@@ -1,0 +1,9 @@
+/.idea
+/coverage
+/karma.conf.js
+/src
+/tsconfig.json
+/tslint.json
+*.js.map
+*.spec.d.ts
+*.spec.js

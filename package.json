@@ -1,0 +1,44 @@
+{
+  "name": "date-time-zone",
+  "version": "1.0.0",
+  "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
+  "main": "dist/index.js",
+  "typings": "dist/index",
+  "scripts": {
+    "build": "tsc",
+    "test": "karma start",
+    "watch:build": "tsc --watch"
+  },
+  "keywords": [
+    "calendar",
+    "date",
+    "gregorian",
+    "iana",
+    "julian",
+    "time",
+    "timezone",
+    "zone"
+  ],
+  "author": "Kerry Shetline <kerry@shetline.com>",
+  "license": "MIT",
+  "dependencies": {
+    "ks-math": "^1.0.1",
+    "ks-util": "^1.0.5",
+    "lodash": "^4.17.5"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.8.6",
+    "@types/lodash": "^4.14.102",
+    "jasmine-core": "^2.99.1",
+    "jasmine-spec-reporter": "^4.2.1",
+    "karma": "^2.0.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-jasmine": "^1.1.1",
+    "karma-jasmine-html-reporter": "^0.2.2",
+    "karma-typescript": "^3.0.12",
+    "karma-typescript-es6-transform": "^1.0.3",
+    "tslint": "^5.9.1",
+    "typescript": "^2.5.3"
+  },
+  "repository": "github:kshetline/date-time-zone"
+}
