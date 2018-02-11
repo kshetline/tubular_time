@@ -1,4 +1,4 @@
-## date-time-zone
+## ks-date-time-zone
 
 This collection of date and time classes provides a combination of support for IANA time zones and a settable Julian/Gregorian calendar switchover date.
 

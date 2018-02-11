@@ -1,6 +1,6 @@
 {
-  "name": "date-time-zone",
-  "version": "1.0.0",
+  "name": "ks-date-time-zone",
+  "version": "1.0.1",
   "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
   "main": "dist/index.js",
   "typings": "dist/index",
@@ -40,5 +40,5 @@
     "tslint": "^5.9.1",
     "typescript": "^2.5.3"
   },
-  "repository": "github:kshetline/date-time-zone"
+  "repository": "github:kshetline/ks-date-time-zone"
 }

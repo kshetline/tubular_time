@@ -1,4 +1,4 @@
-## date-time-zone
+## ks-date-time-zone
 
 Copyright © 2017-2018 Kerry Shetline, kerry@shetline.com
 
