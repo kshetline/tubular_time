@@ -18,7 +18,7 @@
 */
 
 import {
-  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, KsCalendar, YearOrDate, YMDDate
+  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, KsCalendar, SUNDAY, YearOrDate, YMDDate
 } from './ks-calendar';
 import * as _ from 'lodash';
 import { div_rd, mod, round } from 'ks-math';
@@ -97,12 +97,20 @@ export class KsDateTime extends KsCalendar {
     }
   }
 
-  public get utcOffsetMinutes(): number {
+  public get utcOffsetSeconds(): number {
     return this._timeZone.getOffset(this._utcTimeMillis);
   }
 
-  public get dstOffsetMinutes(): number {
+  public get utcOffsetMinutes(): number {
+    return round(this._timeZone.getOffset(this._utcTimeMillis) / 60);
+  }
+
+  public get dstOffsetSeconds(): number {
     return this._timeZone.getOffsets(this._utcTimeMillis)[1];
+  }
+
+  public get dstOffsetMinutes(): number {
+    return round(this._timeZone.getOffsets(this._utcTimeMillis)[1] / 60);
   }
 
   public getTimeZoneDisplayName(): string {
@@ -174,15 +182,15 @@ export class KsDateTime extends KsCalendar {
 
       let dayMillis = this.getDayNumber(year, month, day) * DAY_MSEC;
 
-      dayMillis -= this.timeZone.getOffsetForWallTime(dayMillis) * MINUTE_MSEC;
+      dayMillis -= this.timeZone.getOffsetForWallTime(dayMillis) * 1000;
 
       // There are weird turning-back-the-clock situations where there are two midnights
       // during a single day. Make sure we're getting the earlier midnight unless the
       // earlier midnight doesn't match the day of the month requested.
       const transition = this.timeZone.findTransitionByUtc(dayMillis);
 
-      if (transition !== null && transition.deltaOffset < 0 && dayMillis < transition.transitionTime - transition.deltaOffset * 60000) {
-        const earlier = dayMillis + transition.deltaOffset * 60000;
+      if (transition !== null && transition.deltaOffset < 0 && dayMillis < transition.transitionTime - transition.deltaOffset * 1000) {
+        const earlier = dayMillis + transition.deltaOffset * 1000;
         // The date doesn't have to be normalized when calling this function -- that is, we can
         // ask for the start of January 32 to mean February 1. Now, however, we need a normalized
         // date to select the correct midnight.
@@ -195,6 +203,18 @@ export class KsDateTime extends KsCalendar {
       return dayMillis;
   }
 
+  public getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
+      let year: number;
+
+      if (_.isUndefined(yearOrDate)) {
+        [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
+      }
+      else
+        [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+
+      return (this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / 1000;
+  }
+
   public getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
       let year: number;
 
@@ -204,7 +224,7 @@ export class KsDateTime extends KsCalendar {
       else
         [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
-      return (this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / MINUTE_MSEC;
+      return round((this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / MINUTE_MSEC);
   }
 
   public getCalendarMonth(yearOrStartingDay: number, month?: number, startingDayOfWeek?: number): YMDDate[] {
@@ -215,7 +235,7 @@ export class KsDateTime extends KsCalendar {
     else
       year = yearOrStartingDay;
 
-    const calendar = super.getCalendarMonth(year, month, startingDayOfWeek);
+    const calendar = super.getCalendarMonth(year, month, startingDayOfWeek || SUNDAY);
 
     for (const date of calendar) {
       if (this.getMinutesInDay(date) <= 0)
@@ -269,13 +289,13 @@ export class KsDateTime extends KsCalendar {
                  this._wallTime.hrs * 3600000 +
                  this.getDayNumber(this._wallTime) * 86400000;
 
-    millis -= this._timeZone.getOffsetForWallTime(millis) * 60000;
+    millis -= this._timeZone.getOffsetForWallTime(millis) * 1000;
 
     if (this._wallTime.occurrence === 1) {
       const transition = this.timeZone.findTransitionByUtc(millis);
 
-      if (transition !== null && transition.deltaOffset < 0 && millis < transition.transitionTime - transition.deltaOffset * 60000)
-        millis += transition.deltaOffset * 60000;
+      if (transition !== null && transition.deltaOffset < 0 && millis < transition.transitionTime - transition.deltaOffset * 1000)
+        millis += transition.deltaOffset * 1000;
     }
 
     this._utcTimeMillis = millis;
@@ -286,7 +306,7 @@ export class KsDateTime extends KsCalendar {
   }
 
   public getWallTimeForMillis(millis: number): DateAndTime {
-    let ticks = millis + this._timeZone.getOffset(millis) * 60000;
+    let ticks = millis + this._timeZone.getOffset(millis) * 1000;
     const wallTimeMillis = ticks;
     const wallTime = <DateAndTime> this.getDateFromDayNumber(div_rd(ticks, 86400000));
 
@@ -304,7 +324,7 @@ export class KsDateTime extends KsCalendar {
 
     const transition = this.timeZone.findTransitionByWallTime(wallTimeMillis);
 
-    if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 60000)
+    if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 1000)
       wallTime.occurrence = 2;
 
     return wallTime;

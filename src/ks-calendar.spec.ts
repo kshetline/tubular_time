@@ -25,15 +25,15 @@ describe('KsCalendar', () => {
   });
 
   it('should return Saturday (6) for 1962-10-13.', () => {
-    expect(calendar.getDayOfWeek(1962, 10, 13)).toEqual(6);
+    expect(calendar.getDayOfWeek(1962, 10, 13)).toBe(6);
   });
 
   it('should return Friday (5) for 2016-12-16.', () => {
-    expect(calendar.getDayOfWeek(2016, 12, 16)).toEqual(5);
+    expect(calendar.getDayOfWeek(2016, 12, 16)).toBe(5);
   });
 
   it('should return 24 as the fourth Thursday of 2016/11.', () => {
-    expect(calendar.getDateOfNthWeekdayOfMonth(2016, 11, 4, 4)).toEqual(24);
+    expect(calendar.getDateOfNthWeekdayOfMonth(2016, 11, 4, 4)).toBe(24);
   });
 
   it('should return a series of Tuesdays at the correct index for each month.', () => {
@@ -70,16 +70,16 @@ describe('KsCalendar', () => {
 
   it('should have only 19 days in September 1752 when most of North America switched to the Gregorian calendar.', () => {
     calendar.setGregorianChange(1752, 9, 14);
-    expect(calendar.getDaysInMonth(1752, 9)).toEqual(19);
+    expect(calendar.getDaysInMonth(1752, 9)).toBe(19);
   });
 
   // Proceding with modified Gregorian Calendar change...
 
   it('should return 30 as the third Saturday of 1752/09.', () => {
-    expect(calendar.getDateOfNthWeekdayOfMonth(1752, 9, 6, 3)).toEqual(30);
+    expect(calendar.getDateOfNthWeekdayOfMonth(1752, 9, 6, 3)).toBe(30);
   });
 
   it('should return 30 as the last Saturday of 1752/09.', () => {
-    expect(calendar.getDateOfNthWeekdayOfMonth(1752, 9, 6, LAST)).toEqual(30);
+    expect(calendar.getDateOfNthWeekdayOfMonth(1752, 9, 6, LAST)).toBe(30);
   });
 });

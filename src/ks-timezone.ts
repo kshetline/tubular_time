@@ -21,7 +21,7 @@ import * as _ from 'lodash';
 import { padLeft } from 'ks-util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './ks-calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './ks-date-time-zone-common';
-import { div_tt0, mod2 } from 'ks-math';
+import { div_tt0, mod2, round } from 'ks-math';
 
 export interface RegionAndSubzones {
   region: string;
@@ -29,21 +29,21 @@ export interface RegionAndSubzones {
 }
 
 export interface Transition {
-  transitionTime: number;
-  utcOffset: number;
-  dstOffset: number;
+  transitionTime: number; // in milliseconds
+  utcOffset: number; // in seconds
+  dstOffset: number; // in seconds
   name?: string;
-  deltaOffset?: number;
+  deltaOffset?: number; // in seconds
   dstFlipped?: boolean;
   baseOffsetChanged?: boolean;
-  wallTime?: number;
+  wallTime?: number; // in milliseconds
 }
 
 export interface ZoneInfo {
   zoneName: string;
-  currentUtcOffset: number;
+  currentUtcOffset: number; // in seconds
   usesDst: boolean;
-  dstOffset: number;
+  dstOffset: number; // in seconds
   displayName?: string;
   transitions: Transition[] | null;
 }
@@ -75,7 +75,7 @@ class Rule {
     this.atHour     = Number(parts[4]);
     this.atMinute   = Number(parts[5]);
     this.atType     = Number(parts[6]);
-    this.save       = Number(parts[7]);
+    this.save       = round(Number(parts[7]) * 60);
   }
 
   public getTransitionTime(year: number, stdOffset: number, dstOffset: number): number {
@@ -93,9 +93,9 @@ class Rule {
     let millis = millisFromDateTime_SGC(year, this.month, date, this.atHour, this.atMinute);
 
     if (this.atType === CLOCK_TYPE_WALL)
-      millis -= (stdOffset + dstOffset) * MINUTE_MSEC;
+      millis -= (stdOffset + dstOffset) * 1000;
     else if (this.atType === CLOCK_TYPE_STD)
-      millis -= stdOffset * MINUTE_MSEC;
+      millis -= stdOffset * 1000;
 
     return millis;
   }
@@ -116,7 +116,7 @@ let osDstOffset: number;
   const MONTH_MSEC = 30 * DAY_MSEC;
   const aBitLater = now + MONTH_MSEC * 12 * 2;
   const muchLater = now + MONTH_MSEC * 12 * 50;
-  let lastOffset = -date.getTimezoneOffset();
+  let lastOffset = -date.getTimezoneOffset() * 60;
 
   osTransitions.push({transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: lastOffset, dstOffset: 0 });
 
@@ -125,7 +125,7 @@ let osDstOffset: number;
 
     date.setTime(sampleTime);
 
-    const currentOffset = -date.getTimezoneOffset();
+    const currentOffset = -date.getTimezoneOffset() * 60;
 
     if (_.isUndefined(osProbableStdOffset) && sampleTime >= aBitLater) {
       osProbableStdOffset = osProbableDstOffset = currentOffset;
@@ -143,7 +143,7 @@ let osDstOffset: number;
       while (high - low > MINUTE_MSEC) {
         const mid = Math.floor((high + low) / 2 / MINUTE_MSEC) * MINUTE_MSEC;
         date.setTime(mid);
-        const sampleOffset = -date.getTimezoneOffset();
+        const sampleOffset = -date.getTimezoneOffset() * 60;
 
         if (sampleOffset === lastOffset)
           low = mid;
@@ -205,6 +205,11 @@ export class KsTimeZone {
 
   private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
   private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
+
+  public static defineTimeZones(encodedTimeZones: {[id: string]: string}): void {
+    this.encodedTimeZones = encodedTimeZones;
+    this.zoneLookup = {};
+  }
 
   public static getAvailableTimeZones(): string[] {
     const zones: string[] = [];
@@ -299,7 +304,7 @@ export class KsTimeZone {
     else  if (matches[0] === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
-      zone = new KsTimeZone({zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4),
+      zone = new KsTimeZone({zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
                              usesDst: false, dstOffset: 0, transitions: null});
     }
     else if (matches[0] === 'OS') {
@@ -309,7 +314,7 @@ export class KsTimeZone {
       let offset = 0;
 
       if (matches.length === 5 && matches[3] && matches[4])
-        offset = (parseInt(matches[3], 10) * 60 + parseInt(matches[4], 10)) * (matches[2] === '-' ? -1 : 1);
+        offset = (parseInt(matches[3], 10) * 60 + parseInt(matches[4], 10)) * 60 * (matches[2] === '-' ? -1 : 1);
 
       zone = new KsTimeZone({zoneName: name, currentUtcOffset: offset,
                             usesDst: false, dstOffset: 0, transitions: null});
@@ -348,14 +353,22 @@ export class KsTimeZone {
     if ('0' === offset)
       return 0;
     else if ('1' === offset)
-      return 60;
-    else
-      return sign * (60 * Number(offset.substr(0, 2)) + Number(offset.substr(2, 2)));
+      return 3600;
+    else {
+      let offsetSeconds = 60 * (60 * Number(offset.substr(0, 2)) + Number(offset.substr(2, 2)));
+
+      if (offset.length == 6)
+        offsetSeconds += Number(offset.substr(4, 2));
+
+      return sign * offsetSeconds;
+    }
   }
 
   private static fromBase60(x: string): number {
     let sign = 1;
     let result = 0;
+    let inFractionalPart = false;
+    let power = 1;
 
     if (x.startsWith('-')) {
       sign = -1;
@@ -367,15 +380,25 @@ export class KsTimeZone {
     for (let i = 0; i < x.length; ++i) {
       let digit = x.charCodeAt(i);
 
-      if (digit > 96)
+      if (digit === 46) { // "decimal" point (sexagesimal point, in this case)
+        inFractionalPart = true;
+        continue;
+      }
+      else if (digit > 96) // a-z -> 10-35
         digit -= 87;
-      else if (digit > 64)
+      else if (digit > 64) // A-X -> 36-60
         digit -= 29;
-      else
+      else // 0-9
         digit -= 48;
 
-      result *= 60;
-      result += digit;
+      if (inFractionalPart) {
+        power /= 60;
+        result += power * digit;
+      }
+      else {
+        result *= 60;
+        result += digit;
+      }
     }
 
     return result * sign;
@@ -387,7 +410,7 @@ export class KsTimeZone {
     let parts = sections[0].split(' ');
     const baseUtcOffset = this.parseTimeOffset(parts[0]);
     const currentUtcOffset = this.parseTimeOffset(parts[1]);
-    const dstOffset = Number(parts[2]);
+    const dstOffset = round(Number(parts[2]) * 60);
     let displayName;
     let lastStdName;
     let lastDstName;
@@ -404,8 +427,8 @@ export class KsTimeZone {
         const offset = offsets[i];
 
         parts = offset.split('/');
-        utcOffsets[i] = this.fromBase60(parts[0]);
-        dstOffsets[i] = this.fromBase60(parts[1]);
+        utcOffsets[i] = round(this.fromBase60(parts[0]) * 60);
+        dstOffsets[i] = round(this.fromBase60(parts[1]) * 60);
 
         if (parts.length > 2)
           names[i] = parts[2];
@@ -422,9 +445,9 @@ export class KsTimeZone {
 
         for (let i = 0; i < offsetIndices.length; ++i) {
           const offsetIndex = this.fromBase60(offsetIndices.substr(i, 1));
-          const ttime = lastTTime + this.fromBase60(transitionTimes[i]);
+          const ttime = lastTTime + round(this.fromBase60(transitionTimes[i]) * 60);
 
-          transitions.push({transitionTime: ttime * MINUTE_MSEC, utcOffset: utcOffsets[offsetIndex], dstOffset: dstOffsets[offsetIndex], name: names[offsetIndex]});
+          transitions.push({transitionTime: ttime * 1000, utcOffset: utcOffsets[offsetIndex], dstOffset: dstOffsets[offsetIndex], name: names[offsetIndex]});
           lastTTime = ttime;
 
           if (dstOffsets[offsetIndex] !== 0)
@@ -435,7 +458,7 @@ export class KsTimeZone {
 
         if (sections.length > 4) {
           // Extend transitions table with rules-based Daylight Saving Time changes.
-          lastTTime *= MINUTE_MSEC;
+          lastTTime *= 1000;
 
           const rules = sections[4].split(',');
           const stdRule = new Rule(rules[0]);
@@ -481,22 +504,31 @@ export class KsTimeZone {
     };
   }
 
-  public static formatUtcOffset(offsetMinutes: number): string {
-    let result = offsetMinutes < 0 ? '-' : '+';
+  public static formatUtcOffset(offsetSeconds: number): string {
+    let result = offsetSeconds < 0 ? '-' : '+';
 
-    offsetMinutes = Math.abs(offsetMinutes);
-    result += padLeft(div_tt0(offsetMinutes, 60), 2, '0') + ':' + padLeft(offsetMinutes % 60, 2, '0');
+    offsetSeconds = Math.abs(offsetSeconds);
+
+    const hours = div_tt0(offsetSeconds, 3600);
+    offsetSeconds -= hours * 3600;
+    const minutes = div_tt0(offsetSeconds, 60);
+    offsetSeconds -= minutes * 60;
+
+    result += padLeft(hours, 2, '0') + ':' + padLeft(minutes, 2, '0');
+
+    if (offsetSeconds !== 0)
+      result += ':' + padLeft(offsetSeconds, 2, '0');
 
     return result;
   }
 
-  public static getDstSymbol(dstOffsetMinutes: number): string {
-    switch (dstOffsetMinutes) {
-      case   0: return '';
-      case  30: return '^';
-      case  60: return '§';
-      case 120: return '#';
-      default:  return (dstOffsetMinutes < 0 ? '\u2744' : '~'); // Snowflake character for negative/winter DST
+  public static getDstSymbol(dstOffsetSeconds: number): string {
+    switch (dstOffsetSeconds) {
+      case     0: return '';
+      case  1800: return '^';
+      case  3600: return '§';
+      case  7200: return '#';
+      default:  return (dstOffsetSeconds < 0 ? '\u2744' : '~'); // Snowflake character for negative/winter DST
     }
   }
 
@@ -522,7 +554,7 @@ export class KsTimeZone {
         transition.deltaOffset = transition.utcOffset - lastOffset;
         transition.dstFlipped = (isDst !== lastDst);
         transition.baseOffsetChanged = (baseOffset !== lastBaseOffset);
-        transition.wallTime = transition.transitionTime + transition.utcOffset * 60000;
+        transition.wallTime = transition.transitionTime + transition.utcOffset * 1000;
 
         lastOffset = transition.utcOffset;
         lastDst = isDst;
@@ -574,6 +606,12 @@ export class KsTimeZone {
 
       if (match)
         name = match[1] + ':' + match[2];
+      else {
+        match = /^([+-]\d\d)(\d\d)(\d\d)$/.exec(name);
+
+        if (match)
+          name = match[1] + ':' + match[2] + ':' + match[3];
+      }
     }
 
     return name;
@@ -639,7 +677,7 @@ export class KsTimeZone {
 
   // tslint:disable
   // noinspection SpellCheckingInspection
-  private static encodedTimeZones: { [id: string]: string } =
+  private static encodedTimeZones: {[id: string]: string} =
   { // tz database version: 2018c, years 1800-2030, rounded to nearest minute, filtered, calendar rollbacks eliminated (modified to keep Europe/Dublin from 2018b)
     'Africa/Abidjan': '-0016 +0000 0;-g/0/LMT 0/0/GMT;1;-2ldXI',
     'Africa/Accra': '-0001 +0000 0;-1/0/LMT 0/0/GMT k/k;12121212121212121212121212121212121212121212121;-26BbX 6tzX MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE',
