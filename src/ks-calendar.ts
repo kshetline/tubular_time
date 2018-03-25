@@ -34,25 +34,45 @@ export const FRIDAY    = 5;
 export const SATURDAY  = 6;
 
 /**
- * @description Constant for indicating the last occurrence of a particular day of the week (e.g. the last Tuesday) of a given month.
+ * Constant for indicating the last occurrence of a particular day of the week (e.g. the last Tuesday) of a given month.
  */
 export const LAST = 6;
 
+/** @hidden */
 const DISTANT_YEAR_PAST = -9999999;
+/** @hidden */
 const DISTANT_YEAR_FUTURE = 9999999;
 const FIRST_GREGORIAN_DAY_SGC = -141427; // 1582-10-15
 
+/**
+ * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
+ * or Gregorian.
+ */
 export interface YMDDate {
+  /** Year as signed integer (0 = 1 BCE, -1 = 2 BCE, etc.). */
   y: number;
+  /** Month as 1-12. */
   m: number;
+  /** Day of month. */
   d: number;
-  n?: number; // Day number where 1970-01-01 = 0.
-  j?: boolean; // true if Julian calendar date.
+  /** Day number where 1970-01-01 = 0. */
+  n?: number;
+  /** true if this is a Julian calendar date, false for Gregorian. */
+  j?: boolean;
 }
 
+/**
+ * Type allowing a year alone to be specified, a full date as a [[YMDDate]], or a full date as a numeric array in the
+ * form [year, month, date].
+ */
 export type YearOrDate = number | YMDDate | number[];
+/**
+ * Type for specifying the date when a calendar switches from Julian to Gregorian, or if the calendar is purely Julian
+ * or purely Gregorian. As a string, the letters 'J' or 'G' can be used.
+ */
 export type GregorianChange = YMDDate | CalendarType | string;
 
+/** @hidden */
 export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, day?: number): number[] {
   let year: number;
 
@@ -72,12 +92,28 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   return [year, month, day];
 }
 
+/**
+ * Determine if a given date falls during the Julian calendar or the Gregorian calendar, given the standard
+ * Gregorian change date of 1582-10-15.
+ *
+ * @param {YearOrDate} yearOrDate
+ * @param {number} month
+ * @param {number} day
+ * @returns True if the date is Julian.
+ */
 export function isJulianCalendarDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
   let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
   return (year < 1582 || (year === 1582 && (month < 10 || month === 10 && day < 15)));
 }
 
+/**
+ * Gets the day number for the given date, relative to 1970-01-01, using the standard Gregorian change date 1582-10-15.
+ * @param yearOrDate
+ * @param month
+ * @param day
+ * @returns Day number.
+ */
 export function getDayNumber_SGC(yearOrDate: YearOrDate, month?: number, day?: number): number {
   let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
@@ -90,6 +126,13 @@ export function getDayNumber_SGC(yearOrDate: YearOrDate, month?: number, day?: n
     return getDayNumberGregorian(year, month, day);
 }
 
+/**
+ * Gets the day number for the given Gregorian calendar date, relative to 1970-01-01.
+ * @param yearOrDate
+ * @param month
+ * @param day
+ * @returns Day number.
+ */
 export function getDayNumberGregorian(yearOrDate: YearOrDate, month?: number, day?: number): number {
   let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
@@ -100,6 +143,13 @@ export function getDayNumberGregorian(yearOrDate: YearOrDate, month?: number, da
     div_tt0(275 * month, 9) + day - 719559;
 }
 
+/**
+ * Gets the day number for the given Julian calendar date, relative to 1970-01-01 Gregorian.
+ * @param yearOrDate
+ * @param month
+ * @param day
+ * @returns Day number.
+ */
 export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?: number): number {
   let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
@@ -109,13 +159,22 @@ export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?:
   return 367 * year - div_rd(7 * (year + div_tt0(month + 9, 12)), 4) + div_tt0(275 * month, 9) + day - 719561;
 }
 
-// Always returns 1. This function exists only to parallel getFirstDateInMonth, which can be a different
-// value when the Gregorian change date is not fixed.
-//
+/**
+ * Always returns 1. This function exists only to parallel getFirstDateInMonth, which isn't always 1 when the
+ * Gregorian change date is not fixed.
+ * @returns First date of calender month.
+ */
 export function getFirstDateInMonth_SGC(year: number, month: number): number {
   return 1;
 }
 
+/**
+ * The last date of the given calendar month, using the standard Gregorian change date 1582-10-15, e.g. 31 for
+ * any January, 28 for non-leap-year February, 29 for leap-year February, etc.
+ * @param year
+ * @param month
+ * @returns Last date of calendar month.
+ */
 export function getLastDateInMonth_SGC(year: number, month: number): number {
   if (month === 9 || month === 4 || month === 6 || month === 11)
     return 30;
@@ -127,6 +186,12 @@ export function getLastDateInMonth_SGC(year: number, month: number): number {
     return 28;
 }
 
+/**
+ * The last date of the given Gregorian calendar month.
+ * @param year
+ * @param month
+ * @returns Last date of calendar month.
+ */
 export function getLastDateInMonthGregorian(year: number, month: number): number {
   if (month === 9 || month === 4 || month === 6 || month === 11)
     return 30;
@@ -138,6 +203,12 @@ export function getLastDateInMonthGregorian(year: number, month: number): number
     return 28;
 }
 
+/**
+ * The last date of the given Gregorian calendar month.
+ * @param year
+ * @param month
+ * @returns Last date of calendar month.
+ */
 export function getLastDateInMonthJulian(year: number, month: number): number {
   if (month === 9 || month === 4 || month === 6 || month === 11)
     return 30;
@@ -149,6 +220,15 @@ export function getLastDateInMonthJulian(year: number, month: number): number {
     return 28;
 }
 
+/**
+ * Returns the number of days in the given calendar month. Since this
+ * function is for the standard Gregorian change date of 1582-10-15,
+ * it returns 21 for 1582/10, otherwise it returns the same value as
+ * [[getLastDateInMonth_SGC]].
+ * @param year
+ * @param month
+ * @returns Total number of days in the given month.
+ */
 export function getDaysInMonth_SGC(year: number, month: number): number {
   if (year === 1582 && month === 10)
     return 21;
@@ -160,31 +240,32 @@ export function getDaysInMonth_SGC(year: number, month: number): number {
     return getDayNumber_SGC(year, 3, 1) - getDayNumber_SGC(year, 2, 1);
 }
 
+/**
+ * This typically returns 365, or 366 for a leap year, but for the year
+ * 1582 it returns 355.
+ * @param year
+ * @returns Total number of days in the given year.
+ */
 export function getDaysInYear_SGC(year: number): number {
   return getDayNumber_SGC(year + 1, 1, 1) - getDayNumber_SGC(year, 1, 1);
 }
 
 /**
- * @description Get day of week for a given 1970-01-01-based day number.
- *
- * @param {number} dayNum - 1970-01-01-based day number.
- *
- * @return {number} Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
+ * Get day of week for a given 1970-01-01-based day number.
+ * @param dayNum 1970-01-01-based day number.
+ * @return Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
  */
 export function getDayOfWeek(dayNum: number): number {
   return mod(dayNum + 4, 7);
 }
 
 /**
- * @description Get day of week for a given date, assuming standard Gregorian change.
- *
- * @param {YearOrDate} yearOrDateOrDayNum - 1970-01-01-based day number (month and date must be left undefined) - OR -
- *                                          YMDDate form y/m/d - OR - [y, m, d].
- * @param {number} month
- *
- * @param {number} day
- *
- * @return {number} Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
+ * Get day of week for a given date, assuming standard Gregorian change.
+ * @param yearOrDateOrDayNum 1970-01-01-based day number (month and date must be left undefined) - OR -
+ *                           YMDDate form y/m/d - OR - [y, m, d].
+ * @param month
+ * @param day
+ * @return Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
   if (_.isNumber(yearOrDateOrDayNum) && _.isUndefined(month))
@@ -194,17 +275,15 @@ export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number,
 }
 
 /**
- * @description Get the date of the index-th day of the week of a given month, e.g. the date of the
+ * Get the date of the index-th day of the week of a given month, e.g. the date of the
  * first Wednesday or the third Monday or the last Friday of the month.
- *
- * @param {number} year - Year.
- * @param {number} month - Month.
- * @param {number} dayOfTheWeek - The day of the week (e.g. 0 for Sunday, 2 for Tuesday, 6 for Saturday) for
- *                                which you wish to find the date.
- * @param {number} index - A value of 1-5, or LAST (6), for the occurrence of the specified day of the week.
- *
- * @return {number} 0 if the described day does not exist (e.g. there is no fifth Monday in the given month) or
- *                  the date of the specified day.
+ * @param year Year.
+ * @param month Month.
+ * @param dayOfTheWeek The day of the week (e.g. 0 for Sunday, 2 for Tuesday, 6 for Saturday) for
+ *                     which you wish to find the date.
+ * @param index A value of 1-5, or LAST (6), for the occurrence of the specified day of the week.
+ * @return 0 if the described day does not exist (e.g. there is no fifth Monday in the given month) or
+ *         the date of the specified day.
  */
 export function getDateOfNthWeekdayOfMonth_SGC(year: number, month: number, dayOfTheWeek: number, index: number): number {
   const last: boolean = (index >= LAST);

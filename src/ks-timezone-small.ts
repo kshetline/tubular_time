@@ -2,7 +2,7 @@ import { KsTimeZone } from './ks-timezone';
 
 // tslint:disable
 // noinspection SpellCheckingInspection
-export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2018c, years 2013-2023
+export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2018d, years 2013-2023
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;',
   'Africa/Addis_Ababa': '+0300 +0300 0;30/0/EAT;',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;',
@@ -46,7 +46,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'America/Havana': '-0500 -0500 60;-50/0/CST -40/10/CDT;1010101010101010101010;1J9F0 1zc0 Oo0 1zc0 Oo0 1zc0 Rc0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Oo0 1zc0 Rc0 1zc0 Oo0 1zc0 Oo0 1zc0;2012 11 1 1 0:0 1 0,2013 3 8 1 0:0 1 60',
   'America/Metlakatla': '-0800 -0900 60;-80/0/PST -90/0/AKST -80/10/AKDT;12121212121212121;1PAa0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
   'America/Miquelon': '-0300 -0300 60;-30/0 -20/10;1010101010101010101010;1J9F0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
-  'America/Montevideo': '-0300 -0300 0;-30/0 -20/10;101010;c6r0 1x3d0 1o10 11z0 1o10 11z0',
+  'America/Montevideo': '-0300 -0300 0;-30/0 -20/10;1010;1KxF0 11z0 1o10 11z0',
   'America/Noronha': '-0200 -0200 0;-20/0;',
   'America/Port-au-Prince': '-0500 -0500 60;-50/0/EST -40/10/EDT;10101010101010101010;1J9H0 1zb0 Op0 1zb0 Op0 1zb0 3iN0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0;2017 11 1 1 2:0 0 0,2017 3 8 1 2:0 0 60',
   'America/Punta_Arenas': '-0400 -0300 0;-40/0 -30/10 -30/0;101012;1Kms0 1wn0 Rd0 46n0 Ap0 IL0',
@@ -54,7 +54,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'America/Sao_Paulo': '-0300 -0300 60;-30/0 -20/10;1010101010101010101010;-f4J0 205X0 1C10 Lz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0 1HB0 FX0 1HB0 IL0 1HB0 FX0 1HB0 IL0',
   'America/Scoresbysund': '-0200 -0100 60;-20/0 0/10 -10/0;1212121212121212121212;rm20 1jjX0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60',
   'America/St_Johns': '-0330 -0330 60;-3u/0/NST -2u/10/NDT;1010101010101010101010;1FPDu 4Rd0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
-  'Antarctica/Casey': '+0800 +1100 0;80/0 b0/0;1;1RWg0',
+  'Antarctica/Casey': '+0800 +0800 0;80/0 b0/0;10;1RWg0 3m10',
   'Antarctica/Davis': '+0700 +0700 0;70/0;',
   'Antarctica/DumontDUrville': '+1000 +1000 0;a0/0;',
   'Antarctica/Macquarie': '+1100 +1100 0;b0/0;',
@@ -78,7 +78,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'Asia/Dili': '+0900 +0900 0;90/0;',
   'Asia/Dubai': '+0400 +0400 0;40/0;',
   'Asia/Famagusta': '+0200 +0200 60;20/0/EET 30/10/EEST 30/0;101010120101010101010;19LW0 AS30 11A0 1o00 11A0 1o00 11A0 15U0 2Ks0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60',
-  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1Jha0 1cL0 1cN0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 WN0 1qL0;2016 10 0 7 1:0 0 0,2016 3 0 7 1:0 0 60',
+  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1Jha0 1cL0 1cN0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1qL0 WN0 1qL0 WN0 1qL0 WN0 1qL0;2016 10 0 7 1:0 0 0,2016 3 22 7 1:0 0 60',
   'Asia/Hong_Kong': '+0800 +0800 0;80/0/HKT;',
   'Asia/Hovd': '+0700 +0700 0;70/0 80/10;1010;1O8H0 1cJ0 1cP0 1cJ0',
   'Asia/Irkutsk': '+0900 +0800 0;90/0 80/0;1;1N7t0',
