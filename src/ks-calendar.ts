@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017-2018 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2019 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -17,7 +17,12 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import * as _ from 'lodash';
+import isArray from 'lodash/isArray';
+import isNil from 'lodash/isNil';
+import isNumber from 'lodash/isNumber';
+import isObject from 'lodash/isObject';
+import isString from 'lodash/isString';
+import isUndefined from 'lodash/isUndefined';
 import { div_rd, div_tt0, mod } from 'ks-math';
 import { padLeft } from 'ks-util';
 
@@ -76,17 +81,17 @@ export type GregorianChange = YMDDate | CalendarType | string;
 export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, day?: number): number[] {
   let year: number;
 
-  if (_.isNumber(yearOrDate))
+  if (isNumber(yearOrDate))
     year = <number> yearOrDate;
-  else if (_.isArray(yearOrDate) && (<number[]> yearOrDate).length >= 3 && _.isNumber((<number[]> yearOrDate)[0]))
+  else if (isArray(yearOrDate) && (<number[]> yearOrDate).length >= 3 && isNumber((<number[]> yearOrDate)[0]))
     return <number[]> yearOrDate;
-  else if (_.isObject(yearOrDate)) {
+  else if (isObject(yearOrDate)) {
     year  = (<YMDDate> yearOrDate).y;
     month = (<YMDDate> yearOrDate).m;
     day   = (<YMDDate> yearOrDate).d;
   }
 
-  if (_.isUndefined(year) || _.isUndefined(month) || _.isUndefined(day))
+  if (isUndefined(year) || isUndefined(month) || isUndefined(day))
     throw('KsCalendar: Invalid date arguments');
 
   return [year, month, day];
@@ -268,7 +273,7 @@ export function getDayOfWeek(dayNum: number): number {
  * @return Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-  if (_.isNumber(yearOrDateOrDayNum) && _.isUndefined(month))
+  if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
     return mod(<number> yearOrDateOrDayNum + 4, 7);
   else
     return getDayOfWeek(getDayNumber_SGC(yearOrDateOrDayNum, month, day));
@@ -486,7 +491,7 @@ export class KsCalendar {
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else if (gcYearOrDateOrType === CalendarType.PURE_JULIAN)
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
-    else if (arguments.length === 0 || _.isNil(gcYearOrDateOrType))
+    else if (arguments.length === 0 || isNil(gcYearOrDateOrType))
       this.setGregorianChange(1582, 10, 15);
     else
       this.setGregorianChange(<YearOrDate | string> gcYearOrDateOrType, gcMonth, gcDate);
@@ -525,7 +530,7 @@ export class KsCalendar {
 
       return;
     }
-    else if (_.isString(gcYearOrDate))
+    else if (isString(gcYearOrDate))
       gcYearOrDate = parseISODate(<string> gcYearOrDate);
 
     let gcYear; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(<YearOrDate> gcYearOrDate, gcMonth, gcDate);
@@ -665,7 +670,7 @@ export class KsCalendar {
   }
 
   public getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-    if (_.isNumber(yearOrDateOrDayNum) && _.isUndefined(month))
+    if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
       return getDayOfWeek(<number> yearOrDateOrDayNum);
     else
       return getDayOfWeek(this.getDayNumber(yearOrDateOrDayNum, month, day));

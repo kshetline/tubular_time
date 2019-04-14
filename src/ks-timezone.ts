@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2019 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -17,7 +17,8 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import * as _ from 'lodash';
+import isUndefined from 'lodash/isUndefined';
+import last from 'lodash/last';
 import { padLeft } from 'ks-util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './ks-calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './ks-date-time-zone-common';
@@ -127,7 +128,7 @@ let osDstOffset: number;
 
     const currentOffset = -date.getTimezoneOffset() * 60;
 
-    if (_.isUndefined(osProbableStdOffset) && sampleTime >= aBitLater) {
+    if (isUndefined(osProbableStdOffset) && sampleTime >= aBitLater) {
       osProbableStdOffset = osProbableDstOffset = currentOffset;
     }
 
@@ -181,7 +182,7 @@ let osDstOffset: number;
       });
 
       // Make sure last transition is to standard time.
-      if (_.last(osTransitions).dstOffset !== 0)
+      if (last(osTransitions).dstOffset !== 0)
         osTransitions.pop();
     }
   }
@@ -662,7 +663,7 @@ export class KsTimeZone {
         return this.transitions[i];
     }
 
-    return _.last(this.transitions);
+    return last(this.transitions);
   }
 
   public findTransitionByWallTime(wallTime: number): Transition | null {
@@ -674,6 +675,6 @@ export class KsTimeZone {
         return this.transitions[i];
     }
 
-    return _.last(this.transitions);
+    return last(this.transitions);
   }
 }

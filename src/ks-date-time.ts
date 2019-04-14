@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2019 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -20,7 +20,11 @@
 import {
   getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, KsCalendar, SUNDAY, YearOrDate, YMDDate
 } from './ks-calendar';
-import * as _ from 'lodash';
+import clone from 'lodash/clone';
+import isNil from 'lodash/isNil';
+import isNumber from 'lodash/isNumber';
+import isObject from 'lodash/isObject';
+import isUndefined from 'lodash/isUndefined';
 import { div_rd, mod, round } from 'ks-math';
 import { padLeft } from 'ks-util';
 import { KsTimeZone } from './ks-timezone';
@@ -54,12 +58,12 @@ export class KsDateTime extends KsCalendar {
     if (timeZone)
       this._timeZone = timeZone;
 
-    if (_.isObject(initialTime)) {
-      this.wallTime = _.clone(<DateAndTime> initialTime);
+    if (isObject(initialTime)) {
+      this.wallTime = clone(<DateAndTime> initialTime);
       this.computeUtcTimeMillis();
     }
     else {
-      this._utcTimeMillis = (_.isNumber(initialTime) ? <number> initialTime : Date.now());
+      this._utcTimeMillis = (isNumber(initialTime) ? <number> initialTime : Date.now());
       this.computeWallTime();
     }
   }
@@ -74,13 +78,13 @@ export class KsDateTime extends KsCalendar {
   }
 
   public get wallTime(): DateAndTime {
-    return _.clone(this._wallTime);
+    return clone(this._wallTime);
   }
 
   public set wallTime(newTime: DateAndTime) {
-    this._wallTime = _.clone(newTime);
+    this._wallTime = clone(newTime);
 
-    if (_.isNil(this._wallTime.millis))
+    if (isNil(this._wallTime.millis))
       this._wallTime.millis = 0;
 
     this.computeUtcTimeMillis();
@@ -174,7 +178,7 @@ export class KsDateTime extends KsCalendar {
   public getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number {
       let year: number;
 
-      if (_.isUndefined(yearOrDate)) {
+      if (isUndefined(yearOrDate)) {
         [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
       }
       else
@@ -206,7 +210,7 @@ export class KsDateTime extends KsCalendar {
   public getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
       let year: number;
 
-      if (_.isUndefined(yearOrDate)) {
+      if (isUndefined(yearOrDate)) {
         [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
       }
       else
@@ -218,7 +222,7 @@ export class KsDateTime extends KsCalendar {
   public getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
       let year: number;
 
-      if (_.isUndefined(yearOrDate)) {
+      if (isUndefined(yearOrDate)) {
         [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
       }
       else
@@ -230,7 +234,7 @@ export class KsDateTime extends KsCalendar {
   public getCalendarMonth(yearOrStartingDay: number, month?: number, startingDayOfWeek?: number): YMDDate[] {
     let year: number;
 
-    if (_.isUndefined(month))
+    if (isUndefined(month))
       [year, month, startingDayOfWeek] = [this._wallTime.y,  this._wallTime.m, yearOrStartingDay];
     else
       year = yearOrStartingDay;
