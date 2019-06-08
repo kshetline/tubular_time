@@ -23,6 +23,7 @@ import { padLeft } from 'ks-util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './ks-calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './ks-date-time-zone-common';
 import { div_tt0, mod2, round } from 'ks-math';
+import { isNil } from 'lodash';
 
 export interface RegionAndSubzones {
   region: string;
@@ -51,6 +52,7 @@ export interface ZoneInfo {
 
 const CLOCK_TYPE_WALL = 0;
 const CLOCK_TYPE_STD = 1;
+// noinspection JSUnusedLocalSymbols
 const CLOCK_TYPE_UTC = 2;
 
 const LAST_DST_YEAR = 2500;
@@ -198,12 +200,12 @@ export class KsTimeZone {
 
   private static zoneLookup: { [id: string]: KsTimeZone } = {};
 
-  private _zoneName: string;
-  private _utcOffset: number;
-  private _usesDst: boolean;
-  private _dstOffset: number;
-  private displayName: string;
-  private transitions: Transition[] | null;
+  private readonly _zoneName: string;
+  private readonly _utcOffset: number;
+  private readonly _usesDst: boolean;
+  private readonly _dstOffset: number;
+  private readonly displayName: string;
+  private readonly transitions: Transition[] | null;
   private _error: string;
 
   private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
@@ -294,6 +296,9 @@ export class KsTimeZone {
   }
 
   public static getTimeZone(name: string, longitude?: number): KsTimeZone {
+    if (!name)
+      return this.OS_ZONE;
+
     const cached = this.zoneLookup[name];
 
     if (cached)
@@ -508,6 +513,9 @@ export class KsTimeZone {
   }
 
   public static formatUtcOffset(offsetSeconds: number): string {
+    if (isNil(offsetSeconds))
+      return '?';
+
     let result = offsetSeconds < 0 ? '-' : '+';
 
     offsetSeconds = Math.abs(offsetSeconds);
@@ -526,6 +534,9 @@ export class KsTimeZone {
   }
 
   public static getDstSymbol(dstOffsetSeconds: number): string {
+    if (isNil(dstOffsetSeconds))
+      return '';
+
     switch (dstOffsetSeconds) {
       case     0: return '';
       case  1800: return '^';
