@@ -4,6 +4,7 @@
 /src
 /tsconfig.json
 /tslint.json
+/docs
 *.js.map
 *.spec.d.ts
 *.spec.js
