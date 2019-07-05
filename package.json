@@ -1,6 +1,6 @@
 {
   "name": "ks-date-time-zone",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
   "main": "dist/index.js",
   "typings": "dist/index",

@@ -2,7 +2,7 @@ import { KsTimeZone } from './ks-timezone';
 
 // tslint:disable
 // noinspection SpellCheckingInspection
-export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2019a, years 2014-2024
+export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2019b, years 2014-2024
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;',
   'Africa/Addis_Ababa': '+0300 +0300 0;30/0/EAT;',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;',
@@ -28,7 +28,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'America/Bogota': '-0500 -0500 0;-50/0;',
   'America/Boise': '-0700 -0700 60;-70/0/MST -60/10/MDT;1010101010101010101010;9VJ0 1DcL0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
   'America/Cambridge_Bay': '-0700 -0700 60;-70/0/MST -60/10/MDT;1010101010101010101010;1Lzl0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
-  'America/Campo_Grande': '-0400 -0400 60;-40/0 -30/10;10101010101010101010;1N4Q0 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0 1HB0 FX0 1HB0 IL0 1HB0 FX0 1HB0 IL0 1EN0 FX0',
+  'America/Campo_Grande': '-0400 -0400 0;-40/0 -30/10;1010101010;1N4Q0 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0',
   'America/Cancun': '-0500 -0500 0;-50/0/EST -50/10/CDT -60/0/CST;120;19A70 DvA0 Dd0',
   'America/Caracas': '-0430 -0400 0;-4u/0 -40/0;1;1QMT0',
   'America/Chicago': '-0600 -0600 60;-60/0/CST -50/10/CDT;1010101010101010101010;1Lzk0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
@@ -50,7 +50,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'America/Port-au-Prince': '-0500 -0500 60;-50/0/EST -40/10/EDT;10101010101010101010;1Lzj0 1zb0 Op0 1zb0 3iN0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2017 11 1 1 2:0 0 0,2017 3 8 1 2:0 0 60',
   'America/Punta_Arenas': '-0400 -0300 0;-40/0 -30/10 -30/0;1012;1MM40 46n0 Ap0 IL0',
   'America/Santiago': '-0400 -0400 60;-40/0 -30/10;101010101010101010;1MM40 46n0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1zb0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0;2019 4 2 1 3:0 2 0,2019 9 2 1 4:0 2 60',
-  'America/Sao_Paulo': '-0300 -0300 60;-30/0 -20/10;1010101010101010101010;-f4J0 22vz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0 1HB0 FX0 1HB0 IL0 1HB0 FX0 1HB0 IL0 1EN0 FX0',
+  'America/Sao_Paulo': '-0300 -0300 60;-30/0 -20/10;101010101010;-f4J0 22vz0 1C10 On0 1zd0 On0 1zd0 On0 1zd0 On0 1HB0 FX0',
   'America/Scoresbysund': '-0200 -0100 60;-20/0 0/10 -10/0;1212121212121212121212;rm20 1lJz0 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60',
   'America/St_Johns': '-0330 -0330 60;-3u/0/NST -2u/10/NDT;1010101010101010101010;1FPDu 7iN0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
   'Antarctica/Casey': '+0800 +0800 0;80/0 b0/0;10;1RWg0 3m10',
@@ -77,7 +77,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'Asia/Dili': '+0900 +0900 0;90/0;',
   'Asia/Dubai': '+0400 +0400 0;40/0;',
   'Asia/Famagusta': '+0200 +0200 60;20/0/EET 30/10/EEST 30/0;101012010101010101010;19LW0 DjD0 11A0 1o00 11A0 15U0 2Ks0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60',
-  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1LGK0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0;2016 10 0 7 1:0 0 0,2016 3 24 7 1:0 0 60',
+  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1LGK0 1nX0 1210 1nz0 1220 1qL0 WN0 1qL0 WN0 1qL0 11c0 1oo0 11c0 1rc0 Wo0 1rc0 Wo0 1rc0 11c0 1oo0 11c0 1oo0;2016 10 0 7 1:0 0 0,2019 3 0 6 0:0 0 60',
   'Asia/Hong_Kong': '+0800 +0800 0;80/0/HKT;',
   'Asia/Hovd': '+0700 +0700 0;70/0 80/10;1010;1O8H0 1cJ0 1cP0 1cJ0',
   'Asia/Irkutsk': '+0900 +0800 0;90/0 80/0;1;1N7t0',
