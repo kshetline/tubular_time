@@ -17,13 +17,13 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+import { div_tt0, mod2, round } from 'ks-math';
+import { padLeft } from 'ks-util';
+import { isNil } from 'lodash';
 import isUndefined from 'lodash/isUndefined';
 import last from 'lodash/last';
-import { padLeft } from 'ks-util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './ks-calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './ks-date-time-zone-common';
-import { div_tt0, mod2, round } from 'ks-math';
-import { isNil } from 'lodash';
 
 export interface RegionAndSubzones {
   region: string;
@@ -59,14 +59,14 @@ const LAST_DST_YEAR = 2500;
 const TIME_GAP_AFTER_LAST_TRANSITION = 172800000; // Two days
 
 class Rule {
-  public startYear: number;
-  public month: number;
-  public dayOfMonth: number;
-  public dayOfWeek: number;
-  public atHour: number;
-  public atMinute: number;
-  public atType: number;
-  public save: number;
+  startYear: number;
+  month: number;
+  dayOfMonth: number;
+  dayOfWeek: number;
+  atHour: number;
+  atMinute: number;
+  atType: number;
+  save: number;
 
   constructor(ruleStr: string) {
     const parts = ruleStr.split(/[ :]/);
@@ -81,7 +81,7 @@ class Rule {
     this.save       = round(Number(parts[7]) * 60);
   }
 
-  public getTransitionTime(year: number, stdOffset: number, dstOffset: number): number {
+  getTransitionTime(year: number, stdOffset: number, dstOffset: number): number {
     let date: number;
 
     if (this.dayOfWeek >= 0 && this.dayOfMonth > 0)
@@ -193,9 +193,9 @@ let osDstOffset: number;
 export class KsTimeZone {
   private static encodedTimeZones: {[id: string]: string} = {};
 
-  public static OS_ZONE = new KsTimeZone({zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
+  static OS_ZONE = new KsTimeZone({zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                             dstOffset: osDstOffset, transitions: osTransitions});
-  public static UT_ZONE = new KsTimeZone({zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
+  static UT_ZONE = new KsTimeZone({zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
                             dstOffset: 0, transitions: null });
 
   private static zoneLookup: { [id: string]: KsTimeZone } = {};
@@ -211,12 +211,12 @@ export class KsTimeZone {
   private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
   private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
 
-  public static defineTimeZones(encodedTimeZones: {[id: string]: string}): void {
+  static defineTimeZones(encodedTimeZones: {[id: string]: string}): void {
     this.encodedTimeZones = encodedTimeZones;
     this.zoneLookup = {};
   }
 
-  public static getAvailableTimeZones(): string[] {
+  static getAvailableTimeZones(): string[] {
     const zones: string[] = [];
 
     for (const zone in this.encodedTimeZones) {
@@ -229,7 +229,7 @@ export class KsTimeZone {
     return zones;
   }
 
-  public static getRegionsAndSubzones(): RegionAndSubzones[] {
+  static getRegionsAndSubzones(): RegionAndSubzones[] {
     let hasMisc = false;
     const zoneHash: { [id: string]: string[] } = {};
 
@@ -279,7 +279,7 @@ export class KsTimeZone {
 
     if (hasMisc) {
       regions[regions.length - 1] = 'MISC';
-      zoneHash['MISC'] = zoneHash['~'];
+      zoneHash.MISC = zoneHash['~'];
       delete zoneHash['~'];
     }
 
@@ -295,7 +295,7 @@ export class KsTimeZone {
     return regionAndSubzones;
   }
 
-  public static getTimeZone(name: string, longitude?: number): KsTimeZone {
+  static getTimeZone(name: string, longitude?: number): KsTimeZone {
     if (!name)
       return this.OS_ZONE;
 
@@ -308,7 +308,7 @@ export class KsTimeZone {
     const matches: string[] = /LMT|OS|(?:(UT)(?:([-+])(\d\d):(\d\d))?)|(?:.+\/.+)|\w+/.exec(name);
 
     if (matches === null || matches.length === 0)
-      throw('Unrecognized format for time zone name "' + name + '"');
+      throw new Error('Unrecognized format for time zone name "' + name + '"');
     else  if (matches[0] === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
@@ -365,7 +365,7 @@ export class KsTimeZone {
     else {
       let offsetSeconds = 60 * (60 * Number(offset.substr(0, 2)) + Number(offset.substr(2, 2)));
 
-      if (offset.length == 6)
+      if (offset.length === 6)
         offsetSeconds += Number(offset.substr(4, 2));
 
       return sign * offsetSeconds;
@@ -512,7 +512,7 @@ export class KsTimeZone {
     };
   }
 
-  public static formatUtcOffset(offsetSeconds: number): string {
+  static formatUtcOffset(offsetSeconds: number): string {
     if (isNil(offsetSeconds))
       return '?';
 
@@ -533,7 +533,7 @@ export class KsTimeZone {
     return result;
   }
 
-  public static getDstSymbol(dstOffsetSeconds: number): string {
+  static getDstSymbol(dstOffsetSeconds: number): string {
     if (isNil(dstOffsetSeconds))
       return '';
 
@@ -583,7 +583,7 @@ export class KsTimeZone {
   get dstOffset(): number { return this._dstOffset; }
   get error(): string { return this._error; }
 
-  public getOffset(utcTime: number): number {
+  getOffset(utcTime: number): number {
     if (!this.transitions || this.transitions.length === 0)
       return this._utcOffset;
     else {
@@ -593,7 +593,7 @@ export class KsTimeZone {
     }
   }
 
-  public getDisplayName(utcTime: number): string {
+  getDisplayName(utcTime: number): string {
     let name: string;
 
     if (!this.transitions || this.transitions.length === 0) {
@@ -631,7 +631,7 @@ export class KsTimeZone {
     return name;
   }
 
-  public getOffsetForWallTime(wallTime: number): number {
+  getOffsetForWallTime(wallTime: number): number {
     if (!this.transitions || this.transitions.length === 0)
       return this._utcOffset;
     else {
@@ -641,11 +641,11 @@ export class KsTimeZone {
     }
   }
 
-  public getFormattedOffset(utcTime: number): string {
+  getFormattedOffset(utcTime: number): string {
     return KsTimeZone.formatUtcOffset(this.getOffset(utcTime));
   }
 
-  public getOffsets(utcTime: number): number[] {
+  getOffsets(utcTime: number): number[] {
     if (!this.transitions || this.transitions.length === 0)
       return [this._utcOffset, this._dstOffset];
     else {
@@ -655,7 +655,7 @@ export class KsTimeZone {
     }
   }
 
-  public isDuringDst(utcTime: number): boolean {
+  isDuringDst(utcTime: number): boolean {
     if (!this.transitions || this.transitions.length === 0)
       return false;
     else {
@@ -665,7 +665,7 @@ export class KsTimeZone {
     }
   }
 
-  public findTransitionByUtc(utcTime: number): Transition | null {
+  findTransitionByUtc(utcTime: number): Transition | null {
     if (!this.transitions || this.transitions.length === 0)
       return null;
 
@@ -677,7 +677,7 @@ export class KsTimeZone {
     return last(this.transitions);
   }
 
-  public findTransitionByWallTime(wallTime: number): Transition | null {
+  findTransitionByWallTime(wallTime: number): Transition | null {
     if (!this.transitions || this.transitions.length === 0)
       return null;
 

@@ -1,4 +1,4 @@
-import { KsCalendar, YMDDate, getISOFormatDate, LAST } from './ks-calendar';
+import { getISOFormatDate, KsCalendar, LAST, YMDDate } from './ks-calendar';
 
 describe('KsCalendar', () => {
   const calendar = new KsCalendar();

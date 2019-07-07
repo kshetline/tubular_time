@@ -17,14 +17,14 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+import { div_rd, div_tt0, mod } from 'ks-math';
+import { padLeft } from 'ks-util';
 import isArray from 'lodash/isArray';
 import isNil from 'lodash/isNil';
 import isNumber from 'lodash/isNumber';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isUndefined from 'lodash/isUndefined';
-import { div_rd, div_tt0, mod } from 'ks-math';
-import { padLeft } from 'ks-util';
 
 export enum CalendarType {PURE_GREGORIAN, PURE_JULIAN}
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
@@ -92,7 +92,7 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   }
 
   if (isUndefined(year) || isUndefined(month) || isUndefined(day))
-    throw('KsCalendar: Invalid date arguments');
+    throw new Error('KsCalendar: Invalid date arguments');
 
   return [year, month, day];
 }
@@ -482,7 +482,7 @@ export class KsCalendar {
   private firstGregorianDay: number = FIRST_GREGORIAN_DAY_SGC;
   private firstDateInGCChangeMonth = 1;
   private lengthOfGCChangeMonth = 21;
-  private lastJulianYear:  number = Number.MIN_SAFE_INTEGER;
+  private lastJulianYear: number = Number.MIN_SAFE_INTEGER;
   private lastJulianMonth: number = Number.MIN_SAFE_INTEGER;
   private lastJulianDate = 4;
 
@@ -497,29 +497,29 @@ export class KsCalendar {
       this.setGregorianChange(<YearOrDate | string> gcYearOrDateOrType, gcMonth, gcDate);
   }
 
-  public setPureGregorian(pureGregorian: boolean): void {
+  setPureGregorian(pureGregorian: boolean): void {
     if (pureGregorian)
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else
       this.setGregorianChange(1582, 10, 15);
   }
 
-  public isPureGregorian(): boolean {
+  isPureGregorian(): boolean {
     return (this.gcYear <= DISTANT_YEAR_PAST);
   }
 
-  public setPureJulian(pureJulian: boolean): void {
+  setPureJulian(pureJulian: boolean): void {
     if (pureJulian)
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
     else
       this.setGregorianChange(1582, 10, 15);
   }
 
-  public isPureJulian(): boolean {
+  isPureJulian(): boolean {
     return (this.gcYear >= DISTANT_YEAR_FUTURE);
   }
 
-  public setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
+  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
     if ('g' === gcYearOrDate || 'G' === gcYearOrDate) {
       this.setPureGregorian(true);
 
@@ -537,20 +537,20 @@ export class KsCalendar {
 
     if (gcYear < GREGORIAN_CHANGE_MIN_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear > DISTANT_YEAR_PAST)
-        throw('KsCalendar: Gregorian change year cannot be less than ' + GREGORIAN_CHANGE_MIN_YEAR);
+        throw new Error('KsCalendar: Gregorian change year cannot be less than ' + GREGORIAN_CHANGE_MIN_YEAR);
 
       this.firstGregorianDay = Number.MIN_SAFE_INTEGER;
       this.gcYear = DISTANT_YEAR_PAST;
     }
     else if (gcYear > GREGORIAN_CHANGE_MAX_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear < DISTANT_YEAR_FUTURE)
-        throw('KsCalendar: Gregorian change year cannot be greater than ' + GREGORIAN_CHANGE_MAX_YEAR);
+        throw new Error('KsCalendar: Gregorian change year cannot be greater than ' + GREGORIAN_CHANGE_MAX_YEAR);
 
       this.firstGregorianDay = Number.MAX_SAFE_INTEGER;
       this.gcYear = DISTANT_YEAR_FUTURE;
     }
     else if (!isValidDateGregorian(gcYear, gcMonth, gcDate))
-      throw('KsCalendar: Invalid Gregorian date: ' + getISOFormatDate(gcYear, gcMonth, gcDate));
+      throw new Error('KsCalendar: Invalid Gregorian date: ' + getISOFormatDate(gcYear, gcMonth, gcDate));
 
     this.gcYear  = gcYear;
     this.gcMonth = gcMonth;
@@ -576,17 +576,17 @@ export class KsCalendar {
     }
   }
 
-  public getGregorianChange(): YMDDate {
+  getGregorianChange(): YMDDate {
     return {y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false};
   }
 
-  public isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
+  isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
     return (year < this.gcYear || (year === this.gcYear && (month < this.gcMonth || month === this.gcMonth && day < this.gcDate)));
   }
 
-  public getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
+  getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
     while (month <  1) { month += 12; --year; }
@@ -607,21 +607,21 @@ export class KsCalendar {
       return getDayNumberGregorian(year, month, day);
   }
 
-  public getDateFromDayNumber(dayNum: number): YMDDate {
+  getDateFromDayNumber(dayNum: number): YMDDate {
     if (dayNum >= this.firstGregorianDay)
       return getDateFromDayNumberGregorian(dayNum);
     else
       return getDateFromDayNumberJulian(dayNum);
   }
 
-  public getFirstDateInMonth(year: number, month: number): number {
+  getFirstDateInMonth(year: number, month: number): number {
     if (year === this.gcYear && month === this.gcMonth)
       return this.firstDateInGCChangeMonth;
     else
       return 1;
   }
 
-  public getLastDateInMonth(year: number, month: number): number {
+  getLastDateInMonth(year: number, month: number): number {
     if (month === 0) {
       month = 12;
       --year;
@@ -643,7 +643,7 @@ export class KsCalendar {
       return 28;
   }
 
-  public getDaysInMonth(year: number, month: number): number {
+  getDaysInMonth(year: number, month: number): number {
     if (month === 0) {
       month = 12;
       --year;
@@ -665,11 +665,11 @@ export class KsCalendar {
       return this.getDayNumber(year, 3, 1) - this.getDayNumber(year, 2, 1);
   }
 
-  public getDaysInYear(year: number): number {
+  getDaysInYear(year: number): number {
     return this.getDayNumber(year + 1, 1, 1) - this.getDayNumber(year, 1, 1);
   }
 
-  public getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
+  getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
     if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
       return getDayOfWeek(<number> yearOrDateOrDayNum);
     else
@@ -689,7 +689,7 @@ export class KsCalendar {
    * @return {number} 0 if the described day does not exist (e.g. there is no fifth Monday in the given month) or
    *                  the date of the specified day.
    */
-  public getDateOfNthWeekdayOfMonth(year: number, month: number, dayOfTheWeek: number, index: number): number {
+  getDateOfNthWeekdayOfMonth(year: number, month: number, dayOfTheWeek: number, index: number): number {
     const last: boolean = (index >= LAST);
     const day = 1;
     let dayNum: number = this.getDayNumber(year, month, day);
@@ -719,14 +719,14 @@ export class KsCalendar {
       return 0;
   }
 
-  public getDayOfWeekInMonthCount(year: number, month: number, dayOfTheWeek: number): number {
+  getDayOfWeekInMonthCount(year: number, month: number, dayOfTheWeek: number): number {
     const firstDay = this.getDayNumber(year, month, this.getDateOfNthWeekdayOfMonth(year, month, dayOfTheWeek, 1));
     const nextMonth = this.getDayNumber(year, month + 1, 1);
 
     return div_tt0(nextMonth - firstDay - 1, 7) + 1;
   }
 
-  public getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number {
+  getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number {
     const dayNum = this.getDayNumber(year, month, minDate);
     const dayOfWeek = getDayOfWeek(dayNum);
     const delta = mod(dayOfTheWeek - dayOfWeek, 7);
@@ -749,7 +749,7 @@ export class KsCalendar {
     return minDate;
   }
 
-  public getDayOnOrBefore(year: number, month: number, dayOfTheWeek: number, maxDate: number): number {
+  getDayOnOrBefore(year: number, month: number, dayOfTheWeek: number, maxDate: number): number {
     const dayNum = this.getDayNumber(year, month, maxDate);
     const dayOfWeek = getDayOfWeek(dayNum);
     const delta = mod(dayOfWeek - dayOfTheWeek, 7);
@@ -772,11 +772,11 @@ export class KsCalendar {
     return maxDate;
   }
 
-  public addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: number): YMDDate {
+  addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: number): YMDDate {
     return this.getDateFromDayNumber(this.getDayNumber(yearOrDate, month, day) + deltaDays);
   }
 
-  public getCalendarMonth(year: number, month: number, startingDayOfWeek: number): YMDDate[] {
+  getCalendarMonth(year: number, month: number, startingDayOfWeek: number): YMDDate[] {
     const dates: YMDDate[] = [];
     let dateOffset;
     let dayNum = this.getDayNumber(year, month, this.getFirstDateInMonth(year, month));
@@ -806,14 +806,14 @@ export class KsCalendar {
     return dates;
   }
 
-  public isValidDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
+  isValidDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
     const ymd = this.getDateFromDayNumber(this.getDayNumber(year, month, day));
 
     return (year === ymd.y && month === ymd.m && day === ymd.d);
   }
 
-  public normalizeDate(yearOrDate: YearOrDate, month?: number, day?: number): YMDDate {
+  normalizeDate(yearOrDate: YearOrDate, month?: number, day?: number): YMDDate {
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
     if (month < 1) {
@@ -845,7 +845,7 @@ export class KsCalendar {
     return {y: year, m: month, d: day};
   }
 
-  public getMissingDateRange(year: number, month: number): number[] | null {
+  getMissingDateRange(year: number, month: number): number[] | null {
     if (year === this.lastJulianYear && month === this.lastJulianMonth) {
       const lastDate = getLastDateInMonthJulian(year, month);
 

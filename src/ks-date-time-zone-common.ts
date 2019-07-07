@@ -17,8 +17,8 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './ks-calendar';
 import { div_rd, mod } from 'ks-math';
+import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './ks-calendar';
 
 export interface DateAndTime extends YMDDate {
   hrs: number;
@@ -35,7 +35,6 @@ export const HOUR_MSEC   =  3600000;
 export const DAY_MSEC    = 86400000;
 
 export const DAY_MINUTES = 1440;
-
 
 export function millisFromDateTime_SGC(year: number, month: number, day: number, hour: number, minute: number, second?: number, millis?: number): number {
   millis = millis || 0;

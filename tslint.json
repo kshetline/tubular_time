@@ -11,12 +11,16 @@
       "spaces"
     ],
     "interface-name": false,
+    "max-classes-per-file": false,
     "max-line-length": [
       true,
       200
     ],
+    "member-access": [true, "no-public"],
+    "member-ordering": false,
     "no-angle-bracket-type-assertion": false,
     "no-bitwise": false,
+    "no-conditional-assignment": false,
     "no-console": [
       true,
       "time",
@@ -31,11 +35,21 @@
       "check-whitespace"
     ],
     "one-variable-per-declaration": false,
+    "only-arrow-functions": false,
     "prefer-const": true,
     "quotemark": [
       true,
       "single"
-    ]
+    ],
+    "trailing-comma": [true, {"multiline": "ignore", "singleline": "never"}],
+    "variable-name": {
+      "options": [
+        "allow-leading-underscore",
+        "allow-snake-case",
+        "ban-keywords",
+        "check-format"
+      ]
+    }
   },
   "rulesDirectory": []
 }

@@ -1,6 +1,6 @@
 {
   "name": "ks-date-time-zone",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
   "main": "dist/index.js",
   "typings": "dist/index",
@@ -25,21 +25,21 @@
   "license": "MIT",
   "dependencies": {
     "ks-math": "^1.1.6",
-    "ks-util": "^1.5.0",
+    "ks-util": "^1.6.0",
     "lodash": "^4.17.11"
   },
   "devDependencies": {
     "@types/jasmine": "^2.8.16",
-    "@types/lodash": "^4.14.134",
+    "@types/lodash": "^4.14.135",
     "jasmine-core": "^2.99.1",
     "jasmine-spec-reporter": "^4.2.1",
     "karma": "^4.1.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-jasmine": "^1.1.2",
     "karma-jasmine-html-reporter": "^0.2.2",
-    "karma-typescript": "^4.1.0",
-    "karma-typescript-es6-transform": "^4.1.0",
-    "tslint": "^5.17.0",
+    "karma-typescript": "^4.1.1",
+    "karma-typescript-es6-transform": "^4.1.1",
+    "tslint": "^5.18.0",
     "typescript": "^2.9.2"
   },
   "repository": "github:kshetline/ks-date-time-zone"
