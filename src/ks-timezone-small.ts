@@ -2,7 +2,7 @@ import { KsTimeZone } from './ks-timezone';
 
 // tslint:disable
 // noinspection SpellCheckingInspection
-export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2019b, years 2014-2024
+export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2019c, years 2014-2024
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;',
   'Africa/Addis_Ababa': '+0300 +0300 0;30/0/EAT;',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;',
@@ -153,11 +153,11 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'NZ-CHAT': '+1245 +1245 60;cJ/0 dJ/10;10101010101010101010;1MUe0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0;2008 4 1 1 2:45 1 0,2007 9 0 1 2:45 1 60',
   'Pacific/Apia': '-1100 +1300 60;-b0/0 e0/10 d0/0;1212121212121212121212;1Gfn0 5uP0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0;2012 4 1 1 4:0 0 0,2012 9 0 1 3:0 0 60',
   'Pacific/Bougainville': '+1000 +1100 0;a0/0 b0/0;1;1NwE0',
-  'Pacific/Fiji': '+1200 +1200 60;c0/0 d0/10;10101010101010101010;1Nae0 uM0 1SM0 uM0 1VA0 s00 1VA0 s00 1VA0 s00 1VA0 uM0 1SM0 uM0 1VA0 s00 1VA0 s00 1VA0 s00;2015 1 13 1 3:0 0 0,2014 11 1 1 2:0 0 60',
+  'Pacific/Fiji': '+1200 +1200 60;c0/0 d0/10;10101010101010101010;1Nae0 uM0 1SM0 uM0 1VA0 s00 1VA0 s00 1VA0 s00 20o0 pc0 20o0 s00 20o0 pc0 20o0 pc0 20o0 pc0;2015 1 12 1 3:0 0 0,2019 11 8 1 2:0 0 60',
   'Pacific/Guam': '+1000 +1000 0;a0/0/ChST;',
   'Pacific/Marquesas': '-0930 -0930 0;-9u/0;',
   'Pacific/Midway': '-1100 -1100 0;-b0/0/SST;',
-  'Pacific/Norfolk': '+1130 +1100 0;bu/0 b0/0;1;1PoCu',
+  'Pacific/Norfolk': '+1130 +1100 60;bu/0 b0/0 c0/10;12121212121;1PoCu 9Jcu 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1fA0;2008 4 1 1 2:0 1 0,2008 10 1 1 2:0 1 60',
   'Pacific/Tongatapu': '+1300 +1300 0;d0/0 e0/10;10;1S4d0 s00',
   'SystemV/AST4ADT': '-0400 -0400 60;-40/0/AST -30/10/ADT;1010101010101010101010;1LSS0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0;1976 10 0 1 2:0 0 0,1976 4 0 1 2:0 0 60',
   'SystemV/CST6CDT': '-0600 -0600 60;-60/0/CST -50/10/CDT;1010101010101010101010;1LSU0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0;1976 10 0 1 2:0 0 0,1976 4 0 1 2:0 0 60',
