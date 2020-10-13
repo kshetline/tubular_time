@@ -31,6 +31,7 @@
   "devDependencies": {
     "@types/jasmine": "^2.8.17",
     "@types/lodash": "^4.14.162",
+    "@types/node": "^14.11.8",
     "jasmine-core": "^2.99.1",
     "jasmine-spec-reporter": "^4.2.1",
     "karma": "^5.2.3",
@@ -40,7 +41,7 @@
     "karma-typescript": "^5.2.0",
     "karma-typescript-es6-transform": "^4.1.1",
     "tslint": "^5.20.1",
-    "typescript": "^2.9.2"
+    "typescript": "^3.9.7"
   },
   "repository": "github:kshetline/ks-date-time-zone"
 }
