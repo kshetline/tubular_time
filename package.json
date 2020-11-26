@@ -1,6 +1,6 @@
 {
   "name": "ks-date-time-zone",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
   "main": "dist/index.js",
   "typings": "dist/index",
@@ -30,8 +30,8 @@
   },
   "devDependencies": {
     "@types/jasmine": "^2.8.17",
-    "@types/lodash": "^4.14.162",
-    "@types/node": "^14.11.8",
+    "@types/lodash": "^4.14.165",
+    "@types/node": "^14.14.10",
     "jasmine-core": "^2.99.1",
     "jasmine-spec-reporter": "^4.2.1",
     "karma": "^5.2.3",

@@ -3,7 +3,7 @@ import { KsTimeZone } from './ks-timezone';
 // -5qy 2015,2025 -z .../tzdir/usr/share/zoneinfo
 // tslint:disable
 // noinspection SpellCheckingInspection
-export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2020b, years 2015-2025
+export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2020d, years 2015-2025
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;',
   'Africa/Addis_Ababa': '+0300 +0300 0;30/0/EAT;',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;',
@@ -77,7 +77,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'Asia/Dili': '+0900 +0900 0;90/0;',
   'Asia/Dubai': '+0400 +0400 0;40/0;',
   'Asia/Famagusta': '+0200 +0200 60;20/0/EET 30/10/EEST 30/0;101201010101010101010;19LW0 FJf0 11A0 15U0 2Ks0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60',
-  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1O8K0 1nz0 1220 1qL0 WN0 1qL0 WN0 1qL0 11c0 1oo0 11c0 1rc0 Wo0 1rc0 Wo0 1rc0 11c0 1oo0 11c0 1oo0 11c0 1oo0;2016 10 0 7 1:0 0 0,2019 3 0 6 0:0 0 60',
+  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1O8K0 1nA0 1210 1qL0 WN0 1qL0 WN0 1qL0 11c0 1on0 11B0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00;2020 10 24 7 1:0 0 0,2020 3 24 7 0:0 0 60',
   'Asia/Hong_Kong': '+0800 +0800 0;80/0/HKT;',
   'Asia/Hovd': '+0700 +0700 0;70/0 80/10;1010;1O8H0 1cJ0 1cP0 1cJ0',
   'Asia/Istanbul': '+0200 +0300 0;20/0/EET 30/10/EEST 30/0;1012;1LI10 3SM0 U00 15w0',
@@ -142,7 +142,7 @@ export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz databa
   'MET': '+0100 +0100 60;10/0/MET 20/10/MEST;1010101010101010101010;1O9d0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00;1996 10 0 1 2:0 1 0,1981 3 0 1 2:0 1 60',
   'NZ-CHAT': '+1245 +1245 60;cJ/0 dJ/10;10101010101010101010;1PlO0 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0;2008 4 1 1 2:45 1 0,2007 9 0 1 2:45 1 60',
   'Pacific/Apia': '-1100 +1300 60;-b0/0 e0/10 d0/0;1212121212121212121212;1Gfn0 7Ur0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0;2012 4 1 1 4:0 0 0,2012 9 0 1 3:0 0 60',
-  'Pacific/Fiji': '+1200 +1200 60;c0/0 d0/10;10101010101010101010;1PzO0 uM0 1VA0 s00 1VA0 s00 1VA0 s00 20o0 pc0 20o0 s00 20o0 pc0 20o0 pc0 20o0 pc0 20o0 pc0;2015 1 12 1 3:0 0 0,2019 11 8 1 2:0 0 60',
+  'Pacific/Fiji': '+1200 +1200 60;c0/0 d0/10;10101010101010101010;1PzO0 uM0 1VA0 s00 1VA0 s00 1VA0 s00 20o0 pc0 2hc0 bc0 20o0 pc0 20o0 pc0 20o0 pc0 20o0 pc0;2015 1 12 1 3:0 0 0,2021 11 8 1 2:0 0 60',
   'Pacific/Guam': '+1000 +1000 0;a0/0/ChST;',
   'Pacific/Marquesas': '-0930 -0930 0;-9u/0;',
   'Pacific/Midway': '-1100 -1100 0;-b0/0/SST;',
