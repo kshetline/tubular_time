@@ -9,6 +9,7 @@ export {
 } from './ks-calendar';
 export { KsDateTime, DateTimeField, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './ks-date-time';
 export {
-  DateAndTime, MINUTE_MSEC, dateAndTimeFromMillis_SGC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, millisFromDateTime_SGC
+  DateAndTime, MINUTE_MSEC, dateAndTimeFromMillis_SGC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, millisFromDateTime_SGC,
+  parseISODateTime, parseTimeOffset
 } from './ks-date-time-zone-common';
 export { KsTimeZone, Transition, ZoneInfo, RegionAndSubzones } from './ks-timezone';

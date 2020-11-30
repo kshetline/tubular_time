@@ -1,12 +1,14 @@
 {
   "name": "ks-date-time-zone",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
   "main": "dist/index.js",
   "typings": "dist/index",
   "scripts": {
     "build": "tsc",
-    "test": "karma start",
+    "lint": "eslint \"**/*.ts\"",
+    "test": "nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
+    "test-dev": "mocha --require ts-node/register -w --watch-extensions ts src/**/*.spec.ts",
     "prepublishOnly": "tsc",
     "watch:build": "tsc --watch",
     "document": "typedoc --name \"ks-date-time-zone\" --module commonjs --exclude \"**/*+(e2e|spec|index).ts\" --excludePrivate --excludeProtected --readme README.md --target ES5 --out docs src"
@@ -29,19 +31,26 @@
     "lodash": "^4.17.20"
   },
   "devDependencies": {
+    "@types/chai": "^4.2.14",
     "@types/jasmine": "^2.8.17",
     "@types/lodash": "^4.14.165",
+    "@types/mocha": "^8.0.4",
     "@types/node": "^14.14.10",
+    "@typescript-eslint/eslint-plugin": "^4.8.2",
+    "@typescript-eslint/parser": "^4.8.2",
+    "chai": "^4.2.0",
+    "eslint": "^7.14.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-chai-friendly": "^0.6.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
     "jasmine-core": "^2.99.1",
     "jasmine-spec-reporter": "^4.2.1",
-    "karma": "^5.2.3",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-jasmine": "^1.1.2",
-    "karma-jasmine-html-reporter": "^0.2.2",
-    "karma-typescript": "^5.2.0",
-    "karma-typescript-es6-transform": "^4.1.1",
-    "tslint": "^5.20.1",
-    "typescript": "^3.9.7"
+    "mocha": "^8.2.1",
+    "nyc": "^15.1.0",
+    "ts-node-dev": "^1.0.0",
+    "typescript": "^4.1.2"
   },
   "repository": "github:kshetline/ks-date-time-zone"
 }

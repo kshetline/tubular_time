@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -48,7 +48,7 @@ export function millisFromDateTime_SGC(year: number, month: number, day: number,
 }
 
 export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
-  const wallTime = <DateAndTime> getDateFromDayNumber_SGC(div_rd(ticks, 86400000));
+  const wallTime = getDateFromDayNumber_SGC(div_rd(ticks, 86400000)) as DateAndTime;
 
   wallTime.millis = mod(ticks, 1000);
   ticks = div_rd(ticks, 1000);
@@ -62,4 +62,52 @@ export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
   wallTime.occurrence = 1;
 
   return wallTime;
+}
+
+export function parseISODateTime(date: string): DateAndTime {
+  date = date.trim();
+  let sign = 1;
+
+  if (date.startsWith('-')) {
+    sign = -1;
+    date = date.substring(1).trim();
+  }
+  else if (date.startsWith('+'))
+    date = date.substring(1).trim();
+
+  const match =
+    /^(\d+)-(\d+)-(\d+)(?:T|\s+)(\d+):(\d+)(?::(\d+)(?:\.(\d+))?)?(?:\s*([-+](\d\d\d\d|\d\d:\d\d)))?$/.exec(date);
+
+  if (!match)
+    throw new Error('Invalid ISO date');
+
+  const time = { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]),
+                 hrs: Number(match[4]), min: Number(match[5]),
+                 sec: Number(match[6] ?? 0) + Number(match[7] ?? 0) / 1000 } as DateAndTime;
+
+  if (match[8])
+    time.utcOffset = parseTimeOffset(match[8]);
+
+  return time;
+}
+
+export function parseTimeOffset(offset: string): number {
+  let sign = 1;
+
+  if (offset.startsWith('-')) {
+    sign = -1;
+    offset = offset.substr(1);
+  }
+  else if (offset.startsWith('+'))
+    offset = offset.substr(1);
+
+  const parts = offset.includes(':') ?
+    offset.split(':') :
+    offset.match(/../g);
+  let offsetSeconds = 60 * (60 * Number(parts[0]) + Number(parts[1] ?? 0));
+
+  if (parts[2])
+    offsetSeconds += Number(parts[2]);
+
+  return sign * offsetSeconds;
 }

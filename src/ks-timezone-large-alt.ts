@@ -1,7 +1,7 @@
 import { KsTimeZone } from './ks-timezone';
 
+/* eslint-disable quote-props */
 // -5fmqry 1800,2087 -z .../tzdir/usr/share/zoneinfo
-// tslint:disable
 // noinspection SpellCheckingInspection
 export const initTimeZoneLargeAlt = () => KsTimeZone.defineTimeZones({ // tz database version: 2020d, years 1800-2087, rounded to nearest minute, filtered, calendar rollbacks eliminated
   'Africa/Abidjan': '-0016 +0000 0;-g/0/LMT 0/0/GMT;1;-2ldXI',

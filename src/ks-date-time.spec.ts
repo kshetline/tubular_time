@@ -1,11 +1,12 @@
+import { expect } from 'chai';
 import { SUNDAY } from './ks-calendar';
 import { DateTimeField, KsDateTime } from './ks-date-time';
 import { KsTimeZone } from './ks-timezone';
 import { initTimeZoneLarge } from './ks-timezone-large';
 import { initTimeZoneLargeAlt } from './ks-timezone-large-alt';
 import { initTimeZoneSmall } from './ks-timezone-small';
+import { parseISODateTime } from './ks-date-time-zone-common';
 
-// tslint:disable:max-line-length
 describe('KsDateTime', () => {
   initTimeZoneSmall();
   initTimeZoneLarge();
@@ -19,109 +20,118 @@ describe('KsDateTime', () => {
 
   it('should skip an hour starting Daylight Saving Time.', () => {
     const zone = KsTimeZone.getTimeZone('America/New_York');
-    const time = new KsDateTime({y: 2018, m: 3, d: 11, hrs: 1, min: 59, sec: 59}, zone);
+    const time = new KsDateTime({ y: 2018, m: 3, d: 11, hrs: 1, min: 59, sec: 59 }, zone);
 
-    expect(time.wallTime.utcOffset).toBe(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).toBe('EST');
+    expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
+    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
     time.add(DateTimeField.SECONDS, 1);
-    expect(time.wallTime.utcOffset).toBe(-4 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).toBe('EDT');
-    expect(time.wallTime.hrs).toBe(3);
+    expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
+    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
+    expect(time.wallTime.hrs).to.equal(3);
     time.add(DateTimeField.SECONDS, -1);
-    expect(time.wallTime.hrs).toBe(1);
-    expect(time.getSecondsInDay()).toBe(82800);
-    expect(time.getMinutesInDay()).toBe(1380);
+    expect(time.wallTime.hrs).to.equal(1);
+    expect(time.getSecondsInDay()).to.equal(82800);
+    expect(time.getMinutesInDay()).to.equal(1380);
   });
 
   it('should turn back an hour ending Daylight Saving Time.', () => {
     const zone = KsTimeZone.getTimeZone('America/New_York');
-    const time = new KsDateTime({y: 2018, m: 11, d: 4, hrs: 1, min: 59, sec: 59, occurrence: 1}, zone);
+    const time = new KsDateTime({ y: 2018, m: 11, d: 4, hrs: 1, min: 59, sec: 59, occurrence: 1 }, zone);
 
-    expect(time.wallTime.utcOffset).toBe(-4 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).toBe('EDT');
+    expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
+    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
     time.add(DateTimeField.SECONDS, 1);
-    expect(time.wallTime.utcOffset).toBe(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).toBe('EST');
-    expect(time.wallTime.hrs).toBe(1);
-    expect(time.wallTime.occurrence).toBe(2);
+    expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
+    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(time.wallTime.hrs).to.equal(1);
+    expect(time.wallTime.occurrence).to.equal(2);
     time.add(DateTimeField.SECONDS, -1);
-    expect(time.wallTime.hrs).toBe(1);
-    expect(time.wallTime.occurrence).toBe(1);
-    expect(time.getSecondsInDay()).toBe(90000);
-    expect(time.getMinutesInDay()).toBe(1500);
+    expect(time.wallTime.hrs).to.equal(1);
+    expect(time.wallTime.occurrence).to.equal(1);
+    expect(time.getSecondsInDay()).to.equal(90000);
+    expect(time.getMinutesInDay()).to.equal(1500);
   });
 
   it('should end Daylight Saving Time correctly on a future computed date.', () => {
     const zone = KsTimeZone.getTimeZone('America/New_York');
-    const time = new KsDateTime({y: 2100, m: 11, d: 7, hrs: 1, min: 59, sec: 59, occurrence: 1}, zone);
+    const time = new KsDateTime({ y: 2100, m: 11, d: 7, hrs: 1, min: 59, sec: 59, occurrence: 1 }, zone);
 
-    expect(time.wallTime.utcOffset).toBe(-4 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).toBe('EDT');
+    expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
+    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
     time.add(DateTimeField.SECONDS, 1);
-    expect(time.wallTime.utcOffset).toBe(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).toBe('EST');
-    expect(time.wallTime.hrs).toBe(1);
-    expect(time.wallTime.occurrence).toBe(2);
+    expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
+    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(time.wallTime.hrs).to.equal(1);
+    expect(time.wallTime.occurrence).to.equal(2);
     time.add(DateTimeField.SECONDS, -1);
-    expect(time.wallTime.hrs).toBe(1);
-    expect(time.wallTime.occurrence).toBe(1);
+    expect(time.wallTime.hrs).to.equal(1);
+    expect(time.wallTime.occurrence).to.equal(1);
   });
 
   it('should handle missing day in Pacific/Apia, December 2011.', () => {
     const zone = KsTimeZone.getTimeZone('Pacific/Apia');
-    const time = new KsDateTime({y: 2011, m: 12, d: 1, hrs: 0, min: 0, sec: 0}, zone);
+    const time = new KsDateTime({ y: 2011, m: 12, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
-    expect(time.getSecondsInDay(2011, 12, 30)).toBe(0);
+    expect(time.getSecondsInDay(2011, 12, 30)).to.equal(0);
     const calendar = time.getCalendarMonth(2011, 12, SUNDAY);
-    expect(calendar[32].d).toBe(29);
-    expect(calendar[33].d).toBe(-30);
-    expect(calendar[34].d).toBe(31);
+    expect(calendar[32].d).to.equal(29);
+    expect(calendar[33].d).to.equal(-30);
+    expect(calendar[34].d).to.equal(31);
   });
 
   it('should handle 48-hour day in America/Juneau, October 1867.', () => {
     const zone = KsTimeZone.getTimeZone('America/Juneau');
-    const time = new KsDateTime({y: 1867, m: 10, d: 18, hrs: 0, min: 0, sec: 0, occurrence: 1}, zone);
+    const time = new KsDateTime({ y: 1867, m: 10, d: 18, hrs: 0, min: 0, sec: 0, occurrence: 1 }, zone);
 
-    expect(time.getSecondsInDay()).toBe(172800);
-    expect(time.getMinutesInDay()).toBe(2880);
-    expect(time.wallTime.utcOffset).toBe(54120);
+    expect(time.getSecondsInDay()).to.equal(172800);
+    expect(time.getMinutesInDay()).to.equal(2880);
+    expect(time.wallTime.utcOffset).to.equal(54120);
     time.add(DateTimeField.HOURS, 24);
-    expect(time.wallTime.utcOffset).toBe(-32280);
-    expect(time.wallTime.d).toBe(18);
-    expect(time.wallTime.hrs).toBe(0);
-    expect(time.wallTime.occurrence).toBe(2);
+    expect(time.wallTime.utcOffset).to.equal(-32280);
+    expect(time.wallTime.d).to.equal(18);
+    expect(time.wallTime.hrs).to.equal(0);
+    expect(time.wallTime.occurrence).to.equal(2);
   });
 
   it('should handle negative Daylight Saving Time.', () => {
     const zone = KsTimeZone.getTimeZone('Europe/Dublin');
-    const time = new KsDateTime({y: 2017, m: 12, d: 1, hrs: 0, min: 0, sec: 0}, zone);
+    const time = new KsDateTime({ y: 2017, m: 12, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
-    expect(time.wallTime.dstOffset).toBe(-3600);
+    expect(time.wallTime.dstOffset).to.equal(-3600);
     time.add(DateTimeField.MONTHS, 6);
-    expect(time.wallTime.dstOffset).toBe(0);
+    expect(time.wallTime.dstOffset).to.equal(0);
   });
 
   it('should handle non-whole-minute UTC offsets.', () => {
     const zone = KsTimeZone.getTimeZone('Pacific/Apia');
-    const time = new KsDateTime({y: 1892, m: 1, d: 1, hrs: 0, min: 0, sec: 0}, zone);
+    const time = new KsDateTime({ y: 1892, m: 1, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
-    expect(time.wallTime.utcOffset).toBe(45184);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).toBe('+12:33:04');
+    expect(time.wallTime.utcOffset).to.equal(45184);
+    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('+12:33:04');
     time.add(DateTimeField.YEARS, 1);
-    expect(time.wallTime.utcOffset).toBe(-41216);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).toBe('-11:26:56');
+    expect(time.wallTime.utcOffset).to.equal(-41216);
+    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('-11:26:56');
     time.add(DateTimeField.YEARS, 20);
-    expect(time.wallTime.utcOffset).toBe(-41400);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).toBe('-11:30');
+    expect(time.wallTime.utcOffset).to.equal(-41400);
+    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('-11:30');
 
-    const time2 = new KsDateTime({y: 1900, m: 1, d: 1, hrs: 0, min: 0, sec: 0}, KsTimeZone.UT_ZONE);
+    const time2 = new KsDateTime({ y: 1900, m: 1, d: 1, hrs: 0, min: 0, sec: 0 }, KsTimeZone.UT_ZONE);
     const time3 = new KsDateTime(time2.utcTimeMillis, zone);
 
-    expect(time3.wallTime.y).toBe(1899);
-    expect(time3.wallTime.m).toBe(12);
-    expect(time3.wallTime.d).toBe(31);
-    expect(time3.wallTime.hrs).toBe(12);
-    expect(time3.wallTime.min).toBe(33);
-    expect(time3.wallTime.sec).toBe(4);
+    expect(time3.wallTime.y).to.equal(1899);
+    expect(time3.wallTime.m).to.equal(12);
+    expect(time3.wallTime.d).to.equal(31);
+    expect(time3.wallTime.hrs).to.equal(12);
+    expect(time3.wallTime.min).to.equal(33);
+    expect(time3.wallTime.sec).to.equal(4);
+  });
+
+  it('should parse ISO date/time strings.', () => {
+    expect(parseISODateTime('1962-10-13T03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
+    expect(parseISODateTime('+1962-10-13T03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
+    expect(parseISODateTime('-1962-10-13T03:09')).to.eql({ y: -1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
+    expect(parseISODateTime('1962-10-13T03:09:01')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 1 });
+    expect(parseISODateTime('1962-10-13T03:09:01-0500')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 1, utcOffset: -18000 });
+    expect(parseISODateTime('2020-11-29 23:24:25 +03:00')).to.eql({ y: 2020, m: 11, d: 29, hrs: 23, min: 24, sec: 25, utcOffset: 10800 });
   });
 });

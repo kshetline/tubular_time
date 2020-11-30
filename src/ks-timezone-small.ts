@@ -1,7 +1,7 @@
 import { KsTimeZone } from './ks-timezone';
 
+/* eslint-disable quote-props */
 // -5qy 2015,2025 -z .../tzdir/usr/share/zoneinfo
-// tslint:disable
 // noinspection SpellCheckingInspection
 export const initTimeZoneSmall = () => KsTimeZone.defineTimeZones({ // tz database version: 2020d, years 2015-2025
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;',

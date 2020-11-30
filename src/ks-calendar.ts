@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017-2019 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -82,13 +82,13 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   let year: number;
 
   if (isNumber(yearOrDate))
-    year = <number> yearOrDate;
+    year = yearOrDate as number;
   else if (isArray(yearOrDate) && (<number[]> yearOrDate).length >= 3 && isNumber((<number[]> yearOrDate)[0]))
-    return <number[]> yearOrDate;
+    return yearOrDate as number[];
   else if (isObject(yearOrDate)) {
-    year  = (<YMDDate> yearOrDate).y;
-    month = (<YMDDate> yearOrDate).m;
-    day   = (<YMDDate> yearOrDate).d;
+    year  = (yearOrDate as YMDDate).y;
+    month = (yearOrDate as YMDDate).m;
+    day   = (yearOrDate as YMDDate).d;
   }
 
   if (isUndefined(year) || isUndefined(month) || isUndefined(day))
@@ -169,6 +169,7 @@ export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?:
  * Gregorian change date is not fixed.
  * @returns First date of calender month.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getFirstDateInMonth_SGC(year: number, month: number): number {
   return 1;
 }
@@ -274,7 +275,7 @@ export function getDayOfWeek(dayNum: number): number {
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
   if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
-    return mod(<number> yearOrDateOrDayNum + 4, 7);
+    return mod((yearOrDateOrDayNum as number) + 4, 7);
   else
     return getDayOfWeek(getDayNumber_SGC(yearOrDateOrDayNum, month, day));
 }
@@ -403,7 +404,7 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   for (month = 1; day > (lastDay = getLastDateInMonthGregorian(year, month)); ++month)
     day -= lastDay;
 
-  return {y: year, m: month, d: day, n: dayNum, j: false};
+  return { y: year, m: month, d: day, n: dayNum, j: false };
 }
 
 export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
@@ -425,7 +426,7 @@ export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
   for (month = 1; day > (lastDay = getLastDateInMonthJulian(year, month)); ++month)
     day -= lastDay;
 
-  return {y: year, m: month, d: day, n: dayNum, j: true};
+  return { y: year, m: month, d: day, n: dayNum, j: true };
 }
 
 export function isValidDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -472,7 +473,7 @@ export function parseISODate(date: string): YMDDate {
   if (!match)
     throw new Error('Invalid ISO date');
 
-  return {y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3])};
+  return { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) };
 }
 
 export class KsCalendar {
@@ -520,20 +521,20 @@ export class KsCalendar {
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
-    if ('g' === gcYearOrDate || 'G' === gcYearOrDate) {
+    if (gcYearOrDate === 'g' || gcYearOrDate === 'G') {
       this.setPureGregorian(true);
 
       return;
     }
-    else if ('j' === gcYearOrDate || 'J' === gcYearOrDate) {
+    else if (gcYearOrDate === 'j' || gcYearOrDate === 'J') {
       this.setPureJulian(true);
 
       return;
     }
     else if (isString(gcYearOrDate))
-      gcYearOrDate = parseISODate(<string> gcYearOrDate);
+      gcYearOrDate = parseISODate(gcYearOrDate as string);
 
-    let gcYear; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(<YearOrDate> gcYearOrDate, gcMonth, gcDate);
+    let gcYear; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(gcYearOrDate as YearOrDate, gcMonth, gcDate);
 
     if (gcYear < GREGORIAN_CHANGE_MIN_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear > DISTANT_YEAR_PAST)
@@ -577,7 +578,7 @@ export class KsCalendar {
   }
 
   getGregorianChange(): YMDDate {
-    return {y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false};
+    return { y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false };
   }
 
   isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -671,7 +672,7 @@ export class KsCalendar {
 
   getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
     if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
-      return getDayOfWeek(<number> yearOrDateOrDayNum);
+      return getDayOfWeek(yearOrDateOrDayNum as number);
     else
       return getDayOfWeek(this.getDayNumber(yearOrDateOrDayNum, month, day));
   }
@@ -842,7 +843,7 @@ export class KsCalendar {
       }
     }
 
-    return {y: year, m: month, d: day};
+    return { y: year, m: month, d: day };
   }
 
   getMissingDateRange(year: number, month: number): number[] | null {

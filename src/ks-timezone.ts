@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017-2019 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -53,6 +53,7 @@ export interface ZoneInfo {
 const CLOCK_TYPE_WALL = 0;
 const CLOCK_TYPE_STD = 1;
 // noinspection JSUnusedLocalSymbols
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const CLOCK_TYPE_UTC = 2;
 
 const LAST_DST_YEAR = 2500;
@@ -112,7 +113,7 @@ let osDstOffset: number;
 
 // Create a transition table (if necessary) for the OS time zone so that it can be handled like other time zones.
 // It might also be discovered, of course, that the OS time zone is a simple fixed offset from UTC.
-(function(): void {
+(function (): void {
   const date = new Date(1901, 0, 1, 12, 0, 0, 0); // Sample around local noon so it's unlikely we'll sample right at a transition.
   let lastSampleTime = date.getTime();
   const now = Date.now();
@@ -121,7 +122,7 @@ let osDstOffset: number;
   const muchLater = now + MONTH_MSEC * 12 * 50;
   let lastOffset = -date.getTimezoneOffset() * 60;
 
-  osTransitions.push({transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: lastOffset, dstOffset: 0 });
+  osTransitions.push({ transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: lastOffset, dstOffset: 0 });
 
   while (date.getTime() < muchLater) {
     const sampleTime = lastSampleTime + MONTH_MSEC;
@@ -154,7 +155,7 @@ let osDstOffset: number;
           high = mid;
       }
 
-      osTransitions.push({transitionTime: high, utcOffset: currentOffset, dstOffset: 0 });
+      osTransitions.push({ transitionTime: high, utcOffset: currentOffset, dstOffset: 0 });
       lastOffset = currentOffset;
     }
 
@@ -193,9 +194,10 @@ let osDstOffset: number;
 export class KsTimeZone {
   private static encodedTimeZones: {[id: string]: string} = {};
 
-  static OS_ZONE = new KsTimeZone({zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
-                            dstOffset: osDstOffset, transitions: osTransitions});
-  static UT_ZONE = new KsTimeZone({zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
+  static OS_ZONE = new KsTimeZone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
+                            dstOffset: osDstOffset, transitions: osTransitions });
+
+  static UT_ZONE = new KsTimeZone({ zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
                             dstOffset: 0, transitions: null });
 
   private static zoneLookup: { [id: string]: KsTimeZone } = {};
@@ -289,7 +291,7 @@ export class KsTimeZone {
       const locales = zoneHash[region];
 
       locales.sort();
-      regionAndSubzones.push({region: region, subzones: locales});
+      regionAndSubzones.push({ region: region, subzones: locales });
     }
 
     return regionAndSubzones;
@@ -312,8 +314,8 @@ export class KsTimeZone {
     else  if (matches[0] === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
-      zone = new KsTimeZone({zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
-                             usesDst: false, dstOffset: 0, transitions: null});
+      zone = new KsTimeZone({ zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
+                             usesDst: false, dstOffset: 0, transitions: null });
     }
     else if (matches[0] === 'OS') {
       zone = this.OS_ZONE;
@@ -324,8 +326,8 @@ export class KsTimeZone {
       if (matches.length === 5 && matches[3] && matches[4])
         offset = (parseInt(matches[3], 10) * 60 + parseInt(matches[4], 10)) * 60 * (matches[2] === '-' ? -1 : 1);
 
-      zone = new KsTimeZone({zoneName: name, currentUtcOffset: offset,
-                            usesDst: false, dstOffset: 0, transitions: null});
+      zone = new KsTimeZone({ zoneName: name, currentUtcOffset: offset,
+                            usesDst: false, dstOffset: 0, transitions: null });
     }
     else if (this.encodedTimeZones[name]) {
       let encodedTimeZone = this.encodedTimeZones[name];
@@ -337,8 +339,8 @@ export class KsTimeZone {
     }
     else {
       // Create a timezone equivalent to the OS zone, except with the requested name and an attached error condition.
-      zone = new KsTimeZone({zoneName: name, currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
-                      dstOffset: osDstOffset, transitions: osTransitions});
+      zone = new KsTimeZone({ zoneName: name, currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
+                      dstOffset: osDstOffset, transitions: osTransitions });
       zone._error = 'Unrecognized time zone';
     }
 
@@ -358,9 +360,9 @@ export class KsTimeZone {
     else if (offset.startsWith('+'))
       offset = offset.substr(1);
 
-    if ('0' === offset)
+    if (offset === '0')
       return 0;
-    else if ('1' === offset)
+    else if (offset === '1')
       return 3600;
     else {
       let offsetSeconds = 60 * (60 * Number(offset.substr(0, 2)) + Number(offset.substr(2, 2)));
@@ -423,7 +425,7 @@ export class KsTimeZone {
     let lastStdName;
     let lastDstName;
 
-    transitions.push({transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: baseUtcOffset, dstOffset: 0});
+    transitions.push({ transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: baseUtcOffset, dstOffset: 0 });
 
     if (sections.length > 1) {
       const offsets = sections[1].split(' ');
@@ -455,7 +457,7 @@ export class KsTimeZone {
           const offsetIndex = this.fromBase60(offsetIndices.substr(i, 1));
           const ttime = lastTTime + round(this.fromBase60(transitionTimes[i]) * 60);
 
-          transitions.push({transitionTime: ttime * 1000, utcOffset: utcOffsets[offsetIndex], dstOffset: dstOffsets[offsetIndex], name: names[offsetIndex]});
+          transitions.push({ transitionTime: ttime * 1000, utcOffset: utcOffsets[offsetIndex], dstOffset: dstOffsets[offsetIndex], name: names[offsetIndex] });
           lastTTime = ttime;
 
           if (dstOffsets[offsetIndex] !== 0)
@@ -482,12 +484,12 @@ export class KsTimeZone {
             const secondTime = (dstTime > stdTime ? dstTime : stdTime);
 
             if (firstTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && year >= firstRule.startYear)
-              transitions.push({transitionTime: firstTime, utcOffset: currentUtcOffset + firstRule.save, dstOffset: firstRule.save,
-                name: firstRule.save ? lastDstName : lastStdName});
+              transitions.push({ transitionTime: firstTime, utcOffset: currentUtcOffset + firstRule.save, dstOffset: firstRule.save,
+                name: firstRule.save ? lastDstName : lastStdName });
 
             if (secondTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && year >= secondRule.startYear)
-              transitions.push({transitionTime: secondTime, utcOffset: currentUtcOffset + secondRule.save, dstOffset: secondRule.save,
-                name: secondRule.save ? lastDstName : lastStdName});
+              transitions.push({ transitionTime: secondTime, utcOffset: currentUtcOffset + secondRule.save, dstOffset: secondRule.save,
+                name: secondRule.save ? lastDstName : lastStdName });
           }
 
           // Make sure last transition isn't DST

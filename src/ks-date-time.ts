@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017-2019 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2020 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -59,11 +59,11 @@ export class KsDateTime extends KsCalendar {
       this._timeZone = timeZone;
 
     if (isObject(initialTime)) {
-      this.wallTime = clone(<DateAndTime> initialTime);
+      this.wallTime = clone(initialTime as DateAndTime);
       this.computeUtcTimeMillis();
     }
     else {
-      this._utcTimeMillis = (isNumber(initialTime) ? <number> initialTime : Date.now());
+      this._utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
       this.computeWallTime();
     }
   }
@@ -147,6 +147,7 @@ export class KsDateTime extends KsCalendar {
         break;
 
       case DateTimeField.MONTHS:
+        // eslint-disable-next-line no-case-declarations
         const m = this._wallTime.m;
         updateFromWall = true;
         this._wallTime.m = mod(m - 1 + amount, 12) + 1;
@@ -176,59 +177,59 @@ export class KsDateTime extends KsCalendar {
   }
 
   getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number {
-      let year: number;
+    let year: number;
 
-      if (isUndefined(yearOrDate)) {
-        [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
-      }
-      else
-        [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+    if (isUndefined(yearOrDate)) {
+      [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
+    }
+    else
+      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
-      let dayMillis = this.getDayNumber(year, month, day) * DAY_MSEC;
+    let dayMillis = this.getDayNumber(year, month, day) * DAY_MSEC;
 
-      dayMillis -= this.timeZone.getOffsetForWallTime(dayMillis) * 1000;
+    dayMillis -= this.timeZone.getOffsetForWallTime(dayMillis) * 1000;
 
-      // There are weird turning-back-the-clock situations where there are two midnights
-      // during a single day. Make sure we're getting the earlier midnight unless the
-      // earlier midnight doesn't match the day of the month requested.
-      const transition = this.timeZone.findTransitionByUtc(dayMillis);
+    // There are weird turning-back-the-clock situations where there are two midnights
+    // during a single day. Make sure we're getting the earlier midnight unless the
+    // earlier midnight doesn't match the day of the month requested.
+    const transition = this.timeZone.findTransitionByUtc(dayMillis);
 
-      if (transition !== null && transition.deltaOffset < 0 && dayMillis < transition.transitionTime - transition.deltaOffset * 1000) {
-        const earlier = dayMillis + transition.deltaOffset * 1000;
-        // The date doesn't have to be normalized when calling this function -- that is, we can
-        // ask for the start of January 32 to mean February 1. Now, however, we need a normalized
-        // date to select the correct midnight.
-        const normalized = this.normalizeDate(year, month, day);
+    if (transition !== null && transition.deltaOffset < 0 && dayMillis < transition.transitionTime - transition.deltaOffset * 1000) {
+      const earlier = dayMillis + transition.deltaOffset * 1000;
+      // The date doesn't have to be normalized when calling this function -- that is, we can
+      // ask for the start of January 32 to mean February 1. Now, however, we need a normalized
+      // date to select the correct midnight.
+      const normalized = this.normalizeDate(year, month, day);
 
-        if (this.getWallTimeForMillis(earlier).d === normalized.d)
-          dayMillis = earlier;
-      }
+      if (this.getWallTimeForMillis(earlier).d === normalized.d)
+        dayMillis = earlier;
+    }
 
-      return dayMillis;
+    return dayMillis;
   }
 
   getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
-      let year: number;
+    let year: number;
 
-      if (isUndefined(yearOrDate)) {
-        [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
-      }
-      else
-        [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+    if (isUndefined(yearOrDate)) {
+      [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
+    }
+    else
+      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
-      return (this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / 1000;
+    return (this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / 1000;
   }
 
   getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
-      let year: number;
+    let year: number;
 
-      if (isUndefined(yearOrDate)) {
-        [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
-      }
-      else
-        [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+    if (isUndefined(yearOrDate)) {
+      [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
+    }
+    else
+      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
-      return round((this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / MINUTE_MSEC);
+    return round((this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / MINUTE_MSEC);
   }
 
   getCalendarMonth(yearOrStartingDay: number, month?: number, startingDayOfWeek?: number): YMDDate[] {
@@ -312,7 +313,7 @@ export class KsDateTime extends KsCalendar {
   getWallTimeForMillis(millis: number): DateAndTime {
     let ticks = millis + this._timeZone.getOffset(millis) * 1000;
     const wallTimeMillis = ticks;
-    const wallTime = <DateAndTime> this.getDateFromDayNumber(div_rd(ticks, 86400000));
+    const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000)) as DateAndTime;
 
     wallTime.millis = mod(ticks, 1000);
     ticks = div_rd(ticks, 1000);
