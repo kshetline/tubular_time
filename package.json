@@ -32,7 +32,6 @@
   },
   "devDependencies": {
     "@types/chai": "^4.2.14",
-    "@types/jasmine": "^2.8.17",
     "@types/lodash": "^4.14.165",
     "@types/mocha": "^8.0.4",
     "@types/node": "^14.14.10",
