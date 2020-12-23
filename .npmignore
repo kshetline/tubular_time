@@ -1,10 +1,12 @@
 /.idea
 /coverage
-/karma.conf.js
 /src
 /tsconfig.json
-/tslint.json
+/.eslintrc.json
+/.eslintignore
 /docs
+/.nyc_output
 *.js.map
 *.spec.d.ts
 *.spec.js
+/webpack.config.cjs

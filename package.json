@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
   "browser": "dist/index.umd.js",
   "main": "dist/index.cjs.js",
