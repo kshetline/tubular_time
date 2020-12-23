@@ -17,8 +17,8 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, mod, round } from 'ks-math';
-import { padLeft } from 'ks-util';
+import { div_rd, mod, round } from '@tubular/math';
+import { padLeft } from '@tubular/util';
 import clone from 'lodash/clone';
 import isNil from 'lodash/isNil';
 import isNumber from 'lodash/isNumber';

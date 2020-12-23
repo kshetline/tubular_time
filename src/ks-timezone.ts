@@ -17,8 +17,8 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_tt0, mod2, round } from 'ks-math';
-import { padLeft } from 'ks-util';
+import { div_tt0, mod2, round } from '@tubular/math';
+import { padLeft } from '@tubular/util';
 import { isNil } from 'lodash';
 import isUndefined from 'lodash/isUndefined';
 import last from 'lodash/last';
@@ -53,8 +53,7 @@ export interface ZoneInfo {
 const CLOCK_TYPE_WALL = 0;
 const CLOCK_TYPE_STD = 1;
 // noinspection JSUnusedLocalSymbols
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const CLOCK_TYPE_UTC = 2;
+const CLOCK_TYPE_UTC = 2; // eslint-disable-this-line @typescript-eslint/no-unused-vars
 
 const LAST_DST_YEAR = 2500;
 const TIME_GAP_AFTER_LAST_TRANSITION = 172800000; // Two days
@@ -273,7 +272,7 @@ export class KsTimeZone {
     const regions: string[] = [];
 
     for (const region in zoneHash) {
-      if (zoneHash.hasOwnProperty(region))
+      if (zoneHash.hasOwnProperty(region)) // no-prototype-builtins
         regions.push(region);
     }
 
@@ -485,11 +484,11 @@ export class KsTimeZone {
 
             if (firstTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && year >= firstRule.startYear)
               transitions.push({ transitionTime: firstTime, utcOffset: currentUtcOffset + firstRule.save, dstOffset: firstRule.save,
-                name: firstRule.save ? lastDstName : lastStdName });
+                                 name: firstRule.save ? lastDstName : lastStdName });
 
             if (secondTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && year >= secondRule.startYear)
               transitions.push({ transitionTime: secondTime, utcOffset: currentUtcOffset + secondRule.save, dstOffset: secondRule.save,
-                name: secondRule.save ? lastDstName : lastStdName });
+                                 name: secondRule.save ? lastDstName : lastStdName });
           }
 
           // Make sure last transition isn't DST
