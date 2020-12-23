@@ -92,7 +92,7 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   }
 
   if (isUndefined(year) || isUndefined(month) || isUndefined(day))
-    throw new Error('KsCalendar: Invalid date arguments');
+    throw new Error('Calendar: Invalid date arguments');
 
   return [year, month, day];
 }
@@ -164,6 +164,7 @@ export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?:
   return 367 * year - div_rd(7 * (year + div_tt0(month + 9, 12)), 4) + div_tt0(275 * month, 9) + day - 719561;
 }
 
+// noinspection JSUnusedLocalSymbols
 /**
  * Always returns 1. This function exists only to parallel getFirstDateInMonth, which isn't always 1 when the
  * Gregorian change date is not fixed.
@@ -476,7 +477,7 @@ export function parseISODate(date: string): YMDDate {
   return { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) };
 }
 
-export class KsCalendar {
+export class Calendar {
   private gcYear  = 1582;
   private gcMonth = 10;
   private gcDate  = 15;
@@ -538,20 +539,20 @@ export class KsCalendar {
 
     if (gcYear < GREGORIAN_CHANGE_MIN_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear > DISTANT_YEAR_PAST)
-        throw new Error('KsCalendar: Gregorian change year cannot be less than ' + GREGORIAN_CHANGE_MIN_YEAR);
+        throw new Error('Calendar: Gregorian change year cannot be less than ' + GREGORIAN_CHANGE_MIN_YEAR);
 
       this.firstGregorianDay = Number.MIN_SAFE_INTEGER;
       this.gcYear = DISTANT_YEAR_PAST;
     }
     else if (gcYear > GREGORIAN_CHANGE_MAX_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear < DISTANT_YEAR_FUTURE)
-        throw new Error('KsCalendar: Gregorian change year cannot be greater than ' + GREGORIAN_CHANGE_MAX_YEAR);
+        throw new Error('Calendar: Gregorian change year cannot be greater than ' + GREGORIAN_CHANGE_MAX_YEAR);
 
       this.firstGregorianDay = Number.MAX_SAFE_INTEGER;
       this.gcYear = DISTANT_YEAR_FUTURE;
     }
     else if (!isValidDateGregorian(gcYear, gcMonth, gcDate))
-      throw new Error('KsCalendar: Invalid Gregorian date: ' + getISOFormatDate(gcYear, gcMonth, gcDate));
+      throw new Error('Calendar: Invalid Gregorian date: ' + getISOFormatDate(gcYear, gcMonth, gcDate));
 
     this.gcYear  = gcYear;
     this.gcMonth = gcMonth;

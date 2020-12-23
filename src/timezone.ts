@@ -22,8 +22,8 @@ import { padLeft } from '@tubular/util';
 import { isNil } from 'lodash';
 import isUndefined from 'lodash/isUndefined';
 import last from 'lodash/last';
-import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './ks-calendar';
-import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './ks-date-time-zone-common';
+import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
+import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
 
 export interface RegionAndSubzones {
   region: string;
@@ -53,7 +53,7 @@ export interface ZoneInfo {
 const CLOCK_TYPE_WALL = 0;
 const CLOCK_TYPE_STD = 1;
 // noinspection JSUnusedLocalSymbols
-const CLOCK_TYPE_UTC = 2; // eslint-disable-this-line @typescript-eslint/no-unused-vars
+const CLOCK_TYPE_UTC = 2; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 const LAST_DST_YEAR = 2500;
 const TIME_GAP_AFTER_LAST_TRANSITION = 172800000; // Two days
@@ -190,16 +190,16 @@ let osDstOffset: number;
   }
 })();
 
-export class KsTimeZone {
+export class Timezone {
   private static encodedTimeZones: {[id: string]: string} = {};
 
-  static OS_ZONE = new KsTimeZone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
+  static OS_ZONE = new Timezone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                             dstOffset: osDstOffset, transitions: osTransitions });
 
-  static UT_ZONE = new KsTimeZone({ zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
+  static UT_ZONE = new Timezone({ zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
                             dstOffset: 0, transitions: null });
 
-  private static zoneLookup: { [id: string]: KsTimeZone } = {};
+  private static zoneLookup: { [id: string]: Timezone } = {};
 
   private readonly _zoneName: string;
   private readonly _utcOffset: number;
@@ -220,10 +220,8 @@ export class KsTimeZone {
   static getAvailableTimeZones(): string[] {
     const zones: string[] = [];
 
-    for (const zone in this.encodedTimeZones) {
-      if (this.encodedTimeZones.hasOwnProperty(zone))
-        zones.push(zone);
-    }
+    for (const zone of Object.keys(this.encodedTimeZones))
+      zones.push(zone);
 
     zones.sort();
 
@@ -234,47 +232,43 @@ export class KsTimeZone {
     let hasMisc = false;
     const zoneHash: { [id: string]: string[] } = {};
 
-    for (const zone in this.encodedTimeZones) {
-      if (this.encodedTimeZones.hasOwnProperty(zone)) {
-        let region: string;
-        let locale: string;
-        let matches = this.extendedRegions.exec(zone);
+    for (const zone of Object.keys(this.encodedTimeZones)) {
+      let region: string;
+      let locale: string;
+      let matches = this.extendedRegions.exec(zone);
 
-        if (!matches)
-          matches = /(.+?)\/(.+)/.exec(zone);
+      if (!matches)
+        matches = /(.+?)\/(.+)/.exec(zone);
 
-        if (!matches) {
-          region = zone;
-          locale = null;
-        }
-        else {
-          region = matches[1];
-          locale = matches[2].replace(/_/g, ' ');
-        }
-
-        if (locale == null || this.miscUnique.test(zone)) {
-          region = '~'; // Force miscellaneous zones to sort to end of region list.
-          locale = zone;
-          hasMisc = true;
-        }
-
-        let locales = zoneHash[region];
-
-        if (!locales) {
-          locales = [];
-          zoneHash[region] = locales;
-        }
-
-        locales.push(locale);
+      if (!matches) {
+        region = zone;
+        locale = null;
       }
+      else {
+        region = matches[1];
+        locale = matches[2].replace(/_/g, ' ');
+      }
+
+      if (locale == null || this.miscUnique.test(zone)) {
+        region = '~'; // Force miscellaneous zones to sort to end of region list.
+        locale = zone;
+        hasMisc = true;
+      }
+
+      let locales = zoneHash[region];
+
+      if (!locales) {
+        locales = [];
+        zoneHash[region] = locales;
+      }
+
+      locales.push(locale);
     }
 
     const regions: string[] = [];
 
-    for (const region in zoneHash) {
-      if (zoneHash.hasOwnProperty(region)) // no-prototype-builtins
-        regions.push(region);
-    }
+    for (const region of Object.keys(zoneHash))
+      regions.push(region);
 
     regions.sort();
 
@@ -296,7 +290,7 @@ export class KsTimeZone {
     return regionAndSubzones;
   }
 
-  static getTimeZone(name: string, longitude?: number): KsTimeZone {
+  static getTimeZone(name: string, longitude?: number): Timezone {
     if (!name)
       return this.OS_ZONE;
 
@@ -305,7 +299,7 @@ export class KsTimeZone {
     if (cached)
       return cached;
 
-    let zone: KsTimeZone;
+    let zone: Timezone;
     const matches: string[] = /LMT|OS|(?:(UT)(?:([-+])(\d\d):(\d\d))?)|(?:.+\/.+)|\w+/.exec(name);
 
     if (matches === null || matches.length === 0)
@@ -313,7 +307,7 @@ export class KsTimeZone {
     else  if (matches[0] === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
-      zone = new KsTimeZone({ zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
+      zone = new Timezone({ zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
                              usesDst: false, dstOffset: 0, transitions: null });
     }
     else if (matches[0] === 'OS') {
@@ -325,7 +319,7 @@ export class KsTimeZone {
       if (matches.length === 5 && matches[3] && matches[4])
         offset = (parseInt(matches[3], 10) * 60 + parseInt(matches[4], 10)) * 60 * (matches[2] === '-' ? -1 : 1);
 
-      zone = new KsTimeZone({ zoneName: name, currentUtcOffset: offset,
+      zone = new Timezone({ zoneName: name, currentUtcOffset: offset,
                             usesDst: false, dstOffset: 0, transitions: null });
     }
     else if (this.encodedTimeZones[name]) {
@@ -334,11 +328,11 @@ export class KsTimeZone {
       if (encodedTimeZone.indexOf(';') < 0) // If no semicolon, must be a link to a duplicate time zone.
         encodedTimeZone = this.encodedTimeZones[encodedTimeZone];
 
-      zone = new KsTimeZone(this.parseEncodedTimeZone(name, encodedTimeZone));
+      zone = new Timezone(this.parseEncodedTimeZone(name, encodedTimeZone));
     }
     else {
       // Create a timezone equivalent to the OS zone, except with the requested name and an attached error condition.
-      zone = new KsTimeZone({ zoneName: name, currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
+      zone = new Timezone({ zoneName: name, currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                       dstOffset: osDstOffset, transitions: osTransitions });
       zone._error = 'Unrecognized time zone';
     }
@@ -601,7 +595,7 @@ export class KsTimeZone {
       name = this.displayName;
 
       if (!name)
-        name = KsTimeZone.formatUtcOffset(this.utcOffset);
+        name = Timezone.formatUtcOffset(this.utcOffset);
     }
     else {
       const transition = this.findTransitionByUtc(utcTime);
@@ -609,7 +603,7 @@ export class KsTimeZone {
       name = transition.name;
 
       if (!name)
-        name = KsTimeZone.formatUtcOffset(transition.utcOffset);
+        name = Timezone.formatUtcOffset(transition.utcOffset);
     }
 
     let match = /^[+-]\d\d$/.exec(name);
@@ -643,7 +637,7 @@ export class KsTimeZone {
   }
 
   getFormattedOffset(utcTime: number): string {
-    return KsTimeZone.formatUtcOffset(this.getOffset(utcTime));
+    return Timezone.formatUtcOffset(this.getOffset(utcTime));
   }
 
   getOffsets(utcTime: number): number[] {

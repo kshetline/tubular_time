@@ -18,7 +18,7 @@
 */
 
 import { div_rd, mod } from '@tubular/math';
-import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './ks-calendar';
+import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './calendar';
 
 export interface DateAndTime extends YMDDate {
   hrs: number;

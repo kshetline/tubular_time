@@ -8,10 +8,15 @@ module.exports = env => {
   const config = {
     mode: env?.dev ? 'development' : 'production',
     target,
-    entry: './dist/index.js',
+    entry: {
+      index: './dist/index.js',
+      'timezone-large': './dist/timezone-large.js',
+      'timezone-large-alt': './dist/timezone-large-alt.js',
+      'timezone-small': './dist/timezone-small.js'
+    },
     output: {
       path: resolve(__dirname, 'dist'),
-      filename: `index.${env?.target || 'cjs'}.js`,
+      filename: `[name].${env?.target || 'cjs'}.js`,
       libraryTarget,
       library
     },
@@ -19,12 +24,13 @@ module.exports = env => {
       rules: [
         { test: /\.js$/, use: 'babel-loader', resolve: { fullySpecified: false } }
       ]
-    }
+    },
+    externals: ['lodash']
   };
 
   // Allow umd target to bundle @tubular/math and @tubular/util.
   if (env?.target !== 'umd')
-    config.externals = ['@tubular/math', '@tubular/util'];
+    config.externals.push(...['@tubular/math', '@tubular/util']);
 
   return config;
 };

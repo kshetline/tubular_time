@@ -1,9 +1,9 @@
-import { KsTimeZone } from './ks-timezone';
+import { Timezone } from './timezone';
 
 /* eslint-disable quote-props */
 // -5qy 1800,2087 -z .../tzdir/usr/share/zoneinfo
 // noinspection SpellCheckingInspection
-export const initTimeZoneLarge = () => KsTimeZone.defineTimeZones({ // tz database version: 2020d, years 1800-2087
+export const initTimeZoneLarge = () => Timezone.defineTimeZones({ // tz database version: 2020d, years 1800-2087
   'Africa/Abidjan': '-001608 +0000 0;-g.8/0/LMT 0/0/GMT;1;-2ldXH.Q',
   'Africa/Accra': '-000052 +0000 0;-0.Q/0/LMT 0/0/GMT k/k;12121212121212121212121212121212121212121212121;-26BbX.8 6tzX.8 MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE 1BAk MnE 1C0k MnE 1BAk MnE 1BAk MnE',
   'Africa/Addis_Ababa': '+022716 +0300 0;2r.g/0/LMT 30/0/EAT 2u/0 2J/0;1231;-1F3Cr.g 3Dzr.g okMu MFXJ',

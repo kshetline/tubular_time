@@ -25,19 +25,19 @@ import isNumber from 'lodash/isNumber';
 import isObject from 'lodash/isObject';
 import isUndefined from 'lodash/isUndefined';
 import {
-  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, KsCalendar, SUNDAY, YearOrDate, YMDDate
-} from './ks-calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC } from './ks-date-time-zone-common';
-import { KsTimeZone } from './ks-timezone';
+  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, SUNDAY, YearOrDate, YMDDate
+} from './calendar';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC } from './common';
+import { Timezone } from './timezone';
 
 export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, MONTHS, YEARS }
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
-export class KsDateTime extends KsCalendar {
+export class DateTime extends Calendar {
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
-  private _timeZone = KsTimeZone.OS_ZONE;
+  private _timeZone = Timezone.OS_ZONE;
 
   static julianDay(millis: number): number {
     return millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
@@ -52,7 +52,7 @@ export class KsDateTime extends KsCalendar {
              (hour + (minute + second / 60.0) / 60.0) / 24.0;
   }
 
-  constructor(initialTime?: number | DateAndTime | null, timeZone?: KsTimeZone | null, gregorianChange?: GregorianChange) {
+  constructor(initialTime?: number | DateAndTime | null, timeZone?: Timezone | null, gregorianChange?: GregorianChange) {
     super(gregorianChange);
 
     if (timeZone)
@@ -92,9 +92,9 @@ export class KsDateTime extends KsCalendar {
     this.updateWallTime();
   }
 
-  get timeZone(): KsTimeZone { return this._timeZone; }
+  get timeZone(): Timezone { return this._timeZone; }
 
-  set timeZone(newZone: KsTimeZone) {
+  set timeZone(newZone: Timezone) {
     if (this._timeZone !== newZone) {
       this._timeZone = newZone;
       this.computeWallTime();
@@ -256,7 +256,7 @@ export class KsDateTime extends KsCalendar {
 
     s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + ':' + padLeft(wt.sec, 2, '0') +
          '.' + padLeft(wt.millis, 3, '0') + (wt.occurrence === 2 ? '\u2082' : ' ') + // Subscript 2
-         KsTimeZone.formatUtcOffset(wt.utcOffset) + KsTimeZone.getDstSymbol(wt.dstOffset);
+         Timezone.formatUtcOffset(wt.utcOffset) + Timezone.getDstSymbol(wt.dstOffset);
 
     return s;
   }
@@ -265,7 +265,7 @@ export class KsDateTime extends KsCalendar {
     const wt = this._wallTime;
     let s = getISOFormatDate(wt);
 
-    s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + KsTimeZone.getDstSymbol(wt.dstOffset);
+    s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + Timezone.getDstSymbol(wt.dstOffset);
 
     return s;
   }
@@ -275,7 +275,7 @@ export class KsDateTime extends KsCalendar {
     let s = getISOFormatDate(wt);
 
     s += 'T' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + ':' + padLeft(wt.sec, 2, '0') +
-         '.' + padLeft(wt.millis, 3, '0') + KsTimeZone.formatUtcOffset(wt.utcOffset);
+         '.' + padLeft(wt.millis, 3, '0') + Timezone.formatUtcOffset(wt.utcOffset);
 
     return s;
   }
@@ -284,7 +284,7 @@ export class KsDateTime extends KsCalendar {
     const wt = this._wallTime;
 
     return padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') +
-            (includeDst ? KsTimeZone.getDstSymbol(wt.dstOffset) : '');
+            (includeDst ? Timezone.getDstSymbol(wt.dstOffset) : '');
   }
 
   private computeUtcTimeMillis(): void {
