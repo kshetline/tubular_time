@@ -3,7 +3,7 @@ import { Timezone } from './timezone';
 /* eslint-disable quote-props */
 // -5qy 2015,2025 -z .../tzdir/usr/share/zoneinfo
 // noinspection SpellCheckingInspection
-export const timeZoneSmall = { // tz database version: 2020e, years 2015-2025
+export const timezoneSmall = { // tz database version: 2020e, years 2015-2025
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;',
   'Africa/Addis_Ababa': '+0300 +0300 0;30/0/EAT;',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;',
@@ -613,6 +613,6 @@ export const timeZoneSmall = { // tz database version: 2020e, years 2015-2025
   'Zulu': 'Etc/UCT'
 };
 
-Object.freeze(timeZoneSmall);
+Object.freeze(timezoneSmall);
 
-export const initTimeZoneSmall = () => Timezone.defineTimeZones(timeZoneSmall);
+export const initTimezoneSmall = () => Timezone.defineTimezones(timezoneSmall);

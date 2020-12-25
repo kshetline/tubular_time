@@ -2,18 +2,18 @@ import { expect } from 'chai';
 import { SUNDAY } from './calendar';
 import { DateTimeField, DateTime } from './date-time';
 import { Timezone } from './timezone';
-import { initTimeZoneLarge } from './timezone-large';
-import { initTimeZoneLargeAlt } from './timezone-large-alt';
-import { initTimeZoneSmall } from './timezone-small';
+import { initTimezoneLarge } from './timezone-large';
+import { initTimezoneLargeAlt } from './timezone-large-alt';
+import { initTimezoneSmall } from './timezone-small';
 import { parseISODateTime } from './common';
 
 describe('DateTime', () => {
-  initTimeZoneSmall();
-  initTimeZoneLarge();
-  initTimeZoneLargeAlt();
+  initTimezoneSmall();
+  initTimezoneLarge();
+  initTimezoneLargeAlt();
 
   beforeEach(() => {
-    Timezone.defineTimeZones({
+    Timezone.defineTimezones({
       'America/Juneau': '+1502 -0900 60;f2/0/LMT -8W/0/LMT -80/0/PST -70/10/PWT -70/10/PPT -70/10/PDT -80/10/YDT -90/0/YST -90/0/AKST -80/10/AKDT;1234252525252525252525252526252525789898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898;-48PP2 1jVM0 1EX12 8x10 iy0 Vo10 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 s10 1Vz0 LB0 1BX0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cM0 1cM0 1cL0 1cN0 1fz0 1a10 1fz0 co0 10q0 1cL0 1cN0 1cL0 1cN0 1cL0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
       'America/New_York': '-045602 -0500 60;-4U.2/0/LMT -50/0/EST -40/10/EDT -40/10/EWT -40/10/EPT;121212121212121212121212121212121212121212121212134121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121;-3tFH0 1nEe0 1nX0 11B0 1nX0 11B0 1qL0 1a10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 RB0 8x40 iv0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 s10 1Vz0 LB0 1BX0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
       'Europe/Dublin': '-0025 +0100 -60;-p/0/LMT -p/0/DMT z/10/IST 0/0/GMT 10/10/BST 10/10/IST 10/0/IST 0/-10/GMT;123434343434353535353535353535353535353535353535353535353535353535353535353535353535353535353567676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676;-3BHbz 1ra20 Rc0 1fzz 14M0 1fc0 1g00 1co0 1dc0 1co0 1oo0 1400 1dc0 19A0 1io0 1io0 WM0 1o00 14o0 1o00 17c0 1io0 17c0 1fA0 1a00 1lc0 17c0 1io0 17c0 1fA0 1a00 1io0 17c0 1io0 17c0 1fA0 1cM0 1io0 17c0 1fA0 1a00 1io0 17c0 1io0 17c0 1fA0 1a00 1io0 1qM0 Dc0 g600 14o0 1wo0 17c0 1io0 11A0 1o00 17c0 1fA0 1a00 1fA0 1cM0 1fA0 1a00 17c0 1fA0 1a00 1io0 17c0 1lc0 17c0 1fA0 1a00 1io0 17c0 1io0 17c0 1fA0 1a00 1a00 1qM0 WM0 1qM0 11A0 1o00 WM0 1qM0 WM0 1qM0 WM0 1qM0 WM0 1tA0 IM0 1EJ0 7jD0 U00 1tA0 U00 1tA0 U00 1tA0 U00 1tA0 WM0 1qM0 WM0 1qM0 WM0 1tA0 U00 1tA0 U00 1tA0 11z0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 14o0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0;1981 3 0 1 1:0 2 0,1996 10 0 1 1:0 2 -60',
@@ -22,7 +22,7 @@ describe('DateTime', () => {
   });
 
   it('should skip an hour starting Daylight Saving Time.', () => {
-    const zone = Timezone.getTimeZone('America/New_York');
+    const zone = Timezone.getTimezone('America/New_York');
     const time = new DateTime({ y: 2018, m: 3, d: 11, hrs: 1, min: 59, sec: 59 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
@@ -38,7 +38,7 @@ describe('DateTime', () => {
   });
 
   it('should turn back an hour ending Daylight Saving Time.', () => {
-    const zone = Timezone.getTimeZone('America/New_York');
+    const zone = Timezone.getTimezone('America/New_York');
     const time = new DateTime({ y: 2018, m: 11, d: 4, hrs: 1, min: 59, sec: 59, occurrence: 1 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
@@ -56,7 +56,7 @@ describe('DateTime', () => {
   });
 
   it('should end Daylight Saving Time correctly on a future computed date.', () => {
-    const zone = Timezone.getTimeZone('America/New_York');
+    const zone = Timezone.getTimezone('America/New_York');
     const time = new DateTime({ y: 2100, m: 11, d: 7, hrs: 1, min: 59, sec: 59, occurrence: 1 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
@@ -72,7 +72,7 @@ describe('DateTime', () => {
   });
 
   it('should handle missing day in Pacific/Apia, December 2011.', () => {
-    const zone = Timezone.getTimeZone('Pacific/Apia');
+    const zone = Timezone.getTimezone('Pacific/Apia');
     const time = new DateTime({ y: 2011, m: 12, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
     expect(time.getSecondsInDay(2011, 12, 30)).to.equal(0);
@@ -83,7 +83,7 @@ describe('DateTime', () => {
   });
 
   it('should handle 48-hour day in America/Juneau, October 1867.', () => {
-    const zone = Timezone.getTimeZone('America/Juneau');
+    const zone = Timezone.getTimezone('America/Juneau');
     const time = new DateTime({ y: 1867, m: 10, d: 18, hrs: 0, min: 0, sec: 0, occurrence: 1 }, zone);
 
     expect(time.getSecondsInDay()).to.equal(172800);
@@ -97,7 +97,7 @@ describe('DateTime', () => {
   });
 
   it('should handle negative Daylight Saving Time.', () => {
-    const zone = Timezone.getTimeZone('Europe/Dublin');
+    const zone = Timezone.getTimezone('Europe/Dublin');
     const time = new DateTime({ y: 2017, m: 12, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
     expect(time.wallTime.dstOffset).to.equal(-3600);
@@ -106,7 +106,7 @@ describe('DateTime', () => {
   });
 
   it('should handle non-whole-minute UTC offsets.', () => {
-    const zone = Timezone.getTimeZone('Pacific/Apia');
+    const zone = Timezone.getTimezone('Pacific/Apia');
     const time = new DateTime({ y: 1892, m: 1, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(45184);

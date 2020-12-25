@@ -36,7 +36,7 @@ export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 export class DateTime extends Calendar {
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
-  private _timeZone = Timezone.OS_ZONE;
+  private _timezone = Timezone.OS_ZONE;
 
   static julianDay(millis: number): number {
     return millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
@@ -51,11 +51,11 @@ export class DateTime extends Calendar {
              (hour + (minute + second / 60.0) / 60.0) / 24.0;
   }
 
-  constructor(initialTime?: number | DateAndTime | null, timeZone?: Timezone | null, gregorianChange?: GregorianChange) {
+  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null, gregorianChange?: GregorianChange) {
     super(gregorianChange);
 
-    if (timeZone)
-      this._timeZone = timeZone;
+    if (timezone)
+      this._timezone = timezone;
 
     if (isObject(initialTime)) {
       this.wallTime = clone(initialTime as DateAndTime);
@@ -91,33 +91,33 @@ export class DateTime extends Calendar {
     this.updateWallTime();
   }
 
-  get timeZone(): Timezone { return this._timeZone; }
+  get timezone(): Timezone { return this._timezone; }
 
-  set timeZone(newZone: Timezone) {
-    if (this._timeZone !== newZone) {
-      this._timeZone = newZone;
+  set timezone(newZone: Timezone) {
+    if (this._timezone !== newZone) {
+      this._timezone = newZone;
       this.computeWallTime();
     }
   }
 
   get utcOffsetSeconds(): number {
-    return this._timeZone.getOffset(this._utcTimeMillis);
+    return this._timezone.getOffset(this._utcTimeMillis);
   }
 
   get utcOffsetMinutes(): number {
-    return round(this._timeZone.getOffset(this._utcTimeMillis) / 60);
+    return round(this._timezone.getOffset(this._utcTimeMillis) / 60);
   }
 
   get dstOffsetSeconds(): number {
-    return this._timeZone.getOffsets(this._utcTimeMillis)[1];
+    return this._timezone.getOffsets(this._utcTimeMillis)[1];
   }
 
   get dstOffsetMinutes(): number {
-    return round(this._timeZone.getOffsets(this._utcTimeMillis)[1] / 60);
+    return round(this._timezone.getOffsets(this._utcTimeMillis)[1] / 60);
   }
 
-  getTimeZoneDisplayName(): string {
-    return this._timeZone.getDisplayName(this._utcTimeMillis);
+  getTimezoneDisplayName(): string {
+    return this._timezone.getDisplayName(this._utcTimeMillis);
   }
 
   add(field: DateTimeField, amount: number): void {
@@ -186,12 +186,12 @@ export class DateTime extends Calendar {
 
     let dayMillis = this.getDayNumber(year, month, day) * DAY_MSEC;
 
-    dayMillis -= this.timeZone.getOffsetForWallTime(dayMillis) * 1000;
+    dayMillis -= this.timezone.getOffsetForWallTime(dayMillis) * 1000;
 
     // There are weird turning-back-the-clock situations where there are two midnights
     // during a single day. Make sure we're getting the earlier midnight unless the
     // earlier midnight doesn't match the day of the month requested.
-    const transition = this.timeZone.findTransitionByUtc(dayMillis);
+    const transition = this.timezone.findTransitionByUtc(dayMillis);
 
     if (transition !== null && transition.deltaOffset < 0 && dayMillis < transition.transitionTime - transition.deltaOffset * 1000) {
       const earlier = dayMillis + transition.deltaOffset * 1000;
@@ -293,10 +293,10 @@ export class DateTime extends Calendar {
                  this._wallTime.hrs * 3600000 +
                  this.getDayNumber(this._wallTime) * 86400000;
 
-    millis -= this._timeZone.getOffsetForWallTime(millis) * 1000;
+    millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
 
     if (this._wallTime.occurrence === 1) {
-      const transition = this.timeZone.findTransitionByUtc(millis);
+      const transition = this.timezone.findTransitionByUtc(millis);
 
       if (transition !== null && transition.deltaOffset < 0 && millis < transition.transitionTime - transition.deltaOffset * 1000)
         millis += transition.deltaOffset * 1000;
@@ -310,7 +310,7 @@ export class DateTime extends Calendar {
   }
 
   getWallTimeForMillis(millis: number): DateAndTime {
-    let ticks = millis + this._timeZone.getOffset(millis) * 1000;
+    let ticks = millis + this._timezone.getOffset(millis) * 1000;
     const wallTimeMillis = ticks;
     const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000)) as DateAndTime;
 
@@ -321,12 +321,12 @@ export class DateTime extends Calendar {
     wallTime.min = mod(ticks, 60);
     ticks = div_rd(ticks, 60);
     wallTime.hrs = mod(ticks, 24);
-    const offsets = this._timeZone.getOffsets(millis);
+    const offsets = this._timezone.getOffsets(millis);
     wallTime.utcOffset = offsets[0];
     wallTime.dstOffset = offsets[1];
     wallTime.occurrence = 1;
 
-    const transition = this.timeZone.findTransitionByWallTime(wallTimeMillis);
+    const transition = this.timezone.findTransitionByWallTime(wallTimeMillis);
 
     if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 1000)
       wallTime.occurrence = 2;
@@ -335,7 +335,7 @@ export class DateTime extends Calendar {
   }
 
   private updateWallTime(): void {
-    const offsets = this._timeZone.getOffsets(this._utcTimeMillis);
+    const offsets = this._timezone.getOffsets(this._utcTimeMillis);
 
     this._wallTime.utcOffset = offsets[0];
     this._wallTime.dstOffset = offsets[1];
@@ -344,7 +344,7 @@ export class DateTime extends Calendar {
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 
-    if (this._timeZone)
+    if (this._timezone)
       this.computeWallTime();
   }
 }

@@ -1,8 +1,8 @@
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
-import { initTimeZoneSmall } from './timezone-small';
+import { initTimezoneSmall } from './timezone-small';
 
-initTimeZoneSmall();
+initTimezoneSmall();
 
 export {
   Calendar, CalendarType, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR, SUNDAY, MONDAY, TUESDAY, WEDNESDAY,
@@ -40,7 +40,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false,
     console.log(url);
     const poll = () => {
       zonePoller.getTimezones(url).then(zones => {
-        Timezone.defineTimeZones(zones);
+        Timezone.defineTimezones(zones);
         dispatchUpdateNotification(true);
       })
         .catch(err => dispatchUpdateNotification(err instanceof Error ? err : new Error(err)));

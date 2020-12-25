@@ -108,8 +108,8 @@ let osProbableDstOffset: number;
 let osUsesDst: boolean;
 let osDstOffset: number;
 
-// Create a transition table (if necessary) for the OS time zone so that it can be handled like other time zones.
-// It might also be discovered, of course, that the OS time zone is a simple fixed offset from UTC.
+// Create a transition table (if necessary) for the OS timezone so that it can be handled like other timezones.
+// It might also be discovered, of course, that the OS timezone is a simple fixed offset from UTC.
 (function (): void {
   const date = new Date(1901, 0, 1, 12, 0, 0, 0); // Sample around local noon so it's unlikely we'll sample right at a transition.
   let lastSampleTime = date.getTime();
@@ -168,7 +168,7 @@ let osDstOffset: number;
     osUsesDst = (osProbableDstOffset > osProbableStdOffset);
     osDstOffset = osProbableDstOffset - osProbableStdOffset; // Not the full UTC offset during DST, just the difference from Standard Time.
 
-    // If the OS time zone isn't historical, but instead projects DST rules indefinitely backward in time, we might have accidentally
+    // If the OS timezone isn't historical, but instead projects DST rules indefinitely backward in time, we might have accidentally
     // captured a DST offset for the first transition, something that will wrongly make DST look like the starting base UTC offset.
     if (osUsesDst) {
       if (osTransitions[0].utcOffset === osProbableDstOffset && osTransitions[1].utcOffset === osProbableStdOffset) {
@@ -189,7 +189,7 @@ let osDstOffset: number;
 })();
 
 export class Timezone {
-  private static encodedTimeZones: {[id: string]: string} = {};
+  private static encodedTimezones: {[id: string]: string} = {};
 
   static OS_ZONE = new Timezone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                             dstOffset: osDstOffset, transitions: osTransitions });
@@ -210,15 +210,15 @@ export class Timezone {
   private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
   private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
 
-  static defineTimeZones(encodedTimeZones: {[id: string]: string}): void {
-    this.encodedTimeZones = encodedTimeZones;
+  static defineTimezones(encodedTimezones: {[id: string]: string}): void {
+    this.encodedTimezones = encodedTimezones;
     this.zoneLookup = {};
   }
 
-  static getAvailableTimeZones(): string[] {
+  static getAvailableTimezones(): string[] {
     const zones: string[] = [];
 
-    for (const zone of Object.keys(this.encodedTimeZones))
+    for (const zone of Object.keys(this.encodedTimezones))
       zones.push(zone);
 
     zones.sort();
@@ -230,7 +230,7 @@ export class Timezone {
     let hasMisc = false;
     const zoneHash: { [id: string]: string[] } = {};
 
-    for (const zone of Object.keys(this.encodedTimeZones)) {
+    for (const zone of Object.keys(this.encodedTimezones)) {
       let region: string;
       let locale: string;
       let matches = this.extendedRegions.exec(zone);
@@ -288,7 +288,7 @@ export class Timezone {
     return regionAndSubzones;
   }
 
-  static getTimeZone(name: string, longitude?: number): Timezone {
+  static getTimezone(name: string, longitude?: number): Timezone {
     if (!name)
       return this.OS_ZONE;
 
@@ -301,7 +301,7 @@ export class Timezone {
     const matches: string[] = /LMT|OS|(?:(UT)(?:([-+])(\d\d):(\d\d))?)|(?:.+\/.+)|\w+/.exec(name);
 
     if (matches === null || matches.length === 0)
-      throw new Error('Unrecognized format for time zone name "' + name + '"');
+      throw new Error('Unrecognized format for timezone name "' + name + '"');
     else  if (matches[0] === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
@@ -320,19 +320,19 @@ export class Timezone {
       zone = new Timezone({ zoneName: name, currentUtcOffset: offset,
                             usesDst: false, dstOffset: 0, transitions: null });
     }
-    else if (this.encodedTimeZones[name]) {
-      let encodedTimeZone = this.encodedTimeZones[name];
+    else if (this.encodedTimezones[name]) {
+      let encodedTimezone = this.encodedTimezones[name];
 
-      if (encodedTimeZone.indexOf(';') < 0) // If no semicolon, must be a link to a duplicate time zone.
-        encodedTimeZone = this.encodedTimeZones[encodedTimeZone];
+      if (encodedTimezone.indexOf(';') < 0) // If no semicolon, must be a link to a duplicate timezone.
+        encodedTimezone = this.encodedTimezones[encodedTimezone];
 
-      zone = new Timezone(this.parseEncodedTimeZone(name, encodedTimeZone));
+      zone = new Timezone(this.parseEncodedTimezone(name, encodedTimezone));
     }
     else {
       // Create a timezone equivalent to the OS zone, except with the requested name and an attached error condition.
       zone = new Timezone({ zoneName: name, currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                       dstOffset: osDstOffset, transitions: osTransitions });
-      zone._error = 'Unrecognized time zone';
+      zone._error = 'Unrecognized timezone';
     }
 
     if (name !== 'LMT') // Don't cache LMT because of variable longitude-dependent offsets for the same name.
@@ -405,7 +405,7 @@ export class Timezone {
     return result * sign;
   }
 
-  private static parseEncodedTimeZone(name: string, etz: string): ZoneInfo {
+  private static parseEncodedTimezone(name: string, etz: string): ZoneInfo {
     let transitions: Transition[] = [];
     const sections = etz.split(';');
     let parts = sections[0].split(' ');

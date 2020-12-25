@@ -1,7 +1,7 @@
 {
   "name": "@tubular/time",
   "version": "2.1.0",
-  "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
+  "description": "Date/time, IANA timezones, calendar with settable Julian/Gregorian switchover",
   "browser": "dist/index.umd.js",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
@@ -9,7 +9,7 @@
   "typings": "dist/index",
   "sideEffects": false,
   "scripts": {
-    "build": "rimraf dist/ && tsc && webpack && webpack --env target=umd && ts-node make-remote-zone-data.ts",
+    "build": "rimraf dist/ && tsc && webpack && webpack --env target=umd --env dev=true && ts-node make-remote-zone-data.ts",
     "prepublishOnly": "tsc",
     "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
     "test": "nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
@@ -21,9 +21,12 @@
     "gregorian",
     "iana",
     "julian",
+    "olson",
     "time",
+    "time zone",
     "timezone",
-    "zone"
+    "tzdata",
+    "zoneinfo"
   ],
   "author": "Kerry Shetline <kerry@shetline.com>",
   "license": "MIT",

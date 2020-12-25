@@ -1,12 +1,12 @@
 import fs from 'fs';
-import { timeZoneSmall } from './src/timezone-small';
-import { timeZoneLarge } from './src/timezone-large';
-import { timeZoneLargeAlt } from './src/timezone-large-alt';
+import { timezoneSmall } from './src/timezone-small';
+import { timezoneLarge } from './src/timezone-large';
+import { timezoneLargeAlt } from './src/timezone-large-alt';
 
 const zoneSets = {
-  small: timeZoneSmall,
-  large: timeZoneLarge,
-  large_alt: timeZoneLargeAlt,
+  small: timezoneSmall,
+  large: timezoneLarge,
+  large_alt: timezoneLargeAlt,
 };
 
 Object.keys(zoneSets).forEach(set => {

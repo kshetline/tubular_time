@@ -3,7 +3,7 @@ import { Timezone } from './timezone';
 /* eslint-disable quote-props */
 // -5qy 1800,2087 -z .../tzdir/usr/share/zoneinfo
 // noinspection SpellCheckingInspection
-export const timeZoneLarge = { // tz database version: 2020e, years 1800-2087
+export const timezoneLarge = { // tz database version: 2020e, years 1800-2087
   'Africa/Abidjan': '-001608 +0000 0;-g.8/0/LMT 0/0/GMT;1;-2ldXH.Q',
   'Africa/Accra': '-000052 +0000 0;-0.Q/0/LMT 0/0/GMT k/k u/0 u/u;1212121212121212121212121212121212121212121212131414141414141;-2bRzX.8 9RbX.8 fdE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE Mok 1BXE M0k 1BXE fak 9vbu bjCu MLu 1Bcu MLu 1BAu MLu 1Bcu MLu 1Bcu MLu 1Bcu MLu',
   'Africa/Addis_Ababa': '+022716 +0300 0;2r.g/0/LMT 2u/0 30/0/EAT 2J/0;12132;-2ua2r.g N6nV.g 3Fbu h1cu dzbJ',
@@ -613,6 +613,6 @@ export const timeZoneLarge = { // tz database version: 2020e, years 1800-2087
   'Zulu': 'Etc/UCT'
 };
 
-Object.freeze(timeZoneLarge);
+Object.freeze(timezoneLarge);
 
-export const initTimeZoneLarge = () => Timezone.defineTimeZones(timeZoneLarge);
+export const initTimezoneLarge = () => Timezone.defineTimezones(timezoneLarge);
