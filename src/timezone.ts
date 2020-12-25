@@ -19,8 +19,6 @@
 
 import { div_tt0, mod2, round } from '@tubular/math';
 import { padLeft } from '@tubular/util';
-import { isNil } from 'lodash';
-import isUndefined from 'lodash/isUndefined';
 import last from 'lodash/last';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
@@ -130,7 +128,7 @@ let osDstOffset: number;
 
     const currentOffset = -date.getTimezoneOffset() * 60;
 
-    if (isUndefined(osProbableStdOffset) && sampleTime >= aBitLater) {
+    if (osProbableStdOffset === undefined && sampleTime >= aBitLater) {
       osProbableStdOffset = osProbableDstOffset = currentOffset;
     }
 
@@ -508,7 +506,7 @@ export class Timezone {
   }
 
   static formatUtcOffset(offsetSeconds: number): string {
-    if (isNil(offsetSeconds))
+    if (offsetSeconds == null)
       return '?';
 
     let result = offsetSeconds < 0 ? '-' : '+';
@@ -529,7 +527,7 @@ export class Timezone {
   }
 
   static getDstSymbol(dstOffsetSeconds: number): string {
-    if (isNil(dstOffsetSeconds))
+    if (dstOffsetSeconds == null)
       return '';
 
     switch (dstOffsetSeconds) {

@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Date/time, IANA time zones, calendar with settable Julian/Gregorian switchover",
   "browser": "dist/index.umd.js",
   "main": "dist/index.cjs.js",
@@ -9,7 +9,7 @@
   "typings": "dist/index",
   "sideEffects": false,
   "scripts": {
-    "build": "rimraf dist/ && tsc && webpack && webpack --env target=umd",
+    "build": "rimraf dist/ && tsc && webpack && webpack --env target=umd && ts-node make-remote-zone-data.ts",
     "prepublishOnly": "tsc",
     "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
     "test": "nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
@@ -30,6 +30,7 @@
   "dependencies": {
     "@tubular/math": "^2.0.5",
     "@tubular/util": "^3.0.4",
+    "by-request": "^1.1.6",
     "lodash": "^4.17.20"
   },
   "devDependencies": {

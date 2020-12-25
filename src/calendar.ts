@@ -20,7 +20,6 @@
 import { div_rd, div_tt0, mod } from '@tubular/math';
 import { padLeft } from '@tubular/util';
 import isArray from 'lodash/isArray';
-import isNil from 'lodash/isNil';
 import isNumber from 'lodash/isNumber';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
@@ -493,7 +492,7 @@ export class Calendar {
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else if (gcYearOrDateOrType === CalendarType.PURE_JULIAN)
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
-    else if (arguments.length === 0 || isNil(gcYearOrDateOrType))
+    else if (arguments.length === 0 || gcYearOrDateOrType == null)
       this.setGregorianChange(1582, 10, 15);
     else
       this.setGregorianChange(<YearOrDate | string> gcYearOrDateOrType, gcMonth, gcDate);

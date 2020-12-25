@@ -20,7 +20,6 @@
 import { div_rd, mod, round } from '@tubular/math';
 import { padLeft } from '@tubular/util';
 import clone from 'lodash/clone';
-import isNil from 'lodash/isNil';
 import isNumber from 'lodash/isNumber';
 import isObject from 'lodash/isObject';
 import isUndefined from 'lodash/isUndefined';
@@ -84,7 +83,7 @@ export class DateTime extends Calendar {
   set wallTime(newTime: DateAndTime) {
     this._wallTime = clone(newTime);
 
-    if (isNil(this._wallTime.millis))
+    if (this._wallTime.millis == null)
       this._wallTime.millis = 0;
 
     this.computeUtcTimeMillis();

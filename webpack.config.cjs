@@ -10,9 +10,8 @@ module.exports = env => {
     target,
     entry: {
       index: './dist/index.js',
-      'timezone-large': './dist/timezone-large.js',
-      'timezone-large-alt': './dist/timezone-large-alt.js',
-      'timezone-small': './dist/timezone-small.js'
+      'timezone-large': { import: './dist/timezone-large.js', dependOn: 'index' },
+      'timezone-large-alt': { import: './dist/timezone-large-alt.js', dependOn: 'index' }
     },
     output: {
       path: resolve(__dirname, 'dist'),
@@ -25,12 +24,12 @@ module.exports = env => {
         { test: /\.js$/, use: 'babel-loader', resolve: { fullySpecified: false } }
       ]
     },
-    externals: ['lodash']
+    externals: ['by-request']
   };
 
   // Allow umd target to bundle @tubular/math and @tubular/util.
   if (env?.target !== 'umd')
-    config.externals.push(...['@tubular/math', '@tubular/util']);
+    config.externals.push(...['@tubular/math', '@tubular/util', 'lodash']);
 
   return config;
 };
