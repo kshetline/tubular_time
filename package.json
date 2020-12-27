@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Date/time, IANA timezones, calendar with settable Julian/Gregorian switchover",
   "browser": "dist/umd/index.js",
   "main": "dist/cjs/index.js",
@@ -10,7 +10,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "rimraf dist/ && tsc && webpack && ts-node make-remote-zone-data.ts",
-    "prepublishOnly": "tsc",
+    "prepublishOnly": "npm run build",
     "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
     "test": "nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
     "document": "typedoc --name \"ks-date-time-zone\" --module commonjs --exclude \"**/*+(e2e|spec|index).ts\" --excludePrivate --excludeProtected --readme README.md --target ES5 --out docs src"
