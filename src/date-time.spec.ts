@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { SUNDAY } from './calendar';
 import { DateTimeField, DateTime } from './date-time';
 import { Timezone } from './timezone';
-import { initTimezoneLarge , initTimezoneLargeAlt , initTimezoneSmall } from './index';
+import { initTimezoneLarge, initTimezoneLargeAlt, initTimezoneSmall } from './index';
 import { parseISODateTime } from './common';
 
 describe('DateTime', () => {
