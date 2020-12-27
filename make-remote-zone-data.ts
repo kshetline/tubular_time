@@ -6,10 +6,11 @@ import { timezoneLargeAlt } from './src/timezone-large-alt';
 const zoneSets = {
   small: timezoneSmall,
   large: timezoneLarge,
-  large_alt: timezoneLargeAlt,
+  'large-alt': timezoneLargeAlt,
 };
 
 Object.keys(zoneSets).forEach(set => {
-  fs.writeFileSync(`dist/timezone-${set}-data.js`,
-    `window.tbTime_timezone_${set} = ` + JSON.stringify(zoneSets[set]));
+  fs.mkdirSync('dist/data', { recursive: true });
+  fs.writeFileSync(`dist/data/timezone-${set}.js`,
+    `window.tbTime_timezone_${set.replace(/-/g, '_')} = ` + JSON.stringify(zoneSets[set]));
 });

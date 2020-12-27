@@ -1,8 +1,15 @@
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
-import { initTimezoneSmall } from './timezone-small';
+import { timezoneSmall } from './timezone-small';
+import * as timezoneLarge from './timezone-large';
+import * as timezoneLargeAlt from './timezone-large-alt';
 
-initTimezoneSmall();
+let win: any = null;
+
+try {
+  win = window;
+}
+catch {}
 
 export {
   Calendar, CalendarType, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR, SUNDAY, MONDAY, TUESDAY, WEDNESDAY,
@@ -22,18 +29,37 @@ export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { zonePollerBrowser } from './zone-poller-browser';
 export { zonePollerNode } from './zone-poller-node';
 
+export function initTimezoneSmall(): void {
+  Timezone.defineTimezones(timezoneSmall);
+}
+
+export function initTimezoneLarge(): void {
+  const zones = timezoneLarge?.timezoneLarge ?? win?.tbTime_timezone_large;
+
+  if (zones)
+    Timezone.defineTimezones(zones);
+  else
+    throw new Error('Large timezone set unavailable');
+}
+
+export function initTimezoneLargeAlt(): void {
+  const zones = timezoneLargeAlt?.timezoneLargeAlt ?? win?.tbTime_timezone_large_alt;
+
+  if (zones)
+    Timezone.defineTimezones(zones);
+  else
+    throw new Error('Large-Alt timezone set unavailable');
+}
+
 let pollingInterval: any;
 
-const zonesUrl = 'https://unpkg.com/@tubular/time/dist/timezone-{name}-data.js';
+const zonesUrl = 'https://unpkg.com/@tubular/time/dist/data/timezone-{name}.js';
 
-export function pollForTimezoneUpdates(zonePoller: IZonePoller | false,
-                                       name: 'small' | 'large' | 'large-alt' | 'large_alt' = 'small',
-                                       intervalDays = 1): void {
+export type ZoneOptions = 'small' | 'large' | 'large-alt';
+
+export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: ZoneOptions = 'small', intervalDays = 1): void {
   if (pollingInterval)
     clearInterval(pollingInterval);
-
-  if (name === 'large-alt')
-    name = 'large_alt';
 
   if (zonePoller && name && intervalDays >= 0) {
     const url = zonesUrl.replace('{name}', name);
@@ -47,17 +73,36 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false,
     };
 
     poll();
-    pollingInterval = setInterval(poll, intervalDays * 86400000);
 
-    // Using unref prevents the interval alone from keeping a process alive
-    if (pollingInterval.unref)
-      pollingInterval.unref();
+    if (intervalDays > 0) {
+      pollingInterval = setInterval(poll, intervalDays * 86400000);
+
+      // Using unref prevents the interval alone from keeping a process alive
+      if (pollingInterval.unref)
+        pollingInterval.unref();
+    }
   }
 }
 
-const listeners = new Set<(result: boolean | Error) => void>();
+export async function getTimezones(zonePoller: IZonePoller, name: ZoneOptions = 'small'): Promise<true> {
+  return new Promise<true>((resolve, reject) => {
+    const listener = (result: true | Error): void => {
+      removeZonesUpdateListener(listener);
 
-function dispatchUpdateNotification(result: boolean | Error): void {
+      if (result instanceof Error)
+        reject(result);
+      else
+        resolve(true);
+    };
+
+    addZonesUpdateListener(listener);
+    pollForTimezoneUpdates(zonePoller, name, 0);
+  });
+}
+
+const listeners = new Set<(result: true | Error) => void>();
+
+function dispatchUpdateNotification(result: true | Error): void {
   listeners.forEach(listener => {
     try {
       listener(result);
@@ -66,14 +111,16 @@ function dispatchUpdateNotification(result: boolean | Error): void {
   });
 }
 
-export function addZonesUpdateListener(listener: (result: boolean | Error) => void): void {
+export function addZonesUpdateListener(listener: (result: true | Error) => void): void {
   listeners.add(listener);
 }
 
-export function removeZonesUpdateListener(listener: (result: boolean | Error) => void): void {
+export function removeZonesUpdateListener(listener: (result: true | Error) => void): void {
   listeners.delete(listener);
 }
 
 export function clearZonesUpdateListeners(): void {
   listeners.clear();
 }
+
+initTimezoneSmall();

@@ -12,7 +12,9 @@ export const zonePollerBrowser: IZonePoller = {
         const zoneData = w.tbTime_timezone_small || w.tbTime_timezone_large || w.tbTime_timezone_large_alt;
 
         script.remove();
-        w.tbTime_timezone_small = w.tbTime_timezone_large = w.tbTime_timezone_large_alt = undefined;
+        delete w.tbTime_timezone_small;
+        delete w.tbTime_timezone_large;
+        delete w.tbTime_timezone_large_alt;
         resolve(zoneData);
       };
       script.onerror = () => {

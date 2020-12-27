@@ -1,36 +1,48 @@
 const { resolve } = require('path');
 
-module.exports = env => {
-  const target = env?.target === 'umd' ? 'es5' : 'es2015';
-  const libraryTarget = env?.target === 'umd' ? 'umd' : 'commonjs';
-  const umd = env?.target === 'umd';
-  const library = umd ? ['tbTime', '[name]'] : undefined;
-
-  const config = {
+const cjsConfig = env => {
+  return {
     mode: env?.dev ? 'development' : 'production',
-    target,
+    target: 'es2015',
     entry: {
       index: './dist/index.js',
-      timezone_large: { import: './dist/timezone-large.js', dependOn: 'index' },
-      timezone_large_alt: { import: './dist/timezone-large-alt.js', dependOn: 'index' }
+      'timezone-large': './dist/timezone-large.js',
+      'timezone-large-alt': './dist/timezone-large-alt.js'
     },
     output: {
-      path: resolve(__dirname, 'dist'),
-      filename: `[name].${env?.target || 'cjs'}.js`,
-      libraryTarget,
-      library
+      path: resolve(__dirname, 'dist/cjs'),
+      filename: `[name].js`,
+      libraryTarget: 'commonjs'
     },
     module: {
       rules: [
         { test: /\.js$/, use: 'babel-loader', resolve: { fullySpecified: false } }
       ]
     },
-    externals: ['by-request']
+    externals: ['by-request', '@tubular/math', '@tubular/util', 'lodash', /\.\/timezone-large.*/]
   };
-
-  // Allow umd target to bundle @tubular/math and @tubular/util.
-  if (!umd)
-    config.externals.push(...['@tubular/math', '@tubular/util', 'lodash']);
-
-  return config;
 };
+
+const umdConfig = env => {
+  return {
+    mode: env?.dev ? 'development' : 'production',
+    target: 'es5',
+    entry: {
+      index: './dist/index.js'
+    },
+    output: {
+      path: resolve(__dirname, 'dist/umd'),
+      filename: `index.js`,
+      libraryTarget: 'umd',
+      library: 'tbTime'
+    },
+    module: {
+      rules: [
+        { test: /\.js$/, use: 'babel-loader', resolve: { fullySpecified: false } }
+      ]
+    },
+    externals: ['by-request', /\.\/timezone-large.*/],
+  };
+};
+
+module.exports = [cjsConfig, umdConfig];

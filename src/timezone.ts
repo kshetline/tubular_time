@@ -211,7 +211,7 @@ export class Timezone {
   private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
 
   static defineTimezones(encodedTimezones: {[id: string]: string}): void {
-    this.encodedTimezones = encodedTimezones;
+    this.encodedTimezones = Object.assign({}, encodedTimezones);
     this.zoneLookup = {};
   }
 

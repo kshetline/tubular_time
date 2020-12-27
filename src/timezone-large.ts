@@ -1,5 +1,3 @@
-import { Timezone } from './timezone';
-
 /* eslint-disable quote-props */
 // -5qy 1800,2087 -z .../tzdir/usr/share/zoneinfo
 // noinspection SpellCheckingInspection
@@ -614,5 +612,3 @@ export const timezoneLarge = { // tz database version: 2020e, years 1800-2087
 };
 
 Object.freeze(timezoneLarge);
-
-export const initTimezoneLarge = () => Timezone.defineTimezones(timezoneLarge);
