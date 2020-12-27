@@ -34,7 +34,7 @@ export function initTimezoneSmall(): void {
 }
 
 export function initTimezoneLarge(): void {
-  const zones = timezoneLarge?.timezoneLarge ?? win?.tbTime_timezone_large ?? win?.tmTime_tzcache_large;
+  const zones = timezoneLarge?.timezoneLarge ?? win?.tbTime_timezone_large ?? win?.tbTime_tzcache_large;
 
   if (zones)
     Timezone.defineTimezones(zones);
@@ -43,7 +43,7 @@ export function initTimezoneLarge(): void {
 }
 
 export function initTimezoneLargeAlt(): void {
-  const zones = timezoneLargeAlt?.timezoneLargeAlt ?? win?.tbTime_timezone_large_alt ?? win?.tmTime_tzcache_large_alt;
+  const zones = timezoneLargeAlt?.timezoneLargeAlt ?? win?.tbTime_timezone_large_alt ?? win?.tbTime_tzcache_large_alt;
 
   if (zones)
     Timezone.defineTimezones(zones);
