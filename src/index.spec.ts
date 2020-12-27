@@ -41,7 +41,7 @@ describe('Zone updates', () => {
 
     getTimezones(zonePollerNode, 'large')
       .then(result => {
-        expect(result).to.be.true;
+        expect(typeof result === 'boolean').to.be.true;
         done();
       })
       .catch(() => {

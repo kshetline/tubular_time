@@ -41,7 +41,7 @@ const umdConfig = env => {
         { test: /\.js$/, use: 'babel-loader', resolve: { fullySpecified: false } }
       ]
     },
-    externals: ['by-request', /\.\/timezone-large.*/],
+    externals: ['by-request', /\.\/timezone-large.*/]
   };
 };
 
