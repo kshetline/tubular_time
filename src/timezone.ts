@@ -19,6 +19,7 @@
 
 import { div_tt0, mod2, round } from '@tubular/math';
 import { padLeft } from '@tubular/util';
+import isEqual from 'lodash/isEqual';
 import last from 'lodash/last';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
@@ -210,9 +211,15 @@ export class Timezone {
   private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
   private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
 
-  static defineTimezones(encodedTimezones: {[id: string]: string}): void {
-    this.encodedTimezones = Object.assign({}, encodedTimezones);
-    this.zoneLookup = {};
+  static defineTimezones(encodedTimezones: {[id: string]: string}): boolean {
+    const changed = !isEqual(this.encodedTimezones, encodedTimezones);
+
+    this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
+
+    if (changed)
+      this.zoneLookup = {};
+
+    return changed;
   }
 
   static getAvailableTimezones(): string[] {

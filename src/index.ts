@@ -26,6 +26,7 @@ export {
   parseISODateTime, parseTimeOffset
 } from './common';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
+export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
 export { zonePollerNode } from './zone-poller-node';
 
@@ -63,11 +64,9 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
 
   if (zonePoller && name && intervalDays >= 0) {
     const url = zonesUrl.replace('{name}', name);
-    console.log(url);
     const poll = () => {
       zonePoller.getTimezones(url).then(zones => {
-        Timezone.defineTimezones(zones);
-        dispatchUpdateNotification(true);
+        dispatchUpdateNotification(Timezone.defineTimezones(zones));
       })
         .catch(err => dispatchUpdateNotification(err instanceof Error ? err : new Error(err)));
     };
@@ -84,15 +83,15 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
   }
 }
 
-export async function getTimezones(zonePoller: IZonePoller, name: ZoneOptions = 'small'): Promise<true> {
-  return new Promise<true>((resolve, reject) => {
-    const listener = (result: true | Error): void => {
+export async function getTimezones(zonePoller: IZonePoller, name: ZoneOptions = 'small'): Promise<boolean> {
+  return new Promise<boolean>((resolve, reject) => {
+    const listener = (result: boolean | Error): void => {
       removeZonesUpdateListener(listener);
 
       if (result instanceof Error)
         reject(result);
       else
-        resolve(true);
+        resolve(result);
     };
 
     addZonesUpdateListener(listener);
@@ -100,22 +99,24 @@ export async function getTimezones(zonePoller: IZonePoller, name: ZoneOptions = 
   });
 }
 
-const listeners = new Set<(result: true | Error) => void>();
+const listeners = new Set<(result: boolean | Error) => void>();
 
-function dispatchUpdateNotification(result: true | Error): void {
+function dispatchUpdateNotification(result: boolean | Error): void {
   listeners.forEach(listener => {
     try {
       listener(result);
     }
-    catch (e) {}
+    catch (e) {
+      console.error(e);
+    }
   });
 }
 
-export function addZonesUpdateListener(listener: (result: true | Error) => void): void {
+export function addZonesUpdateListener(listener: (result: boolean | Error) => void): void {
   listeners.add(listener);
 }
 
-export function removeZonesUpdateListener(listener: (result: true | Error) => void): void {
+export function removeZonesUpdateListener(listener: (result: boolean | Error) => void): void {
   listeners.delete(listener);
 }
 
