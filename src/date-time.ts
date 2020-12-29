@@ -18,11 +18,7 @@
 */
 
 import { div_rd, mod, round } from '@tubular/math';
-import { padLeft } from '@tubular/util';
-import clone from 'lodash/clone';
-import isNumber from 'lodash/isNumber';
-import isObject from 'lodash/isObject';
-import isUndefined from 'lodash/isUndefined';
+import { clone, isNumber, isObject, padLeft } from '@tubular/util';
 import {
   getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, SUNDAY, YearOrDate, YMDDate
 } from './calendar';
@@ -178,7 +174,7 @@ export class DateTime extends Calendar {
   getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number {
     let year: number;
 
-    if (isUndefined(yearOrDate)) {
+    if (yearOrDate == null) {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
@@ -210,7 +206,7 @@ export class DateTime extends Calendar {
   getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
     let year: number;
 
-    if (isUndefined(yearOrDate)) {
+    if (yearOrDate == null) {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
@@ -222,7 +218,7 @@ export class DateTime extends Calendar {
   getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
     let year: number;
 
-    if (isUndefined(yearOrDate)) {
+    if (yearOrDate == null) {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
@@ -234,7 +230,7 @@ export class DateTime extends Calendar {
   getCalendarMonth(yearOrStartingDay: number, month?: number, startingDayOfWeek?: number): YMDDate[] {
     let year: number;
 
-    if (isUndefined(month))
+    if (month == null)
       [year, month, startingDayOfWeek] = [this._wallTime.y,  this._wallTime.m, yearOrStartingDay];
     else
       year = yearOrStartingDay;

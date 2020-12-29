@@ -1,8 +1,8 @@
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
-import { timezoneSmall } from './timezone-small';
-import * as timezoneLarge from './timezone-large';
-import * as timezoneLargeAlt from './timezone-large-alt';
+import timezoneSmall from './timezone-small';
+import timezoneLarge from './timezone-large';
+import timezoneLargeAlt from './timezone-large-alt';
 
 let win: any = null;
 
@@ -35,7 +35,7 @@ export function initTimezoneSmall(): void {
 }
 
 export function initTimezoneLarge(): void {
-  const zones = timezoneLarge?.timezoneLarge ?? win?.tbTime_timezone_large ?? win?.tbTime_tzcache_large;
+  const zones = timezoneLarge ?? win?.tbTime_timezone_large ?? win?.tbTime_tzcache_large;
 
   if (zones)
     Timezone.defineTimezones(zones);
@@ -44,7 +44,7 @@ export function initTimezoneLarge(): void {
 }
 
 export function initTimezoneLargeAlt(): void {
-  const zones = timezoneLargeAlt?.timezoneLargeAlt ?? win?.tbTime_timezone_large_alt ?? win?.tbTime_tzcache_large_alt;
+  const zones = timezoneLargeAlt ?? win?.tbTime_timezone_large_alt ?? win?.tbTime_tzcache_large_alt;
 
   if (zones)
     Timezone.defineTimezones(zones);

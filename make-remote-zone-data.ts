@@ -1,7 +1,7 @@
 import fs from 'fs';
-import { timezoneSmall } from './src/timezone-small';
-import { timezoneLarge } from './src/timezone-large';
-import { timezoneLargeAlt } from './src/timezone-large-alt';
+import timezoneSmall from './src/timezone-small';
+import timezoneLarge from './src/timezone-large';
+import timezoneLargeAlt from './src/timezone-large-alt';
 
 const zoneSets = {
   small: timezoneSmall,

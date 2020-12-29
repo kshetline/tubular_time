@@ -18,12 +18,7 @@
 */
 
 import { div_rd, div_tt0, mod } from '@tubular/math';
-import { padLeft } from '@tubular/util';
-import isArray from 'lodash/isArray';
-import isNumber from 'lodash/isNumber';
-import isObject from 'lodash/isObject';
-import isString from 'lodash/isString';
-import isUndefined from 'lodash/isUndefined';
+import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
 
 export enum CalendarType {PURE_GREGORIAN, PURE_JULIAN}
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
@@ -90,7 +85,7 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
     day   = (yearOrDate as YMDDate).d;
   }
 
-  if (isUndefined(year) || isUndefined(month) || isUndefined(day))
+  if (year == null || month == null || day == null)
     throw new Error('Calendar: Invalid date arguments');
 
   return [year, month, day];
@@ -274,7 +269,7 @@ export function getDayOfWeek(dayNum: number): number {
  * @return Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-  if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
+  if (isNumber(yearOrDateOrDayNum) && month == null)
     return mod((yearOrDateOrDayNum as number) + 4, 7);
   else
     return getDayOfWeek(getDayNumber_SGC(yearOrDateOrDayNum, month, day));
@@ -671,7 +666,7 @@ export class Calendar {
   }
 
   getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-    if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
+    if (isNumber(yearOrDateOrDayNum) && month == null)
       return getDayOfWeek(yearOrDateOrDayNum as number);
     else
       return getDayOfWeek(this.getDayNumber(yearOrDateOrDayNum, month, day));

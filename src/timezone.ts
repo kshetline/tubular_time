@@ -18,9 +18,7 @@
 */
 
 import { div_tt0, mod2, round } from '@tubular/math';
-import { padLeft } from '@tubular/util';
-import isEqual from 'lodash/isEqual';
-import last from 'lodash/last';
+import { isEqual, last, padLeft } from '@tubular/util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
 

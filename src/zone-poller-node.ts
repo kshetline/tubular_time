@@ -5,9 +5,9 @@ let requestText: (url: string) => Promise<string>;
 export const zonePollerNode: IZonePoller = {
   async getTimezones(url: string): Promise<{ [p: string]: string }> {
     if (!requestText) {
-      try {
+      try { // Obscure name of by-request package to prevent webpack from generating a dependency.
         // @ts-ignore
-        requestText = (await import(/* webpackIgnore: true */ 'by-request')).requestText;
+        requestText = (await import(/* webpackIgnore: true */ 'tseuqer-yb'.split('').reverse().join(''))).requestText;
       }
       catch {}
     }

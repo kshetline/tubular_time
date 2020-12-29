@@ -1,15 +1,15 @@
 {
   "name": "@tubular/time",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "description": "Date/time, IANA timezones, calendar with settable Julian/Gregorian switchover",
-  "browser": "dist/umd/index.js",
-  "main": "dist/cjs/index.js",
+  "browser": "dist/web/index.js",
+  "main": "dist/es5/index.js",
   "module": "dist/index.js",
   "esm2015": "dist/index.js",
   "typings": "dist/index",
   "sideEffects": false,
   "scripts": {
-    "build": "rimraf dist/ && tsc && webpack && ts-node make-remote-zone-data.ts",
+    "build": "rimraf dist/ && tsc && tsc --build tsconfig.es5.json && webpack && ts-node make-remote-zone-data.ts",
     "prepublishOnly": "npm run build",
     "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
     "test": "nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
@@ -31,16 +31,14 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "license": "MIT",
   "dependencies": {
-    "@tubular/math": "^2.0.5",
-    "@tubular/util": "^3.0.4",
-    "lodash": "^4.17.20"
+    "@tubular/math": "^2.1.0",
+    "@tubular/util": "^3.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/preset-env": "^7.12.11",
     "@babel/register": "^7.12.10",
     "@types/chai": "^4.2.14",
-    "@types/lodash": "^4.14.165",
     "@types/mocha": "^8.0.4",
     "@types/node": "^14.14.10",
     "@typescript-eslint/eslint-plugin": "^4.8.2",
@@ -57,6 +55,7 @@
     "eslint-plugin-standard": "^5.0.0",
     "esm": "^3.2.25",
     "mocha": "^8.2.1",
+    "null-loader": "^4.0.1",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",

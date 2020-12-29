@@ -3,8 +3,8 @@ import {
   addZonesUpdateListener, clearZonesUpdateListeners, getTimezones, initTimezoneSmall,
   pollForTimezoneUpdates, Timezone
 } from './index';
-import { timezoneSmall } from './timezone-small';
-import { timezoneLarge } from './timezone-large';
+import timezoneSmall from './timezone-small';
+import timezoneLarge from './timezone-large';
 import { zonePollerNode } from './zone-poller-node';
 
 describe('Zone updates', () => {
