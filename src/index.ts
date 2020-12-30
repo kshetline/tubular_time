@@ -11,6 +11,13 @@ try {
 }
 catch {}
 
+Timezone.defineTimezones(win?.tbTime_timezone_large ?? win?.tbTime_timezone_large_alt ?? timezoneSmall);
+
+if (win) {
+  delete win.tbTime_timezone_large;
+  delete win.tbTime_timezone_large_alt;
+}
+
 export {
   Calendar, CalendarType, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR, SUNDAY, MONDAY, TUESDAY, WEDNESDAY,
   THURSDAY, FRIDAY, SATURDAY, LAST, YMDDate, YearOrDate, GregorianChange, getISOFormatDate, addDaysToDate_SGC,
@@ -34,22 +41,36 @@ export function initTimezoneSmall(): void {
   Timezone.defineTimezones(timezoneSmall);
 }
 
-export function initTimezoneLarge(): void {
+export function initTimezoneLarge(failQuietly = false): void {
   const zones = timezoneLarge ?? win?.tbTime_timezone_large ?? win?.tbTime_tzcache_large;
 
   if (zones)
     Timezone.defineTimezones(zones);
-  else
-    throw new Error('Large timezone set unavailable');
+  else {
+    const msg = 'Large timezone definitions unavailable. Falling back to defaults.';
+
+    console.error(msg);
+    Timezone.defineTimezones(timezoneSmall);
+
+    if (!failQuietly)
+      throw new Error(msg);
+  }
 }
 
-export function initTimezoneLargeAlt(): void {
+export function initTimezoneLargeAlt(failQuietly = false): void {
   const zones = timezoneLargeAlt ?? win?.tbTime_timezone_large_alt ?? win?.tbTime_tzcache_large_alt;
 
   if (zones)
     Timezone.defineTimezones(zones);
-  else
-    throw new Error('Large-Alt timezone set unavailable');
+  else {
+    const msg = 'Large-Alt timezone definitions unavailable. Falling back to defaults.';
+
+    console.error(msg);
+    Timezone.defineTimezones(timezoneSmall);
+
+    if (!failQuietly)
+      throw new Error(msg);
+  }
 }
 
 let pollingInterval: any;
@@ -123,5 +144,3 @@ export function removeZonesUpdateListener(listener: (result: boolean | Error) =>
 export function clearZonesUpdateListeners(): void {
   listeners.clear();
 }
-
-initTimezoneSmall();

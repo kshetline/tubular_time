@@ -22,7 +22,7 @@ export const zonePollerBrowser: IZonePoller = {
       };
       script.onerror = () => {
         script.remove();
-        reject(new Error('Failed to load timezone data from ' + url));
+        reject(new Error('Failed to load timezone definitions from ' + url));
       };
       script.src = url;
     });
