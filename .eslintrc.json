@@ -21,6 +21,7 @@
     "@typescript-eslint",
     "chai-friendly"
   ],
+  "ignorePatterns": ["dist/**/*"],
   "rules": {
     "brace-style": [
       "error",
@@ -47,16 +48,14 @@
       2,
       {
         "ArrayExpression": "first",
+        "CallExpression": { "arguments": "off" },
         "FunctionDeclaration": { "parameters": "off" },
-        "ignoredNodes": [
-          "CallExpression",
-          "ClassProperty Literal",
-          "IfStatement > :expression *",
-          "MethodDefinition Identifier",
-          "NewExpression *",
-          "WhileStatement > :expression *"
-        ],
+        "FunctionExpression": { "parameters": "off" },
         "ignoreComments": true,
+        "ignoredNodes": [
+          "ClassProperty[value]",
+          "NewExpression[arguments] :expression *"
+        ],
         "ObjectExpression": "first",
         "SwitchCase": 1
       }
@@ -64,13 +63,15 @@
     "key-spacing": "off",
     "multiline-ternary": "off",
     "no-control-regex": "off",
+    "no-empty": "off",
     "no-labels": "off",
     "no-mixed-operators": "off",
     "no-multi-spaces": "off",
     "no-new": "off",
-    "no-prototype-builtins": "off",
     "no-return-assign": "off",
     "no-unused-expressions": "off",
+    "no-useless-constructor": "off",
+    "@typescript-eslint/no-useless-constructor": "error",
     "chai-friendly/no-unused-expressions": "error",
     "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
@@ -101,6 +102,7 @@
       "error",
       "single",
       {
+        "allowTemplateLiterals": true,
         "avoidEscape": true
       }
     ],

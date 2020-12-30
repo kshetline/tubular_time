@@ -17,14 +17,8 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, div_tt0, mod } from 'ks-math';
-import { padLeft } from 'ks-util';
-import isArray from 'lodash/isArray';
-import isNil from 'lodash/isNil';
-import isNumber from 'lodash/isNumber';
-import isObject from 'lodash/isObject';
-import isString from 'lodash/isString';
-import isUndefined from 'lodash/isUndefined';
+import { div_rd, div_tt0, mod } from '@tubular/math';
+import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
 
 export enum CalendarType {PURE_GREGORIAN, PURE_JULIAN}
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
@@ -91,8 +85,8 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
     day   = (yearOrDate as YMDDate).d;
   }
 
-  if (isUndefined(year) || isUndefined(month) || isUndefined(day))
-    throw new Error('KsCalendar: Invalid date arguments');
+  if (year == null || month == null || day == null)
+    throw new Error('Calendar: Invalid date arguments');
 
   return [year, month, day];
 }
@@ -164,6 +158,7 @@ export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?:
   return 367 * year - div_rd(7 * (year + div_tt0(month + 9, 12)), 4) + div_tt0(275 * month, 9) + day - 719561;
 }
 
+// noinspection JSUnusedLocalSymbols
 /**
  * Always returns 1. This function exists only to parallel getFirstDateInMonth, which isn't always 1 when the
  * Gregorian change date is not fixed.
@@ -274,7 +269,7 @@ export function getDayOfWeek(dayNum: number): number {
  * @return Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-  if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
+  if (isNumber(yearOrDateOrDayNum) && month == null)
     return mod((yearOrDateOrDayNum as number) + 4, 7);
   else
     return getDayOfWeek(getDayNumber_SGC(yearOrDateOrDayNum, month, day));
@@ -476,7 +471,7 @@ export function parseISODate(date: string): YMDDate {
   return { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) };
 }
 
-export class KsCalendar {
+export class Calendar {
   private gcYear  = 1582;
   private gcMonth = 10;
   private gcDate  = 15;
@@ -492,7 +487,7 @@ export class KsCalendar {
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else if (gcYearOrDateOrType === CalendarType.PURE_JULIAN)
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
-    else if (arguments.length === 0 || isNil(gcYearOrDateOrType))
+    else if (arguments.length === 0 || gcYearOrDateOrType == null)
       this.setGregorianChange(1582, 10, 15);
     else
       this.setGregorianChange(<YearOrDate | string> gcYearOrDateOrType, gcMonth, gcDate);
@@ -538,20 +533,20 @@ export class KsCalendar {
 
     if (gcYear < GREGORIAN_CHANGE_MIN_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear > DISTANT_YEAR_PAST)
-        throw new Error('KsCalendar: Gregorian change year cannot be less than ' + GREGORIAN_CHANGE_MIN_YEAR);
+        throw new Error('Calendar: Gregorian change year cannot be less than ' + GREGORIAN_CHANGE_MIN_YEAR);
 
       this.firstGregorianDay = Number.MIN_SAFE_INTEGER;
       this.gcYear = DISTANT_YEAR_PAST;
     }
     else if (gcYear > GREGORIAN_CHANGE_MAX_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear < DISTANT_YEAR_FUTURE)
-        throw new Error('KsCalendar: Gregorian change year cannot be greater than ' + GREGORIAN_CHANGE_MAX_YEAR);
+        throw new Error('Calendar: Gregorian change year cannot be greater than ' + GREGORIAN_CHANGE_MAX_YEAR);
 
       this.firstGregorianDay = Number.MAX_SAFE_INTEGER;
       this.gcYear = DISTANT_YEAR_FUTURE;
     }
     else if (!isValidDateGregorian(gcYear, gcMonth, gcDate))
-      throw new Error('KsCalendar: Invalid Gregorian date: ' + getISOFormatDate(gcYear, gcMonth, gcDate));
+      throw new Error('Calendar: Invalid Gregorian date: ' + getISOFormatDate(gcYear, gcMonth, gcDate));
 
     this.gcYear  = gcYear;
     this.gcMonth = gcMonth;
@@ -671,7 +666,7 @@ export class KsCalendar {
   }
 
   getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-    if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
+    if (isNumber(yearOrDateOrDayNum) && month == null)
       return getDayOfWeek(yearOrDateOrDayNum as number);
     else
       return getDayOfWeek(this.getDayNumber(yearOrDateOrDayNum, month, day));

@@ -17,27 +17,22 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, mod, round } from 'ks-math';
-import { padLeft } from 'ks-util';
-import clone from 'lodash/clone';
-import isNil from 'lodash/isNil';
-import isNumber from 'lodash/isNumber';
-import isObject from 'lodash/isObject';
-import isUndefined from 'lodash/isUndefined';
+import { div_rd, mod, round } from '@tubular/math';
+import { clone, isNumber, isObject, padLeft } from '@tubular/util';
 import {
-  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, KsCalendar, SUNDAY, YearOrDate, YMDDate
-} from './ks-calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC } from './ks-date-time-zone-common';
-import { KsTimeZone } from './ks-timezone';
+  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, SUNDAY, YearOrDate, YMDDate
+} from './calendar';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC } from './common';
+import { Timezone } from './timezone';
 
 export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, MONTHS, YEARS }
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
-export class KsDateTime extends KsCalendar {
+export class DateTime extends Calendar {
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
-  private _timeZone = KsTimeZone.OS_ZONE;
+  private _timezone = Timezone.OS_ZONE;
 
   static julianDay(millis: number): number {
     return millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
@@ -52,11 +47,11 @@ export class KsDateTime extends KsCalendar {
              (hour + (minute + second / 60.0) / 60.0) / 24.0;
   }
 
-  constructor(initialTime?: number | DateAndTime | null, timeZone?: KsTimeZone | null, gregorianChange?: GregorianChange) {
+  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null, gregorianChange?: GregorianChange) {
     super(gregorianChange);
 
-    if (timeZone)
-      this._timeZone = timeZone;
+    if (timezone)
+      this._timezone = timezone;
 
     if (isObject(initialTime)) {
       this.wallTime = clone(initialTime as DateAndTime);
@@ -84,7 +79,7 @@ export class KsDateTime extends KsCalendar {
   set wallTime(newTime: DateAndTime) {
     this._wallTime = clone(newTime);
 
-    if (isNil(this._wallTime.millis))
+    if (this._wallTime.millis == null)
       this._wallTime.millis = 0;
 
     this.computeUtcTimeMillis();
@@ -92,33 +87,33 @@ export class KsDateTime extends KsCalendar {
     this.updateWallTime();
   }
 
-  get timeZone(): KsTimeZone { return this._timeZone; }
+  get timezone(): Timezone { return this._timezone; }
 
-  set timeZone(newZone: KsTimeZone) {
-    if (this._timeZone !== newZone) {
-      this._timeZone = newZone;
+  set timezone(newZone: Timezone) {
+    if (this._timezone !== newZone) {
+      this._timezone = newZone;
       this.computeWallTime();
     }
   }
 
   get utcOffsetSeconds(): number {
-    return this._timeZone.getOffset(this._utcTimeMillis);
+    return this._timezone.getOffset(this._utcTimeMillis);
   }
 
   get utcOffsetMinutes(): number {
-    return round(this._timeZone.getOffset(this._utcTimeMillis) / 60);
+    return round(this._timezone.getOffset(this._utcTimeMillis) / 60);
   }
 
   get dstOffsetSeconds(): number {
-    return this._timeZone.getOffsets(this._utcTimeMillis)[1];
+    return this._timezone.getOffsets(this._utcTimeMillis)[1];
   }
 
   get dstOffsetMinutes(): number {
-    return round(this._timeZone.getOffsets(this._utcTimeMillis)[1] / 60);
+    return round(this._timezone.getOffsets(this._utcTimeMillis)[1] / 60);
   }
 
-  getTimeZoneDisplayName(): string {
-    return this._timeZone.getDisplayName(this._utcTimeMillis);
+  getTimezoneDisplayName(): string {
+    return this._timezone.getDisplayName(this._utcTimeMillis);
   }
 
   add(field: DateTimeField, amount: number): void {
@@ -179,7 +174,7 @@ export class KsDateTime extends KsCalendar {
   getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number {
     let year: number;
 
-    if (isUndefined(yearOrDate)) {
+    if (yearOrDate == null) {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
@@ -187,12 +182,12 @@ export class KsDateTime extends KsCalendar {
 
     let dayMillis = this.getDayNumber(year, month, day) * DAY_MSEC;
 
-    dayMillis -= this.timeZone.getOffsetForWallTime(dayMillis) * 1000;
+    dayMillis -= this.timezone.getOffsetForWallTime(dayMillis) * 1000;
 
     // There are weird turning-back-the-clock situations where there are two midnights
     // during a single day. Make sure we're getting the earlier midnight unless the
     // earlier midnight doesn't match the day of the month requested.
-    const transition = this.timeZone.findTransitionByUtc(dayMillis);
+    const transition = this.timezone.findTransitionByUtc(dayMillis);
 
     if (transition !== null && transition.deltaOffset < 0 && dayMillis < transition.transitionTime - transition.deltaOffset * 1000) {
       const earlier = dayMillis + transition.deltaOffset * 1000;
@@ -211,7 +206,7 @@ export class KsDateTime extends KsCalendar {
   getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
     let year: number;
 
-    if (isUndefined(yearOrDate)) {
+    if (yearOrDate == null) {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
@@ -223,7 +218,7 @@ export class KsDateTime extends KsCalendar {
   getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
     let year: number;
 
-    if (isUndefined(yearOrDate)) {
+    if (yearOrDate == null) {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
@@ -235,7 +230,7 @@ export class KsDateTime extends KsCalendar {
   getCalendarMonth(yearOrStartingDay: number, month?: number, startingDayOfWeek?: number): YMDDate[] {
     let year: number;
 
-    if (isUndefined(month))
+    if (month == null)
       [year, month, startingDayOfWeek] = [this._wallTime.y,  this._wallTime.m, yearOrStartingDay];
     else
       year = yearOrStartingDay;
@@ -256,7 +251,7 @@ export class KsDateTime extends KsCalendar {
 
     s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + ':' + padLeft(wt.sec, 2, '0') +
          '.' + padLeft(wt.millis, 3, '0') + (wt.occurrence === 2 ? '\u2082' : ' ') + // Subscript 2
-         KsTimeZone.formatUtcOffset(wt.utcOffset) + KsTimeZone.getDstSymbol(wt.dstOffset);
+         Timezone.formatUtcOffset(wt.utcOffset) + Timezone.getDstSymbol(wt.dstOffset);
 
     return s;
   }
@@ -265,7 +260,7 @@ export class KsDateTime extends KsCalendar {
     const wt = this._wallTime;
     let s = getISOFormatDate(wt);
 
-    s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + KsTimeZone.getDstSymbol(wt.dstOffset);
+    s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + Timezone.getDstSymbol(wt.dstOffset);
 
     return s;
   }
@@ -275,7 +270,7 @@ export class KsDateTime extends KsCalendar {
     let s = getISOFormatDate(wt);
 
     s += 'T' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + ':' + padLeft(wt.sec, 2, '0') +
-         '.' + padLeft(wt.millis, 3, '0') + KsTimeZone.formatUtcOffset(wt.utcOffset);
+         '.' + padLeft(wt.millis, 3, '0') + Timezone.formatUtcOffset(wt.utcOffset);
 
     return s;
   }
@@ -284,7 +279,7 @@ export class KsDateTime extends KsCalendar {
     const wt = this._wallTime;
 
     return padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') +
-            (includeDst ? KsTimeZone.getDstSymbol(wt.dstOffset) : '');
+            (includeDst ? Timezone.getDstSymbol(wt.dstOffset) : '');
   }
 
   private computeUtcTimeMillis(): void {
@@ -294,10 +289,10 @@ export class KsDateTime extends KsCalendar {
                  this._wallTime.hrs * 3600000 +
                  this.getDayNumber(this._wallTime) * 86400000;
 
-    millis -= this._timeZone.getOffsetForWallTime(millis) * 1000;
+    millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
 
     if (this._wallTime.occurrence === 1) {
-      const transition = this.timeZone.findTransitionByUtc(millis);
+      const transition = this.timezone.findTransitionByUtc(millis);
 
       if (transition !== null && transition.deltaOffset < 0 && millis < transition.transitionTime - transition.deltaOffset * 1000)
         millis += transition.deltaOffset * 1000;
@@ -311,7 +306,7 @@ export class KsDateTime extends KsCalendar {
   }
 
   getWallTimeForMillis(millis: number): DateAndTime {
-    let ticks = millis + this._timeZone.getOffset(millis) * 1000;
+    let ticks = millis + this._timezone.getOffset(millis) * 1000;
     const wallTimeMillis = ticks;
     const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000)) as DateAndTime;
 
@@ -322,12 +317,12 @@ export class KsDateTime extends KsCalendar {
     wallTime.min = mod(ticks, 60);
     ticks = div_rd(ticks, 60);
     wallTime.hrs = mod(ticks, 24);
-    const offsets = this._timeZone.getOffsets(millis);
+    const offsets = this._timezone.getOffsets(millis);
     wallTime.utcOffset = offsets[0];
     wallTime.dstOffset = offsets[1];
     wallTime.occurrence = 1;
 
-    const transition = this.timeZone.findTransitionByWallTime(wallTimeMillis);
+    const transition = this.timezone.findTransitionByWallTime(wallTimeMillis);
 
     if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 1000)
       wallTime.occurrence = 2;
@@ -336,7 +331,7 @@ export class KsDateTime extends KsCalendar {
   }
 
   private updateWallTime(): void {
-    const offsets = this._timeZone.getOffsets(this._utcTimeMillis);
+    const offsets = this._timezone.getOffsets(this._utcTimeMillis);
 
     this._wallTime.utcOffset = offsets[0];
     this._wallTime.dstOffset = offsets[1];
@@ -345,7 +340,7 @@ export class KsDateTime extends KsCalendar {
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 
-    if (this._timeZone)
+    if (this._timezone)
       this.computeWallTime();
   }
 }

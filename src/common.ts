@@ -17,8 +17,8 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, mod } from 'ks-math';
-import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './ks-calendar';
+import { div_rd, mod } from '@tubular/math';
+import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './calendar';
 
 export interface DateAndTime extends YMDDate {
   hrs: number;

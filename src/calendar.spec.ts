@@ -1,8 +1,8 @@
 import { assert, expect } from 'chai';
-import { getISOFormatDate, KsCalendar, LAST, YMDDate } from './ks-calendar';
+import { getISOFormatDate, Calendar, LAST, YMDDate } from './calendar';
 
-describe('KsCalendar', () => {
-  const calendar = new KsCalendar();
+describe('Calendar', () => {
+  const calendar = new Calendar();
 
   it('should consistently convert the date for a day number back to the same day number.', () => {
     let match = true;
