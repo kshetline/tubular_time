@@ -227,7 +227,9 @@ export class DateTime extends Calendar {
     return round((this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / MINUTE_MSEC);
   }
 
-  getCalendarMonth(yearOrStartingDay: number, month?: number, startingDayOfWeek?: number): YMDDate[] {
+  getCalendarMonth(year: number, month: number, startingDayOfWeek?: number): YMDDate[];
+  getCalendarMonth(startingDayOfWeek?: number): YMDDate[];
+  getCalendarMonth(yearOrStartingDay?: number, month?: number, startingDayOfWeek?: number): YMDDate[] {
     let year: number;
 
     if (month == null)
@@ -342,5 +344,83 @@ export class DateTime extends Calendar {
 
     if (this._timezone)
       this.computeWallTime();
+  }
+
+  getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
+    return super.getDayNumber(yearOrDate ?? this._wallTime, month, day);
+  }
+
+  getFirstDateInMonth(year?: number, month?: number): number {
+    return super.getFirstDateInMonth(year ?? this._wallTime.y, month ?? this._wallTime.m);
+  }
+
+  getLastDateInMonth(year?: number, month?: number): number {
+    return super.getLastDateInMonth(year ?? this._wallTime.y, month ?? this._wallTime.m);
+  }
+
+  getDaysInMonth(year?: number, month?: number): number {
+    return super.getDaysInMonth(year ?? this._wallTime.y, month ?? this._wallTime.m);
+  }
+
+  getDaysInYear(year?: number): number {
+    return super.getDaysInYear(year ?? this._wallTime.y);
+  }
+
+  getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number {
+    return super.getDayOfWeek(yearOrDateOrDayNum ?? this._wallTime, month, day);
+  }
+
+  getDateOfNthWeekdayOfMonth(year: number, month: number, dayOfTheWeek: number, index: number): number;
+  getDateOfNthWeekdayOfMonth(dayOfTheWeek: number, index: number): number;
+  getDateOfNthWeekdayOfMonth(...args: number[]): number {
+    if (args.length >= 4)
+      return super.getDateOfNthWeekdayOfMonth(args[0], args[1], args[2], args[3]);
+    else
+      return super.getDateOfNthWeekdayOfMonth(this._wallTime.y, this._wallTime.m, args[0], args[1]);
+  }
+
+  getDayOfWeekInMonthCount(year: number, month: number, dayOfTheWeek: number): number;
+  getDayOfWeekInMonthCount(dayOfTheWeek: number): number;
+  getDayOfWeekInMonthCount(...args: number[]): number {
+    if (args.length >= 3)
+      return super.getDayOfWeekInMonthCount(args[0], args[1], args[2]);
+    else
+      return super.getDayOfWeekInMonthCount(this._wallTime.y, this._wallTime.m, args[0]);
+  }
+
+  getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number;
+  getDayOnOrAfter(dayOfTheWeek: number, minDate: number): number;
+  getDayOnOrAfter(...args: number[]): number {
+    if (args.length >= 4)
+      return super.getDayOnOrAfter(args[0], args[1], args[2], args[3]);
+    else
+      return super.getDayOnOrAfter(this._wallTime.y, this._wallTime.m, args[0], args[1]);
+  }
+
+  getDayOnOrBefore(year: number, month: number, dayOfTheWeek: number, maxDate: number): number;
+  getDayOnOrBefore(dayOfTheWeek: number, minDate: number): number;
+  getDayOnOrBefore(...args: number[]): number {
+    if (args.length >= 4)
+      return super.getDayOnOrBefore(args[0], args[1], args[2], args[3]);
+    else
+      return super.getDayOnOrBefore(this._wallTime.y, this._wallTime.m, args[0], args[1]);
+  }
+
+  addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: number): YMDDate;
+  addDaysToDate(deltaDays: number): YMDDate;
+  addDaysToDate(deltaDays: number, yearOrDate?: YearOrDate, month?: number, day?: number): YMDDate {
+    if (yearOrDate == null)
+      return super.addDaysToDate(deltaDays, this._wallTime);
+    else
+      return super.addDaysToDate(deltaDays, yearOrDate, month, day);
+  }
+
+  getMissingDateRange(year: number, month: number): number[] | null;
+  getMissingDateRange(): number[] | null;
+  getMissingDateRange(...args: number[]): number[] | null {
+    if (args.length >= 2)
+      return super.getMissingDateRange(args[0], args[1]);
+    else
+      return super.getMissingDateRange(this._wallTime.y, this._wallTime.m);
   }
 }
