@@ -6,10 +6,17 @@ import { isEqual, isString } from '@tubular/util';
 import moment from 'moment/moment';
 import { getMeridiems, normalizeLocale } from './locale-data';
 
+let hasIntlDateTime = false;
+
+try {
+  hasIntlDateTime = typeof Intl !== 'undefined' && !!Intl?.DateTimeFormat;
+}
+catch {}
+
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second' };
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZ|zz|Z|z|X|x|I[FLMSx][FLMS])/g;
+const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, LocaleInfo> = {};
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -42,7 +49,7 @@ export function decomposeFormatString(format: string): string[] {
 }
 
 export function format(dt: DateTime, fmt: string): string {
-  const localeName = !Intl?.DateTimeFormat ? 'en' : normalizeLocale(dt.locale);
+  const localeName = !hasIntlDateTime ? 'en' : normalizeLocale(dt.locale);
   const locale = getLocaleInfo(localeName);
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
@@ -285,36 +292,46 @@ function getLocaleInfo(localeName: string): LocaleInfo {
   const fmt = (opts: any) => quickFormat(localeName, 'UTC', opts);
 
   locale.name = localeName;
-  locale.months = [];
-  locale.monthsShort = [];
 
-  for (let month = 1; month <= 12; ++month) {
-    const date = Date.UTC(2021, month - 1, 1);
-    let format = fmt({ month: 'long' });
+  if (hasIntlDateTime) {
+    locale.months = [];
+    locale.monthsShort = [];
 
-    locale.months.push(getDatePart(format, date, 'month'));
-    format = fmt({ month: 'short' });
-    locale.monthsShort.push(getDatePart(format, date, 'month'));
+    for (let month = 1; month <= 12; ++month) {
+      const date = Date.UTC(2021, month - 1, 1);
+      let format = fmt({ M: 'l' });
+
+      locale.months.push(getDatePart(format, date, 'month'));
+      format = fmt({ M: 's' });
+      locale.monthsShort.push(getDatePart(format, date, 'month'));
+    }
+
+    locale.weekdays = [];
+    locale.weekdaysShort = [];
+    locale.weekdaysMin = [];
+
+    for (let day = 3; day <= 9; ++day) {
+      const date = Date.UTC(2021, 0, day);
+      let format = new Intl.DateTimeFormat(localeName, { timeZone: 'UTC', weekday: 'long' });
+
+      locale.weekdays.push(getDatePart(format, date, 'weekday'));
+      format = fmt({ w: 's' });
+      locale.weekdaysShort.push(getDatePart(format, date, 'weekday'));
+      format = fmt({ w: 'n' });
+      locale.weekdaysMin.push(getDatePart(format, date, 'weekday'));
+    }
+
+    // If weekdaysMin are so narrow that there are non-unique names, try either 2 or 3 characters from weekdaysShort.
+    for (let len = 2; len < 4 && new Set(locale.weekdaysMin).size < 7; ++len)
+      locale.weekdaysMin = locale.weekdaysShort.map(name => name.substr(0, len));
   }
-
-  locale.weekdays = [];
-  locale.weekdaysShort = [];
-  locale.weekdaysMin = [];
-
-  for (let day = 3; day <= 9; ++day) {
-    const date = Date.UTC(2021, 0, day);
-    let format = new Intl.DateTimeFormat(localeName, { timeZone: 'UTC', weekday: 'long' });
-
-    locale.weekdays.push(getDatePart(format, date, 'weekday'));
-    format = fmt({ w: 's' });
-    locale.weekdaysShort.push(getDatePart(format, date, 'weekday'));
-    format = fmt({ w: 'n' });
-    locale.weekdaysMin.push(getDatePart(format, date, 'weekday'));
+  else {
+    locale.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    locale.monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    locale.weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    locale.weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    locale.weekdaysMin = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
   }
-
-  // If weekdaysMin are so narrow that there are non-unique names, try either 2 or 3 characters from weekdaysShort.
-  for (let len = 2; len < 4 && new Set(locale.weekdaysMin).size < 7; ++len)
-    locale.weekdaysMin = locale.weekdaysShort.map(name => name.substr(0, len));
 
   locale.dateTimeFormats = {};
   locale.meridiem = getMeridiems(localeName);
@@ -329,14 +346,29 @@ function generatePredefinedFormats(locale: LocaleInfo, timezone: string): void {
 
   locale.cachedTimezone = timezone;
   locale.dateTimeFormats = {};
-  locale.dateTimeFormats.LLLL = fmt({ Y: 'd', M: 'l', D: 'd', w: 'l', h: 'd', m: 'dd' }); // Thursday, September 4, 1986 8:30 PM
-  locale.dateTimeFormats.llll = fmt({ Y: 'd', M: 's', D: 'd', w: 's', h: 'd', m: 'dd' }); // Thu, Sep 4, 1986 8:30 PM
-  locale.dateTimeFormats.LLL = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // September 4, 1986 8:30 PM
-  locale.dateTimeFormats.lll = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // Sep 4, 1986 8:30 PM
-  locale.dateTimeFormats.LTS = fmt({ h: 'd', m: 'dd', s: 'dd' }); // 8:30:25 PM
-  locale.dateTimeFormats.LT = fmt({ h: 'd', m: 'dd' }); // 8:30 PM
-  locale.dateTimeFormats.LL = fmt({ Y: 'd', M: 's', D: 'd' }); // September 4, 1986
-  locale.dateTimeFormats.ll = fmt({ Y: 'd', M: 's', D: 'd' }); // Sep 4, 1986
-  locale.dateTimeFormats.L = fmt({ Y: 'd', M: 'dd', D: 'dd' }); // 09/04/1986
-  locale.dateTimeFormats.l = fmt({ Y: 'd', M: 'd', D: 'd' }); // 9/4/1986
+
+  if (hasIntlDateTime) {
+    locale.dateTimeFormats.LLLL = fmt({ Y: 'd', M: 'l', D: 'd', w: 'l', h: 'd', m: 'dd' }); // Thursday, September 4, 1986 8:30 PM
+    locale.dateTimeFormats.llll = fmt({ Y: 'd', M: 's', D: 'd', w: 's', h: 'd', m: 'dd' }); // Thu, Sep 4, 1986 8:30 PM
+    locale.dateTimeFormats.LLL = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // September 4, 1986 8:30 PM
+    locale.dateTimeFormats.lll = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // Sep 4, 1986 8:30 PM
+    locale.dateTimeFormats.LTS = fmt({ h: 'd', m: 'dd', s: 'dd' }); // 8:30:25 PM
+    locale.dateTimeFormats.LT = fmt({ h: 'd', m: 'dd' }); // 8:30 PM
+    locale.dateTimeFormats.LL = fmt({ Y: 'd', M: 's', D: 'd' }); // September 4, 1986
+    locale.dateTimeFormats.ll = fmt({ Y: 'd', M: 's', D: 'd' }); // Sep 4, 1986
+    locale.dateTimeFormats.L = fmt({ Y: 'd', M: 'dd', D: 'dd' }); // 09/04/1986
+    locale.dateTimeFormats.l = fmt({ Y: 'd', M: 'd', D: 'd' }); // 9/4/1986
+  }
+  else {
+    locale.dateTimeFormats.LLLL = 'dddd, MMMM D, YYYY h:mm A'; // Thursday, September 4, 1986 8:30 PM
+    locale.dateTimeFormats.llll = 'ddd, MMM D, YYYY h:mm A'; // Thu, Sep 4, 1986 8:30 PM
+    locale.dateTimeFormats.LLL = 'MMMM D, YYYY h:mm A'; // September 4, 1986 8:30 PM
+    locale.dateTimeFormats.lll = 'MMM D, YYYY h:mm A'; // Sep 4, 1986 8:30 PM
+    locale.dateTimeFormats.LTS = 'h:mm:ss A'; // 8:30:25 PM
+    locale.dateTimeFormats.LT = 'h:mm A'; // 8:30 PM
+    locale.dateTimeFormats.LL = 'MMMM D, YYYY'; // September 4, 1986
+    locale.dateTimeFormats.ll = 'MMM D, YYYY'; // Sep 4, 1986
+    locale.dateTimeFormats.L = 'MM/DD/YYYY'; // 09/04/1986
+    locale.dateTimeFormats.l = 'M/D/YYYY'; // 9/4/1986
+  }
 }
