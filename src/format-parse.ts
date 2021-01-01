@@ -1,14 +1,28 @@
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { LocaleInfo } from './locale-info';
-import { isString } from '@tubular/util';
+import { isEqual, isString } from '@tubular/util';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import moment from 'moment/moment';
+import { getMeridiems, normalizeLocale } from './locale-data';
 
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second' };
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
-const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZ|zz|Z|z|X|x)/g;
+const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
+const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZ|zz|Z|z|X|x|I[FLMSx][FLMS])/g;
 const cachedLocales: Record<string, LocaleInfo> = {};
 
-const locale = getLocaleInfo('en');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const localeList = [
+  'af', 'ar', 'ar-DZ', 'ar-KW', 'ar-LY', 'ar-MA', 'ar-SA', 'ar-TN', 'az', 'be', 'bg', 'bm', 'bn', 'bn-BD',
+  'bo', 'br', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'de-AT', 'de-CH', 'el', 'en', 'en-AU', 'en-CA', 'en-GB',
+  'en-IE', 'en-IL', 'en-IN', 'en-NZ', 'en-SG', 'eo', 'es', 'es-DO', 'es-MX', 'es-US', 'et', 'eu', 'fa',
+  'fi', 'fil', 'fo', 'fr', 'fr-CA', 'fr-CH', 'fy', 'ga', 'gd', 'gl', 'gu', 'hi', 'hr', 'hu', 'hy-AM',
+  'is', 'it', 'it-CH', 'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'lb', 'lo', 'lt', 'lv',
+  'mi', 'mk', 'ml', 'mn', 'mr', 'ms', 'ms-MY', 'mt', 'my', 'nb', 'ne', 'nl', 'nl-BE', 'nn', 'pl', 'pt',
+  'pt-BR', 'ro', 'ru', 'sd', 'se', 'si', 'sk', 'sl', 'sq', 'sr', 'sv', 'sw', 'ta', 'te', 'tg', 'th',
+  'tk', 'tr', 'tzm', 'ug-CN', 'uk', 'ur', 'uz', 'vi', 'yo', 'zh-CN', 'zh-HK', 'zh-TW'
+];
 
 export function decomposeFormatString(format: string): string[] {
   const parts = format.split(patternsMoment);
@@ -28,6 +42,8 @@ export function decomposeFormatString(format: string): string[] {
 }
 
 export function format(dt: DateTime, fmt: string): string {
+  const localeName = !Intl?.DateTimeFormat ? 'en' : normalizeLocale(dt.locale);
+  const locale = getLocaleInfo(localeName);
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
 
@@ -152,7 +168,12 @@ export function format(dt: DateTime, fmt: string): string {
 
       case 'A':
       case 'a':
-        result.push(locale.meridiem(hour, min, field === 'a'));
+        {
+          const values = locale.meridiem;
+          const forHour = values[values.length === 2 ? floor(hour / 12) : hour];
+
+          result.push(forHour[field === 'A' && forHour.length > 1 ? 1 : 0]);
+        }
         break;
 
       case 'X':
@@ -174,7 +195,10 @@ export function format(dt: DateTime, fmt: string): string {
       case 'L':
       case 'l':
         {
-          const localFormat = locale.longDateFormat[field];
+          if (locale.cachedTimezone !== dt.timezone.zoneName || isEqual(locale.dateTimeFormats, {}))
+            generatePredefinedFormats(locale, dt.timezone.zoneName);
+
+          const localFormat = locale.dateTimeFormats[field];
 
           if (localFormat == null)
             result.push('???');
@@ -186,7 +210,38 @@ export function format(dt: DateTime, fmt: string): string {
         break;
 
       default:
-        if (field.startsWith('S'))
+        if (field.startsWith('I')) {
+          if (locale.cachedTimezone !== dt.timezone.zoneName || isEqual(locale.dateTimeFormats, {}))
+            generatePredefinedFormats(locale, dt.timezone.zoneName);
+
+          let intlFormat = locale.dateTimeFormats[field] as Intl.DateTimeFormat;
+
+          if (!intlFormat) {
+            // For some reason the typing for Intl.DateTimeFormatOptions doesn't know about dateStyle and timeStyle.
+            const options = {} as any;
+
+            if (dt.timezone.zoneName !== 'OS')
+              options.timeZone = dt.timezone.zoneName;
+
+            if (field.charAt(1) !== 'x')
+              options.dateStyle = styleOptValues[field.charAt(1)];
+
+            if (field.length > 2)
+              options.timeStyle = styleOptValues[field.charAt(2)];
+
+            try {
+              locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
+            }
+            catch {
+              console.warn('Timezone "%s" not recognized', options.timeZone);
+              delete options.timeZone;
+              locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
+            }
+          }
+
+          result.push(intlFormat.format(dt.utcTimeMillis));
+        }
+        else if (field.startsWith('S'))
           result.push(wallTime.millis.toString().padStart(3, '0').substr(0, field.length).padEnd(field.length, '0'));
         else
           result.push('??');
@@ -206,24 +261,30 @@ function getDatePart(format: Intl.DateTimeFormat, date: number, partName: string
     return '???';
 }
 
+function quickFormat(localeName: string, timezone: string, opts: any) {
+  const options: Intl.DateTimeFormatOptions = {};
+
+  if (timezone !== 'OS')
+    options.timeZone = timezone;
+
+  Object.keys(opts).forEach(key => {
+    const value = shortOptValues[opts[key]] ?? opts[key];
+    key = shortOpts[key];
+    options[key] = value;
+  });
+
+  return new Intl.DateTimeFormat(localeName, options);
+}
+
 function getLocaleInfo(localeName: string): LocaleInfo {
   const locale: LocaleInfo = cachedLocales[localeName] ?? {} as LocaleInfo;
 
-  if (Object.keys(locale).length > 0)
+  if (locale && Object.keys(locale).length > 0)
     return locale;
 
-  const fmt = (opts: any) => {
-    const options: Intl.DateTimeFormatOptions = { timeZone: 'UTC' };
+  const fmt = (opts: any) => quickFormat(localeName, 'UTC', opts);
 
-    Object.keys(opts).forEach(key => {
-      const value = shortOptValues[opts[key]] ?? opts[key];
-      key = shortOpts[key];
-      options[key] = value;
-    });
-
-    return new Intl.DateTimeFormat(localeName, options);
-  };
-
+  locale.name = localeName;
   locale.months = [];
   locale.monthsShort = [];
 
@@ -255,24 +316,27 @@ function getLocaleInfo(localeName: string): LocaleInfo {
   for (let len = 2; len < 4 && new Set(locale.weekdaysMin).size < 7; ++len)
     locale.weekdaysMin = locale.weekdaysShort.map(name => name.substr(0, len));
 
-  locale.longDateFormat = {};
-  locale.longDateFormat.LLLL = fmt({ Y: 'd', M: 'l', D: 'd', w: 'l', h: 'd', m: 'dd' }); // Thursday, September 4, 1986 8:30 PM
-  locale.longDateFormat.llll = fmt({ Y: 'd', M: 's', D: 'd', w: 's', h: 'd', m: 'dd' }); // Thu, Sep 4, 1986 8:30 PM
-  locale.longDateFormat.LLL = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // September 4, 1986 8:30 PM
-  locale.longDateFormat.lll = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // Sep 4, 1986 8:30 PM
-  locale.longDateFormat.LTS = fmt({ h: 'd', m: 'dd', s: 'dd' }); // 8:30:25 PM
-  locale.longDateFormat.LT = fmt({ h: 'd', m: 'dd' }); // 8:30 PM
-  locale.longDateFormat.LL = fmt({ Y: 'd', M: 's', D: 'd' }); // September 4, 1986
-  locale.longDateFormat.ll = fmt({ Y: 'd', M: 's', D: 'd' }); // Sep 4, 1986
-  locale.longDateFormat.L = fmt({ Y: 'd', M: 'dd', D: 'dd' }); // 09/04/1986
-  locale.longDateFormat.l = fmt({ Y: 'd', M: 'd', D: 'd' }); // 9/4/1986
+  locale.dateTimeFormats = {};
+  locale.meridiem = getMeridiems(localeName);
 
-  locale.meridiem = (hours: number, minutes: number, isLower: boolean) => {
-    if (hours < 12)
-      return isLower ? 'am' : 'AM';
-    else
-      return isLower ? 'pm' : 'PM';
-  };
+  cachedLocales[localeName] = locale;
 
   return locale;
+}
+
+function generatePredefinedFormats(locale: LocaleInfo, timezone: string): void {
+  const fmt = (opts: any) => quickFormat(locale.name, timezone, opts);
+
+  locale.cachedTimezone = timezone;
+  locale.dateTimeFormats = {};
+  locale.dateTimeFormats.LLLL = fmt({ Y: 'd', M: 'l', D: 'd', w: 'l', h: 'd', m: 'dd' }); // Thursday, September 4, 1986 8:30 PM
+  locale.dateTimeFormats.llll = fmt({ Y: 'd', M: 's', D: 'd', w: 's', h: 'd', m: 'dd' }); // Thu, Sep 4, 1986 8:30 PM
+  locale.dateTimeFormats.LLL = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // September 4, 1986 8:30 PM
+  locale.dateTimeFormats.lll = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // Sep 4, 1986 8:30 PM
+  locale.dateTimeFormats.LTS = fmt({ h: 'd', m: 'dd', s: 'dd' }); // 8:30:25 PM
+  locale.dateTimeFormats.LT = fmt({ h: 'd', m: 'dd' }); // 8:30 PM
+  locale.dateTimeFormats.LL = fmt({ Y: 'd', M: 's', D: 'd' }); // September 4, 1986
+  locale.dateTimeFormats.ll = fmt({ Y: 'd', M: 's', D: 'd' }); // Sep 4, 1986
+  locale.dateTimeFormats.L = fmt({ Y: 'd', M: 'dd', D: 'dd' }); // 09/04/1986
+  locale.dateTimeFormats.l = fmt({ Y: 'd', M: 'd', D: 'd' }); // 9/4/1986
 }

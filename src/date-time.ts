@@ -18,7 +18,7 @@
 */
 
 import { div_rd, mod, round } from '@tubular/math';
-import { clone, isNumber, isObject, padLeft } from '@tubular/util';
+import { clone, isEqual, isNumber, isObject, isString, padLeft } from '@tubular/util';
 import {
   getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, SUNDAY, YearOrDate, YMDDate
 } from './calendar';
@@ -29,10 +29,17 @@ export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, MONTHS, YEARS
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
+const localeTest = /^[a-z][a-z][-_a-z]*$/i;
+
 export class DateTime extends Calendar {
+  private static defaultLocale = 'en-us';
+  private static defaultTimezone = Timezone.OS_ZONE;
+
+  private _locale = DateTime.defaultLocale;
+  private _timezone = DateTime.defaultTimezone;
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
-  private _timezone = Timezone.OS_ZONE;
+  private locked = false;
 
   static julianDay(millis: number): number {
     return millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
@@ -47,11 +54,23 @@ export class DateTime extends Calendar {
              (hour + (minute + second / 60.0) / 60.0) / 24.0;
   }
 
-  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null, gregorianChange?: GregorianChange) {
-    super(gregorianChange);
+  static getDefaultLocale(): string { return DateTime.defaultLocale; }
+  static setDefaultLocale(newLocale: string) { DateTime.defaultLocale = newLocale; }
+
+  static getDefaultTimezone(): Timezone { return DateTime.defaultTimezone; }
+  static setDefaultTimezone(newZone: Timezone) { DateTime.defaultTimezone = newZone; }
+
+  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null, locale?: string, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null,
+              gregorianOrLocale?: string | GregorianChange, gregorianChange?: GregorianChange) {
+    super(gregorianChange ?? (isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale)) ? undefined : gregorianOrLocale);
 
     if (timezone)
       this._timezone = timezone;
+
+    if (!isNumber(gregorianOrLocale) && isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale))
+      this._locale = gregorianOrLocale;
 
     if (isObject(initialTime)) {
       this.wallTime = clone(initialTime as DateAndTime);
@@ -63,37 +82,57 @@ export class DateTime extends Calendar {
     }
   }
 
-  get utcTimeMillis(): number {
-    return this._utcTimeMillis;
+  lock(): DateTime {
+    this.locked = true;
+    return this;
   }
 
+  get utcTimeMillis(): number { return this._utcTimeMillis; }
   set utcTimeMillis(newTime: number) {
-    this._utcTimeMillis = newTime;
-    this.computeWallTime();
+    if (this.locked)
+      throw new Error('This DateTime instance is locked and immutable');
+
+    if (this._utcTimeMillis !== newTime) {
+      this._utcTimeMillis = newTime;
+      this.computeWallTime();
+    }
   }
 
-  get wallTime(): DateAndTime {
-    return clone(this._wallTime);
-  }
-
+  get wallTime(): DateAndTime { return clone(this._wallTime); }
   set wallTime(newTime: DateAndTime) {
-    this._wallTime = clone(newTime);
+    if (this.locked)
+      throw new Error('This DateTime instance is locked and immutable');
 
-    if (this._wallTime.millis == null)
-      this._wallTime.millis = 0;
+    if (!isEqual(this._wallTime, newTime)) {
+      this._wallTime = clone(newTime);
 
-    this.computeUtcTimeMillis();
-    this.computeWallTime();
-    this.updateWallTime();
+      if (this._wallTime.millis == null)
+        this._wallTime.millis = 0;
+
+      this.computeUtcTimeMillis();
+      this.computeWallTime();
+      this.updateWallTime();
+    }
   }
 
   get timezone(): Timezone { return this._timezone; }
-
   set timezone(newZone: Timezone) {
+    if (this.locked)
+      throw new Error('This DateTime instance is locked and immutable');
+
     if (this._timezone !== newZone) {
       this._timezone = newZone;
       this.computeWallTime();
     }
+  }
+
+  get locale(): string { return this._locale; }
+  set locale(newLocale: string) {
+    if (this.locked)
+      throw new Error('This DateTime instance is locked and immutable');
+
+    if (this._locale !== newLocale)
+      this._locale = newLocale;
   }
 
   get utcOffsetSeconds(): number {
@@ -117,6 +156,9 @@ export class DateTime extends Calendar {
   }
 
   add(field: DateTimeField, amount: number): void {
+    if (this.locked)
+      throw new Error('This DateTime instance is locked and immutable');
+
     let updateFromWall = false;
     let normalized: YMDDate;
 
@@ -340,6 +382,9 @@ export class DateTime extends Calendar {
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
+    if (this.locked)
+      throw new Error('This DateTime instance is locked and immutable');
+
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 
     if (this._timezone)
