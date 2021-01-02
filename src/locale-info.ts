@@ -7,5 +7,6 @@ export interface LocaleInfo {
   weekdaysMin: string[];
   cachedTimezone?: string;
   dateTimeFormats: Record<string, string | Intl.DateTimeFormat>;
-  meridiem : string[][];
+  meridiem: string[][];
+  startOfWeek: number;
 }

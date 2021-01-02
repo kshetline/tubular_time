@@ -1,8 +1,23 @@
+export const localeList = [
+  'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bn', 'bn-bd',
+  'bo', 'br', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'de-at', 'de-ch', 'el', 'en', 'en-au', 'en-ca', 'en-gb',
+  'en-ie', 'en-il', 'en-in', 'en-nz', 'en-sg', 'eo', 'es', 'es-do', 'es-mx', 'es-us', 'et', 'eu', 'fa',
+  'fi', 'fil', 'fo', 'fr', 'fr-ca', 'fr-ch', 'fy', 'ga', 'gd', 'gl', 'gu', 'hi', 'hr', 'hu', 'hy-am',
+  'is', 'it', 'it-ch', 'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'lb', 'lo', 'lt', 'lv',
+  'mi', 'mk', 'ml', 'mn', 'mr', 'ms', 'ms-my', 'mt', 'my', 'nb', 'ne', 'nl', 'nl-be', 'nn', 'pl', 'pt',
+  'pt-br', 'ro', 'ru', 'sd', 'se', 'si', 'sk', 'sl', 'sq', 'sr', 'sv', 'sw', 'ta', 'te', 'tg', 'th',
+  'tk', 'tr', 'tzm', 'ug-cn', 'uk', 'ur', 'uz', 'vi', 'yo', 'zh-cn', 'zh-hk', 'zh-tw'
+];
+
 export function normalizeLocale(name: string): string {
   if (!Intl?.DateTimeFormat)
     return 'en';
 
   return name.replace(/_/g, '-').toLowerCase();
+}
+
+function reduceLocale(locale: string): string {
+  return locale.replace(/-[^-]*?$/i, '');
 }
 
 /* eslint-disable quote-props */
@@ -58,11 +73,41 @@ export function getMeridiems(locale: string): string[][] {
 
   do {
     result = meridiems[locale];
-    locale = locale.replace(/-[^-]*?$/i, '');
+    locale = reduceLocale(locale);
   } while (!result && locale.includes('-'));
 
   if (!result)
     result = [['am', 'AM'], ['pm', 'PM']];
+
+  return result;
+}
+
+const weekStarts = {
+  'af': 1, 'ar': 6, 'ar-dz': 0, 'ar-kw': 0, 'ar-ma': 1, 'ar-sa': 0, 'ar-tn': 1, 'az': 1,
+  'be': 1, 'bg': 1, 'bm': 1, 'bn': 0, 'bo': 0, 'br': 1, 'bs': 1, 'ca': 1, 'cs': 1, 'cy': 1,
+  'da': 1, 'de': 1, 'el': 1, 'en': 0, 'en-gb': 1, 'en-ie': 1, 'en-nz': 1, 'en-sg': 1, 'eo': 1,
+  'es': 1, 'es-mx': 0, 'es-us': 0, 'et': 1, 'eu': 1, 'fa': 6, 'fi': 1, 'fil': 1, 'fo': 1,
+  'fr': 1, 'fr-ca': 0, 'fy': 1, 'ga': 1, 'gd': 1, 'gl': 1, 'gu': 0, 'hi': 0, 'hr': 1, 'hu': 1,
+  'hy-am': 1, 'is': 1, 'it': 1, 'ja': 0, 'jv': 1, 'ka': 1, 'kk': 1, 'km': 1, 'kn': 0, 'ko': 0,
+  'ku': 6, 'ky': 1, 'lb': 1, 'lo': 0, 'lt': 1, 'lv': 1, 'mi': 1, 'mk': 1, 'ml': 0, 'mn': 0,
+  'mr': 0, 'ms': 1, 'mt': 1, 'my': 1, 'nb': 1, 'ne': 0, 'nl': 1, 'nn': 1, 'pl': 1, 'pt': 1,
+  'pt-br': 0, 'ro': 1, 'ru': 1, 'sd': 1, 'se': 1, 'si': 0, 'sk': 1, 'sl': 1, 'sq': 1, 'sr': 1,
+  'sv': 1, 'sw': 1, 'ta': 0, 'te': 0, 'tg': 1, 'th': 0, 'tk': 1, 'tr': 1, 'tzm': 6, 'ug-cn': 1,
+  'uk': 1, 'ur': 1, 'uz': 1, 'vi': 1, 'yo': 1, 'zh': 1, 'zh-hk': 0, 'zh-tw': 0
+};
+
+export function getStartOfWeek(locale: string): number {
+  let result: number;
+
+  locale = normalizeLocale(locale);
+
+  do {
+    result = weekStarts[locale];
+    locale = reduceLocale(locale);
+  } while (!result && locale.includes('-'));
+
+  if (result == null)
+    result = 0;
 
   return result;
 }

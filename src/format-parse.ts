@@ -4,7 +4,7 @@ import { LocaleInfo } from './locale-info';
 import { isEqual, isString } from '@tubular/util';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import moment from 'moment/moment';
-import { getMeridiems, normalizeLocale } from './locale-data';
+import { getMeridiems, getStartOfWeek, normalizeLocale } from './locale-data';
 
 let hasIntlDateTime = false;
 
@@ -18,18 +18,6 @@ const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: '
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, LocaleInfo> = {};
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const localeList = [
-  'af', 'ar', 'ar-DZ', 'ar-KW', 'ar-LY', 'ar-MA', 'ar-SA', 'ar-TN', 'az', 'be', 'bg', 'bm', 'bn', 'bn-BD',
-  'bo', 'br', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'de-AT', 'de-CH', 'el', 'en', 'en-AU', 'en-CA', 'en-GB',
-  'en-IE', 'en-IL', 'en-IN', 'en-NZ', 'en-SG', 'eo', 'es', 'es-DO', 'es-MX', 'es-US', 'et', 'eu', 'fa',
-  'fi', 'fil', 'fo', 'fr', 'fr-CA', 'fr-CH', 'fy', 'ga', 'gd', 'gl', 'gu', 'hi', 'hr', 'hu', 'hy-AM',
-  'is', 'it', 'it-CH', 'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'lb', 'lo', 'lt', 'lv',
-  'mi', 'mk', 'ml', 'mn', 'mr', 'ms', 'ms-MY', 'mt', 'my', 'nb', 'ne', 'nl', 'nl-BE', 'nn', 'pl', 'pt',
-  'pt-BR', 'ro', 'ru', 'sd', 'se', 'si', 'sk', 'sl', 'sq', 'sr', 'sv', 'sw', 'ta', 'te', 'tg', 'th',
-  'tk', 'tr', 'tzm', 'ug-CN', 'uk', 'ur', 'uz', 'vi', 'yo', 'zh-CN', 'zh-HK', 'zh-TW'
-];
 
 export function decomposeFormatString(format: string): string[] {
   const parts = format.split(patternsMoment);
@@ -224,6 +212,10 @@ export function format(dt: DateTime, fmt: string): string {
           result.push(dt.timezone.zoneName);
           break;
         }
+        else if (hasIntlDateTime) {
+          result.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
+          break;
+        }
 
       // eslint-disable-next-line no-fallthrough
       case 'zzz':
@@ -390,6 +382,7 @@ function getLocaleInfo(localeName: string): LocaleInfo {
 
   locale.dateTimeFormats = {};
   locale.meridiem = getMeridiems(localeName);
+  locale.startOfWeek = getStartOfWeek(localeName);
 
   cachedLocales[localeName] = locale;
 

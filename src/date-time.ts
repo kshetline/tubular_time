@@ -20,10 +20,11 @@
 import { div_rd, mod, round } from '@tubular/math';
 import { clone, isEqual, isNumber, isObject, isString, padLeft } from '@tubular/util';
 import {
-  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, SUNDAY, YearOrDate, YMDDate
+  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate, YMDDate
 } from './calendar';
 import { DateAndTime, DAY_MSEC, MINUTE_MSEC } from './common';
 import { Timezone } from './timezone';
+import { getStartOfWeek } from './locale-data';
 
 export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, MONTHS, YEARS }
 
@@ -280,7 +281,7 @@ export class DateTime extends Calendar {
     else
       year = yearOrStartingDay;
 
-    const calendar = super.getCalendarMonth(year, month, startingDayOfWeek || SUNDAY);
+    const calendar = super.getCalendarMonth(year, month, startingDayOfWeek || getStartOfWeek(this.locale));
 
     for (const date of calendar) {
       if (this.getMinutesInDay(date) <= 0)

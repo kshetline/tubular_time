@@ -196,6 +196,9 @@ export class Timezone {
   static UT_ZONE = new Timezone({ zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
                             dstOffset: 0, transitions: null });
 
+  static ZONELESS = new Timezone({ zoneName: 'ZONELESS', currentUtcOffset: 0, usesDst: false,
+                            dstOffset: 0, transitions: null });
+
   private static zoneLookup: { [id: string]: Timezone } = {};
 
   private readonly _zoneName: string;
