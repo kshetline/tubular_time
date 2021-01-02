@@ -30,6 +30,7 @@ export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, MONTHS, YEARS
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
 const localeTest = /^[a-z][a-z][-_a-z]*$/i;
+const lockError = new Error('This DateTime instance is locked and immutable');
 
 export class DateTime extends Calendar {
   private static defaultLocale = 'en-us';
@@ -90,7 +91,7 @@ export class DateTime extends Calendar {
   get utcTimeMillis(): number { return this._utcTimeMillis; }
   set utcTimeMillis(newTime: number) {
     if (this.locked)
-      throw new Error('This DateTime instance is locked and immutable');
+      throw lockError;
 
     if (this._utcTimeMillis !== newTime) {
       this._utcTimeMillis = newTime;
@@ -101,7 +102,7 @@ export class DateTime extends Calendar {
   get wallTime(): DateAndTime { return clone(this._wallTime); }
   set wallTime(newTime: DateAndTime) {
     if (this.locked)
-      throw new Error('This DateTime instance is locked and immutable');
+      throw lockError;
 
     if (!isEqual(this._wallTime, newTime)) {
       this._wallTime = clone(newTime);
@@ -118,7 +119,7 @@ export class DateTime extends Calendar {
   get timezone(): Timezone { return this._timezone; }
   set timezone(newZone: Timezone) {
     if (this.locked)
-      throw new Error('This DateTime instance is locked and immutable');
+      throw lockError;
 
     if (this._timezone !== newZone) {
       this._timezone = newZone;
@@ -129,7 +130,7 @@ export class DateTime extends Calendar {
   get locale(): string { return this._locale; }
   set locale(newLocale: string) {
     if (this.locked)
-      throw new Error('This DateTime instance is locked and immutable');
+      throw lockError;
 
     if (this._locale !== newLocale)
       this._locale = newLocale;
@@ -157,7 +158,7 @@ export class DateTime extends Calendar {
 
   add(field: DateTimeField, amount: number): void {
     if (this.locked)
-      throw new Error('This DateTime instance is locked and immutable');
+      throw lockError;
 
     let updateFromWall = false;
     let normalized: YMDDate;
@@ -383,7 +384,7 @@ export class DateTime extends Calendar {
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
     if (this.locked)
-      throw new Error('This DateTime instance is locked and immutable');
+      throw lockError;
 
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 

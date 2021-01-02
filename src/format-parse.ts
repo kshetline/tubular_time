@@ -13,10 +13,10 @@ try {
 }
 catch {}
 
-const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second' };
+const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName' };
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZ|zz|Z|z|X|x)/g;
+const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, LocaleInfo> = {};
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -48,11 +48,26 @@ export function decomposeFormatString(format: string): string[] {
   return parts;
 }
 
+function cleanUpLongTimezone(zone: string): string {
+  return zone.replace(/^[\p{P}\p{N}\s]*/u, '').replace(/[\p{P}\p{N}\s]*$/u, '');
+}
+
 export function format(dt: DateTime, fmt: string): string {
   const localeName = !hasIntlDateTime ? 'en' : normalizeLocale(dt.locale);
   const locale = getLocaleInfo(localeName);
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
+  const wallTime = dt.wallTime;
+  const year = wallTime.y;
+  const eraYear = abs(year) + (year <= 0 ? 1 : 0);
+  const month = wallTime.m;
+  const day = wallTime.d;
+  const hour = wallTime.hrs;
+  const h = (hour === 0 ? 12 : hour <= 12 ? hour : hour - 12);
+  const k = (hour === 0 ? 24 : hour);
+  const min = wallTime.min;
+  const sec = wallTime.sec;
+  const dayOfWeek = dt.getDayOfWeek();
 
   for (let i = 0; i < parts.length; i += 2) {
     result.push(parts[i]);
@@ -61,17 +76,8 @@ export function format(dt: DateTime, fmt: string): string {
     if (field == null)
       break;
 
-    const wallTime = dt.wallTime;
-    const year = wallTime.y;
-    const eraYear = abs(year) + (year <= 0 ? 1 : 0);
-    const month = wallTime.m;
-    const day = wallTime.d;
-    const hour = wallTime.hrs;
-    const h = (hour === 0 ? 12 : hour <= 12 ? hour : hour - 12);
-    const k = (hour === 0 ? 24 : hour);
-    const min = wallTime.min;
-    const sec = wallTime.sec;
-    const dayOfWeek = dt.getDayOfWeek();
+    if (/^[LlZzI]/.test(field) && locale.cachedTimezone !== dt.timezone.zoneName || (hasIntlDateTime && isEqual(locale.dateTimeFormats, {})))
+      generatePredefinedFormats(locale, dt.timezone.zoneName);
 
     switch (field) {
       case 'YYYYYY':
@@ -202,9 +208,6 @@ export function format(dt: DateTime, fmt: string): string {
       case 'L':
       case 'l':
         {
-          if (locale.cachedTimezone !== dt.timezone.zoneName || isEqual(locale.dateTimeFormats, {}))
-            generatePredefinedFormats(locale, dt.timezone.zoneName);
-
           const localFormat = locale.dateTimeFormats[field];
 
           if (localFormat == null)
@@ -216,37 +219,89 @@ export function format(dt: DateTime, fmt: string): string {
         }
         break;
 
+      case 'ZZZ':
+        if (dt.timezone.zoneName !== 'OS') {
+          result.push(dt.timezone.zoneName);
+          break;
+        }
+
+      // eslint-disable-next-line no-fallthrough
+      case 'zzz':
+        if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof Intl.DateTimeFormat) {
+          result.push(cleanUpLongTimezone(locale.dateTimeFormats.Z.format(dt.utcTimeMillis)));
+          break;
+        }
+
+      // eslint-disable-next-line no-fallthrough
+      case 'zz':
+      case 'z':
+        if (hasIntlDateTime && locale.dateTimeFormats.z instanceof Intl.DateTimeFormat) {
+          result.push(cleanUpLongTimezone(locale.dateTimeFormats.z.format(dt.utcTimeMillis)));
+          break;
+        }
+        else if (dt.timezone.zoneName !== 'OS') {
+          result.push(dt.timezone.zoneName);
+          break;
+        }
+
+      // eslint-disable-next-line no-fallthrough
+      case 'ZZ':
+      case 'Z':
+        result.push(dt.timezone.getFormattedOffset(dt.utcTimeMillis, field === 'ZZ'));
+        break;
+
       default:
         if (field.startsWith('I')) {
-          if (locale.cachedTimezone !== dt.timezone.zoneName || isEqual(locale.dateTimeFormats, {}))
-            generatePredefinedFormats(locale, dt.timezone.zoneName);
+          if (hasIntlDateTime) {
+            let intlFormat = locale.dateTimeFormats[field] as Intl.DateTimeFormat;
 
-          let intlFormat = locale.dateTimeFormats[field] as Intl.DateTimeFormat;
+            if (!intlFormat) {
+              // For some reason the typing for Intl.DateTimeFormatOptions doesn't know about dateStyle and timeStyle.
+              const options = {} as any;
 
-          if (!intlFormat) {
-            // For some reason the typing for Intl.DateTimeFormatOptions doesn't know about dateStyle and timeStyle.
-            const options = {} as any;
+              if (dt.timezone.zoneName !== 'OS')
+                options.timeZone = dt.timezone.zoneName;
 
-            if (dt.timezone.zoneName !== 'OS')
-              options.timeZone = dt.timezone.zoneName;
+              if (field.charAt(1) !== 'x')
+                options.dateStyle = styleOptValues[field.charAt(1)];
 
-            if (field.charAt(1) !== 'x')
-              options.dateStyle = styleOptValues[field.charAt(1)];
+              if (field.length > 2)
+                options.timeStyle = styleOptValues[field.charAt(2)];
 
-            if (field.length > 2)
-              options.timeStyle = styleOptValues[field.charAt(2)];
-
-            try {
-              locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
+              try {
+                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
+              }
+              catch {
+                console.warn('Timezone "%s" not recognized', options.timeZone);
+                delete options.timeZone;
+                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
+              }
             }
-            catch {
-              console.warn('Timezone "%s" not recognized', options.timeZone);
-              delete options.timeZone;
-              locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
-            }
+
+            result.push(intlFormat.format(dt.utcTimeMillis));
           }
+          else {
+            let intlFormat = '';
 
-          result.push(intlFormat.format(dt.utcTimeMillis));
+            switch (field.charAt(1)) {
+              case 'F': intlFormat = 'dddd, MMMM D, YYYY'; break;
+              case 'L': intlFormat = 'MMMM D, YYYY'; break;
+              case 'M': intlFormat = 'MMM D, YYYY'; break;
+              case 'S': intlFormat = 'M/D/YY'; break;
+            }
+
+            if (intlFormat && /..[FLMS]/.test(field))
+              intlFormat += ', ';
+
+            switch (field.charAt(2)) {
+              case 'F':
+              case 'L': intlFormat += 'h:mm:ss A zz'; break;
+              case 'M': intlFormat += 'h:mm:ss A'; break;
+              case 'S': intlFormat += 'h:mm A'; break;
+            }
+
+            result.push(format(dt, intlFormat));
+          }
         }
         else if (field.startsWith('S'))
           result.push(wallTime.millis.toString().padStart(3, '0').substr(0, field.length).padEnd(field.length, '0'));
@@ -358,6 +413,8 @@ function generatePredefinedFormats(locale: LocaleInfo, timezone: string): void {
     locale.dateTimeFormats.ll = fmt({ Y: 'd', M: 's', D: 'd' }); // Sep 4, 1986
     locale.dateTimeFormats.L = fmt({ Y: 'd', M: 'dd', D: 'dd' }); // 09/04/1986
     locale.dateTimeFormats.l = fmt({ Y: 'd', M: 'd', D: 'd' }); // 9/4/1986
+    locale.dateTimeFormats.Z = fmt({ z: 'l', Y: 'd' }); // Don't really want the year, but without *something* else
+    locale.dateTimeFormats.z = fmt({ z: 's', Y: 'd' }); //   a whole date appears, and just a year is easier to remove.
   }
   else {
     locale.dateTimeFormats.LLLL = 'dddd, MMMM D, YYYY h:mm A'; // Thursday, September 4, 1986 8:30 PM

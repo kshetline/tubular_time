@@ -510,11 +510,12 @@ export class Timezone {
     };
   }
 
-  static formatUtcOffset(offsetSeconds: number): string {
+  static formatUtcOffset(offsetSeconds: number, noColons = false): string {
     if (offsetSeconds == null)
       return '?';
 
     let result = offsetSeconds < 0 ? '-' : '+';
+    const colon = noColons ? '' : ':';
 
     offsetSeconds = Math.abs(offsetSeconds);
 
@@ -523,10 +524,10 @@ export class Timezone {
     const minutes = div_tt0(offsetSeconds, 60);
     offsetSeconds -= minutes * 60;
 
-    result += padLeft(hours, 2, '0') + ':' + padLeft(minutes, 2, '0');
+    result += padLeft(hours, 2, '0') + colon + padLeft(minutes, 2, '0');
 
     if (offsetSeconds !== 0)
-      result += ':' + padLeft(offsetSeconds, 2, '0');
+      result += colon + padLeft(offsetSeconds, 2, '0');
 
     return result;
   }
@@ -639,8 +640,8 @@ export class Timezone {
     }
   }
 
-  getFormattedOffset(utcTime: number): string {
-    return Timezone.formatUtcOffset(this.getOffset(utcTime));
+  getFormattedOffset(utcTime: number, noColons = false): string {
+    return Timezone.formatUtcOffset(this.getOffset(utcTime), noColons);
   }
 
   getOffsets(utcTime: number): number[] {
