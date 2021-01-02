@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 // -5fmqry 1800,2087 -z .../tzdir/usr/share/zoneinfo
 // noinspection SpellCheckingInspection
-const timezoneLargeAlt = { // tz database version: 2020e, years 1800-2087, rounded to nearest minute, filtered, calendar rollbacks eliminated
+const timezoneLargeAlt = /* trim-file-start */{ // tz database version: 2020e, years 1800-2087, rounded to nearest minute, filtered, calendar rollbacks eliminated
   'Africa/Abidjan': '-0016 +0000 0;-g/0/LMT 0/0/GMT;1;-2ldXI',
   'Africa/Accra': '-0001 +0000 0;-1/0/LMT 0/0/GMT k/k u/0 u/u;1212121212121212121212121212121212121212121212131414141414141;-2bRzX 9RbX fdE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE Mok 1BXE M0k 1BXE fak 9vbu bjCu MLu 1Bcu MLu 1BAu MLu 1Bcu MLu 1Bcu MLu 1Bcu MLu',
   'Africa/Addis_Ababa': '+0227 +0300 0;2r/0/LMT 2u/0 30/0/EAT 2J/0;12132;-2ua2r N6nV 3Fbu h1cu dzbJ',
@@ -527,7 +527,7 @@ const timezoneLargeAlt = { // tz database version: 2020e, years 1800-2087, round
   'US/Pacific': 'America/Los_Angeles',
   'US/Pacific-New': 'America/Los_Angeles',
   'US/Samoa': 'Pacific/Midway'
-};
+}/* trim-file-end */;
 
 Object.freeze(timezoneLargeAlt);
 export default timezoneLargeAlt;
