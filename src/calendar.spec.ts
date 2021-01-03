@@ -83,4 +83,14 @@ describe('Calendar', () => {
   it('should return 30 as the last Saturday of 1752/09.', () => {
     expect(calendar.getDateOfNthWeekdayOfMonth(1752, 9, 6, LAST)).to.equal(30);
   });
+
+  it('should properly handle week numbers.', () => {
+    expect(calendar.getStartDateOfFirstWeekOfYear(2021)).to.include({ y: 2020, m: 12, d: 28 });
+    expect(calendar.getStartDateOfFirstWeekOfYear(2022)).to.include({ y: 2022, m:  1, d:  3 });
+    expect(calendar.getStartDateOfFirstWeekOfYear(2023)).to.include({ y: 2023, m:  1, d:  2 });
+    expect(calendar.getStartDateOfFirstWeekOfYear(2024)).to.include({ y: 2024, m:  1, d:  1 });
+    expect(calendar.getStartDateOfFirstWeekOfYear(2025)).to.include({ y: 2024, m: 12, d: 30 });
+    expect(calendar.getStartDateOfFirstWeekOfYear(2026)).to.include({ y: 2025, m: 12, d: 29 });
+    expect(calendar.getStartDateOfFirstWeekOfYear(2027)).to.include({ y: 2026, m: 12, d: 28 });
+  });
 });

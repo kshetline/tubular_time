@@ -20,7 +20,7 @@
 import { div_rd, div_tt0, mod } from '@tubular/math';
 import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
 
-export enum CalendarType {PURE_GREGORIAN, PURE_JULIAN}
+export enum CalendarType { PURE_GREGORIAN, PURE_JULIAN }
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
 export const GREGORIAN_CHANGE_MAX_YEAR = 3900;
 
@@ -58,6 +58,14 @@ export interface YMDDate {
   n?: number;
   /** true if this is a Julian calendar date, false for Gregorian. */
   j?: boolean;
+  /** ISO week of year. */
+  w?: number;
+  /** ISO year for week of year. */
+  yw?: number;
+  /** Local week of year. */
+  wl?: number;
+  /** Local year for week of year. */
+  ywl?: number;
 }
 
 /**
@@ -772,7 +780,9 @@ export class Calendar {
     return this.getDateFromDayNumber(this.getDayNumber(yearOrDate, month, day) + deltaDays);
   }
 
-  getCalendarMonth(year: number, month: number, startingDayOfWeek: number): YMDDate[] {
+  getCalendarMonth(year: number, month: number, startingDayOfWeek?: number): YMDDate[] {
+    startingDayOfWeek = startingDayOfWeek ?? SUNDAY;
+
     const dates: YMDDate[] = [];
     let dateOffset;
     let dayNum = this.getDayNumber(year, month, this.getFirstDateInMonth(year, month));
@@ -852,5 +862,19 @@ export class Calendar {
       return [this.lastJulianDate + 1, this.gcDate - 1];
 
     return null;
+  }
+
+  getStartDateOfFirstWeekOfYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): YMDDate {
+    let day = 1;
+
+    // 7 is a special case, where start week is first full week *after* January 1st.
+    if (minDaysInCalendarYear === 7) {
+      ++day;
+      --minDaysInCalendarYear;
+    }
+
+    const daysIntoWeek = mod(this.getDayOfWeek(year, 1, day) - startingDayOfWeek, 7);
+
+    return this.addDaysToDate(-daysIntoWeek + (daysIntoWeek > minDaysInCalendarYear ? 7 : 0), year, 1, day);
   }
 }

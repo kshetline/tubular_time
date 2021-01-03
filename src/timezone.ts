@@ -544,17 +544,17 @@ export class Timezone {
       case  1800: return '^';
       case  3600: return '§';
       case  7200: return '#';
-      default:  return (dstOffsetSeconds < 0 ? '\u2744' : '~'); // Snowflake character for negative/winter DST
+      default: return (dstOffsetSeconds < 0 ? '\u2744' : '~'); // Snowflake character for negative/winter DST
     }
   }
 
   constructor(zoneInfo: ZoneInfo) {
-    this._zoneName       = zoneInfo.zoneName;
-    this._utcOffset      = zoneInfo.currentUtcOffset;
-    this._usesDst        = zoneInfo.usesDst;
-    this._dstOffset      = zoneInfo.dstOffset;
-    this.displayName     = zoneInfo.displayName;
-    this.transitions     = zoneInfo.transitions;
+    this._zoneName   = zoneInfo.zoneName;
+    this._utcOffset  = zoneInfo.currentUtcOffset;
+    this._usesDst    = zoneInfo.usesDst;
+    this._dstOffset  = zoneInfo.dstOffset;
+    this.displayName = zoneInfo.displayName;
+    this.transitions = zoneInfo.transitions;
 
     if (this.transitions && this.transitions.length > 0) {
       let lastOffset = this.transitions[0].utcOffset;

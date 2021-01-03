@@ -140,6 +140,32 @@ describe('DateTime', () => {
     expect(parseISODateTime('2020-11-29 23:24:25 +03:00')).to.eql({ y: 2020, m: 11, d: 29, hrs: 23, min: 24, sec: 25, utcOffset: 10800 });
   });
 
+  it('should correctly add DateTime fields', () => {
+    expect(new DateTime('2300-05-05T04:08:10.909').add(DateTimeField.MILLIS, -1001).toIsoString(23))
+      .to.equal('2300-05-05T04:08:09.908');
+    expect(new DateTime('2020-11-29 23:24:35').add(DateTimeField.SECONDS, 30).toIsoString(19))
+      .to.equal('2020-11-29T23:25:05');
+    expect(new DateTime('1884-02-03 22:53').add(DateTimeField.MINUTES, 14).toIsoString(16))
+      .to.equal('1884-02-03T23:07');
+    expect(new DateTime('1884-02-03 22:53').add(DateTimeField.HOURS, -25).toIsoString(16))
+      .to.equal('1884-02-02T21:53');
+    expect(new DateTime('2021-03-14T01:23-05:00', 'America/New_York').add(DateTimeField.HOURS, 1).toIsoString())
+      .to.equal('2021-03-14T03:23:00.000-04:00'); // DST start
+    expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').add(DateTimeField.HOURS, 1).toIsoString())
+      .to.equal('2021-11-07T01:23:00.000-05:00'); // DST end
+    expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').add(DateTimeField.HOURS, 26).toIsoString())
+      .to.equal('2021-11-08T02:23:00.000-05:00'); // DST end
+    expect(new DateTime('2020-02-28').add(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('2020-02-29');
+    expect(new DateTime('2019-02-28').add(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('2019-03-01');
+    expect(new DateTime('1582-10-20').add(DateTimeField.DAYS, -6).toIsoString(10)).to.equal('1582-10-04');
+    expect(new DateTime('1582-10-20').add(DateTimeField.DAYS, -7).toIsoString(10)).to.equal('1582-10-03');
+    expect(new DateTime('1582-10-04').add(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('1582-10-15');
+    expect(new DateTime('1582-10-04').add(DateTimeField.DAYS, 2).toIsoString(10)).to.equal('1582-10-16');
+    expect(new DateTime('1970-08-01').add(DateTimeField.MONTHS, 5).toIsoString(10)).to.equal('1971-01-01');
+    expect(new DateTime('1970-03-31').add(DateTimeField.MONTHS, -1).toIsoString(10)).to.equal('1970-02-28');
+    expect(new DateTime('1972-02-29').add(DateTimeField.YEARS, 50).toIsoString(10)).to.equal('2022-02-28');
+  });
+
   it('should correctly roll DateTime fields', () => {
     expect(new DateTime('2300-05-05T04:08:10.909').roll(DateTimeField.MILLIS, -1001).toIsoString(23))
       .to.equal('2300-05-05T04:08:10.908');

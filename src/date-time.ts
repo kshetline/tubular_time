@@ -17,7 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, floor, max, min, mod, round } from '@tubular/math';
+import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, isEqual, isNumber, isObject, isString, padLeft } from '@tubular/util';
 import {
   getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate, YMDDate
@@ -203,7 +203,6 @@ export class DateTime extends Calendar {
         this._wallTime.y += div_rd(m - 1 + amount, 12);
         normalized = this.normalizeDate(this._wallTime);
         [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
-        this._wallTime.occurrence = 1;
         break;
 
       case DateTimeField.YEARS:
@@ -216,6 +215,7 @@ export class DateTime extends Calendar {
 
     if (updateFromWall) {
       delete this._wallTime.occurrence;
+      delete this._wallTime.utcOffset;
       this._wallTime.n = this.getDayNumber(this._wallTime);
       this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
       this.computeUtcTimeMillis();
@@ -291,11 +291,12 @@ export class DateTime extends Calendar {
         const targetHour = mod(this._wallTime.hrs + 12, 24);
         const result = this.roll(DateTimeField.HOURS, 12 * (amount % 2));
 
-        if (result._wallTime.hrs < targetHour)
+        if (result._wallTime.hrs === targetHour)
+          return result;
+        else if (mod2(result._wallTime.hrs - targetHour, 24) < 0)
           return this.add(DateTimeField.HOURS, 1);
-        else if (result._wallTime.hrs > targetHour)
+        else
           return this.add(DateTimeField.HOURS, -1);
-        else return result;
       }
 
       case DateTimeRollField.ERA:
