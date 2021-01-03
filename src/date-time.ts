@@ -17,21 +17,23 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, mod, round } from '@tubular/math';
+import { div_rd, floor, max, min, mod, round } from '@tubular/math';
 import { clone, isEqual, isNumber, isObject, isString, padLeft } from '@tubular/util';
 import {
   getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate, YMDDate
 } from './calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC } from './common';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime } from './common';
 import { Timezone } from './timezone';
 import { getStartOfWeek } from './locale-data';
 
 export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, MONTHS, YEARS }
+export enum DateTimeRollField { AM_PM = DateTimeField.YEARS + 1, ERA }
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
 const localeTest = /^[a-z][a-z][-_a-z]*$/i;
 const lockError = new Error('This DateTime instance is locked and immutable');
+const nonIntError = new Error('Amounts for add/roll must be integers');
 
 export class DateTime extends Calendar {
   private static defaultLocale = 'en-us';
@@ -62,11 +64,23 @@ export class DateTime extends Calendar {
   static getDefaultTimezone(): Timezone { return DateTime.defaultTimezone; }
   static setDefaultTimezone(newZone: Timezone) { DateTime.defaultTimezone = newZone; }
 
-  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null, locale?: string, gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null, gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | DateAndTime | null, timezone?: Timezone | null,
+  constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string | null, locale?: string, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string| null,
               gregorianOrLocale?: string | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale)) ? undefined : gregorianOrLocale);
+
+    if (isString(initialTime)) {
+      if (/Z$/i.test(initialTime)) {
+        initialTime = initialTime.slice(0, -1);
+        timezone = timezone ?? Timezone.UT_ZONE;
+      }
+
+      initialTime = parseISODateTime(initialTime);
+    }
+
+    if (isString(timezone))
+      timezone = Timezone.getTimezone(timezone);
 
     if (timezone)
       this._timezone = timezone;
@@ -74,14 +88,10 @@ export class DateTime extends Calendar {
     if (!isNumber(gregorianOrLocale) && isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale))
       this._locale = gregorianOrLocale;
 
-    if (isObject(initialTime)) {
-      this.wallTime = clone(initialTime as DateAndTime);
-      this.computeUtcTimeMillis();
-    }
-    else {
-      this._utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
-      this.computeWallTime();
-    }
+    if (isObject(initialTime))
+      this.wallTime = initialTime;
+    else
+      this.utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
   }
 
   lock(): DateTime {
@@ -107,10 +117,6 @@ export class DateTime extends Calendar {
 
     if (!isEqual(this._wallTime, newTime)) {
       this._wallTime = clone(newTime);
-
-      if (this._wallTime.millis == null)
-        this._wallTime.millis = 0;
-
       this.computeUtcTimeMillis();
       this.computeWallTime();
       this.updateWallTime();
@@ -157,9 +163,13 @@ export class DateTime extends Calendar {
     return this._timezone.getDisplayName(this._utcTimeMillis);
   }
 
-  add(field: DateTimeField, amount: number): void {
+  add(field: DateTimeField, amount: number): DateTime {
     if (this.locked)
       throw lockError;
+    else if (amount === 0)
+      return;
+    else if (amount !== floor(amount))
+      throw nonIntError;
 
     let updateFromWall = false;
     let normalized: YMDDate;
@@ -201,18 +211,112 @@ export class DateTime extends Calendar {
         this._wallTime.y += amount;
         normalized = this.normalizeDate(this._wallTime);
         [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
-        this._wallTime.occurrence = 1;
         break;
     }
 
     if (updateFromWall) {
+      delete this._wallTime.occurrence;
       this._wallTime.n = this.getDayNumber(this._wallTime);
       this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
       this.computeUtcTimeMillis();
       this.updateWallTime();
     }
-    else
-      this.computeWallTime();
+
+    this.computeWallTime();
+
+    return this;
+  }
+
+  roll(field: DateTimeField | DateTimeRollField, amount: number, minYear = -9999, maxYear = 9999): DateTime {
+    if (this.locked)
+      throw lockError;
+    else if (amount === 0)
+      return this;
+    else if (amount !== floor(amount))
+      throw nonIntError;
+
+    let normalized: YMDDate;
+
+    switch (field) {
+      case DateTimeField.MILLIS:
+        this._wallTime.millis = mod(this._wallTime.millis + amount, 1000);
+        break;
+
+      case DateTimeField.SECONDS:
+        this._wallTime.sec = mod(this._wallTime.sec + amount, 60);
+        break;
+
+      case DateTimeField.MINUTES:
+        this._wallTime.min = mod(this._wallTime.min + amount, 60);
+        break;
+
+      case DateTimeField.HOURS:
+        {
+          const hoursInDay = floor(this.getSecondsInDay() / 3600);
+          this._wallTime.hrs = mod(this._wallTime.hrs + amount, hoursInDay);
+        }
+        break;
+
+      case DateTimeField.DAYS:
+        {
+          const missing = this.getMissingDateRange();
+          const daysInMonth = this.getLastDateInMonth();
+          this._wallTime.d = mod(this._wallTime.d + amount - 1, daysInMonth) + 1;
+
+          if (missing && (missing[0] <= this._wallTime.d && this._wallTime.d <= missing[1]))
+            this._wallTime.d = amount < 0 ? missing[0] - 1 : missing[1] + 1;
+
+          this._wallTime.d = min(max(this._wallTime.d, this.getFirstDateInMonth()), daysInMonth);
+          delete this._wallTime.utcOffset;
+        }
+        break;
+
+      case DateTimeField.MONTHS:
+        this._wallTime.m = mod(this._wallTime.m + amount - 1, 12) + 1;
+        normalized = this.normalizeDate(this._wallTime);
+        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete this._wallTime.utcOffset;
+        break;
+
+      case DateTimeField.YEARS:
+        this._wallTime.y = mod(this._wallTime.y - minYear + amount, maxYear - minYear + 1) + minYear;
+        normalized = this.normalizeDate(this._wallTime);
+        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete this._wallTime.utcOffset;
+        break;
+
+      case DateTimeRollField.AM_PM:
+      // Normally straight-forward, but this can get weird if the AM/PM roll crosses a Daylight Saving Time change.
+      {
+        const targetHour = mod(this._wallTime.hrs + 12, 24);
+        const result = this.roll(DateTimeField.HOURS, 12 * (amount % 2));
+
+        if (result._wallTime.hrs < targetHour)
+          return this.add(DateTimeField.HOURS, 1);
+        else if (result._wallTime.hrs > targetHour)
+          return this.add(DateTimeField.HOURS, -1);
+        else return result;
+      }
+
+      case DateTimeRollField.ERA:
+        if (amount % 2 === 0)
+          return this;
+
+        this._wallTime.y = -this._wallTime.y + 1;
+        normalized = this.normalizeDate(this._wallTime);
+        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete this._wallTime.utcOffset;
+        break;
+    }
+
+    delete this._wallTime.occurrence;
+    this._wallTime.n = this.getDayNumber(this._wallTime);
+    this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
+    this.computeUtcTimeMillis();
+    this.updateWallTime();
+    this.computeWallTime();
+
+    return this;
   }
 
   getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number {
@@ -311,12 +415,15 @@ export class DateTime extends Calendar {
     return s;
   }
 
-  toIsoString(): string {
+  toIsoString(maxLength?: number): string {
     const wt = this._wallTime;
     let s = getISOFormatDate(wt);
 
     s += 'T' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + ':' + padLeft(wt.sec, 2, '0') +
          '.' + padLeft(wt.millis, 3, '0') + Timezone.formatUtcOffset(wt.utcOffset);
+
+    if (maxLength != null)
+      s = s.substr(0, maxLength);
 
     return s;
   }
@@ -329,13 +436,16 @@ export class DateTime extends Calendar {
   }
 
   private computeUtcTimeMillis(): void {
-    let millis = this._wallTime.millis +
-                 this._wallTime.sec * 1000 +
-                 this._wallTime.min * 60000 +
-                 this._wallTime.hrs * 3600000 +
+    let millis = (this._wallTime.millis ?? 0) +
+                 (this._wallTime.sec ?? 0) * 1000 +
+                 (this._wallTime.min ?? 0) * 60000 +
+                 (this._wallTime.hrs ?? 0) * 3600000 +
                  this.getDayNumber(this._wallTime) * 86400000;
 
-    millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
+    if (this._wallTime.utcOffset != null)
+      millis -= this._wallTime.utcOffset * 1000;
+    else
+      millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
 
     if (this._wallTime.occurrence === 1) {
       const transition = this.timezone.findTransitionByUtc(millis);

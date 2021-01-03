@@ -76,14 +76,17 @@ export function parseISODateTime(date: string): DateAndTime {
     date = date.substring(1).trim();
 
   const match =
-    /^(\d+)-(\d+)-(\d+)(?:T|\s+)(\d+):(\d+)(?::(\d+)(?:\.(\d+))?)?(?:\s*([-+](\d\d\d\d|\d\d:\d\d)))?$/.exec(date);
+    /^([-+]?\d+)-(\d+)-(\d+)(?:(?:\s*T\s*|\s+)(\d+):(\d+)(?::(\d+)(?:\.(\d+))?)?(?:\s*([-+](?:\d\d\d\d|\d\d:\d\d)))?)?$/.exec(date);
 
   if (!match)
-    throw new Error('Invalid ISO date');
+    throw new Error('Invalid ISO date/time');
 
   const time = { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]),
-                 hrs: Number(match[4]), min: Number(match[5]),
-                 sec: Number(match[6] ?? 0) + Number(match[7] ?? 0) / 1000 } as DateAndTime;
+                 hrs: Number(match[4] ?? 0), min: Number(match[5] ?? 0),
+                 sec: Number(match[6] ?? 0), millis: Number((match[7] ?? '0').padEnd(3, '0').substr(0, 3)) } as DateAndTime;
+
+  if (match[7] == null && time.millis === 0)
+    delete time.millis;
 
   if (match[8])
     time.utcOffset = parseTimeOffset(match[8]);

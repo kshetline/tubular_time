@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { SUNDAY } from './calendar';
-import { DateTimeField, DateTime } from './date-time';
+import { DateTime, DateTimeField, DateTimeRollField } from './date-time';
 import { Timezone } from './timezone';
 import { initTimezoneLarge, initTimezoneLargeAlt, initTimezoneSmall } from './index';
 import { parseISODateTime } from './common';
@@ -128,11 +128,51 @@ describe('DateTime', () => {
   });
 
   it('should parse ISO date/time strings.', () => {
+    expect(parseISODateTime('1962-10-13')).to.eql({ y: 1962, m: 10, d: 13, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('1962-10-13T03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
-    expect(parseISODateTime('+1962-10-13T03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
-    expect(parseISODateTime('-1962-10-13T03:09')).to.eql({ y: -1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
+    expect(parseISODateTime('1962-10-13  T03:09:05')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5 });
+    expect(parseISODateTime('1962-10-13T  03:09:05.3')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5, millis: 300 });
+    expect(parseISODateTime('1962-10-13 T 03:09:05.0305')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5, millis: 30 });
+    expect(parseISODateTime('+1962-10-13  03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
+    expect(parseISODateTime('-1962-10-13 03:09')).to.eql({ y: -1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
     expect(parseISODateTime('1962-10-13T03:09:01')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 1 });
     expect(parseISODateTime('1962-10-13T03:09:01-0500')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 1, utcOffset: -18000 });
     expect(parseISODateTime('2020-11-29 23:24:25 +03:00')).to.eql({ y: 2020, m: 11, d: 29, hrs: 23, min: 24, sec: 25, utcOffset: 10800 });
+  });
+
+  it('should correctly roll DateTime fields', () => {
+    expect(new DateTime('2300-05-05T04:08:10.909').roll(DateTimeField.MILLIS, -1001).toIsoString(23))
+      .to.equal('2300-05-05T04:08:10.908');
+    expect(new DateTime('2020-11-29 23:24:35').roll(DateTimeField.SECONDS, 30).toIsoString(19))
+      .to.equal('2020-11-29T23:24:05');
+    expect(new DateTime('1884-02-03 22:53').roll(DateTimeField.MINUTES, 14).toIsoString(16))
+      .to.equal('1884-02-03T22:07');
+    expect(new DateTime('1884-02-03 22:53').roll(DateTimeField.HOURS, -25).toIsoString(16))
+      .to.equal('1884-02-03T21:53');
+    expect(new DateTime('2021-03-14T01:23', 'America/New_York').roll(DateTimeField.HOURS, 1).toIsoString())
+      .to.equal('2021-03-14T03:23:00.000-04:00'); // DST start
+    expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').roll(DateTimeField.HOURS, 1).toIsoString())
+      .to.equal('2021-11-07T01:23:00.000-05:00'); // DST end
+    expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').roll(DateTimeField.HOURS, 26).toIsoString())
+      .to.equal('2021-11-07T01:23:00.000-05:00'); // DST end
+    expect(new DateTime('1995-08-03 22:53').roll(DateTimeRollField.AM_PM, 1).toIsoString(16))
+      .to.equal('1995-08-03T10:53');
+    expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').roll(DateTimeRollField.AM_PM, 1).toIsoString(16))
+      .to.equal('2021-11-07T13:23');
+    expect(new DateTime('2021-11-07T01:23-05:00', 'America/New_York').roll(DateTimeRollField.AM_PM, 1).toIsoString(16))
+      .to.equal('2021-11-07T13:23');
+    expect(new DateTime('2021-11-07T13:23', 'America/New_York').roll(DateTimeRollField.AM_PM, 1).toIsoString())
+      .to.equal('2021-11-07T01:23:00.000-04:00');
+    expect(new DateTime('2020-02-28').roll(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('2020-02-29');
+    expect(new DateTime('2019-02-28').roll(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('2019-02-01');
+    expect(new DateTime('1582-10-20').roll(DateTimeField.DAYS, -6).toIsoString(10)).to.equal('1582-10-04');
+    expect(new DateTime('1582-10-20').roll(DateTimeField.DAYS, -7).toIsoString(10)).to.equal('1582-10-04');
+    expect(new DateTime('1582-10-04').roll(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('1582-10-15');
+    expect(new DateTime('1582-10-04').roll(DateTimeField.DAYS, 2).toIsoString(10)).to.equal('1582-10-15');
+    expect(new DateTime('1970-08-01').roll(DateTimeField.MONTHS, 5).toIsoString(10)).to.equal('1970-01-01');
+    expect(new DateTime('1970-03-31').roll(DateTimeField.MONTHS, -1).toIsoString(10)).to.equal('1970-02-28');
+    expect(new DateTime('-9999-01-01').roll(DateTimeField.YEARS, -1).toIsoString(10)).to.equal('9999-01-01');
+    expect(new DateTime('9999-01-01').roll(DateTimeField.YEARS, 1).toIsoString(11)).to.equal('-9999-01-01');
+    expect(new DateTime('1970-03-31').roll(DateTimeRollField.ERA, 1).toIsoString(11)).to.equal('-1969-03-31');
   });
 });
