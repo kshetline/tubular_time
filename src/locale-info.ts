@@ -9,4 +9,6 @@ export interface LocaleInfo {
   dateTimeFormats: Record<string, string | Intl.DateTimeFormat>;
   meridiem: string[][];
   startOfWeek: number;
+  minDaysInWeek: number;
+  weekend: number[];
 }

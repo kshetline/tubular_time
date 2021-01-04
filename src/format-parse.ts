@@ -2,9 +2,7 @@ import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { LocaleInfo } from './locale-info';
 import { isEqual, isString } from '@tubular/util';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import moment from 'moment/moment';
-import { getMeridiems, getStartOfWeek, normalizeLocale } from './locale-data';
+import { getMeridiems, getMinDaysInWeek, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 
 let hasIntlDateTime = false;
@@ -263,7 +261,7 @@ export function format(dt: DateTime, fmt: string): string {
               const options = {} as any;
 
               if (dt.timezone.zoneName !== 'OS')
-                options.timeZone = dt.timezone.zoneName;
+                options.timeZone = (dt.timezone.zoneName === 'UT' ? 'UTC' : dt.timezone.zoneName);
 
               if (field.charAt(1) !== 'x')
                 options.dateStyle = styleOptValues[field.charAt(1)];
@@ -330,7 +328,7 @@ function quickFormat(localeName: string, timezone: string, opts: any) {
   const options: Intl.DateTimeFormatOptions = {};
 
   if (timezone !== 'OS')
-    options.timeZone = timezone;
+    options.timeZone = (timezone === 'UT' ? 'UTC' : timezone);
 
   Object.keys(opts).forEach(key => {
     const value = shortOptValues[opts[key]] ?? opts[key];
@@ -394,6 +392,8 @@ function getLocaleInfo(localeName: string): LocaleInfo {
   locale.dateTimeFormats = {};
   locale.meridiem = getMeridiems(localeName);
   locale.startOfWeek = getStartOfWeek(localeName);
+  locale.minDaysInWeek = getMinDaysInWeek(localeName);
+  locale.weekend = getWeekend(localeName);
 
   cachedLocales[localeName] = locale;
 

@@ -1,3 +1,5 @@
+// import moment from 'moment/moment';
+
 export const localeList = [
   'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bn', 'bn-bd',
   'bo', 'br', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'de-at', 'de-ch', 'el', 'en', 'en-au', 'en-ca', 'en-gb',
@@ -8,6 +10,8 @@ export const localeList = [
   'pt-br', 'ro', 'ru', 'sd', 'se', 'si', 'sk', 'sl', 'sq', 'sr', 'sv', 'sw', 'ta', 'te', 'tg', 'th',
   'tk', 'tr', 'tzm', 'ug-cn', 'uk', 'ur', 'uz', 'vi', 'yo', 'zh-cn', 'zh-hk', 'zh-tw'
 ];
+
+Object.freeze(localeList);
 
 export function normalizeLocale(name: string): string {
   if (!Intl?.DateTimeFormat)
@@ -82,32 +86,46 @@ export function getMeridiems(locale: string): string[][] {
   return result;
 }
 
-const weekStarts = {
-  'af': 1, 'ar': 6, 'ar-dz': 0, 'ar-kw': 0, 'ar-ma': 1, 'ar-sa': 0, 'ar-tn': 1, 'az': 1,
-  'be': 1, 'bg': 1, 'bm': 1, 'bn': 0, 'bo': 0, 'br': 1, 'bs': 1, 'ca': 1, 'cs': 1, 'cy': 1,
-  'da': 1, 'de': 1, 'el': 1, 'en': 0, 'en-gb': 1, 'en-ie': 1, 'en-nz': 1, 'en-sg': 1, 'eo': 1,
-  'es': 1, 'es-mx': 0, 'es-us': 0, 'et': 1, 'eu': 1, 'fa': 6, 'fi': 1, 'fil': 1, 'fo': 1,
-  'fr': 1, 'fr-ca': 0, 'fy': 1, 'ga': 1, 'gd': 1, 'gl': 1, 'gu': 0, 'hi': 0, 'hr': 1, 'hu': 1,
-  'hy-am': 1, 'is': 1, 'it': 1, 'ja': 0, 'jv': 1, 'ka': 1, 'kk': 1, 'km': 1, 'kn': 0, 'ko': 0,
-  'ku': 6, 'ky': 1, 'lb': 1, 'lo': 0, 'lt': 1, 'lv': 1, 'mi': 1, 'mk': 1, 'ml': 0, 'mn': 0,
-  'mr': 0, 'ms': 1, 'mt': 1, 'my': 1, 'nb': 1, 'ne': 0, 'nl': 1, 'nn': 1, 'pl': 1, 'pt': 1,
-  'pt-br': 0, 'ro': 1, 'ru': 1, 'sd': 1, 'se': 1, 'si': 0, 'sk': 1, 'sl': 1, 'sq': 1, 'sr': 1,
-  'sv': 1, 'sw': 1, 'ta': 0, 'te': 0, 'tg': 1, 'th': 0, 'tk': 1, 'tr': 1, 'tzm': 6, 'ug-cn': 1,
-  'uk': 1, 'ur': 1, 'uz': 1, 'vi': 1, 'yo': 1, 'zh': 1, 'zh-hk': 0, 'zh-tw': 0
+const weekInfo = {
+  'af': [1, 4, 5], 'ar': [6, 1, 5, 6], 'ar-dz': [0, 3, 5, 6], 'ar-kw': [0, -5, 5, 6], 'ar-ly': [6, 1, 5, 6],
+  'ar-sa': [0, 1, 4, 5], 'az': [1, 1, 6, 0], 'be': [1, 1, 6, 0], 'bg': [1, 1, 6, 0], 'bn': [0, 1, 6, 0],
+  'bn-bd': [0, 1, 6, 0], 'bo': [0, 1, 6, 0], 'bs': [1, 1, 6, 0], 'en': [0, 1, 6, 0], 'en-au': [0, 3, 6, 0],
+  'en-ca': [0, 1, 6, 0], 'en-il': [0, 1, 5, 6], 'en-in': [0, 1, 6, 0], 'eo': [1, 1, 6, 0], 'es-mx': [0, 3, 6, 0],
+  'es-us': [0, 1, 6, 0], 'eu': [1, 1, 6, 0], 'fa': [6, 1, 6, 0], 'fr-ca': [0, 1, 6, 0], 'gu': [0, 1, 6, 0],
+  'hi': [0, 1, 6, 0], 'hr': [1, 1, 6, 0], 'hy-am': [1, 1, 6, 0], 'ja': [0, 1, 6, 0], 'jv': [1, 1, 6, 0],
+  'ka': [1, 1, 6, 0], 'kk': [1, 1, 6, 0], 'kn': [0, 1, 6, 0], 'ko': [0, 1, 6, 0], 'ku': [6, 1, 6, 0],
+  'ky': [1, 1, 6, 0], 'lo': [0, 1, 6, 0], 'mk': [1, 1, 6, 0], 'ml': [0, 1, 6, 0], 'mn': [0, 1, 6, 0],
+  'mr': [0, 1, 5, 6], 'ms': [1, 1, 6, 0], 'ms-my': [1, 1, 6, 0], 'ne': [0, 1, 6, 0], 'pt-br': [0, 1, 6, 0],
+  'ro': [1, 1, 6, 0], 'sd': [1, 4, 5], 'si': [0, 1, 6, 0], 'sl': [1, 1, 6, 0], 'sr': [1, 1, 6, 0], 'sw': [1, 1, 6, 0],
+  'ta': [0, 1, 6, 0], 'te': [0, 1, 6, 0], 'tg': [1, 1, 6, 0], 'th': [0, 1, 6, 0], 'tk': [1, 1, 6, 0],
+  'tr': [1, 1, 6, 0], 'tzm': [6, 1, 6, 0], 'ug-cn': [1, 1, 6, 0], 'uk': [1, 1, 6, 0], 'uz': [1, 1, 6, 0],
+  'zh-hk': [0, 1, 6, 0], 'zh-tw': [0, 1, 6, 0]
 };
 
-export function getStartOfWeek(locale: string): number {
-  let result: number;
+function getWeekInfo(locale: string): number[] {
+  let result: number[];
 
   locale = normalizeLocale(locale);
 
   do {
-    result = weekStarts[locale];
+    result = weekInfo[locale];
     locale = reduceLocale(locale);
   } while (!result && locale.includes('-'));
 
   if (result == null)
-    result = 0;
+    result = weekInfo.en;
 
   return result;
+}
+
+export function getStartOfWeek(locale: string): number {
+  return getWeekInfo(locale)[0];
+}
+
+export function getMinDaysInWeek(locale: string): number {
+  return getWeekInfo(locale)[1];
+}
+
+export function getWeekend(locale: string): number[] {
+  return getWeekInfo(locale).slice(2);
 }
