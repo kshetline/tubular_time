@@ -19,6 +19,7 @@
 
 import { div_rd, mod } from '@tubular/math';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './calendar';
+import { toNumber } from '@tubular/util';
 
 export interface DateAndTime extends YMDDate {
   hrs: number;
@@ -64,32 +65,41 @@ export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
   return wallTime;
 }
 
+const invalidDateTime = new Error('Invalid ISO date/time');
+
 export function parseISODateTime(date: string): DateAndTime {
   date = date.trim();
-  let sign = 1;
 
-  if (date.startsWith('-')) {
-    sign = -1;
-    date = date.substring(1).trim();
+  let time: DateAndTime;
+  let $ = /^([-+]?\d+)-(\d{1,2})-(\d{1,2})/.exec(date);
+
+  if ($ || ($ = /^([-+]?\d{4,})(\d\d)(\d\d)/.exec(date)))
+    time = { y: toNumber($[1]), m: Number($[2]), d: Number($[3]) } as DateAndTime;
+  else if (($ = /^([-+]?\d+)-W(\d+)-(\d)/i.exec(date)) || ($ = /^([-+]?\d{4,})W(\d\d)(\d)/i.exec(date)))
+    time = { yw: toNumber($[1]), w: Number($[2]), dw: Number($[3]) } as DateAndTime;
+  else if (($ = /^(\d+)-(\d+)/.exec(date)) || ($ = /^(\d{4})(\d){3}/.exec(date))) {
+    time = { y: toNumber($[1]), dy: Number($[2]) } as DateAndTime;
   }
-  else if (date.startsWith('+'))
-    date = date.substring(1).trim();
+  else
+    throw invalidDateTime;
 
-  const match =
-    /^([-+]?\d+)-(\d+)-(\d+)(?:(?:\s*T\s*|\s+)(\d+):(\d+)(?::(\d+)(?:\.(\d+))?)?(?:\s*([-+](?:\d\d\d\d|\d\d:\d\d)))?)?$/.exec(date);
+  date = date.substr($[0].length).trim();
 
-  if (!match)
-    throw new Error('Invalid ISO date/time');
+  if (!date)
+    $ = [] as RegExpExecArray;
+  else if (!($ = /(?:T\s*)?(\d{1,2}):(\d{1,2})(?::(?:(\d{1,2})(?:\.(\d+))?))?(?:\s*([-+](?:\d\d\d\d|\d\d:\d\d)))?$/i.exec(date)) &&
+           !($ = /(?:T\s*)?(\d{4})(\d\d)(\d\d)(?:\.(\d+))?/i.exec(date)))
+    throw invalidDateTime;
 
-  const time = { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]),
-                 hrs: Number(match[4] ?? 0), min: Number(match[5] ?? 0),
-                 sec: Number(match[6] ?? 0), millis: Number((match[7] ?? '0').padEnd(3, '0').substr(0, 3)) } as DateAndTime;
+  Object.assign(time, {
+    hrs: Number($[1] ?? 0), min: Number($[2] ?? 0),
+    sec: Number($[3] ?? 0), millis: Number(($[4] ?? '0').padEnd(3, '0').substr(0, 3)) });
 
-  if (match[7] == null && time.millis === 0)
+  if ($[4] == null && time.millis === 0)
     delete time.millis;
 
-  if (match[8])
-    time.utcOffset = parseTimeOffset(match[8]);
+  if ($[5])
+    time.utcOffset = parseTimeOffset($[5]);
 
   return time;
 }

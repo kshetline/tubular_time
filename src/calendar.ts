@@ -54,6 +54,8 @@ export interface YMDDate {
   m?: number;
   /** Day of month. */
   d?: number;
+  /** Day of month. */
+  dy?: number;
   /** Day number where 1970-01-01 = 0. */
   n?: number;
   /** true if this is a Julian calendar date, false for Gregorian. */
@@ -396,6 +398,7 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   let year: number;
   let month: number;
   let day: number;
+  let dayOfYear: number;
   let lastDay: number;
 
   year = Math.floor((dayNum + 719528) / 365.2425);
@@ -406,12 +409,12 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   while (dayNum >= getDayNumberGregorian(year + 1, 1, 1))
     ++year;
 
-  day = dayNum - getDayNumberGregorian(year, 1, 1) + 1;
+  day = dayOfYear = dayNum - getDayNumberGregorian(year, 1, 1) + 1;
 
   for (month = 1; day > (lastDay = getLastDateInMonthGregorian(year, month)); ++month)
     day -= lastDay;
 
-  return { y: year, m: month, d: day, n: dayNum, j: false };
+  return { y: year, m: month, d: day, dy: dayOfYear, n: dayNum, j: false };
 }
 
 export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
@@ -595,6 +598,20 @@ export class Calendar {
   }
 
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
+    if (isObject(yearOrDate) && !isArray(yearOrDate)) {
+      if (yearOrDate.y == null && yearOrDate.yw != null) {
+        ++this.computeWeekValues;
+
+        const w = this.getStartDateOfFirstWeekOfYear(yearOrDate.yw);
+        const dayNum = w.n + ((yearOrDate.w ?? 1) - 1) * 7 + (yearOrDate.dw ?? 1) - 1;
+
+        yearOrDate = this.getDateFromDayNumber(dayNum);
+        --this.computeWeekValues;
+      }
+      else if (yearOrDate.y != null && yearOrDate.m == null && yearOrDate.dy != null)
+        yearOrDate = this.addDaysToDate(yearOrDate.dy - 1, { y: yearOrDate.y, m: 1, d: 1 });
+    }
+
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
     while (month <  1) { month += 12; --year; }

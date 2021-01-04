@@ -216,8 +216,6 @@ export class DateTime extends Calendar {
     if (updateFromWall) {
       delete this._wallTime.occurrence;
       delete this._wallTime.utcOffset;
-      this._wallTime.n = this.getDayNumber(this._wallTime);
-      this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
       this.computeUtcTimeMillis();
       this.updateWallTime();
     }
@@ -311,8 +309,6 @@ export class DateTime extends Calendar {
     }
 
     delete this._wallTime.occurrence;
-    this._wallTime.n = this.getDayNumber(this._wallTime);
-    this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
     this.computeUtcTimeMillis();
     this.updateWallTime();
     this.computeWallTime();
@@ -492,7 +488,10 @@ export class DateTime extends Calendar {
 
     this._wallTime.utcOffset = offsets[0];
     this._wallTime.dstOffset = offsets[1];
+    this._wallTime.n = this.getDayNumber(this._wallTime);
+    this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
     [this._wallTime.yw, this._wallTime.w, this._wallTime.dw] = this.getYearWeekAndWeekday(this._wallTime);
+    this._wallTime.dy = this._wallTime.n - this.getDayNumber(this._wallTime.y, 1, 1) + 1;
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {

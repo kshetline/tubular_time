@@ -128,7 +128,7 @@ describe('DateTime', () => {
   });
 
   it('should parse ISO date/time strings.', () => {
-    expect(parseISODateTime('1962-10-13')).to.eql({ y: 1962, m: 10, d: 13, hrs: 0, min: 0, sec: 0 });
+    expect(parseISODateTime('19621013')).to.eql({ y: 1962, m: 10, d: 13, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('1962-10-13T03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
     expect(parseISODateTime('1962-10-13  T03:09:05')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5 });
     expect(parseISODateTime('1962-10-13T  03:09:05.3')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5, millis: 300 });
@@ -138,6 +138,8 @@ describe('DateTime', () => {
     expect(parseISODateTime('1962-10-13T03:09:01')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 1 });
     expect(parseISODateTime('1962-10-13T03:09:01-0500')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 1, utcOffset: -18000 });
     expect(parseISODateTime('2020-11-29 23:24:25 +03:00')).to.eql({ y: 2020, m: 11, d: 29, hrs: 23, min: 24, sec: 25, utcOffset: 10800 });
+    expect(parseISODateTime('2020-W01-1')).to.eql({ yw: 2020, w: 1, dw: 1, hrs: 0, min: 0, sec: 0 });
+    expect(parseISODateTime('2020001')).to.eql({ y: 2020, dy: 1, hrs: 0, min: 0, sec: 0 });
   });
 
   it('should correctly add DateTime fields', () => {
@@ -205,5 +207,7 @@ describe('DateTime', () => {
   it('should correctly report week numbers', () => {
     expect(new DateTime('2020-12-28').wallTime).to.include({ yw: 2020, w: 53, dw: 1 });
     expect(new DateTime('2021-01-05').wallTime).to.include({ yw: 2021, w:  1, dw: 2 });
+    expect(new DateTime('2021-w06-4').wallTime).to.include({ yw: 2021, w:  6, dw: 4 });
+    expect(new DateTime('2021-033').wallTime).to.include({ yw: 2021, w: 5, dw: 2 });
   });
 });
