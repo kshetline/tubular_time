@@ -163,6 +163,7 @@ describe('DateTime', () => {
     expect(new DateTime('1582-10-20').add(DateTimeField.DAYS, -7).toIsoString(10)).to.equal('1582-10-03');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAYS, 2).toIsoString(10)).to.equal('1582-10-16');
+    expect(new DateTime('2021-02-28').add(DateTimeField.WEEKS, -3).toIsoString(10)).to.equal('2021-02-07');
     expect(new DateTime('1970-08-01').add(DateTimeField.MONTHS, 5).toIsoString(10)).to.equal('1971-01-01');
     expect(new DateTime('1970-03-31').add(DateTimeField.MONTHS, -1).toIsoString(10)).to.equal('1970-02-28');
     expect(new DateTime('1972-02-29').add(DateTimeField.YEARS, 50).toIsoString(10)).to.equal('2022-02-28');
@@ -197,6 +198,8 @@ describe('DateTime', () => {
     expect(new DateTime('1582-10-20').roll(DateTimeField.DAYS, -7).toIsoString(10)).to.equal('1582-10-04');
     expect(new DateTime('1582-10-04').roll(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('1582-10-04').roll(DateTimeField.DAYS, 2).toIsoString(10)).to.equal('1582-10-15');
+    expect(new DateTime('2021-02-28').roll(DateTimeField.WEEKS, -13).toIsoString(10)).to.equal('2021-11-28');
+    expect(new DateTime('2021-02-28').roll(DateTimeField.WEEKS, 2).toIsoString(10)).to.equal('2021-03-14');
     expect(new DateTime('1970-08-01').roll(DateTimeField.MONTHS, 5).toIsoString(10)).to.equal('1970-01-01');
     expect(new DateTime('1970-03-31').roll(DateTimeField.MONTHS, -1).toIsoString(10)).to.equal('1970-02-28');
     expect(new DateTime('-9999-01-01').roll(DateTimeField.YEARS, -1).toIsoString(10)).to.equal('9999-01-01');

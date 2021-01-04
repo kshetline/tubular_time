@@ -184,15 +184,19 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.MINUTES:
-        this._utcTimeMillis += amount * 60000;
+        this._utcTimeMillis += amount * 60_000;
         break;
 
       case DateTimeField.HOURS:
-        this._utcTimeMillis += amount * 3600000;
+        this._utcTimeMillis += amount * 3_600_000;
         break;
 
       case DateTimeField.DAYS:
-        this._utcTimeMillis += amount * 86400000;
+        this._utcTimeMillis += amount * 86_400_000;
+        break;
+
+      case DateTimeField.WEEKS:
+        this._utcTimeMillis += amount * 604_800_000;
         break;
 
       case DateTimeField.MONTHS:
@@ -265,6 +269,16 @@ export class DateTime extends Calendar {
             this._wallTime.d = amount < 0 ? missing[0] - 1 : missing[1] + 1;
 
           this._wallTime.d = min(max(this._wallTime.d, this.getFirstDateInMonth()), daysInMonth);
+          delete this._wallTime.utcOffset;
+        }
+        break;
+
+      case DateTimeField.WEEKS:
+        {
+          const weeksInYear = this.getWeeksInYear(this._wallTime.yw);
+
+          this._wallTime.w = mod(this._wallTime.w + amount - 1, weeksInYear) + 1;
+          delete this._wallTime.y;
           delete this._wallTime.utcOffset;
         }
         break;
@@ -489,9 +503,11 @@ export class DateTime extends Calendar {
     this._wallTime.utcOffset = offsets[0];
     this._wallTime.dstOffset = offsets[1];
     this._wallTime.n = this.getDayNumber(this._wallTime);
-    this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
+    const date = this.getDateFromDayNumber(this._wallTime.n);
+    [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [date.y, date.m, date.d];
     [this._wallTime.yw, this._wallTime.w, this._wallTime.dw] = this.getYearWeekAndWeekday(this._wallTime);
     this._wallTime.dy = this._wallTime.n - this.getDayNumber(this._wallTime.y, 1, 1) + 1;
+    this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
