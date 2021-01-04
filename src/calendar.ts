@@ -17,7 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, div_tt0, mod } from '@tubular/math';
+import { div_rd, div_tt0, floor, mod } from '@tubular/math';
 import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
 
 export enum CalendarType { PURE_GREGORIAN, PURE_JULIAN }
@@ -49,23 +49,27 @@ const FIRST_GREGORIAN_DAY_SGC = -141427; // 1582-10-15
  */
 export interface YMDDate {
   /** Year as signed integer (0 = 1 BCE, -1 = 2 BCE, etc.). */
-  y: number;
+  y?: number;
   /** Month as 1-12. */
-  m: number;
+  m?: number;
   /** Day of month. */
-  d: number;
+  d?: number;
   /** Day number where 1970-01-01 = 0. */
   n?: number;
   /** true if this is a Julian calendar date, false for Gregorian. */
   j?: boolean;
-  /** ISO week of year. */
-  w?: number;
   /** ISO year for week of year. */
   yw?: number;
-  /** Local week of year. */
-  wl?: number;
+  /** ISO week of year. */
+  w?: number;
+  /** ISO day or week. */
+  dw?: number;
   /** Local year for week of year. */
   ywl?: number;
+  /** Local week of year. */
+  wl?: number;
+  /** Local day or week. */
+  dwl?: number;
 }
 
 /**
@@ -611,11 +615,20 @@ export class Calendar {
       return getDayNumberGregorian(year, month, day);
   }
 
+  private computeWeekValues = 0; // To prevent infinite recursion, compute week values only when this is 0.
+
   getDateFromDayNumber(dayNum: number): YMDDate {
+    let result: YMDDate;
+
     if (dayNum >= this.firstGregorianDay)
-      return getDateFromDayNumberGregorian(dayNum);
+      result = getDateFromDayNumberGregorian(dayNum);
     else
-      return getDateFromDayNumberJulian(dayNum);
+      result = getDateFromDayNumberJulian(dayNum);
+
+    if (this.computeWeekValues === 0)
+      [result.yw, result.w, result.dw] = this.getYearWeekAndWeekday(result);
+
+    return result;
   }
 
   getFirstDateInMonth(year: number, month: number): number {
@@ -875,6 +888,51 @@ export class Calendar {
 
     const daysIntoWeek = mod(this.getDayOfWeek(year, 1, day) - startingDayOfWeek, 7);
 
-    return this.addDaysToDate(-daysIntoWeek + (daysIntoWeek > minDaysInCalendarYear ? 7 : 0), year, 1, day);
+    return this.addDaysToDate(-daysIntoWeek + (daysIntoWeek > 7 - minDaysInCalendarYear ? 7 : 0), year, 1, day);
+  }
+
+  getWeeksInYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): number {
+    const w1 = this.getStartDateOfFirstWeekOfYear(year, startingDayOfWeek, minDaysInCalendarYear);
+    const w2 = this.getStartDateOfFirstWeekOfYear(year + 1, startingDayOfWeek, minDaysInCalendarYear);
+
+    return (w2.n - w1.n) / 7;
+  }
+
+  getYearWeekAndWeekday(year: number, month: number, day: number,
+    startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+
+  getYearWeekAndWeekday(date: YearOrDate | number,
+    startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+
+  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
+                      startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
+    const [year, month, day] = handleVariableDateArgs(yearOrDate, monthOrSDW, dayOrMDiCY);
+
+    if (isObject(yearOrDate)) {
+      startingDayOfWeek = monthOrSDW;
+      minDaysInCalendarYear = dayOrMDiCY;
+    }
+
+    startingDayOfWeek = startingDayOfWeek ?? 1;
+    minDaysInCalendarYear = minDaysInCalendarYear ?? 4;
+    ++this.computeWeekValues;
+
+    let resultYear = year;
+    let w = this.getStartDateOfFirstWeekOfYear(year, startingDayOfWeek, minDaysInCalendarYear);
+    const w2 = this.getStartDateOfFirstWeekOfYear(year + 1, startingDayOfWeek, minDaysInCalendarYear);
+    const dayNum = this.getDayNumber(year, month, day);
+
+    if (w.n > dayNum) {
+      w = this.getStartDateOfFirstWeekOfYear(year - 1, startingDayOfWeek, minDaysInCalendarYear);
+      --resultYear;
+    }
+    else if (w2.n + 6 < dayNum) {
+      w = w2;
+      ++resultYear;
+    }
+
+    --this.computeWeekValues;
+
+    return [resultYear, floor((dayNum - w.n) / 7) + 1, mod(dayNum - w.n, 7) + 1];
   }
 }

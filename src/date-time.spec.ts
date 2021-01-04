@@ -201,4 +201,9 @@ describe('DateTime', () => {
     expect(new DateTime('9999-01-01').roll(DateTimeField.YEARS, 1).toIsoString(11)).to.equal('-9999-01-01');
     expect(new DateTime('1970-03-31').roll(DateTimeRollField.ERA, 1).toIsoString(11)).to.equal('-1969-03-31');
   });
+
+  it('should correctly report week numbers', () => {
+    expect(new DateTime('2020-12-28').wallTime).to.include({ yw: 2020, w: 53, dw: 1 });
+    expect(new DateTime('2021-01-05').wallTime).to.include({ yw: 2021, w:  1, dw: 2 });
+  });
 });

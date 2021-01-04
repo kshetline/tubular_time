@@ -26,8 +26,8 @@ import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime } from './common';
 import { Timezone } from './timezone';
 import { getStartOfWeek } from './locale-data';
 
-export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, MONTHS, YEARS }
-export enum DateTimeRollField { AM_PM = DateTimeField.YEARS + 1, ERA }
+export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, WEEKS, MONTHS, YEARS }
+export enum DateTimeRollField { AM_PM = DateTimeField.YEARS + 1, ERA, LOCAL_WEEKS }
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
@@ -492,6 +492,7 @@ export class DateTime extends Calendar {
 
     this._wallTime.utcOffset = offsets[0];
     this._wallTime.dstOffset = offsets[1];
+    [this._wallTime.yw, this._wallTime.w, this._wallTime.dw] = this.getYearWeekAndWeekday(this._wallTime);
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
