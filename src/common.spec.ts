@@ -7,7 +7,7 @@ describe('DateTime', () => {
     expect(parseISODateTime('1962-10-13T03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
     expect(parseISODateTime('1962-10-13  T03:09:05')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5 });
     expect(parseISODateTime('1962-10-13T  03:09:05.3')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5, millis: 300 });
-    expect(parseISODateTime('1962-10-13 T 03:09:05.0305')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5, millis: 30 });
+    expect(parseISODateTime('1962-10-13 T 03:09:05,0305')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 5, millis: 30 });
     expect(parseISODateTime('+1962-10-13  03:09')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
     expect(parseISODateTime('-1962-10-13 03:09')).to.eql({ y: -1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });
     expect(parseISODateTime('1962-10-13T03:09:01')).to.eql({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 1 });

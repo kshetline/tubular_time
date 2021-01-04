@@ -296,6 +296,10 @@ export class Timezone {
     return regionAndSubzones;
   }
 
+  static from(name: string): Timezone {
+    return Timezone.getTimezone(name);
+  }
+
   static getTimezone(name: string, longitude?: number): Timezone {
     if (!name)
       return this.OS_ZONE;
@@ -306,7 +310,7 @@ export class Timezone {
       return cached;
 
     let zone: Timezone;
-    const matches: string[] = /LMT|OS|(?:(UT)(?:([-+])(\d\d):(\d\d))?)|(?:.+\/.+)|\w+/.exec(name);
+    const matches: string[] = /LMT|OS|(?:(UT)?(?:([-+])(\d\d):(\d\d))?)|(?:.+\/.+)|\w+/.exec(name);
 
     if (matches === null || matches.length === 0)
       throw new Error('Unrecognized format for timezone name "' + name + '"');
@@ -319,8 +323,11 @@ export class Timezone {
     else if (matches[0] === 'OS') {
       zone = this.OS_ZONE;
     }
-    else if (matches.length > 1 && matches[1] === 'UT') {
+    else if (matches.length > 1 && (matches[1] === 'UT' || matches[2])) {
       let offset = 0;
+
+      if (!matches[1])
+        name = 'UT' + name;
 
       if (matches.length === 5 && matches[3] && matches[4])
         offset = (parseInt(matches[3], 10) * 60 + parseInt(matches[4], 10)) * 60 * (matches[2] === '-' ? -1 : 1);

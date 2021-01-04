@@ -23,6 +23,7 @@ import {
   getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate, YMDDate
 } from './calendar';
 import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime } from './common';
+import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getStartOfWeek } from './locale-data';
 
@@ -34,6 +35,10 @@ export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 const localeTest = /^[a-z][a-z][-_a-z]*$/i;
 const lockError = new Error('This DateTime instance is locked and immutable');
 const nonIntError = new Error('Amounts for add/roll must be integers');
+// noinspection SpellCheckingInspection
+const fullIsoFormat = 'yyyy-MM-DDTHH:mm:ss.SSSZ';
+// noinspection SpellCheckingInspection
+const fullAltFormat = 'yyyy-MM-DDTHH:mm:ss.SSSRZv';
 
 export class DateTime extends Calendar {
   private static defaultLocale = 'en-us';
@@ -62,7 +67,12 @@ export class DateTime extends Calendar {
   static setDefaultLocale(newLocale: string) { DateTime.defaultLocale = newLocale; }
 
   static getDefaultTimezone(): Timezone { return DateTime.defaultTimezone; }
-  static setDefaultTimezone(newZone: Timezone) { DateTime.defaultTimezone = newZone; }
+  static setDefaultTimezone(newZone: Timezone | string) {
+    if (isString(newZone))
+      newZone = Timezone.from(newZone);
+
+    DateTime.defaultTimezone = newZone;
+  }
 
   constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string | null, locale?: string, gregorianChange?: GregorianChange);
   constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
@@ -71,16 +81,23 @@ export class DateTime extends Calendar {
     super(gregorianChange ?? (isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale)) ? undefined : gregorianOrLocale);
 
     if (isString(initialTime)) {
-      if (/Z$/i.test(initialTime)) {
-        initialTime = initialTime.slice(0, -1);
-        timezone = timezone ?? Timezone.UT_ZONE;
+      const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
+      if ($) {
+        let zone = $[1];
+
+        initialTime = initialTime.slice(0, -zone.length).trim();
+
+        if (/^(Z|UT|UTC|GMT)$/i.test(zone))
+          zone = 'UT';
+
+        timezone = timezone ?? Timezone.from(zone);
       }
 
       initialTime = parseISODateTime(initialTime);
     }
 
     if (isString(timezone))
-      timezone = Timezone.getTimezone(timezone);
+      timezone = Timezone.from(timezone);
 
     if (timezone)
       this._timezone = timezone;
@@ -88,8 +105,12 @@ export class DateTime extends Calendar {
     if (!isNumber(gregorianOrLocale) && isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale))
       this._locale = gregorianOrLocale;
 
-    if (isObject(initialTime))
+    if (isObject(initialTime)) {
+      if (!timezone && initialTime.utcOffset != null && initialTime.utcOffset !== 0)
+        this._timezone = Timezone.from(Timezone.formatUtcOffset(initialTime.utcOffset));
+
       this.wallTime = initialTime;
+    }
     else
       this.utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
   }
@@ -406,15 +427,12 @@ export class DateTime extends Calendar {
     return calendar;
   }
 
+  format(fmt = fullIsoFormat): string {
+    return formatter(this, fmt);
+  }
+
   toString(): string {
-    const wt = this._wallTime;
-    let s = getISOFormatDate(wt);
-
-    s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + ':' + padLeft(wt.sec, 2, '0') +
-         '.' + padLeft(wt.millis, 3, '0') + (wt.occurrence === 2 ? '\u2082' : ' ') + // Subscript 2
-         Timezone.formatUtcOffset(wt.utcOffset) + Timezone.getDstSymbol(wt.dstOffset);
-
-    return s;
+    return 'DateTime<' + this.format(fullAltFormat) + '>';
   }
 
   toYMDhmString(): string {
@@ -427,11 +445,7 @@ export class DateTime extends Calendar {
   }
 
   toIsoString(maxLength?: number): string {
-    const wt = this._wallTime;
-    let s = getISOFormatDate(wt);
-
-    s += 'T' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + ':' + padLeft(wt.sec, 2, '0') +
-         '.' + padLeft(wt.millis, 3, '0') + Timezone.formatUtcOffset(wt.utcOffset);
+    let s = this.format();
 
     if (maxLength != null)
       s = s.substr(0, maxLength);

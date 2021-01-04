@@ -5,6 +5,7 @@ import { isEqual, isString } from '@tubular/util';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import moment from 'moment/moment';
 import { getMeridiems, getStartOfWeek, normalizeLocale } from './locale-data';
+import { Timezone } from './timezone';
 
 let hasIntlDateTime = false;
 
@@ -16,7 +17,7 @@ catch {}
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName' };
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
+const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, LocaleInfo> = {};
 
 export function decomposeFormatString(format: string): string[] {
@@ -45,16 +46,16 @@ export function format(dt: DateTime, fmt: string): string {
   const locale = getLocaleInfo(localeName);
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
-  const wallTime = dt.wallTime;
-  const year = wallTime.y;
+  const wt = dt.wallTime;
+  const year = wt.y;
   const eraYear = abs(year) + (year <= 0 ? 1 : 0);
-  const month = wallTime.m;
-  const day = wallTime.d;
-  const hour = wallTime.hrs;
+  const month = wt.m;
+  const day = wt.d;
+  const hour = wt.hrs;
   const h = (hour === 0 ? 12 : hour <= 12 ? hour : hour - 12);
   const k = (hour === 0 ? 24 : hour);
-  const min = wallTime.min;
-  const sec = wallTime.sec;
+  const min = wt.min;
+  const sec = wt.sec;
   const dayOfWeek = dt.getDayOfWeek();
 
   for (let i = 0; i < parts.length; i += 2) {
@@ -75,12 +76,12 @@ export function format(dt: DateTime, fmt: string): string {
 
       case 'YYYY':
       case 'yyyy':
-        result.push(eraYear.toString().padStart(4, '0'));
+        result.push((year < 0 ? '-' : '') + abs(year).toString().padStart(4, '0'));
         break;
 
       case 'YY':
       case 'yy':
-        result.push((eraYear % 100).toString().padStart(2, '0'));
+        result.push((abs(year) % 100).toString().padStart(2, '0'));
         break;
 
       case 'Y':
@@ -242,6 +243,16 @@ export function format(dt: DateTime, fmt: string): string {
         result.push(dt.timezone.getFormattedOffset(dt.utcTimeMillis, field === 'ZZ'));
         break;
 
+      case 'V':
+      case 'v':
+        result.push(Timezone.getDstSymbol(wt.dstOffset) + (wt.dstOffset === 0 && field === 'V' ? ' ' : ''));
+        break;
+
+      case 'R':
+      case 'r':
+        result.push(wt.occurrence === 2 ? '\u2082' : field === 'R' ? ' ' : ''); // Subscript 2
+        break;
+
       default:
         if (field.startsWith('I')) {
           if (hasIntlDateTime) {
@@ -296,7 +307,7 @@ export function format(dt: DateTime, fmt: string): string {
           }
         }
         else if (field.startsWith('S'))
-          result.push(wallTime.millis.toString().padStart(3, '0').substr(0, field.length).padEnd(field.length, '0'));
+          result.push(wt.millis.toString().padStart(3, '0').substr(0, field.length).padEnd(field.length, '0'));
         else
           result.push('??');
     }

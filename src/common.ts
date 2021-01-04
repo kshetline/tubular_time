@@ -87,7 +87,7 @@ export function parseISODateTime(date: string): DateAndTime {
 
   if (!date)
     $ = [] as RegExpExecArray;
-  else if (!($ = /(?:T\s*)?(\d{1,2}):(\d{1,2})(?::(?:(\d{1,2})(?:\.(\d+))?))?(?:\s*([-+](?:\d\d\d\d|\d\d:\d\d)))?$/i.exec(date)) &&
+  else if (!($ = /(?:T\s*)?(\d{1,2}):(\d{1,2})(?::(?:(\d{1,2})(?:[.,](\d+))?))?(?:\s*([-+](?:\d\d\d\d|\d\d:\d\d)))?$/i.exec(date)) &&
            !($ = /(?:T\s*)?(\d{4})(\d\d)(\d\d)(?:\.(\d+))?/i.exec(date)))
     throw invalidDateTime;
 
