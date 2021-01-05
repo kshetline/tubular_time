@@ -11,4 +11,5 @@ export interface LocaleInfo {
   startOfWeek: number;
   minDaysInWeek: number;
   weekend: number[];
+  eras: string[];
 }

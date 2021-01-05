@@ -1,8 +1,8 @@
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { LocaleInfo } from './locale-info';
-import { isEqual, isString } from '@tubular/util';
-import { getMeridiems, getMinDaysInWeek, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
+import { isEqual, isString, last } from '@tubular/util';
+import { getEras, getMeridiems, getMinDaysInWeek, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 
 let hasIntlDateTime = false;
@@ -15,7 +15,7 @@ catch {}
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName' };
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|NNNNN|NNN|NN|N|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
+const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, LocaleInfo> = {};
 
 export function decomposeFormatString(format: string): string[] {
@@ -251,8 +251,17 @@ export function format(dt: DateTime, fmt: string): string {
         result.push(wt.occurrence === 2 ? '\u2082' : field === 'R' ? ' ' : ''); // Subscript 2
         break;
 
+      case 'n':
+        if (year < 1)
+          result.push(locale.eras[0]);
+        else if (result.length > 0 && last(result).endsWith(' '))
+          result[result.length - 1] = last(result).trimEnd();
+        break;
+
       default:
-        if (field.startsWith('I')) {
+        if (field.startsWith('N'))
+          result.push(locale.eras[year < 1 ? 0 : 1]);
+        else if (field.startsWith('I')) {
           if (hasIntlDateTime) {
             let intlFormat = locale.dateTimeFormats[field] as Intl.DateTimeFormat;
 
@@ -394,6 +403,7 @@ function getLocaleInfo(localeName: string): LocaleInfo {
   locale.startOfWeek = getStartOfWeek(localeName);
   locale.minDaysInWeek = getMinDaysInWeek(localeName);
   locale.weekend = getWeekend(localeName);
+  locale.eras = getEras(localeName);
 
   cachedLocales[localeName] = locale;
 
