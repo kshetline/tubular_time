@@ -17,9 +17,9 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, mod } from '@tubular/math';
+import { div_rd, floor, mod } from '@tubular/math';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
-import { toNumber } from '@tubular/util';
+import { isNumber, toNumber } from '@tubular/util';
 
 /**
  * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
@@ -65,9 +65,9 @@ export interface YMDDate {
 }
 
 export interface DateAndTime extends YMDDate {
-  hrs: number;
-  min: number;
-  sec: number;
+  hrs?: number;
+  min?: number;
+  sec?: number;
   millis?: number;
   utcOffset?: number;
   dstOffset?: number;
@@ -81,7 +81,7 @@ const altFields = [
   ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
 ];
 
-export function syncDateTime<T extends YMDDate | DateAndTime>(obj: T): T {
+export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {
   for (const [key1, key2] of altFields) {
     // eslint-disable-next-line no-prototype-builtins
     if (obj.hasOwnProperty(key1))
@@ -92,6 +92,21 @@ export function syncDateTime<T extends YMDDate | DateAndTime>(obj: T): T {
   }
 
   return obj;
+}
+
+export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
+  Object.keys(obj).forEach(key => {
+    if (key !== 'j' && key !== 'isJulian') {
+      const value = obj[key];
+
+      if (!isNumber(value) || value !== floor(value))
+        throw new Error(key + ' must be an integer value');
+    }
+  });
+
+  if (obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
+      obj.ywl == null && obj.yearByWeekLocal == null)
+    throw new Error('A year value must be specified');
 }
 
 export const MINUTE_MSEC =    60000;
@@ -125,7 +140,7 @@ export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
   wallTime.dstOffset = 0;
   wallTime.occurrence = 1;
 
-  return syncDateTime(wallTime);
+  return syncDateAndTime(wallTime);
 }
 
 const invalidDateTime = new Error('Invalid ISO date/time');
@@ -164,7 +179,7 @@ export function parseISODateTime(date: string): DateAndTime {
   if ($[5])
     time.utcOffset = parseTimeOffset($[5]);
 
-  return syncDateTime(time);
+  return syncDateAndTime(time);
 }
 
 export function parseTimeOffset(offset: string): number {

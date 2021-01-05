@@ -20,7 +20,7 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, isEqual, isNumber, isObject, isString, padLeft } from '@tubular/util';
 import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate } from './calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, syncDateTime, YMDDate } from './common';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek } from './locale-data';
@@ -46,7 +46,6 @@ export class DateTime extends Calendar {
   private _timezone = DateTime.defaultTimezone;
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
-  private locked = false;
 
   static julianDay(millis: number): number {
     return millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
@@ -119,7 +118,7 @@ export class DateTime extends Calendar {
   }
 
   lock(): DateTime {
-    this.locked = true;
+    super.lock();
     return this;
   }
 
@@ -153,6 +152,7 @@ export class DateTime extends Calendar {
       throw lockError;
 
     if (!isEqual(this._wallTime, newTime)) {
+      validateDateAndTime(newTime);
       this._wallTime = clone(newTime);
       this.computeUtcTimeMillis();
       this.computeWallTime();
@@ -548,7 +548,7 @@ export class DateTime extends Calendar {
     if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 1000)
       wallTime.occurrence = 2;
 
-    return syncDateTime(wallTime);
+    return syncDateAndTime(wallTime);
   }
 
   private updateWallTime(): void {
@@ -562,7 +562,7 @@ export class DateTime extends Calendar {
     [this._wallTime.yw, this._wallTime.w, this._wallTime.dw] = this.getYearWeekAndWeekday(this._wallTime, 1, 4);
     this._wallTime.dy = this._wallTime.n - this.getDayNumber(this._wallTime.y, 1, 1) + 1;
     this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
-    syncDateTime(this._wallTime);
+    syncDateAndTime(this._wallTime);
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {

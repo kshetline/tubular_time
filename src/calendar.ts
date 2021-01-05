@@ -19,7 +19,7 @@
 
 import { div_rd, div_tt0, floor, mod } from '@tubular/math';
 import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
-import { syncDateTime, YMDDate } from './common';
+import { syncDateAndTime, YMDDate } from './common';
 
 export enum CalendarType { PURE_GREGORIAN, PURE_JULIAN }
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
@@ -54,6 +54,8 @@ export type YearOrDate = number | YMDDate | number[];
  * or purely Gregorian. As a string, the letters 'J' or 'G' can be used.
  */
 export type GregorianChange = YMDDate | CalendarType | string;
+
+const lockError = new Error('This DateTime instance is locked and immutable');
 
 /** @hidden */
 export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, day?: number): number[] {
@@ -384,7 +386,7 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   for (month = 1; day > (lastDay = getLastDateInMonthGregorian(year, month)); ++month)
     day -= lastDay;
 
-  return syncDateTime({ y: year, m: month, d: day, dy: dayOfYear, n: dayNum, j: false });
+  return syncDateAndTime({ y: year, m: month, d: day, dy: dayOfYear, n: dayNum, j: false });
 }
 
 export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
@@ -406,7 +408,7 @@ export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
   for (month = 1; day > (lastDay = getLastDateInMonthJulian(year, month)); ++month)
     day -= lastDay;
 
-  return syncDateTime({ y: year, m: month, d: day, n: dayNum, j: true });
+  return syncDateAndTime({ y: year, m: month, d: day, n: dayNum, j: true });
 }
 
 export function isValidDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -453,7 +455,7 @@ export function parseISODate(date: string): YMDDate {
   if (!match)
     throw new Error('Invalid ISO date');
 
-  return syncDateTime({ y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) });
+  return syncDateAndTime({ y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) });
 }
 
 export class Calendar {
@@ -467,6 +469,8 @@ export class Calendar {
   private lastJulianMonth: number = Number.MIN_SAFE_INTEGER;
   private lastJulianDate = 4;
 
+  protected locked = false;
+
   constructor(gcYearOrDateOrType?: YearOrDate | CalendarType | string, gcMonth?: number, gcDate?: number) {
     if (gcYearOrDateOrType === CalendarType.PURE_GREGORIAN)
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
@@ -475,10 +479,18 @@ export class Calendar {
     else if (arguments.length === 0 || gcYearOrDateOrType == null)
       this.setGregorianChange(1582, 10, 15);
     else
-      this.setGregorianChange(<YearOrDate | string> gcYearOrDateOrType, gcMonth, gcDate);
+      this.setGregorianChange(gcYearOrDateOrType as YearOrDate | string, gcMonth, gcDate);
+  }
+
+  lock(): Calendar {
+    this.locked = true;
+    return this;
   }
 
   setPureGregorian(pureGregorian: boolean): void {
+    if (this.locked)
+      throw lockError;
+
     if (pureGregorian)
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else
@@ -490,6 +502,9 @@ export class Calendar {
   }
 
   setPureJulian(pureJulian: boolean): void {
+    if (this.locked)
+      throw lockError;
+
     if (pureJulian)
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
     else
@@ -501,6 +516,9 @@ export class Calendar {
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
+    if (this.locked)
+      throw lockError;
+
     if (gcYearOrDate === 'g' || gcYearOrDate === 'G') {
       this.setPureGregorian(true);
 
@@ -558,7 +576,7 @@ export class Calendar {
   }
 
   getGregorianChange(): YMDDate {
-    return syncDateTime({ y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false });
+    return syncDateAndTime({ y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false });
   }
 
   isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -615,7 +633,7 @@ export class Calendar {
     if (this.computeWeekValues === 0)
       [result.yw, result.w, result.dw] = this.getYearWeekAndWeekday(result);
 
-    return syncDateTime(result);
+    return syncDateAndTime(result);
   }
 
   getFirstDateInMonth(year: number, month: number): number {
@@ -848,7 +866,7 @@ export class Calendar {
       }
     }
 
-    return syncDateTime({ y: year, m: month, d: day });
+    return syncDateAndTime({ y: year, m: month, d: day });
   }
 
   getMissingDateRange(year: number, month: number): number[] | null {

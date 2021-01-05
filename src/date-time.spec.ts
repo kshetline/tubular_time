@@ -21,6 +21,7 @@ describe('DateTime', () => {
 
   it('should properly create Datetime instances', () => {
     expect(new DateTime('2021-11-07T01:23-04:00').timezone.zoneName).to.equal('UT-04:00');
+    expect(() => new DateTime({ y: 1900.7 })).to.throw('y must be an integer value');
   });
 
   it('should skip an hour starting Daylight Saving Time', () => {
