@@ -25,7 +25,7 @@ import {
 import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
-import { getStartOfWeek } from './locale-data';
+import { getMinDaysInWeek, getStartOfWeek } from './locale-data';
 
 export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, WEEKS, MONTHS, YEARS }
 export enum DateTimeRollField { AM_PM = DateTimeField.YEARS + 1, ERA, LOCAL_WEEKS }
@@ -610,5 +610,42 @@ export class DateTime extends Calendar {
       return super.getMissingDateRange(args[0], args[1]);
     else
       return super.getMissingDateRange(this._wallTime.y, this._wallTime.m);
+  }
+
+  getStartDateOfFirstWeekOfYear(year: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate {
+    startingDayOfWeek = startingDayOfWeek ?? getStartOfWeek(this.locale) ?? 1;
+    minDaysInCalendarYear = minDaysInCalendarYear ?? getMinDaysInWeek(this.locale) ?? 4;
+
+    return super.getStartDateOfFirstWeekOfYear(year, startingDayOfWeek, minDaysInCalendarYear);
+  }
+
+  getWeeksInYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): number {
+    startingDayOfWeek = startingDayOfWeek ?? getStartOfWeek(this.locale) ?? 1;
+    minDaysInCalendarYear = minDaysInCalendarYear ?? getMinDaysInWeek(this.locale) ?? 4;
+
+    return super.getWeeksInYear(year, startingDayOfWeek, minDaysInCalendarYear);
+  }
+
+  getYearWeekAndWeekday(year: number, month: number, day: number,
+    startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+
+  getYearWeekAndWeekday(date: YearOrDate | number,
+    startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+
+  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
+                      startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
+    const sow = getStartOfWeek(this.locale) ?? 1;
+    const min = getMinDaysInWeek(this.locale) ?? 4;
+
+    if (isObject(yearOrDate)) {
+      monthOrSDW = monthOrSDW ?? sow;
+      dayOrMDiCY = dayOrMDiCY ?? min;
+    }
+    else {
+      startingDayOfWeek = startingDayOfWeek ?? sow;
+      minDaysInCalendarYear = minDaysInCalendarYear ?? min;
+    }
+
+    return super.getYearWeekAndWeekday(yearOrDate as any, monthOrSDW, dayOrMDiCY, startingDayOfWeek, minDaysInCalendarYear);
   }
 }
