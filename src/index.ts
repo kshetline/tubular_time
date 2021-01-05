@@ -1,3 +1,6 @@
+import { GregorianChange } from './calendar';
+import { DateAndTime } from './common';
+import { DateTime } from './date-time';
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
 import timezoneSmall from './timezone-small';
@@ -144,3 +147,12 @@ export function removeZonesUpdateListener(listener: (result: boolean | Error) =>
 export function clearZonesUpdateListeners(): void {
   listeners.clear();
 }
+
+function ttime(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string, gregorianChange?: GregorianChange);
+function ttime(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
+function ttime(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null,
+              gregorianOrLocale?: string | GregorianChange, gregorianChange?: GregorianChange) {
+  return new DateTime(initialTime, timezone, gregorianOrLocale as any, gregorianChange).lock();
+}
+
+export default ttime;

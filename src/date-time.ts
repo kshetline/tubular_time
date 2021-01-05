@@ -72,9 +72,9 @@ export class DateTime extends Calendar {
     DateTime.defaultTimezone = newZone;
   }
 
-  constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string | null, locale?: string, gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | string | DateAndTime | null, timezone?: Timezone | string| null,
+  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null,
               gregorianOrLocale?: string | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale)) ? undefined : gregorianOrLocale);
 
@@ -91,7 +91,10 @@ export class DateTime extends Calendar {
         timezone = timezone ?? Timezone.from(zone);
       }
 
-      initialTime = parseISODateTime(initialTime);
+      if (initialTime)
+        initialTime = parseISODateTime(initialTime);
+      else
+        initialTime = null;
     }
 
     if (isString(timezone))
@@ -103,7 +106,9 @@ export class DateTime extends Calendar {
     if (!isNumber(gregorianOrLocale) && isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale))
       this._locale = gregorianOrLocale;
 
-    if (isObject(initialTime)) {
+    if (initialTime instanceof Date)
+      this.utcTimeMillis = +initialTime;
+    else if (isObject(initialTime)) {
       if (!timezone && initialTime.utcOffset != null && initialTime.utcOffset !== 0)
         this._timezone = Timezone.from(Timezone.formatUtcOffset(initialTime.utcOffset));
 

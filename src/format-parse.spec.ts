@@ -3,6 +3,7 @@ import { expect } from 'chai';
 
 import { DateTime } from './date-time';
 import { format } from './format-parse';
+import ttime from './index';
 
 describe('FormatParse', () => {
   it('should properly decompose format strings', () => {
@@ -17,6 +18,7 @@ describe('FormatParse', () => {
     console.log(format(date2, 'MMM D, y N'));
     console.log(format(date, 'MMM D, y n'));
     console.log(format(date2, 'MMM D, y n'));
+    console.log(ttime());
     expect(true).to.be.true;
   });
 });

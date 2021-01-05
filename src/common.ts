@@ -75,7 +75,7 @@ export interface DateAndTime extends YMDDate {
 }
 
 const altFields = [
-  ['y', ' year'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
+  ['y', 'year'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
   ['j', 'isJulian'], ['yw', 'yearByWeek'], ['w', 'week'], ['dw', 'dayOfWeek'],
   ['ywl', 'yearByWeekLocal'], ['wl', 'weekLocal'], ['dwl', 'dayOfWeekLocal'],
   ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
