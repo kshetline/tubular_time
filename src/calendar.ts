@@ -469,7 +469,7 @@ export class Calendar {
   private lastJulianMonth: number = Number.MIN_SAFE_INTEGER;
   private lastJulianDate = 4;
 
-  protected locked = false;
+  protected _locked = false;
 
   constructor(gcYearOrDateOrType?: YearOrDate | CalendarType | string, gcMonth?: number, gcDate?: number) {
     if (gcYearOrDateOrType === CalendarType.PURE_GREGORIAN)
@@ -482,10 +482,13 @@ export class Calendar {
       this.setGregorianChange(gcYearOrDateOrType as YearOrDate | string, gcMonth, gcDate);
   }
 
-  lock(): Calendar {
-    this.locked = true;
+  lock = () => this._lock();
+  protected _lock(doLock = true): Calendar {
+    this._locked = this._locked || doLock;
     return this;
   }
+
+  get locked(): boolean { return this._locked; }
 
   setPureGregorian(pureGregorian: boolean): void {
     if (this.locked)

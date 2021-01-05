@@ -117,12 +117,13 @@ export class DateTime extends Calendar {
       this.utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
   }
 
-  lock(): DateTime {
-    super.lock();
+  lock = () => this._lock();
+  protected _lock(doLock = true): DateTime {
+    super._lock(doLock);
     return this;
   }
 
-  clone(): DateTime {
+  clone(cloneLock = true): DateTime {
     const copy = new DateTime(this._utcTimeMillis, this._timezone, this._locale);
 
     if (this.isPureJulian())
@@ -131,6 +132,9 @@ export class DateTime extends Calendar {
       copy.setPureGregorian(true);
     else
       copy.setGregorianChange(this.getGregorianChange());
+
+    if (cloneLock && this.locked)
+      copy.lock();
 
     return copy;
   }
@@ -228,170 +232,174 @@ export class DateTime extends Calendar {
   }
 
   add(field: DateTimeField, amount: number): DateTime {
-    if (this.locked)
-      throw lockError;
-    else if (amount === 0)
-      return;
+    const result = this.locked ? this.clone(false) : this;
+
+    if (amount === 0)
+      return result._lock(this.locked);
     else if (amount !== floor(amount))
       throw nonIntError;
 
     let updateFromWall = false;
     let normalized: YMDDate;
+    const wallTime = result.wallTime;
 
     switch (field) {
       case DateTimeField.MILLIS:
-        this._utcTimeMillis += amount;
+        result._utcTimeMillis += amount;
         break;
 
       case DateTimeField.SECONDS:
-        this._utcTimeMillis += amount * 1000;
+        result._utcTimeMillis += amount * 1000;
         break;
 
       case DateTimeField.MINUTES:
-        this._utcTimeMillis += amount * 60_000;
+        result._utcTimeMillis += amount * 60_000;
         break;
 
       case DateTimeField.HOURS:
-        this._utcTimeMillis += amount * 3_600_000;
+        result._utcTimeMillis += amount * 3_600_000;
         break;
 
       case DateTimeField.DAYS:
-        this._utcTimeMillis += amount * 86_400_000;
+        result._utcTimeMillis += amount * 86_400_000;
         break;
 
       case DateTimeField.WEEKS:
-        this._utcTimeMillis += amount * 604_800_000;
+        result._utcTimeMillis += amount * 604_800_000;
         break;
 
       case DateTimeField.MONTHS:
         // eslint-disable-next-line no-case-declarations
-        const m = this._wallTime.m;
+        const m = wallTime.m;
         updateFromWall = true;
-        this._wallTime.m = mod(m - 1 + amount, 12) + 1;
-        this._wallTime.y += div_rd(m - 1 + amount, 12);
-        normalized = this.normalizeDate(this._wallTime);
-        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        wallTime.m = mod(m - 1 + amount, 12) + 1;
+        wallTime.y += div_rd(m - 1 + amount, 12);
+        normalized = result.normalizeDate(wallTime);
+        [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
         break;
 
       case DateTimeField.YEARS:
         updateFromWall = true;
-        this._wallTime.y += amount;
-        normalized = this.normalizeDate(this._wallTime);
-        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        wallTime.y += amount;
+        normalized = result.normalizeDate(wallTime);
+        [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
         break;
     }
 
     if (updateFromWall) {
-      delete this._wallTime.occurrence;
-      delete this._wallTime.utcOffset;
-      this.computeUtcTimeMillis();
-      this.updateWallTime();
+      delete wallTime.occurrence;
+      delete wallTime.utcOffset;
+      result.computeUtcTimeMillis();
+      result.updateWallTime();
     }
 
-    this.computeWallTime();
+    result.computeWallTime();
 
-    return this;
+    return result._lock(this.locked);
   }
 
   roll(field: DateTimeField | DateTimeRollField, amount: number, minYear = -9999, maxYear = 9999): DateTime {
-    if (this.locked)
-      throw lockError;
-    else if (amount === 0)
-      return this;
+    const result = this.locked ? this.clone(false) : this;
+
+    if (amount === 0)
+      return result._lock(this.locked);
     else if (amount !== floor(amount))
       throw nonIntError;
 
     let normalized: YMDDate;
+    const wallTime = result.wallTime;
 
     switch (field) {
       case DateTimeField.MILLIS:
-        this._wallTime.millis = mod(this._wallTime.millis + amount, 1000);
+        wallTime.millis = mod(wallTime.millis + amount, 1000);
         break;
 
       case DateTimeField.SECONDS:
-        this._wallTime.sec = mod(this._wallTime.sec + amount, 60);
+        wallTime.sec = mod(wallTime.sec + amount, 60);
         break;
 
       case DateTimeField.MINUTES:
-        this._wallTime.min = mod(this._wallTime.min + amount, 60);
+        wallTime.min = mod(wallTime.min + amount, 60);
         break;
 
       case DateTimeField.HOURS:
         {
-          const hoursInDay = floor(this.getSecondsInDay() / 3600);
-          this._wallTime.hrs = mod(this._wallTime.hrs + amount, hoursInDay);
+          const hoursInDay = floor(result.getSecondsInDay() / 3600);
+          wallTime.hrs = mod(wallTime.hrs + amount, hoursInDay);
         }
         break;
 
       case DateTimeField.DAYS:
         {
-          const missing = this.getMissingDateRange();
-          const daysInMonth = this.getLastDateInMonth();
-          this._wallTime.d = mod(this._wallTime.d + amount - 1, daysInMonth) + 1;
+          const missing = result.getMissingDateRange();
+          const daysInMonth = result.getLastDateInMonth();
 
-          if (missing && (missing[0] <= this._wallTime.d && this._wallTime.d <= missing[1]))
-            this._wallTime.d = amount < 0 ? missing[0] - 1 : missing[1] + 1;
+          wallTime.d = mod(wallTime.d + amount - 1, daysInMonth) + 1;
 
-          this._wallTime.d = min(max(this._wallTime.d, this.getFirstDateInMonth()), daysInMonth);
-          delete this._wallTime.utcOffset;
+          if (missing && (missing[0] <= wallTime.d && wallTime.d <= missing[1]))
+            wallTime.d = amount < 0 ? missing[0] - 1 : missing[1] + 1;
+
+          wallTime.d = min(max(wallTime.d, result.getFirstDateInMonth()), daysInMonth);
+          delete wallTime.utcOffset;
         }
         break;
 
       case DateTimeField.WEEKS:
         {
-          const weeksInYear = this.getWeeksInYear(this._wallTime.yw);
+          const weeksInYear = result.getWeeksInYear(wallTime.yw);
 
-          this._wallTime.w = mod(this._wallTime.w + amount - 1, weeksInYear) + 1;
-          delete this._wallTime.y;
-          delete this._wallTime.utcOffset;
+          wallTime.w = mod(wallTime.w + amount - 1, weeksInYear) + 1;
+          delete wallTime.y;
+          delete wallTime.utcOffset;
         }
         break;
 
       case DateTimeField.MONTHS:
-        this._wallTime.m = mod(this._wallTime.m + amount - 1, 12) + 1;
-        normalized = this.normalizeDate(this._wallTime);
-        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
-        delete this._wallTime.utcOffset;
+        wallTime.m = mod(wallTime.m + amount - 1, 12) + 1;
+        normalized = result.normalizeDate(wallTime);
+        [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.utcOffset;
         break;
 
       case DateTimeField.YEARS:
-        this._wallTime.y = mod(this._wallTime.y - minYear + amount, maxYear - minYear + 1) + minYear;
-        normalized = this.normalizeDate(this._wallTime);
-        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
-        delete this._wallTime.utcOffset;
+        wallTime.y = mod(wallTime.y - minYear + amount, maxYear - minYear + 1) + minYear;
+        normalized = result.normalizeDate(wallTime);
+        [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.utcOffset;
         break;
 
       case DateTimeRollField.AM_PM:
       // Normally straight-forward, but this can get weird if the AM/PM roll crosses a Daylight Saving Time change.
       {
-        const targetHour = mod(this._wallTime.hrs + 12, 24);
-        const result = this.roll(DateTimeField.HOURS, 12 * (amount % 2));
+        const targetHour = mod(wallTime.hrs + 12, 24);
+
+        result.roll(DateTimeField.HOURS, 12 * (amount % 2));
 
         if (result._wallTime.hrs === targetHour)
-          return result;
+          return result._lock(this.locked);
         else if (mod2(result._wallTime.hrs - targetHour, 24) < 0)
-          return this.add(DateTimeField.HOURS, 1);
+          return result.add(DateTimeField.HOURS, 1)._lock(this.locked);
         else
-          return this.add(DateTimeField.HOURS, -1);
+          return result.add(DateTimeField.HOURS, -1)._lock(this.locked);
       }
 
       case DateTimeRollField.ERA:
         if (amount % 2 === 0)
-          return this;
+          return result._lock(this.locked);
 
-        this._wallTime.y = -this._wallTime.y + 1;
-        normalized = this.normalizeDate(this._wallTime);
-        [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [normalized.y, normalized.m, normalized.d];
-        delete this._wallTime.utcOffset;
+        wallTime.y = -wallTime.y + 1;
+        normalized = result.normalizeDate(wallTime);
+        [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.utcOffset;
         break;
     }
 
-    delete this._wallTime.occurrence;
-    this.computeUtcTimeMillis();
-    this.updateWallTime();
-    this.computeWallTime();
+    delete wallTime.occurrence;
+    result.computeUtcTimeMillis();
+    result.updateWallTime();
+    result.computeWallTime();
 
-    return this;
+    return result._lock(this.locked);
   }
 
   getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number {
@@ -566,13 +574,8 @@ export class DateTime extends Calendar {
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
-    if (this.locked)
-      throw lockError;
-
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
-
-    if (this._timezone)
-      this.computeWallTime();
+    this.computeWallTime();
   }
 
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
