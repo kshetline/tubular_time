@@ -18,7 +18,7 @@
 */
 
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
-import { clone, isEqual, isNumber, isObject, isString, padLeft } from '@tubular/util';
+import { clone, isArray, isEqual, isNumber, isObject, isString } from '@tubular/util';
 import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate } from './calendar';
 import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
@@ -183,7 +183,7 @@ export class DateTime extends Calendar {
       newZone = Timezone.from(newZone);
 
     const result = this.clone();
-    const wallTime = this.wallTime;
+    const wallTime = result.wallTime; // copy
 
     result.timezone = newZone;
 
@@ -241,7 +241,7 @@ export class DateTime extends Calendar {
 
     let updateFromWall = false;
     let normalized: YMDDate;
-    const wallTime = result.wallTime;
+    const wallTime = result._wallTime;
 
     switch (field) {
       case DateTimeField.MILLIS:
@@ -307,7 +307,7 @@ export class DateTime extends Calendar {
       throw nonIntError;
 
     let normalized: YMDDate;
-    const wallTime = result.wallTime;
+    const wallTime = result._wallTime;
 
     switch (field) {
       case DateTimeField.MILLIS:
@@ -350,6 +350,19 @@ export class DateTime extends Calendar {
 
           wallTime.w = mod(wallTime.w + amount - 1, weeksInYear) + 1;
           delete wallTime.y;
+          delete wallTime.ywl;
+          delete wallTime.utcOffset;
+        }
+        break;
+
+      case DateTimeRollField.LOCAL_WEEKS:
+        {
+          const weeksInYear = result.getWeeksInYear(wallTime.ywl,
+            getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
+
+          wallTime.wl = mod(wallTime.wl + amount - 1, weeksInYear) + 1;
+          delete wallTime.y;
+          delete wallTime.yw;
           delete wallTime.utcOffset;
         }
         break;
@@ -480,8 +493,8 @@ export class DateTime extends Calendar {
     return calendar;
   }
 
-  format(fmt = fullIsoFormat): string {
-    return formatter(this, fmt);
+  format(fmt = fullIsoFormat, localeOverride?: string): string {
+    return formatter(this, fmt, localeOverride);
   }
 
   toString(): string {
@@ -502,25 +515,23 @@ export class DateTime extends Calendar {
   }
 
   toHoursAndMinutesString(includeDst = false): string {
-    const wt = this._wallTime;
-
-    return padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') +
-            (includeDst ? Timezone.getDstSymbol(wt.dstOffset) : '');
+    return this.format('HH:mm' + (includeDst ? 'v' : ''));
   }
 
   private computeUtcTimeMillis(): void {
-    let millis = (this._wallTime.millis ?? 0) +
-                 (this._wallTime.sec ?? 0) * 1000 +
-                 (this._wallTime.min ?? 0) * 60000 +
-                 (this._wallTime.hrs ?? 0) * 3600000 +
-                 this.getDayNumber(this._wallTime) * 86400000;
+    const wallTime = this._wallTime;
+    let millis = (wallTime.millis ?? 0) +
+                 (wallTime.sec ?? 0) * 1000 +
+                 (wallTime.min ?? 0) * 60000 +
+                 (wallTime.hrs ?? 0) * 3600000 +
+                 this.getDayNumber(wallTime) * 86400000;
 
-    if (this._wallTime.utcOffset != null)
-      millis -= this._wallTime.utcOffset * 1000;
+    if (wallTime.utcOffset != null)
+      millis -= wallTime.utcOffset * 1000;
     else
       millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
 
-    if (this._wallTime.occurrence === 1) {
+    if (wallTime.occurrence === 1) {
       const transition = this.timezone.findTransitionByUtc(millis);
 
       if (transition !== null && transition.deltaOffset < 0 && millis < transition.transitionTime - transition.deltaOffset * 1000)
@@ -561,24 +572,34 @@ export class DateTime extends Calendar {
 
   private updateWallTime(): void {
     const offsets = this._timezone.getOffsets(this._utcTimeMillis);
+    const wallTime = this._wallTime;
 
-    this._wallTime.utcOffset = offsets[0];
-    this._wallTime.dstOffset = offsets[1];
-    this._wallTime.n = this.getDayNumber(this._wallTime);
-    const date = this.getDateFromDayNumber(this._wallTime.n);
-    [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [date.y, date.m, date.d];
-    [this._wallTime.yw, this._wallTime.w, this._wallTime.dw] = this.getYearWeekAndWeekday(this._wallTime, 1, 4);
-    this._wallTime.dy = this._wallTime.n - this.getDayNumber(this._wallTime.y, 1, 1) + 1;
-    this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
-    syncDateAndTime(this._wallTime);
+    wallTime.utcOffset = offsets[0];
+    wallTime.dstOffset = offsets[1];
+    wallTime.n = this.getDayNumber(wallTime);
+    const date = this.getDateFromDayNumber(wallTime.n);
+    [wallTime.y, wallTime.m, wallTime.d] = [date.y, date.m, date.d];
+    [wallTime.yw, wallTime.w, wallTime.dw] = this.getYearWeekAndWeekday(wallTime, 1, 4);
+    [wallTime.ywl, wallTime.wl, wallTime.dwl] =
+      this.getYearWeekAndWeekday(wallTime, getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
+    wallTime.dy = wallTime.n - this.getDayNumber(wallTime.y, 1, 1) + 1;
+    wallTime.j = this.isJulianCalendarDate(wallTime);
+    syncDateAndTime(wallTime);
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
-    this.computeWallTime();
+
+    if (this._timezone)
+      this.computeWallTime();
   }
 
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
+    if (isObject(yearOrDate) && !isArray(yearOrDate)) {
+      month = getStartOfWeek(this.locale);
+      day = getMinDaysInWeek(this.locale);
+    }
+
     return super.getDayNumber(yearOrDate ?? this._wallTime, month, day);
   }
 

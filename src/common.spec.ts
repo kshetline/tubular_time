@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { parseISODateTime } from './common';
 
-describe('DateTime', () => {
+describe('Common', () => {
   it('should parse ISO date/time strings.', () => {
     expect(parseISODateTime('19621013')).to.include({ y: 1962, m: 10, d: 13, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('1962-10-13T03:09')).to.include({ y: 1962, m: 10, d: 13, hrs: 3, min: 9, sec: 0 });

@@ -589,12 +589,19 @@ export class Calendar {
   }
 
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
+    // Note: month/day can be used internally to pass startOfWeek/minDaysInWeek.
     if (isObject(yearOrDate) && !isArray(yearOrDate)) {
-      if (yearOrDate.y == null && yearOrDate.yw != null) {
+      if (yearOrDate.y == null && (yearOrDate.yw != null || yearOrDate.ywl != null)) {
+        const localeWeek = (yearOrDate.ywl != null);
+        const year = yearOrDate.ywl ?? yearOrDate.yw;
+        const startOfWeek = (localeWeek && month) || 1;
+        const minDaysInWeek = (localeWeek && day) || 4;
+        const week = (localeWeek ? yearOrDate.wl : yearOrDate.w) || 1;
+        const dayOfWeek = (localeWeek ? yearOrDate.dwl : yearOrDate.dw) || 1;
         ++this.computeWeekValues;
 
-        const w = this.getStartDateOfFirstWeekOfYear(yearOrDate.yw, 1, 4);
-        const dayNum = w.n + ((yearOrDate.w ?? 1) - 1) * 7 + (yearOrDate.dw ?? 1) - 1;
+        const w = this.getStartDateOfFirstWeekOfYear(year, startOfWeek, minDaysInWeek);
+        const dayNum = w.n + (week - 1) * 7 + dayOfWeek - 1;
 
         yearOrDate = this.getDateFromDayNumber(dayNum);
         --this.computeWeekValues;

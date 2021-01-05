@@ -39,10 +39,11 @@ function cleanUpLongTimezone(zone: string): string {
   return zone.replace(/^[\p{P}\p{N}\s]*/u, '').replace(/[\p{P}\p{N}\s]*$/u, '');
 }
 
-export function format(dt: DateTime, fmt: string): string {
-  const localeName = !hasIntlDateTime ? 'en' : normalizeLocale(dt.locale);
+export function format(dt: DateTime, fmt: string, localeOverride?: string): string {
+  const localeName = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
   const locale = getLocaleInfo(localeName);
   const parts = decomposeFormatString(fmt);
+  const isoWeek = !parts.find((value, index) => index % 2 === 1 && /ww?/.test(value));
   const result: string[] = [];
   const wt = dt.wallTime;
   const year = wt.y;
@@ -106,6 +107,16 @@ export function format(dt: DateTime, fmt: string): string {
         result.push(month.toString());
         break;
 
+      case 'WW':
+      case 'W':
+        result.push(wt.w.toString().padStart(field === 'WW' ? 2 : 1, '0'));
+        break;
+
+      case 'ww':
+      case 'w':
+        result.push(wt.wl.toString().padStart(field === 'ww' ? 2 : 1, '0'));
+        break;
+
       case 'DD':
         result.push(day.toString().padStart(2, '0'));
         break;
@@ -124,6 +135,10 @@ export function format(dt: DateTime, fmt: string): string {
 
       case 'dd':
         result.push(locale.weekdaysMin[dayOfWeek]);
+        break;
+
+      case 'd':
+        result.push((isoWeek ? wt.dw : wt.dwl).toString());
         break;
 
       case 'HH':

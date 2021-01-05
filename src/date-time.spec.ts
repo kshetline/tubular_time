@@ -201,6 +201,7 @@ describe('DateTime', () => {
     expect(new DateTime('2020-12-28').wallTime).to.include({ yw: 2020, w: 53, dw: 1 });
     expect(new DateTime('2021-01-05').wallTime).to.include({ yw: 2021, w:  1, dw: 2 });
     expect(new DateTime('2021-w06-4').wallTime).to.include({ yw: 2021, w:  6, dw: 4 });
+    expect(new DateTime('2021-w06-4').wallTime).to.include({ ywl: 2021, wl: 7, dwl: 5 });
     expect(new DateTime('2021-033').wallTime).to.include({ yw: 2021, w: 5, dw: 2 });
   });
 

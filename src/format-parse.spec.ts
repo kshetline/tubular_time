@@ -2,23 +2,21 @@ import { expect } from 'chai';
 // import moment from './locale/moment-with-locales.js';
 
 import { DateTime } from './date-time';
-import { format } from './format-parse';
-import ttime from './index';
 
 describe('FormatParse', () => {
   it('should properly decompose format strings', () => {
-    const date = new DateTime({ y: 1986, m: 9, d: 4, hrs: 20, min: 30, sec: 3 }, null, 'en');
-    const date2 = new DateTime({ y: -1986, m: 9, d: 4, hrs: 20, min: 30, sec: 3 }, null, 'en');
-    console.log(format(date, 'dddd ddd dd MMMM MMM yyyy-MM-DD (kk) HH:mm:ss.SS X x'));
-    console.log(format(date, 'LTS; LT; LLLL; LLL; LL; L; hh:mma'));
-    console.log(format(date, 'llll; lll; ll; l; ZZZ; zzz; ZZ; zz; Z; z'));
-    console.log(format(date, 'ILS; IxF; IMM'));
-    console.log(format(date, 'IF; IL; IM; IS; IxF; IxL; IxM; IxS'));
-    console.log(format(date, 'MMM D, y N'));
-    console.log(format(date2, 'MMM D, y N'));
-    console.log(format(date, 'MMM D, y n'));
-    console.log(format(date2, 'MMM D, y n'));
-    console.log(ttime());
-    expect(true).to.be.true;
+    expect(new DateTime('2021-w06-4').format('YYYY-[W]WW-d')).to.equal('2021-W06-4');
+    expect(new DateTime('2021-w06-4').format('YYYY-[w]ww-d')).to.equal('2021-w07-5');
+    expect(new DateTime('1986-09-04T20:30:03').format('yyyy-MMM-DD, hh:mm A')).to.equal('1986-Sep-04, 08:30 PM');
+    expect(new DateTime('1986-09-04T20:30:03').format('LTS')).to.equal('8:30:03 PM');
+    expect(new DateTime('1986-09-04T20:30:03').format('LLLL')).to.equal('Thursday, September 4, 1986, 8:30 PM');
+    expect(new DateTime('1986-09-04T20:30:03').format('ILS')).to.equal('September 4, 1986 at 8:30 PM');
+    expect(new DateTime('1986-09-04T20:30:03 America/New_York').format('IxL')).to.equal('8:30:03 PM EDT');
+    expect(new DateTime('1986-09-04T20:30:03Z').format('IxL')).to.equal('8:30:03 PM UTC');
+    expect(new DateTime('1986-09-04').format('MMM D, y N')).to.equal('Sep 4, 1986 AD');
+    expect(new DateTime('1986-09-04').format('MMM D, y n')).to.equal('Sep 4, 1986');
+    expect(new DateTime('-1986-09-04').format('MMM D, y n')).to.equal('Sep 4, 1987 BC');
+    expect(new DateTime('1986-09-04T20:30:03').toLocale('fr').format('yyyy MMMM DD, hh:mm A')).to.equal('1986 septembre 04, 08:30 PM');
+    expect(new DateTime('1986-05-04T20:30:03').format('yyyy MMMM DD, HH:mm', 'es')).to.equal('1986 mayo 04, 20:30');
   });
 });

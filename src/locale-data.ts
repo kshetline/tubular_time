@@ -129,6 +129,7 @@ export function getWeekend(locale: string): number[] {
   return getWeekInfo(locale).slice(2);
 }
 
+// noinspection SpellCheckingInspection
 const eras = {
   'ar': ['ق.م', 'م'], 'be': ['да н.е.', 'н.е.'], 'bg': ['пр.н.е.', 'н.е.'], 'ca': ['aC', 'dC'], 'cs': ['př.Kr.', 'po Kr.'],
   'da': ['f.Kr.', 'e.Kr.'], 'de': ['v. Chr.', 'n. Chr.'], 'el': ['π.Χ.', 'μ.Χ.'], 'es': ['antes de Cristo', 'anno Dómini'],
