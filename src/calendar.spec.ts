@@ -1,5 +1,6 @@
 import { assert, expect } from 'chai';
-import { getISOFormatDate, Calendar, LAST, YMDDate } from './calendar';
+import { getISOFormatDate, Calendar, LAST } from './calendar';
+import { YMDDate } from './common';
 
 describe('Calendar', () => {
   const calendar = new Calendar();

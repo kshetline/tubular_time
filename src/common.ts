@@ -18,8 +18,51 @@
 */
 
 import { div_rd, mod } from '@tubular/math';
-import { getDateFromDayNumber_SGC, getDayNumber_SGC, YMDDate } from './calendar';
+import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 import { toNumber } from '@tubular/util';
+
+/**
+ * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
+ * or Gregorian.
+ */
+export interface YMDDate {
+  /** Year as signed integer (0 = 1 BCE, -1 = 2 BCE, etc.). */
+  y?: number;
+  year?: number;
+  /** Month as 1-12. */
+  m?: number;
+  month?: number;
+  /** Day of month. */
+  d?: number;
+  day?: number;
+  /** Day of month. */
+  dy?: number;
+  dayOfYear?: number;
+  /** Day number where 1970-01-01 = 0. */
+  n?: number;
+  epochDay?: number;
+  /** true if this is a Julian calendar date, false for Gregorian. */
+  j?: boolean;
+  isJulian?: boolean;
+  /** ISO year for week of year. */
+  yw?: number;
+  yearByWeek?: number;
+  /** ISO week of year. */
+  w?: number;
+  week?: number;
+  /** ISO day or week. */
+  dw?: number;
+  dayOfWeek?: number;
+  /** Local year for week of year. */
+  ywl?: number;
+  yearByWeekLocal?: number;
+  /** Local week of year. */
+  wl?: number;
+  weekLocal?: number;
+  /** Local day or week. */
+  dwl?: number;
+  dayOfWeekLocal?: number;
+}
 
 export interface DateAndTime extends YMDDate {
   hrs: number;
@@ -29,6 +72,26 @@ export interface DateAndTime extends YMDDate {
   utcOffset?: number;
   dstOffset?: number;
   occurrence?: number;
+}
+
+const altFields = [
+  ['y', ' year'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
+  ['j', 'isJulian'], ['yw', 'yearByWeek'], ['w', 'week'], ['dw', 'dayOfWeek'],
+  ['ywl', 'yearByWeekLocal'], ['wl', 'weekLocal'], ['dwl', 'dayOfWeekLocal'],
+  ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
+];
+
+export function syncDateTime<T extends YMDDate | DateAndTime>(obj: T): T {
+  for (const [key1, key2] of altFields) {
+    // eslint-disable-next-line no-prototype-builtins
+    if (obj.hasOwnProperty(key1))
+      obj[key2] = obj[key1];
+    // eslint-disable-next-line no-prototype-builtins
+    else if (obj.hasOwnProperty(key2))
+      obj[key1] = obj[key2];
+  }
+
+  return obj;
 }
 
 export const MINUTE_MSEC =    60000;
@@ -62,7 +125,7 @@ export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
   wallTime.dstOffset = 0;
   wallTime.occurrence = 1;
 
-  return wallTime;
+  return syncDateTime(wallTime);
 }
 
 const invalidDateTime = new Error('Invalid ISO date/time');
@@ -101,7 +164,7 @@ export function parseISODateTime(date: string): DateAndTime {
   if ($[5])
     time.utcOffset = parseTimeOffset($[5]);
 
-  return time;
+  return syncDateTime(time);
 }
 
 export function parseTimeOffset(offset: string): number {

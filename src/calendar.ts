@@ -19,6 +19,7 @@
 
 import { div_rd, div_tt0, floor, mod } from '@tubular/math';
 import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
+import { syncDateTime, YMDDate } from './common';
 
 export enum CalendarType { PURE_GREGORIAN, PURE_JULIAN }
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
@@ -42,37 +43,6 @@ const DISTANT_YEAR_PAST = -9999999;
 /** @hidden */
 const DISTANT_YEAR_FUTURE = 9999999;
 const FIRST_GREGORIAN_DAY_SGC = -141427; // 1582-10-15
-
-/**
- * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
- * or Gregorian.
- */
-export interface YMDDate {
-  /** Year as signed integer (0 = 1 BCE, -1 = 2 BCE, etc.). */
-  y?: number;
-  /** Month as 1-12. */
-  m?: number;
-  /** Day of month. */
-  d?: number;
-  /** Day of month. */
-  dy?: number;
-  /** Day number where 1970-01-01 = 0. */
-  n?: number;
-  /** true if this is a Julian calendar date, false for Gregorian. */
-  j?: boolean;
-  /** ISO year for week of year. */
-  yw?: number;
-  /** ISO week of year. */
-  w?: number;
-  /** ISO day or week. */
-  dw?: number;
-  /** Local year for week of year. */
-  ywl?: number;
-  /** Local week of year. */
-  wl?: number;
-  /** Local day or week. */
-  dwl?: number;
-}
 
 /**
  * Type allowing a year alone to be specified, a full date as a [[YMDDate]], or a full date as a numeric array in the
@@ -414,7 +384,7 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   for (month = 1; day > (lastDay = getLastDateInMonthGregorian(year, month)); ++month)
     day -= lastDay;
 
-  return { y: year, m: month, d: day, dy: dayOfYear, n: dayNum, j: false };
+  return syncDateTime({ y: year, m: month, d: day, dy: dayOfYear, n: dayNum, j: false });
 }
 
 export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
@@ -436,7 +406,7 @@ export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
   for (month = 1; day > (lastDay = getLastDateInMonthJulian(year, month)); ++month)
     day -= lastDay;
 
-  return { y: year, m: month, d: day, n: dayNum, j: true };
+  return syncDateTime({ y: year, m: month, d: day, n: dayNum, j: true });
 }
 
 export function isValidDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -483,7 +453,7 @@ export function parseISODate(date: string): YMDDate {
   if (!match)
     throw new Error('Invalid ISO date');
 
-  return { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) };
+  return syncDateTime({ y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) });
 }
 
 export class Calendar {
@@ -588,7 +558,7 @@ export class Calendar {
   }
 
   getGregorianChange(): YMDDate {
-    return { y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false };
+    return syncDateTime({ y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false });
   }
 
   isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -602,7 +572,7 @@ export class Calendar {
       if (yearOrDate.y == null && yearOrDate.yw != null) {
         ++this.computeWeekValues;
 
-        const w = this.getStartDateOfFirstWeekOfYear(yearOrDate.yw);
+        const w = this.getStartDateOfFirstWeekOfYear(yearOrDate.yw, 1, 4);
         const dayNum = w.n + ((yearOrDate.w ?? 1) - 1) * 7 + (yearOrDate.dw ?? 1) - 1;
 
         yearOrDate = this.getDateFromDayNumber(dayNum);
@@ -645,7 +615,7 @@ export class Calendar {
     if (this.computeWeekValues === 0)
       [result.yw, result.w, result.dw] = this.getYearWeekAndWeekday(result);
 
-    return result;
+    return syncDateTime(result);
   }
 
   getFirstDateInMonth(year: number, month: number): number {
@@ -878,7 +848,7 @@ export class Calendar {
       }
     }
 
-    return { y: year, m: month, d: day };
+    return syncDateTime({ y: year, m: month, d: day });
   }
 
   getMissingDateRange(year: number, month: number): number[] | null {

@@ -19,10 +19,8 @@
 
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, isEqual, isNumber, isObject, isString, padLeft } from '@tubular/util';
-import {
-  getDayNumber_SGC, getISOFormatDate, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate, YMDDate
-} from './calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime } from './common';
+import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate } from './calendar';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, syncDateTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek } from './locale-data';
@@ -420,8 +418,10 @@ export class DateTime extends Calendar {
     const calendar = super.getCalendarMonth(year, month, startingDayOfWeek || getStartOfWeek(this.locale));
 
     for (const date of calendar) {
-      if (this.getMinutesInDay(date) <= 0)
+      if (this.getMinutesInDay(date) <= 0) {
         date.d *= -1;
+        date.day = date.d;
+      }
     }
 
     return calendar;
@@ -436,12 +436,7 @@ export class DateTime extends Calendar {
   }
 
   toYMDhmString(): string {
-    const wt = this._wallTime;
-    let s = getISOFormatDate(wt);
-
-    s += ' ' + padLeft(wt.hrs, 2, '0') + ':' + padLeft(wt.min, 2, '0') + Timezone.getDstSymbol(wt.dstOffset);
-
-    return s;
+    return formatter(this, 'YYYY-MM-DD HH:mm:ssv');
   }
 
   toIsoString(maxLength?: number): string {
@@ -508,7 +503,7 @@ export class DateTime extends Calendar {
     if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 1000)
       wallTime.occurrence = 2;
 
-    return wallTime;
+    return syncDateTime(wallTime);
   }
 
   private updateWallTime(): void {
@@ -519,9 +514,10 @@ export class DateTime extends Calendar {
     this._wallTime.n = this.getDayNumber(this._wallTime);
     const date = this.getDateFromDayNumber(this._wallTime.n);
     [this._wallTime.y, this._wallTime.m, this._wallTime.d] = [date.y, date.m, date.d];
-    [this._wallTime.yw, this._wallTime.w, this._wallTime.dw] = this.getYearWeekAndWeekday(this._wallTime);
+    [this._wallTime.yw, this._wallTime.w, this._wallTime.dw] = this.getYearWeekAndWeekday(this._wallTime, 1, 4);
     this._wallTime.dy = this._wallTime.n - this.getDayNumber(this._wallTime.y, 1, 1) + 1;
     this._wallTime.j = this.isJulianCalendarDate(this._wallTime);
+    syncDateTime(this._wallTime);
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
