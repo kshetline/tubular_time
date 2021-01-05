@@ -123,6 +123,19 @@ export class DateTime extends Calendar {
     return this;
   }
 
+  clone(): DateTime {
+    const copy = new DateTime(this._utcTimeMillis, this._timezone, this._locale);
+
+    if (this.isPureJulian())
+      copy.setPureJulian(true);
+    else if (this.isPureGregorian())
+      copy.setPureGregorian(true);
+    else
+      copy.setGregorianChange(this.getGregorianChange());
+
+    return copy;
+  }
+
   get utcTimeMillis(): number { return this._utcTimeMillis; }
   set utcTimeMillis(newTime: number) {
     if (this.locked)
@@ -152,10 +165,37 @@ export class DateTime extends Calendar {
     if (this.locked)
       throw lockError;
 
+    if (isString(newZone))
+      newZone = Timezone.from(newZone);
+
     if (this._timezone !== newZone) {
       this._timezone = newZone;
       this.computeWallTime();
     }
+  }
+
+  tz(newZone: Timezone | string, keepLocalTime = false): DateTime {
+    if (isString(newZone))
+      newZone = Timezone.from(newZone);
+
+    const result = this.clone();
+    const wallTime = this.wallTime;
+
+    result.timezone = newZone;
+
+    if (keepLocalTime) {
+      delete wallTime.utcOffset;
+      delete wallTime.occurrence;
+      result.wallTime = wallTime;
+    }
+
+    return result;
+  }
+
+  toLocale(newLocale: string): DateTime {
+    const result = this.clone();
+    result.locale = newLocale;
+    return result;
   }
 
   get locale(): string { return this._locale; }
