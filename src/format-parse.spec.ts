@@ -5,8 +5,8 @@ import { DateTime } from './date-time';
 
 describe('FormatParse', () => {
   it('should properly decompose format strings', () => {
-    expect(new DateTime('2021-w06-4').format('YYYY-[W]WW-d')).to.equal('2021-W06-4');
-    expect(new DateTime('2021-w06-4').format('YYYY-[w]ww-d')).to.equal('2021-w07-5');
+    expect(new DateTime('2021-W06-4').format('YYYY-[W]WW-d')).to.equal('2021-W06-4');
+    expect(new DateTime('2021-W06-4').format('YYYY-[w]ww-d')).to.equal('2021-w07-5');
     expect(new DateTime('1986-09-04T20:30:03').format('yyyy-MMM-DD, hh:mm A')).to.equal('1986-Sep-04, 08:30 PM');
     expect(new DateTime('1986-09-04T20:30:03').format('LTS')).to.equal('8:30:03 PM');
     expect(new DateTime('1986-09-04T20:30:03').format('LLLL')).to.equal('Thursday, September 4, 1986, 8:30 PM');

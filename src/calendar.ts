@@ -66,6 +66,7 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   else if (isArray(yearOrDate) && (<number[]> yearOrDate).length >= 3 && isNumber((<number[]> yearOrDate)[0]))
     return yearOrDate as number[];
   else if (isObject(yearOrDate)) {
+    syncDateAndTime(yearOrDate as YMDDate);
     year  = (yearOrDate as YMDDate).y;
     month = (yearOrDate as YMDDate).m;
     day   = (yearOrDate as YMDDate).d;
@@ -591,13 +592,15 @@ export class Calendar {
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
     // Note: month/day can be used internally to pass startOfWeek/minDaysInWeek.
     if (isObject(yearOrDate) && !isArray(yearOrDate)) {
+      syncDateAndTime(yearOrDate);
+
       if (yearOrDate.y == null && (yearOrDate.yw != null || yearOrDate.ywl != null)) {
         const localeWeek = (yearOrDate.ywl != null);
         const year = yearOrDate.ywl ?? yearOrDate.yw;
         const startOfWeek = (localeWeek && month != null ? month : 1);
         const minDaysInWeek = (localeWeek && day != null ? day : 4);
-        const week = (localeWeek ? yearOrDate.wl : yearOrDate.w) || 1;
-        const dayOfWeek = (localeWeek ? yearOrDate.dwl : yearOrDate.dw) || 1;
+        const week = (localeWeek ? yearOrDate.wl : yearOrDate.w) ?? 1;
+        const dayOfWeek = (localeWeek ? yearOrDate.dwl : yearOrDate.dw) ?? 1;
         ++this.computeWeekValues;
 
         const w = this.getStartDateOfFirstWeekOfYear(year, startOfWeek, minDaysInWeek);
@@ -632,7 +635,7 @@ export class Calendar {
 
   private computeWeekValues = 0; // To prevent infinite recursion, compute week values only when this is 0.
 
-  getDateFromDayNumber(dayNum: number): YMDDate {
+  getDateFromDayNumber(dayNum: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate {
     let result: YMDDate;
 
     if (dayNum >= this.firstGregorianDay)
@@ -641,7 +644,7 @@ export class Calendar {
       result = getDateFromDayNumberJulian(dayNum);
 
     if (this.computeWeekValues === 0)
-      [result.yw, result.w, result.dw] = this.getYearWeekAndWeekday(result);
+      [result.yw, result.w, result.dw] = this.getYearWeekAndWeekday(result, startingDayOfWeek, minDaysInCalendarYear);
 
     return syncDateAndTime(result);
   }
@@ -821,7 +824,7 @@ export class Calendar {
     dateOffset = mod(startingDayOfWeek - getDayOfWeek(dayNum), -7); // First time I recall ever wanting to use a negative modulus.
     dayNum += dateOffset; // dateOffset will be 0 or negative
 
-    ymd = this.getDateFromDayNumber(dayNum);
+    ymd = this.getDateFromDayNumber(dayNum, startingDayOfWeek);
 
     // This loop will fill in a calendar month's full set of dates in such a way as to obtain dates which
     // should be shown from previous and subsequent months, while also skipping over Julian-to-Gregorian

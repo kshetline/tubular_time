@@ -20,14 +20,15 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, isArray, isEqual, isNumber, isObject, isString } from '@tubular/util';
 import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate } from './calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek } from './locale-data';
 
 export enum DateTimeField {
-  MILLIS, SECONDS, MINUTES, HOURS_12, HOURS, AM_PM, DAYS, WEEK_DAY_NUMBER, WEEK_DAY_NUMBER_LOCALE,
-  WEEKS, WEEKS_LOCALE, MONTHS, YEARS, YEARS_WEEK, YEARS_WEEK_LOCALE, ERA
+  MILLIS, SECONDS, MINUTES, HOUR_12, HOUR, AM_PM, DAY, DATE = DAY,
+  DAY_OF_WEEK, DAY_OF_WEEK_LOCALE, DAY_OF_YEAR, WEEK, WEEK_LOCALE,
+  MONTH, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
 }
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
@@ -258,19 +259,19 @@ export class DateTime extends Calendar {
         result._utcTimeMillis += amount * 60_000;
         break;
 
-      case DateTimeField.HOURS:
+      case DateTimeField.HOUR:
         result._utcTimeMillis += amount * 3_600_000;
         break;
 
-      case DateTimeField.DAYS:
+      case DateTimeField.DAY:
         result._utcTimeMillis += amount * 86_400_000;
         break;
 
-      case DateTimeField.WEEKS:
+      case DateTimeField.WEEK:
         result._utcTimeMillis += amount * 604_800_000;
         break;
 
-      case DateTimeField.MONTHS:
+      case DateTimeField.MONTH:
         // eslint-disable-next-line no-case-declarations
         const m = wallTime.m;
         updateFromWall = true;
@@ -280,7 +281,7 @@ export class DateTime extends Calendar {
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
         break;
 
-      case DateTimeField.YEARS:
+      case DateTimeField.YEAR:
         updateFromWall = true;
         wallTime.y += amount;
         normalized = result.normalizeDate(wallTime);
@@ -327,7 +328,7 @@ export class DateTime extends Calendar {
         wallTime.min = mod(wallTime.min + amount, 60);
         break;
 
-      case DateTimeField.HOURS:
+      case DateTimeField.HOUR:
         {
           const hoursInDay = floor(result.getSecondsInDay() / 3600);
           wallTime.hrs = mod(wallTime.hrs + amount, hoursInDay);
@@ -339,17 +340,17 @@ export class DateTime extends Calendar {
       {
         const targetHour = mod(wallTime.hrs + 12, 24);
 
-        result.roll(DateTimeField.HOURS, 12 * (amount % 2));
+        result.roll(DateTimeField.HOUR, 12 * (amount % 2));
 
         if (result._wallTime.hrs === targetHour)
           return result._lock(this.locked);
         else if (mod2(result._wallTime.hrs - targetHour, 24) < 0)
-          return result.add(DateTimeField.HOURS, 1)._lock(this.locked);
+          return result.add(DateTimeField.HOUR, 1)._lock(this.locked);
         else
-          return result.add(DateTimeField.HOURS, -1)._lock(this.locked);
+          return result.add(DateTimeField.HOUR, -1)._lock(this.locked);
       }
 
-      case DateTimeField.DAYS:
+      case DateTimeField.DAY:
         {
           const missing = result.getMissingDateRange();
           const daysInMonth = result.getLastDateInMonth();
@@ -364,23 +365,29 @@ export class DateTime extends Calendar {
         }
         break;
 
-      case DateTimeField.WEEK_DAY_NUMBER:
+      case DateTimeField.DAY_OF_WEEK:
         wallTime.dw = mod(wallTime.dw + amount - 1, 7) + 1;
         delete wallTime.y;
         delete wallTime.ywl;
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeField.WEEK_DAY_NUMBER_LOCALE:
+      case DateTimeField.DAY_OF_WEEK_LOCALE:
         wallTime.dwl = mod(wallTime.dwl + amount - 1, 7) + 1;
         delete wallTime.y;
         delete wallTime.yw;
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeField.WEEKS:
+      case DateTimeField.DAY_OF_YEAR:
+        wallTime.dy = mod(wallTime.dy + amount - 1, this.getDaysInYear(wallTime.y)) + 1;
+        delete wallTime.m;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.WEEK:
         {
-          const weeksInYear = result.getWeeksInYear(wallTime.yw);
+          const weeksInYear = result.getWeeksInYear(wallTime.yw, 1, 4);
 
           wallTime.w = mod(wallTime.w + amount - 1, weeksInYear) + 1;
           delete wallTime.y;
@@ -389,7 +396,7 @@ export class DateTime extends Calendar {
         }
         break;
 
-      case DateTimeField.WEEKS_LOCALE:
+      case DateTimeField.WEEK_LOCALE:
         {
           const weeksInYear = result.getWeeksInYear(wallTime.ywl,
             getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
@@ -401,28 +408,28 @@ export class DateTime extends Calendar {
         }
         break;
 
-      case DateTimeField.MONTHS:
+      case DateTimeField.MONTH:
         wallTime.m = mod(wallTime.m + amount - 1, 12) + 1;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeField.YEARS:
+      case DateTimeField.YEAR:
         wallTime.y = mod(wallTime.y - minYear + amount, maxYear - minYear + 1) + minYear;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeField.YEARS_WEEK:
+      case DateTimeField.YEAR_WEEK:
         wallTime.yw = mod(wallTime.yw - minYear + amount, maxYear - minYear + 1) + minYear;
         delete wallTime.y;
         delete wallTime.ywl;
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeField.YEARS_WEEK_LOCALE:
+      case DateTimeField.YEAR_WEEK_LOCALE:
         wallTime.ywl = mod(wallTime.ywl - minYear + amount, maxYear - minYear + 1) + minYear;
         delete wallTime.y;
         delete wallTime.yw;
@@ -444,6 +451,168 @@ export class DateTime extends Calendar {
     result.computeUtcTimeMillis();
     result.updateWallTime();
     result.computeWallTime();
+
+    return result._lock(this.locked);
+  }
+
+  set(field: DateTimeField, value: number, loose = false): DateTime {
+    const result = this.locked ? this.clone(false) : this;
+
+    if (value !== floor(value))
+      throw nonIntError;
+
+    let normalized: YMDDate;
+    const wallTime = result._wallTime;
+    let min = 0;
+    let max = 59;
+
+    switch (field) {
+      case DateTimeField.MILLIS:
+        max = 999;
+        wallTime.millis = value;
+        break;
+
+      case DateTimeField.SECONDS:
+        wallTime.sec = value;
+        break;
+
+      case DateTimeField.MINUTES:
+        wallTime.min = value;
+        break;
+
+      case DateTimeField.HOUR:
+        max = 23;
+        wallTime.hrs = value;
+        break;
+
+      case DateTimeField.HOUR_12:
+        min = 1;
+        max = 12;
+
+        if (wallTime.hrs < 12)
+          wallTime.hrs = (value === 12 ? 0 : value);
+        else
+          wallTime.hrs = (value === 12 ? 12 : value + 12);
+        break;
+
+      case DateTimeField.AM_PM:
+        max = 1;
+        if (value === 0 && wallTime.hrs >= 12)
+          wallTime.hrs -= 12;
+        else if (value === 1 && wallTime.hrs < 12)
+          wallTime.hrs += 12;
+        break;
+
+      case DateTimeField.DATE:
+        min = loose ? 0 : 1;
+        max = loose ? 32 : this.getLastDateInMonth();
+        wallTime.d = value;
+        if (!loose) {
+          const missing = this.getMissingDateRange();
+
+          if (missing && (missing[0] <= value && value <= missing[1]))
+            throw new Error(`${value} is an invalid date in the month ${wallTime.m}/${wallTime.y}`);
+        }
+        break;
+
+      case DateTimeField.DAY_OF_WEEK:
+        min = loose ? 0 : 1;
+        max = loose ? 8 : 7;
+        wallTime.dw = value;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.DAY_OF_WEEK_LOCALE:
+        min = loose ? 0 : 1;
+        max = loose ? 8 : 7;
+        wallTime.dwl = value;
+        delete wallTime.y;
+        delete wallTime.yw;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.DAY_OF_YEAR:
+        min = loose ? 0 : 1;
+        max = loose ? 367 : this.getDaysInYear(wallTime.y);
+        wallTime.dy = value;
+        delete wallTime.m;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.WEEK:
+        min = loose ? 0 : 1;
+        max = loose ? 54 : this.getWeeksInYear(wallTime.yw, 1, 4);
+        wallTime.w = value;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.WEEK_LOCALE:
+        min = loose ? 0 : 1;
+        max = loose ? 54 : result.getWeeksInYear(wallTime.ywl, getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
+        wallTime.wl = value;
+        delete wallTime.y;
+        delete wallTime.yw;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.MONTH:
+        min = loose ? 0 : 1;
+        max = loose ? 13 : 12;
+        wallTime.m = value;
+        normalized = result.normalizeDate(wallTime);
+        [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.YEAR:
+        min = -271820;
+        max = 275759;
+        wallTime.y = value;
+        normalized = result.normalizeDate(wallTime);
+        [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.YEAR_WEEK:
+        min = -271820;
+        max = 275759;
+        wallTime.yw = value;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.YEAR_WEEK_LOCALE:
+        min = -271820;
+        max = 275759;
+        wallTime.ywl = value;
+        delete wallTime.y;
+        delete wallTime.yw;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.ERA:
+        max = 1;
+
+        if ((value === 0 && wallTime.y > 0) || (value === 1 && wallTime.y <= 0)) {
+          wallTime.y = -wallTime.y + 1;
+          normalized = result.normalizeDate(wallTime);
+          [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+          delete wallTime.utcOffset;
+          break;
+        }
+    }
+
+    if (value < min || value > max)
+      throw new Error(`${DateTimeField[field]} (${value}) must be in the range [${min}, ${max}]`);
+
+    delete wallTime.occurrence;
+    result.computeUtcTimeMillis();
+    result.updateWallTime();
 
     return result._lock(this.locked);
   }
@@ -552,7 +721,7 @@ export class DateTime extends Calendar {
   }
 
   private computeUtcTimeMillis(): void {
-    const wallTime = this._wallTime;
+    const wallTime = purgeAliasFields(this._wallTime);
     let millis = (wallTime.millis ?? 0) +
                  (wallTime.sec ?? 0) * 1000 +
                  (wallTime.min ?? 0) * 60000 +
@@ -581,7 +750,7 @@ export class DateTime extends Calendar {
   getWallTimeForMillis(millis: number): DateAndTime {
     let ticks = millis + this._timezone.getOffset(millis) * 1000;
     const wallTimeMillis = ticks;
-    const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000)) as DateAndTime;
+    const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000), 1, 4) as DateAndTime;
 
     wallTime.millis = mod(ticks, 1000);
     ticks = div_rd(ticks, 1000);

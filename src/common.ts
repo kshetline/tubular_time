@@ -94,6 +94,13 @@ export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {
   return obj;
 }
 
+export function purgeAliasFields<T extends YMDDate | DateAndTime>(obj: T): T {
+  for (const [_, alias] of altFields)
+    delete obj[alias];
+
+  return obj;
+}
+
 export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
   Object.keys(obj).forEach(key => {
     if (key !== 'j' && key !== 'isJulian') {
@@ -153,8 +160,12 @@ export function parseISODateTime(date: string): DateAndTime {
 
   if ($ || ($ = /^([-+]?\d{4,})(\d\d)(\d\d)/.exec(date)))
     time = { y: toNumber($[1]), m: Number($[2]), d: Number($[3]) } as DateAndTime;
-  else if (($ = /^([-+]?\d+)-W(\d+)-(\d)/i.exec(date)) || ($ = /^([-+]?\d{4,})W(\d\d)(\d)/i.exec(date)))
-    time = { yw: toNumber($[1]), w: Number($[2]), dw: Number($[3]) } as DateAndTime;
+  else if (($ = /^([-+]?\d+)-(W)(\d+)-(\d)/i.exec(date)) || ($ = /^([-+]?\d{4,})(W)(\d\d)(\d)/i.exec(date))) {
+    if ($[2] === 'W')
+      time = { yw: toNumber($[1]), w: Number($[3]), dw: Number($[4]) } as DateAndTime;
+    else
+      time = { ywl: toNumber($[1]), wl: Number($[3]), dwl: Number($[4]) } as DateAndTime;
+  }
   else if (($ = /^(\d+)-(\d+)/.exec(date)) || ($ = /^(\d{4})(\d){3}/.exec(date))) {
     time = { y: toNumber($[1]), dy: Number($[2]) } as DateAndTime;
   }
