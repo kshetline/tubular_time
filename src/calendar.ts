@@ -594,8 +594,8 @@ export class Calendar {
       if (yearOrDate.y == null && (yearOrDate.yw != null || yearOrDate.ywl != null)) {
         const localeWeek = (yearOrDate.ywl != null);
         const year = yearOrDate.ywl ?? yearOrDate.yw;
-        const startOfWeek = (localeWeek && month) || 1;
-        const minDaysInWeek = (localeWeek && day) || 4;
+        const startOfWeek = (localeWeek && month != null ? month : 1);
+        const minDaysInWeek = (localeWeek && day != null ? day : 4);
         const week = (localeWeek ? yearOrDate.wl : yearOrDate.w) || 1;
         const dayOfWeek = (localeWeek ? yearOrDate.dwl : yearOrDate.dw) || 1;
         ++this.computeWeekValues;

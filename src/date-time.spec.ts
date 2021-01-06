@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { SUNDAY } from './calendar';
-import { DateTime, DateTimeField, DateTimeRollField } from './date-time';
+import { DateTime, DateTimeField } from './date-time';
 import { Timezone } from './timezone';
 import { initTimezoneLarge, initTimezoneLargeAlt, initTimezoneSmall } from './index';
 
@@ -174,13 +174,13 @@ describe('DateTime', () => {
       .to.equal('2021-11-07T01:23:00.000-05:00'); // DST end
     expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').roll(DateTimeField.HOURS, 26).toIsoString())
       .to.equal('2021-11-07T01:23:00.000-05:00'); // DST end
-    expect(new DateTime('1995-08-03 22:53').roll(DateTimeRollField.AM_PM, 1).toIsoString(16))
+    expect(new DateTime('1995-08-03 22:53').roll(DateTimeField.AM_PM, 1).toIsoString(16))
       .to.equal('1995-08-03T10:53');
-    expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').roll(DateTimeRollField.AM_PM, 1).toIsoString(16))
+    expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').roll(DateTimeField.AM_PM, 1).toIsoString(16))
       .to.equal('2021-11-07T13:23');
-    expect(new DateTime('2021-11-07T01:23-05:00', 'America/New_York').roll(DateTimeRollField.AM_PM, 1).toIsoString(16))
+    expect(new DateTime('2021-11-07T01:23-05:00', 'America/New_York').roll(DateTimeField.AM_PM, 1).toIsoString(16))
       .to.equal('2021-11-07T13:23');
-    expect(new DateTime('2021-11-07T13:23', 'America/New_York').roll(DateTimeRollField.AM_PM, 1).toIsoString())
+    expect(new DateTime('2021-11-07T13:23', 'America/New_York').roll(DateTimeField.AM_PM, 1).toIsoString())
       .to.equal('2021-11-07T01:23:00.000-04:00');
     expect(new DateTime('2020-02-28').roll(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('2020-02-29');
     expect(new DateTime('2019-02-28').roll(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('2019-02-01');
@@ -188,13 +188,19 @@ describe('DateTime', () => {
     expect(new DateTime('1582-10-20').roll(DateTimeField.DAYS, -7).toIsoString(10)).to.equal('1582-10-04');
     expect(new DateTime('1582-10-04').roll(DateTimeField.DAYS, 1).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('1582-10-04').roll(DateTimeField.DAYS, 2).toIsoString(10)).to.equal('1582-10-15');
+    expect(new DateTime('2021-02-28').roll(DateTimeField.WEEK_DAY_NUMBER, 3).toIsoString(10)).to.equal('2021-02-24');
+    expect(new DateTime('2021-03-03').roll(DateTimeField.WEEK_DAY_NUMBER, 5).toIsoString(10)).to.equal('2021-03-01');
+    expect(new DateTime('2020-08-20').roll(DateTimeField.WEEK_DAY_NUMBER_LOCALE, -4).toIsoString(10)).to.equal('2020-08-16');
     expect(new DateTime('2021-02-28').roll(DateTimeField.WEEKS, -13).toIsoString(10)).to.equal('2021-11-28');
     expect(new DateTime('2021-02-28').roll(DateTimeField.WEEKS, 2).toIsoString(10)).to.equal('2021-03-14');
+    expect(new DateTime('2021-02-28').roll(DateTimeField.WEEKS_LOCALE, 2).toIsoString(10)).to.equal('2021-03-14');
     expect(new DateTime('1970-08-01').roll(DateTimeField.MONTHS, 5).toIsoString(10)).to.equal('1970-01-01');
     expect(new DateTime('1970-03-31').roll(DateTimeField.MONTHS, -1).toIsoString(10)).to.equal('1970-02-28');
-    expect(new DateTime('-9999-01-01').roll(DateTimeField.YEARS, -1).toIsoString(10)).to.equal('9999-01-01');
-    expect(new DateTime('9999-01-01').roll(DateTimeField.YEARS, 1).toIsoString(11)).to.equal('-9999-01-01');
-    expect(new DateTime('1970-03-31').roll(DateTimeRollField.ERA, 1).toIsoString(11)).to.equal('-1969-03-31');
+    expect(new DateTime('-9999-01-01').roll(DateTimeField.YEARS, -1, -9999, 9999).toIsoString(10)).to.equal('9999-01-01');
+    expect(new DateTime('2099-01-01').roll(DateTimeField.YEARS, 1).toIsoString(10)).to.equal('1900-01-01');
+    expect(new DateTime('1970-03-31').roll(DateTimeField.YEARS_WEEK, -1).toIsoString(10)).to.equal('1969-04-01');
+    expect(new DateTime('1970-03-31').roll(DateTimeField.YEARS_WEEK_LOCALE, -1).toIsoString(10)).to.equal('1969-04-01');
+    expect(new DateTime('1970-03-31').roll(DateTimeField.ERA, 1).toIsoString(11)).to.equal('-1969-03-31');
   });
 
   it('should correctly report week numbers', () => {

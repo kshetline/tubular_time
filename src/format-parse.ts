@@ -210,14 +210,14 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string): stri
       case 'L':
       case 'l':
         {
-          const localFormat = locale.dateTimeFormats[field];
+          const localeFormat = locale.dateTimeFormats[field];
 
-          if (localFormat == null)
+          if (localeFormat == null)
             result.push('???');
-          else if (isString(localFormat))
-            result.push(format(dt, localFormat));
+          else if (isString(localeFormat))
+            result.push(format(dt, localeFormat));
           else
-            result.push(localFormat.format(dt.utcTimeMillis));
+            result.push(localeFormat.format(dt.utcTimeMillis));
         }
         break;
 

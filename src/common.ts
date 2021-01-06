@@ -53,15 +53,15 @@ export interface YMDDate {
   /** ISO day or week. */
   dw?: number;
   dayOfWeek?: number;
-  /** Local year for week of year. */
+  /** Locale year for week of year. */
   ywl?: number;
-  yearByWeekLocal?: number;
-  /** Local week of year. */
+  yearByWeekLocale?: number;
+  /** Locale week of year. */
   wl?: number;
-  weekLocal?: number;
-  /** Local day or week. */
+  weekLocale?: number;
+  /** Locale day or week. */
   dwl?: number;
-  dayOfWeekLocal?: number;
+  dayOfWeekLocale?: number;
 }
 
 export interface DateAndTime extends YMDDate {
@@ -77,7 +77,7 @@ export interface DateAndTime extends YMDDate {
 const altFields = [
   ['y', 'year'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
   ['j', 'isJulian'], ['yw', 'yearByWeek'], ['w', 'week'], ['dw', 'dayOfWeek'],
-  ['ywl', 'yearByWeekLocal'], ['wl', 'weekLocal'], ['dwl', 'dayOfWeekLocal'],
+  ['ywl', 'yearByWeekLocale'], ['wl', 'weekLocale'], ['dwl', 'dayOfWeekLocale'],
   ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
 ];
 
@@ -105,7 +105,7 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
   });
 
   if (obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
-      obj.ywl == null && obj.yearByWeekLocal == null)
+      obj.ywl == null && obj.yearByWeekLocale == null)
     throw new Error('A year value must be specified');
 }
 

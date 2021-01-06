@@ -25,8 +25,10 @@ import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek } from './locale-data';
 
-export enum DateTimeField { MILLIS, SECONDS, MINUTES, HOURS, DAYS, WEEKS, MONTHS, YEARS }
-export enum DateTimeRollField { AM_PM = DateTimeField.YEARS + 1, ERA, LOCAL_WEEKS }
+export enum DateTimeField {
+  MILLIS, SECONDS, MINUTES, HOURS_12, HOURS, AM_PM, DAYS, WEEK_DAY_NUMBER, WEEK_DAY_NUMBER_LOCALE,
+  WEEKS, WEEKS_LOCALE, MONTHS, YEARS, YEARS_WEEK, YEARS_WEEK_LOCALE, ERA
+}
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
@@ -284,6 +286,9 @@ export class DateTime extends Calendar {
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
         break;
+
+      default:
+        throw new Error(`${DateTimeField[field]} is not a valid add() field`);
     }
 
     if (updateFromWall) {
@@ -298,7 +303,7 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  roll(field: DateTimeField | DateTimeRollField, amount: number, minYear = -9999, maxYear = 9999): DateTime {
+  roll(field: DateTimeField, amount: number, minYear = 1900, maxYear = 2099): DateTime {
     const result = this.locked ? this.clone(false) : this;
 
     if (amount === 0)
@@ -329,6 +334,21 @@ export class DateTime extends Calendar {
         }
         break;
 
+      case DateTimeField.AM_PM:
+      // Normally straight-forward, but this can get weird if the AM/PM roll crosses a Daylight Saving Time change.
+      {
+        const targetHour = mod(wallTime.hrs + 12, 24);
+
+        result.roll(DateTimeField.HOURS, 12 * (amount % 2));
+
+        if (result._wallTime.hrs === targetHour)
+          return result._lock(this.locked);
+        else if (mod2(result._wallTime.hrs - targetHour, 24) < 0)
+          return result.add(DateTimeField.HOURS, 1)._lock(this.locked);
+        else
+          return result.add(DateTimeField.HOURS, -1)._lock(this.locked);
+      }
+
       case DateTimeField.DAYS:
         {
           const missing = result.getMissingDateRange();
@@ -344,6 +364,20 @@ export class DateTime extends Calendar {
         }
         break;
 
+      case DateTimeField.WEEK_DAY_NUMBER:
+        wallTime.dw = mod(wallTime.dw + amount - 1, 7) + 1;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        delete wallTime.utcOffset;
+        break;
+
+      case DateTimeField.WEEK_DAY_NUMBER_LOCALE:
+        wallTime.dwl = mod(wallTime.dwl + amount - 1, 7) + 1;
+        delete wallTime.y;
+        delete wallTime.yw;
+        delete wallTime.utcOffset;
+        break;
+
       case DateTimeField.WEEKS:
         {
           const weeksInYear = result.getWeeksInYear(wallTime.yw);
@@ -355,7 +389,7 @@ export class DateTime extends Calendar {
         }
         break;
 
-      case DateTimeRollField.LOCAL_WEEKS:
+      case DateTimeField.WEEKS_LOCALE:
         {
           const weeksInYear = result.getWeeksInYear(wallTime.ywl,
             getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
@@ -381,22 +415,21 @@ export class DateTime extends Calendar {
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeRollField.AM_PM:
-      // Normally straight-forward, but this can get weird if the AM/PM roll crosses a Daylight Saving Time change.
-      {
-        const targetHour = mod(wallTime.hrs + 12, 24);
+      case DateTimeField.YEARS_WEEK:
+        wallTime.yw = mod(wallTime.yw - minYear + amount, maxYear - minYear + 1) + minYear;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        delete wallTime.utcOffset;
+        break;
 
-        result.roll(DateTimeField.HOURS, 12 * (amount % 2));
+      case DateTimeField.YEARS_WEEK_LOCALE:
+        wallTime.ywl = mod(wallTime.ywl - minYear + amount, maxYear - minYear + 1) + minYear;
+        delete wallTime.y;
+        delete wallTime.yw;
+        delete wallTime.utcOffset;
+        break;
 
-        if (result._wallTime.hrs === targetHour)
-          return result._lock(this.locked);
-        else if (mod2(result._wallTime.hrs - targetHour, 24) < 0)
-          return result.add(DateTimeField.HOURS, 1)._lock(this.locked);
-        else
-          return result.add(DateTimeField.HOURS, -1)._lock(this.locked);
-      }
-
-      case DateTimeRollField.ERA:
+      case DateTimeField.ERA:
         if (amount % 2 === 0)
           return result._lock(this.locked);
 
