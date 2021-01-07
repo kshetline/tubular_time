@@ -149,7 +149,7 @@ export class DateTime extends Calendar {
 
     if (this._utcTimeMillis !== newTime) {
       this._utcTimeMillis = newTime;
-      this.computeWallTime();
+      this.updateWallTimeFromCurrentMillis();
     }
   }
 
@@ -161,9 +161,8 @@ export class DateTime extends Calendar {
     if (!isEqual(this._wallTime, newTime)) {
       validateDateAndTime(newTime);
       this._wallTime = clone(newTime);
-      this.computeUtcTimeMillis();
-      this.computeWallTime();
-      this.updateWallTime();
+      this.updateUtcMillisFromWallTime();
+      this.updateWallTimeFromCurrentMillis();
     }
   }
 
@@ -177,7 +176,7 @@ export class DateTime extends Calendar {
 
     if (this._timezone !== newZone) {
       this._timezone = newZone;
-      this.computeWallTime();
+      this.updateWallTimeFromCurrentMillis();
     }
   }
 
@@ -295,11 +294,10 @@ export class DateTime extends Calendar {
     if (updateFromWall) {
       delete wallTime.occurrence;
       delete wallTime.utcOffset;
-      result.computeUtcTimeMillis();
-      result.updateWallTime();
+      result.updateUtcMillisFromWallTime();
     }
 
-    result.computeWallTime();
+    result.updateWallTimeFromCurrentMillis();
 
     return result._lock(this.locked);
   }
@@ -448,9 +446,8 @@ export class DateTime extends Calendar {
     }
 
     delete wallTime.occurrence;
-    result.computeUtcTimeMillis();
-    result.updateWallTime();
-    result.computeWallTime();
+    result.updateUtcMillisFromWallTime();
+    result.updateWallTimeFromCurrentMillis();
 
     return result._lock(this.locked);
   }
@@ -611,8 +608,8 @@ export class DateTime extends Calendar {
       throw new Error(`${DateTimeField[field]} (${value}) must be in the range [${min}, ${max}]`);
 
     delete wallTime.occurrence;
-    result.computeUtcTimeMillis();
-    result.updateWallTime();
+    result.updateUtcMillisFromWallTime();
+    result.updateWallTimeFromCurrentMillis();
 
     return result._lock(this.locked);
   }
@@ -642,7 +639,7 @@ export class DateTime extends Calendar {
       // date to select the correct midnight.
       const normalized = this.normalizeDate(year, month, day);
 
-      if (this.getWallTimeForMillis(earlier).d === normalized.d)
+      if (this.getTimeOfDayFieldsFromMillis(earlier).d === normalized.d)
         dayMillis = earlier;
     }
 
@@ -720,8 +717,17 @@ export class DateTime extends Calendar {
     return this.format('HH:mm' + (includeDst ? 'v' : ''));
   }
 
-  private computeUtcTimeMillis(): void {
-    const wallTime = purgeAliasFields(this._wallTime);
+  private updateUtcMillisFromWallTime(): void {
+    this._utcTimeMillis = this.computeUtcMillisFromWallTimeAux(this._wallTime);
+  }
+
+  public computeUtcMillisFromWallTime(wallTime: DateAndTime): number {
+    return this.computeUtcMillisFromWallTimeAux(clone(wallTime));
+  }
+
+  private computeUtcMillisFromWallTimeAux(wallTime: DateAndTime): number {
+    purgeAliasFields(this._wallTime);
+
     let millis = (wallTime.millis ?? 0) +
                  (wallTime.sec ?? 0) * 1000 +
                  (wallTime.min ?? 0) * 60000 +
@@ -740,14 +746,14 @@ export class DateTime extends Calendar {
         millis += transition.deltaOffset * 1000;
     }
 
-    this._utcTimeMillis = millis;
+    return millis;
   }
 
-  private computeWallTime(): void {
-    this._wallTime = this.getWallTimeForMillis(this._utcTimeMillis);
+  private updateWallTimeFromCurrentMillis(): void {
+    this._wallTime = this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis);
   }
 
-  getWallTimeForMillis(millis: number): DateAndTime {
+  getTimeOfDayFieldsFromMillis(millis: number): DateAndTime {
     let ticks = millis + this._timezone.getOffset(millis) * 1000;
     const wallTimeMillis = ticks;
     const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000), 1, 4) as DateAndTime;
@@ -769,15 +775,6 @@ export class DateTime extends Calendar {
     if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 1000)
       wallTime.occurrence = 2;
 
-    return syncDateAndTime(wallTime);
-  }
-
-  private updateWallTime(): void {
-    const offsets = this._timezone.getOffsets(this._utcTimeMillis);
-    const wallTime = this._wallTime;
-
-    wallTime.utcOffset = offsets[0];
-    wallTime.dstOffset = offsets[1];
     wallTime.n = this.getDayNumber(wallTime);
     const date = this.getDateFromDayNumber(wallTime.n);
     [wallTime.y, wallTime.m, wallTime.d] = [date.y, date.m, date.d];
@@ -787,13 +784,15 @@ export class DateTime extends Calendar {
     wallTime.dy = wallTime.n - this.getDayNumber(wallTime.y, 1, 1) + 1;
     wallTime.j = this.isJulianCalendarDate(wallTime);
     syncDateAndTime(wallTime);
+
+    return wallTime;
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 
     if (this._timezone)
-      this.computeWallTime();
+      this.updateWallTimeFromCurrentMillis();
   }
 
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
