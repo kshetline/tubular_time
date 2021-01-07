@@ -111,8 +111,8 @@ export class DateTime extends Calendar {
     if (initialTime instanceof Date)
       this.utcTimeMillis = +initialTime;
     else if (isObject(initialTime)) {
-      if (!timezone && initialTime.utcOffset != null && initialTime.utcOffset !== 0)
-        this._timezone = Timezone.from(Timezone.formatUtcOffset(initialTime.utcOffset));
+      if (!timezone && initialTime!.utcOffset != null && initialTime!.utcOffset !== 0)
+        this._timezone = Timezone.from(Timezone.formatUtcOffset(initialTime!.utcOffset));
 
       this.wallTime = initialTime;
     }

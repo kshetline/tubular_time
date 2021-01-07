@@ -1,8 +1,8 @@
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { LocaleInfo } from './locale-info';
-import { isEqual, isString, last } from '@tubular/util';
-import { getEras, getMeridiems, getMinDaysInWeek, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
+import { flatten, isEqual, isString, last } from '@tubular/util';
+import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 
 let hasIntlDateTime = false;
@@ -15,24 +15,42 @@ catch {}
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName' };
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /(\[[^]]*?]|{[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDDo|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
+const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, LocaleInfo> = {};
 
 export function decomposeFormatString(format: string): string[] {
-  const parts = format.split(patternsMoment);
+  let parts: (string | string[])[] = [];
+
+  // For some reason I can't get a regex to do this first part quite right
+  while (format) {
+    const pos1 = format.indexOf('['); if (pos1 < 0) break;
+    const pos2 = format.indexOf(']', pos1 + 1); if (pos2 < 0) break;
+
+    parts.push(format.substr(0, pos1));
+    parts.push(format.substring(pos1, pos2 + 1));
+    format = format.substr(pos2 + 1);
+  }
+
+  if (format)
+    parts.push(format);
+
+  for (let i = 0; i < parts.length; i += 2)
+    parts[i] = (parts[i] as string).split(patternsMoment);
+
+  parts = flatten(parts);
 
   // Even indices should contain literal text, and odd indices format patterns. When a format pattern
   // represents quoted literal text, move it to an even position.
   for (let i = 1; i < parts.length; i += 2) {
-    const part = parts[i];
+    const part = parts[i] as string;
 
-    if (part.startsWith('[')) {
+    if (part.startsWith('[') && part.endsWith(']')) {
       parts[i - 1] += part.substr(1, part.length - 2) + (parts[i + 1] ?? '');
       parts.splice(i, 2);
     }
   }
 
-  return parts;
+  return parts as string[];
 }
 
 function cleanUpLongTimezone(zone: string): string {
@@ -43,12 +61,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string): stri
   const localeName = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
   const locale = getLocaleInfo(localeName);
   const parts = decomposeFormatString(fmt);
-  const isoWeek = !parts.find((value, index) => index % 2 === 1 && /ww?/.test(value));
   const result: string[] = [];
   const wt = dt.wallTime;
   const year = wt.y;
   const eraYear = abs(year) + (year <= 0 ? 1 : 0);
   const month = wt.m;
+  const quarter = floor((month + 2) / 3);
   const day = wt.d;
   const hour = wt.hrs;
   const h = (hour === 0 ? 12 : hour <= 12 ? hour : hour - 12);
@@ -56,6 +74,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string): stri
   const min = wt.min;
   const sec = wt.sec;
   const dayOfWeek = dt.getDayOfWeek();
+  let isoWeek = !parts.find((value, index) => index % 2 === 1 && /ww?/.test(value));
 
   for (let i = 0; i < parts.length; i += 2) {
     result.push(parts[i]);
@@ -91,6 +110,14 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string): stri
         result.push(eraYear.toString());
         break;
 
+      case 'Qo':
+        result.push(locale.ordinals[quarter]);
+        break;
+
+      case 'Q':
+        result.push(quarter.toString());
+        break;
+
       case 'MMMM':
         result.push(locale.months[month - 1]);
         break;
@@ -103,22 +130,42 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string): stri
         result.push(month.toString().padStart(2, '0'));
         break;
 
+      case 'Mo':
+        result.push(locale.ordinals[month]);
+        break;
+
       case 'M':
         result.push(month.toString());
+        break;
+
+      case 'Wo':
+        result.push(locale.ordinals[wt.w]);
+        isoWeek = true;
         break;
 
       case 'WW':
       case 'W':
         result.push(wt.w.toString().padStart(field === 'WW' ? 2 : 1, '0'));
+        isoWeek = true;
+        break;
+
+      case 'wo':
+        result.push(locale.ordinals[wt.wl]);
+        isoWeek = false;
         break;
 
       case 'ww':
       case 'w':
         result.push(wt.wl.toString().padStart(field === 'ww' ? 2 : 1, '0'));
+        isoWeek = false;
         break;
 
       case 'DD':
         result.push(day.toString().padStart(2, '0'));
+        break;
+
+      case 'Do':
+        result.push(locale.ordinals[day]);
         break;
 
       case 'D':
@@ -135,6 +182,10 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string): stri
 
       case 'dd':
         result.push(locale.weekdaysMin[dayOfWeek]);
+        break;
+
+      case 'do':
+        result.push(locale.ordinals[isoWeek ? wt.dw : wt.dwl]);
         break;
 
       case 'd':
@@ -419,6 +470,7 @@ function getLocaleInfo(localeName: string): LocaleInfo {
   locale.minDaysInWeek = getMinDaysInWeek(localeName);
   locale.weekend = getWeekend(localeName);
   locale.eras = getEras(localeName);
+  locale.ordinals = getOrdinals(localeName);
 
   cachedLocales[localeName] = locale;
 
