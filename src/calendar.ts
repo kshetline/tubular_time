@@ -53,7 +53,19 @@ export type YearOrDate = number | YMDDate | number[];
  * Type for specifying the date when a calendar switches from Julian to Gregorian, or if the calendar is purely Julian
  * or purely Gregorian. As a string, the letters 'J' or 'G' can be used.
  */
-export type GregorianChange = YMDDate | CalendarType | string;
+export type GregorianChange = YMDDate | CalendarType | string | number[];
+
+function hasYearField(obj: any): boolean {
+  return obj.y != null || obj.yw != null || obj.ywl != null ||
+         obj.year != null || obj.yearByWeek != null || obj.yearByWeekLocale != null;
+}
+
+export function isGregorianType(obj: any): obj is GregorianChange {
+  return isNumber(obj) ||
+         (isArray(obj) && obj.length === 3 && obj.findIndex(n => !isNumber(n)) < 0) ||
+         (isString(obj) && /g|j|(\d+)-(\d+)-(\d+)/i.test(obj)) ||
+         (isObject(obj) && hasYearField(obj));
+}
 
 const lockError = new Error('This DateTime instance is locked and immutable');
 

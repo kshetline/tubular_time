@@ -20,5 +20,8 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-05-04T20:30:03').format('yyyy MMMM DD, HH:mm', 'es')).to.equal('1986 mayo 04, 20:30');
     expect(new DateTime('2021-05-04').format('YYYY-MM-DD [Q:]Q Qo [M:]Mo [W:]Wo [d:]do [w:]wo [d:]do [D:]Do'))
       .to.equal('2021-05-04 Q:2 2nd M:5th W:18th d:2nd w:19th d:3rd D:4th');
+    expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
+    expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
+    expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
   });
 });

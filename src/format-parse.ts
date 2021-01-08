@@ -1,7 +1,7 @@
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { ILocale } from './i-locale';
-import { flatten, isEqual, isString, last } from '@tubular/util';
+import { flatten, isArray, isEqual, isString, last } from '@tubular/util';
 import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 
@@ -57,9 +57,9 @@ function cleanUpLongTimezone(zone: string): string {
   return zone.replace(/^[\p{P}\p{N}\s]*/u, '').replace(/[\p{P}\p{N}\s]*$/u, '');
 }
 
-export function format(dt: DateTime, fmt: string, localeOverride?: string): string {
-  const localeName = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
-  const locale = getLocaleInfo(localeName);
+export function format(dt: DateTime, fmt: string, localeOverride?: string | string[]): string {
+  const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
+  const locale = getLocaleInfo(localeNames);
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
   const wt = dt.wallTime;
@@ -345,12 +345,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string): stri
                 options.timeStyle = styleOptValues[field.charAt(2)];
 
               try {
-                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
+                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(localeNames, options);
               }
               catch {
                 console.warn('Timezone "%s" not recognized', options.timeZone);
                 delete options.timeZone;
-                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(locale.name, options);
+                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(localeNames, options);
               }
             }
 
@@ -399,8 +399,10 @@ function getDatePart(format: Intl.DateTimeFormat, date: number, partName: string
     return '???';
 }
 
-function quickFormat(localeName: string, timezone: string, opts: any) {
+function quickFormat(localeNames: string | string[], timezone: string, opts: any) {
   const options: Intl.DateTimeFormatOptions = {};
+
+  localeNames = normalizeLocale(localeNames);
 
   if (timezone !== 'OS')
     options.timeZone = (timezone === 'UT' ? 'UTC' : timezone);
@@ -411,18 +413,19 @@ function quickFormat(localeName: string, timezone: string, opts: any) {
     options[key] = value;
   });
 
-  return new Intl.DateTimeFormat(localeName, options);
+  return new Intl.DateTimeFormat(localeNames, options);
 }
 
-function getLocaleInfo(localeName: string): ILocale {
-  const locale: ILocale = cachedLocales[localeName] ?? {} as ILocale;
+function getLocaleInfo(localeNames: string | string[]): ILocale {
+  const joinedNames = isArray(localeNames) ? localeNames.join(',') : localeNames;
+  const locale: ILocale = cachedLocales[joinedNames] ?? {} as ILocale;
 
   if (locale && Object.keys(locale).length > 0)
     return locale;
 
-  const fmt = (opts: any) => quickFormat(localeName, 'UTC', opts);
+  const fmt = (opts: any) => quickFormat(localeNames, 'UTC', opts);
 
-  locale.name = localeName;
+  locale.name = isArray(localeNames) ? localeNames.join(',') : localeNames;
 
   if (hasIntlDateTime) {
     locale.months = [];
@@ -443,7 +446,7 @@ function getLocaleInfo(localeName: string): ILocale {
 
     for (let day = 3; day <= 9; ++day) {
       const date = Date.UTC(2021, 0, day);
-      let format = new Intl.DateTimeFormat(localeName, { timeZone: 'UTC', weekday: 'long' });
+      let format = new Intl.DateTimeFormat(localeNames, { timeZone: 'UTC', weekday: 'long' });
 
       locale.weekdays.push(getDatePart(format, date, 'weekday'));
       format = fmt({ w: 's' });
@@ -465,14 +468,14 @@ function getLocaleInfo(localeName: string): ILocale {
   }
 
   locale.dateTimeFormats = {};
-  locale.meridiem = getMeridiems(localeName);
-  locale.startOfWeek = getStartOfWeek(localeName);
-  locale.minDaysInWeek = getMinDaysInWeek(localeName);
-  locale.weekend = getWeekend(localeName);
-  locale.eras = getEras(localeName);
-  locale.ordinals = getOrdinals(localeName);
+  locale.meridiem = getMeridiems(localeNames);
+  locale.startOfWeek = getStartOfWeek(localeNames);
+  locale.minDaysInWeek = getMinDaysInWeek(localeNames);
+  locale.weekend = getWeekend(localeNames);
+  locale.eras = getEras(localeNames);
+  locale.ordinals = getOrdinals(localeNames);
 
-  cachedLocales[localeName] = locale;
+  cachedLocales[joinedNames] = locale;
 
   return locale;
 }

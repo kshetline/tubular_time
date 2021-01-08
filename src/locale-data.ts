@@ -1,4 +1,4 @@
-import { isNumber } from '@tubular/util';
+import { isArray, isNumber, isString } from '@tubular/util';
 
 export const localeList = [
   'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bn', 'bn-bd',
@@ -13,27 +13,42 @@ export const localeList = [
 
 Object.freeze(localeList);
 
-export function normalizeLocale(name: string): string {
+export function normalizeLocale(locale: string | string[]): string | string[] {
   if (!Intl?.DateTimeFormat)
     return 'en';
 
-  return name.replace(/_/g, '-').toLowerCase();
+  if (isString(locale) && locale.includes(','))
+    locale = locale.split(',').map(lcl => lcl.trim());
+
+  if (isArray(locale))
+    return locale.map(lcl => normalizeLocale(lcl) as string);
+
+  return locale.replace(/_/g, '-').toLowerCase();
 }
 
 function reduceLocale(locale: string): string {
   return locale.replace(/-[^-]*?$/i, '');
 }
 
-function getLocaleResource<T>(locale: string, localeData: Record<string, T>): T {
+function getLocaleResource<T>(locale: string | string[], localeData: Record<string, T>): T {
   let data: any;
-  let next: string;
 
   locale = normalizeLocale(locale);
 
-  do {
-    data = localeData[locale];
-    next = reduceLocale(locale);
-  } while (!data && locale.includes('-') && (locale = next));
+  if (!isArray(locale))
+    locale = [locale];
+
+  for (let lcl in locale) {
+    let next: string;
+
+    do {
+      data = localeData[lcl];
+      next = reduceLocale(lcl);
+    } while (!data && lcl.includes('-') && (lcl = next));
+
+    if (data)
+      break;
+  }
 
   return data;
 }
@@ -84,7 +99,7 @@ const meridiems = {
   'zh': [['凌晨'], ['凌晨'], ['凌晨'], ['凌晨'], ['凌晨'], ['凌晨'], ['早上'], ['早上'], ['早上'], ['上午'], ['上午'], ['上午'], ['中午'], ['下午'], ['下午'], ['下午'], ['下午'], ['下午'], ['晚上'], ['晚上'], ['晚上'], ['晚上'], ['晚上'], ['晚上']],
 };
 
-export function getMeridiems(locale: string): string[][] {
+export function getMeridiems(locale: string | string[]): string[][] {
   let result = getLocaleResource<string[][]>(locale, meridiems);
 
   if (!result)
@@ -108,7 +123,7 @@ const weekInfo = {
   'uk': [1, 1, 6, 0], 'uz': [1, 1, 6, 0], 'zh': [0, 1, 6, 0]
 };
 
-function getWeekInfo(locale: string): number[] {
+function getWeekInfo(locale: string | string[]): number[] {
   let result = getLocaleResource<number []>(locale, weekInfo);
 
   if (result == null)
@@ -117,15 +132,15 @@ function getWeekInfo(locale: string): number[] {
   return result;
 }
 
-export function getStartOfWeek(locale: string): number {
+export function getStartOfWeek(locale: string | string[]): number {
   return getWeekInfo(locale)[0];
 }
 
-export function getMinDaysInWeek(locale: string): number {
+export function getMinDaysInWeek(locale: string | string[]): number {
   return getWeekInfo(locale)[1];
 }
 
-export function getWeekend(locale: string): number[] {
+export function getWeekend(locale: string | string[]): number[] {
   return getWeekInfo(locale).slice(2);
 }
 
@@ -147,7 +162,7 @@ const eras = {
   'zh--#hant': ['西元前', '西元']
 };
 
-export function getEras(locale: string): string[] {
+export function getEras(locale: string | string[]): string[] {
   let result = getLocaleResource<string[]>(locale, eras);
 
   if (result == null)
@@ -202,11 +217,11 @@ const ordinals = {
   'tk': ["0'unjy", "1'inji", "2'nji", "3'ünji", "4'ünji", "5'inji", "6'njy", "7'nji", "8'inji", "9'unjy", "10'unjy", "11'inji", "12'nji", "13'ünji", "14'ünji", "15'inji", "16'njy", "17'nji", "18'inji", "19'unjy", "20'nji", "21'inji", "22'nji", "23'ünji", "24'ünji", "25'inji", "26'njy", "27'nji", "28'inji", "29'unjy", "30'unjy", "31'inji"],
   'tr': ["0'ıncı", "1'inci", "2'nci", "3'üncü", "4'üncü", "5'inci", "6'ncı", "7'nci", "8'inci", "9'uncu", "10'uncu", "11'inci", "12'nci", "13'üncü", "14'üncü", "15'inci", "16'ncı", "17'nci", "18'inci", "19'uncu", "20'nci", "21'inci", "22'nci", "23'üncü", "24'üncü", "25'inci", "26'ncı", "27'nci", "28'inci", "29'uncu", "30'uncu", "31'inci"],
   'tzm': 1, 'ug-cn': 1, 'uk': 1, 'ur': 1, 'uz': 1, 'vi': 1,
-  yo: ['ọjọ́ 0', 'ọjọ́ 1', 'ọjọ́ 2', 'ọjọ́ 3', 'ọjọ́ 4', 'ọjọ́ 5', 'ọjọ́ 6', 'ọjọ́ 7', 'ọjọ́ 8', 'ọjọ́ 9', 'ọjọ́ 10', 'ọjọ́ 11', 'ọjọ́ 12', 'ọjọ́ 13', 'ọjọ́ 14', 'ọjọ́ 15', 'ọjọ́ 16', 'ọjọ́ 17', 'ọjọ́ 18', 'ọjọ́ 19', 'ọjọ́ 20', 'ọjọ́ 21', 'ọjọ́ 22', 'ọjọ́ 23', 'ọjọ́ 24', 'ọjọ́ 25', 'ọjọ́ 26', 'ọjọ́ 27', 'ọjọ́ 28', 'ọjọ́ 29', 'ọjọ́ 30', 'ọjọ́ 31'],
+  'yo': ['ọjọ́ 0', 'ọjọ́ 1', 'ọjọ́ 2', 'ọjọ́ 3', 'ọjọ́ 4', 'ọjọ́ 5', 'ọjọ́ 6', 'ọjọ́ 7', 'ọjọ́ 8', 'ọjọ́ 9', 'ọjọ́ 10', 'ọjọ́ 11', 'ọjọ́ 12', 'ọjọ́ 13', 'ọjọ́ 14', 'ọjọ́ 15', 'ọjọ́ 16', 'ọjọ́ 17', 'ọjọ́ 18', 'ọjọ́ 19', 'ọjọ́ 20', 'ọjọ́ 21', 'ọjọ́ 22', 'ọjọ́ 23', 'ọjọ́ 24', 'ọjọ́ 25', 'ọjọ́ 26', 'ọjọ́ 27', 'ọjọ́ 28', 'ọjọ́ 29', 'ọjọ́ 30', 'ọjọ́ 31'],
   'zh': 1
 };
 
-export function getOrdinals(locale: string): string[] {
+export function getOrdinals(locale: string | string[]): string[] {
   const ords = getLocaleResource<string[] | number>(locale, ordinals);
   let result: string[];
 

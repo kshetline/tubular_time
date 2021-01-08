@@ -19,7 +19,7 @@
 
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, isArray, isEqual, isNumber, isObject, isString } from '@tubular/util';
-import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, Calendar, YearOrDate } from './calendar';
+import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate } from './calendar';
 import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
@@ -42,7 +42,7 @@ const fullIsoFormat = 'yyyy-MM-DDTHH:mm:ss.SSSZ';
 const fullAltFormat = 'yyyy-MM-DDTHH:mm:ss.SSSRZv';
 
 export class DateTime extends Calendar {
-  private static defaultLocale = 'en-us';
+  private static defaultLocale: string | string[] = 'en-us';
   private static defaultTimezone = Timezone.OS_ZONE;
 
   private _locale = DateTime.defaultLocale;
@@ -63,8 +63,8 @@ export class DateTime extends Calendar {
              (hour + (minute + second / 60.0) / 60.0) / 24.0;
   }
 
-  static getDefaultLocale(): string { return DateTime.defaultLocale; }
-  static setDefaultLocale(newLocale: string) { DateTime.defaultLocale = newLocale; }
+  static getDefaultLocale(): string | string[] { return DateTime.defaultLocale; }
+  static setDefaultLocale(newLocale: string | string[]) { DateTime.defaultLocale = newLocale; }
 
   static getDefaultTimezone(): Timezone { return DateTime.defaultTimezone; }
   static setDefaultTimezone(newZone: Timezone | string) {
@@ -74,11 +74,11 @@ export class DateTime extends Calendar {
     DateTime.defaultTimezone = newZone;
   }
 
-  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null,
-              gregorianOrLocale?: string | GregorianChange, gregorianChange?: GregorianChange) {
-    super(gregorianChange ?? (isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale)) ? undefined : gregorianOrLocale);
+              gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
+    super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
     if (isString(initialTime)) {
       const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
@@ -198,14 +198,14 @@ export class DateTime extends Calendar {
     return result;
   }
 
-  toLocale(newLocale: string): DateTime {
+  toLocale(newLocale: string | string[]): DateTime {
     const result = this.clone();
     result.locale = newLocale;
     return result;
   }
 
-  get locale(): string { return this._locale; }
-  set locale(newLocale: string) {
+  get locale(): string | string[] { return this._locale; }
+  set locale(newLocale: string | string[]) {
     if (this.locked)
       throw lockError;
 
