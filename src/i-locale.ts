@@ -1,4 +1,4 @@
-export interface LocaleInfo {
+export interface ILocale {
   name: string;
   months: string[];
   monthsShort: string[];

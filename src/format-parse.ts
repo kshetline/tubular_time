@@ -1,6 +1,6 @@
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
-import { LocaleInfo } from './locale-info';
+import { ILocale } from './i-locale';
 import { flatten, isEqual, isString, last } from '@tubular/util';
 import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
@@ -16,7 +16,7 @@ const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m:
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
-const cachedLocales: Record<string, LocaleInfo> = {};
+const cachedLocales: Record<string, ILocale> = {};
 
 export function decomposeFormatString(format: string): string[] {
   let parts: (string | string[])[] = [];
@@ -414,8 +414,8 @@ function quickFormat(localeName: string, timezone: string, opts: any) {
   return new Intl.DateTimeFormat(localeName, options);
 }
 
-function getLocaleInfo(localeName: string): LocaleInfo {
-  const locale: LocaleInfo = cachedLocales[localeName] ?? {} as LocaleInfo;
+function getLocaleInfo(localeName: string): ILocale {
+  const locale: ILocale = cachedLocales[localeName] ?? {} as ILocale;
 
   if (locale && Object.keys(locale).length > 0)
     return locale;
@@ -477,7 +477,7 @@ function getLocaleInfo(localeName: string): LocaleInfo {
   return locale;
 }
 
-function generatePredefinedFormats(locale: LocaleInfo, timezone: string): void {
+function generatePredefinedFormats(locale: ILocale, timezone: string): void {
   const fmt = (opts: any) => quickFormat(locale.name, timezone, opts);
 
   locale.cachedTimezone = timezone;

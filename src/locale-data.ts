@@ -24,6 +24,20 @@ function reduceLocale(locale: string): string {
   return locale.replace(/-[^-]*?$/i, '');
 }
 
+function getLocaleResource<T>(locale: string, localeData: Record<string, T>): T {
+  let data: any;
+  let next: string;
+
+  locale = normalizeLocale(locale);
+
+  do {
+    data = localeData[locale];
+    next = reduceLocale(locale);
+  } while (!data && locale.includes('-') && (locale = next));
+
+  return data;
+}
+
 /* eslint-disable quote-props */
 // noinspection SpellCheckingInspection
 const meridiems = {
@@ -71,15 +85,7 @@ const meridiems = {
 };
 
 export function getMeridiems(locale: string): string[][] {
-  let result: string[][] = null;
-  let next: string;
-
-  locale = normalizeLocale(locale);
-
-  do {
-    result = meridiems[locale];
-    next = reduceLocale(locale);
-  } while (!result && locale.includes('-') && (locale = next));
+  let result = getLocaleResource<string[][]>(locale, meridiems);
 
   if (!result)
     result = [['am', 'AM'], ['pm', 'PM']];
@@ -103,15 +109,7 @@ const weekInfo = {
 };
 
 function getWeekInfo(locale: string): number[] {
-  let result: number[];
-  let next: string;
-
-  locale = normalizeLocale(locale);
-
-  do {
-    result = weekInfo[locale];
-    next = reduceLocale(locale);
-  } while (!result && locale.includes('-') && (locale = next));
+  let result = getLocaleResource<number []>(locale, weekInfo);
 
   if (result == null)
     result = weekInfo.en;
@@ -150,15 +148,7 @@ const eras = {
 };
 
 export function getEras(locale: string): string[] {
-  let result: string[];
-  let next: string;
-
-  locale = normalizeLocale(locale);
-
-  do {
-    result = eras[locale];
-    next = reduceLocale(locale);
-  } while (!result && locale.includes('-') && (locale = next));
+  let result = getLocaleResource<string[]>(locale, eras);
 
   if (result == null)
     result = ['BC', 'AD'];
@@ -217,16 +207,8 @@ const ordinals = {
 };
 
 export function getOrdinals(locale: string): string[] {
-  let ords: string[] | number;
+  const ords = getLocaleResource<string[] | number>(locale, ordinals);
   let result: string[];
-  let next: string;
-
-  locale = normalizeLocale(locale);
-
-  do {
-    ords = ordinals[locale];
-    next = reduceLocale(locale);
-  } while (!ords && locale.includes('-') && (locale = next));
 
   if (isNumber(ords)) {
     result = [];
@@ -234,6 +216,8 @@ export function getOrdinals(locale: string): string[] {
     for (let i = 0; i <= 31; ++i)
       result.push(i + (' .aº\u0645η'.substr(ords - 1, 1).trim()));
   }
+  else if (!ords)
+    result = ordinals.en;
   else
     result = ords;
 
