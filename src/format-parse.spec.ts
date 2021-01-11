@@ -2,6 +2,7 @@ import { expect } from 'chai';
 // import moment from './locale/moment-with-locales.js';
 
 import { DateTime } from './date-time';
+import { analyzeFormat } from './format-parse';
 
 describe('FormatParse', () => {
   it('should properly decompose format strings', () => {
@@ -23,5 +24,6 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
     expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
+    console.log(analyzeFormat('fr', 'long', 'long'));
   });
 });

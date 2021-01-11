@@ -95,6 +95,7 @@ export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {
 }
 
 export function purgeAliasFields<T extends YMDDate | DateAndTime>(obj: T): T {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const [_, alias] of altFields)
     delete obj[alias];
 
