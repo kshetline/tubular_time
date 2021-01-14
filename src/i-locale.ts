@@ -13,4 +13,5 @@ export interface ILocale {
   weekend: number[];
   eras: string[];
   ordinals: string[];
+  parsePatterns: Record<string, string>;
 }

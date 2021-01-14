@@ -1,4 +1,3 @@
-import { GregorianChange } from './calendar';
 import { DateAndTime } from './common';
 import { DateTime } from './date-time';
 import { IZonePoller } from './i-zone-poller';
@@ -148,11 +147,9 @@ export function clearZonesUpdateListeners(): void {
   listeners.clear();
 }
 
-function ttime(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string, gregorianChange?: GregorianChange);
-function ttime(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
-function ttime(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null,
-              gregorianOrLocale?: string | GregorianChange, gregorianChange?: GregorianChange) {
-  return new DateTime(initialTime, timezone, gregorianOrLocale as any, gregorianChange).lock();
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string) {
+  return new DateTime(initialTime).lock();
 }
 
 export default ttime;

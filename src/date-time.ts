@@ -82,8 +82,11 @@ export class DateTime extends Calendar {
 
     if (isString(initialTime)) {
       const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
+      let zone: string;
+      const origTime = initialTime;
+
       if ($) {
-        let zone = $[1];
+        zone = $[1];
 
         initialTime = initialTime.slice(0, -zone.length).trim();
 
@@ -91,10 +94,30 @@ export class DateTime extends Calendar {
           zone = 'UT';
 
         timezone = timezone ?? Timezone.from(zone);
+
+        if (timezone instanceof Timezone && timezone.error) {
+          const szni = Timezone.getShortZoneNameInfo(zone);
+
+          if (szni) {
+            timezone = Timezone.from(szni.ianaName);
+            initialTime += ' ' + Timezone.formatUtcOffset(szni.utcOffset);
+          }
+          else {
+            timezone = undefined;
+            zone = undefined;
+            initialTime = origTime;
+          }
+        }
       }
 
-      if (initialTime)
-        initialTime = parseISODateTime(initialTime);
+      if (initialTime) {
+        try {
+          initialTime = parseISODateTime(initialTime);
+        }
+        catch {
+          initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
+        }
+      }
       else
         initialTime = null;
     }
@@ -141,6 +164,8 @@ export class DateTime extends Calendar {
 
     return copy;
   }
+
+  get valid(): boolean { return this._utcTimeMillis != null && !isNaN(this._utcTimeMillis); }
 
   get utcTimeMillis(): number { return this._utcTimeMillis; }
   set utcTimeMillis(newTime: number) {
@@ -754,6 +779,9 @@ export class DateTime extends Calendar {
   }
 
   getTimeOfDayFieldsFromMillis(millis: number): DateAndTime {
+    if (millis == null || isNaN(millis))
+      return syncDateAndTime({ y: NaN, m: NaN, d: NaN, n: NaN });
+
     let ticks = millis + this._timezone.getOffset(millis) * 1000;
     const wallTimeMillis = ticks;
     const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000), 1, 4) as DateAndTime;

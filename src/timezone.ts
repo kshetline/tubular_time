@@ -18,7 +18,7 @@
 */
 
 import { div_tt0, mod2, round } from '@tubular/math';
-import { isEqual, last, padLeft } from '@tubular/util';
+import { clone, compareStrings, isEqual, last, padLeft } from '@tubular/util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
 
@@ -45,6 +45,12 @@ export interface ZoneInfo {
   dstOffset: number; // in seconds
   displayName?: string;
   transitions: Transition[] | null;
+}
+
+export interface ShortZoneNameInfo {
+  utcOffset: number;
+  dstOffset: number;
+  ianaName: string;
 }
 
 const CLOCK_TYPE_WALL = 0;
@@ -189,6 +195,7 @@ let osDstOffset: number;
 
 export class Timezone {
   private static encodedTimezones: {[id: string]: string} = {};
+  private static shortZoneNames: {[id: string]: ShortZoneNameInfo} = {};
 
   static OS_ZONE = new Timezone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                             dstOffset: osDstOffset, transitions: osTransitions });
@@ -216,6 +223,7 @@ export class Timezone {
     const changed = !isEqual(this.encodedTimezones, encodedTimezones);
 
     this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
+    this.extractZoneShortNames();
 
     if (changed)
       this.zoneLookup = {};
@@ -338,7 +346,7 @@ export class Timezone {
     else if (this.encodedTimezones[name]) {
       let encodedTimezone = this.encodedTimezones[name];
 
-      if (encodedTimezone.indexOf(';') < 0) // If no semicolon, must be a link to a duplicate timezone.
+      if (!encodedTimezone.includes(';')) // If no semicolon, must be a link to a duplicate timezone.
         encodedTimezone = this.encodedTimezones[encodedTimezone];
 
       zone = new Timezone(this.parseEncodedTimezone(name, encodedTimezone));
@@ -350,10 +358,14 @@ export class Timezone {
       zone._error = 'Unrecognized timezone';
     }
 
-    if (name !== 'LMT') // Don't cache LMT because of variable longitude-dependent offsets for the same name.
+    if (name !== 'LMT' && !zone._error) // Don't cache LMT because of variable longitude-dependent offsets for the same name.
       this.zoneLookup[name] = zone;
 
     return zone;
+  }
+
+  static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo {
+    return clone(this.shortZoneNames[shortName]);
   }
 
   private static parseTimeOffset(offset: string): number {
@@ -518,6 +530,55 @@ export class Timezone {
       displayName: displayName,
       transitions: transitions
     };
+  }
+
+  private static extractZoneShortNames(): void {
+    const preferredZones = new Set([
+      'Australia/ACT', 'Australia/Adelaide', 'Asia/Tokyo', 'Asia/Hong_Kong',
+      'Asia/Jakarta', 'Asia/Novosibirsk', 'Asia/Calcutta', 'Asia/Karachi', 'Europe/Moscow',
+      'Africa/Cairo', 'Europe/Paris', 'Europe/London', 'Atlantic/Azores', 'America/Scoresbysund',
+      'America/Godthab', 'America/St_Johns', 'America/Halifax', 'America/New_York', 'America/Chicago',
+      'America/Denver', 'America/Los_Angeles', 'America/Anchorage', 'Pacific/Honolulu', 'America/Adak',
+      'Pacific/Apia'
+    ]);
+    const sortKey = (key: string) => preferredZones.has(key) ? '!' + key : key;
+    const keys = Object.keys(this.encodedTimezones).sort((a, b) =>
+      compareStrings(sortKey(a), sortKey(b)));
+
+    keys.forEach(ianaName => {
+      let etz = this.encodedTimezones[ianaName];
+
+      if (!etz.includes(';'))
+        etz = this.encodedTimezones[etz];
+
+      const sections = etz.split(';');
+      let parts = sections[0].split(' ');
+      const currentUtcOffset = this.parseTimeOffset(parts[1]);
+      const currentDstOffset = round(Number(parts[2]) * 60);
+
+      if (sections.length > 1) {
+        const offsets = sections[1].split(' ');
+
+        for (let i = 0; i < offsets.length; ++i) {
+          const offset = offsets[i];
+
+          parts = offset.split('/');
+
+          if (parts.length > 2) {
+            const name = parts[2];
+            const info = this.shortZoneNames[name];
+            const utcOffset = round(this.fromBase60(parts[0]) * 60);
+            const dstOffset = round(this.fromBase60(parts[1]) * 60);
+
+            if ((!info || ianaName.startsWith('America/') && !info.ianaName.startsWith('America/')) &&
+                utcOffset - dstOffset === currentUtcOffset &&
+                (!dstOffset || (dstOffset && dstOffset === currentDstOffset))) {
+              this.shortZoneNames[name] = { utcOffset, dstOffset, ianaName };
+            }
+          }
+        }
+      }
+    });
   }
 
   static formatUtcOffset(offsetSeconds: number, noColons = false): string {

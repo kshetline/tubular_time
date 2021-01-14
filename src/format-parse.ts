@@ -1,7 +1,7 @@
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { ILocale } from './i-locale';
-import { flatten, forEach, isArray, isEqual, isString, last, regexEscape, sortObjectEntries } from '@tubular/util';
+import { flatten, isArray, isEqual, isString, last, regexEscape, sortObjectEntries } from '@tubular/util';
 import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 
@@ -76,10 +76,18 @@ export function decomposeFormatString(format: string): string[] {
 }
 
 function cleanUpLongTimezone(zone: string): string {
+  const $ = /\b(GMT[-+]\d[:\d]*)/.exec(zone);
+
+  if ($)
+    return $[1];
+
   return zone.replace(/^[\p{P}\p{N}\s]*/u, '').replace(/[\p{P}\p{N}\s]*$/u, '');
 }
 
 export function format(dt: DateTime, fmt: string, localeOverride?: string | string[]): string {
+  if (!dt.valid)
+    return '##Invalid_Date##';
+
   const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
   const locale = getLocaleInfo(localeNames);
   const parts = decomposeFormatString(fmt);
@@ -303,7 +311,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         }
         break;
 
-      case 'ZZZ':
+      case 'ZZZ': // As IANA zone name, if possible
         if (dt.timezone.zoneName !== 'OS') {
           result.push(dt.timezone.zoneName);
           break;
@@ -314,14 +322,14 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         }
 
       // eslint-disable-next-line no-fallthrough
-      case 'zzz':
+      case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
         if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof Intl.DateTimeFormat) {
           result.push(cleanUpLongTimezone(locale.dateTimeFormats.Z.format(dt.utcTimeMillis)));
           break;
         }
 
       // eslint-disable-next-line no-fallthrough
-      case 'zz':
+      case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
         if (hasIntlDateTime && locale.dateTimeFormats.z instanceof Intl.DateTimeFormat) {
           result.push(cleanUpLongTimezone(locale.dateTimeFormats.z.format(dt.utcTimeMillis)));
@@ -333,7 +341,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         }
 
       // eslint-disable-next-line no-fallthrough
-      case 'ZZ':
+      case 'ZZ': // Zone as UTC offset
       case 'Z':
         result.push(dt.timezone.getFormattedOffset(dt.utcTimeMillis, field === 'ZZ'));
         break;
@@ -564,7 +572,7 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
   const fields = {
     year: /((?:23)?45)/.exec(formatted),
     month: /(10)/.exec(formatted),
-    date: /(20)/.exec(formatted),
+    day: /(20)/.exec(formatted),
     weekday: null,
     hour: /(11)/.exec(formatted),
     minute: /(22)/.exec(formatted),
@@ -617,19 +625,10 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
 
     if (ams.length > 0 || pms.length > 0)
       fields.ampm = new RegExp('(' + flatten([ams, pms]).map(s => regexEscape(s)).join('|') + ')').exec(formatted);
-
-    console.log(hourMode);
-    console.log(JSON.stringify(ams));
-    console.log(JSON.stringify(pms));
   }
 
   Object.keys(fields).forEach(key => fields[key] == null && delete fields[key]);
   sortObjectEntries(fields, (a, b) => a[1].index - b[1].index, true);
-
-  forEach(fields, (key, value) => {
-    if (value != null)
-      console.log(`${key}: ${value.index}, ${value[1].length}, "${value[1]}"`);
-  });
 
   let formatString = '';
   let lastIndex = 0;
@@ -686,7 +685,6 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
   });
 
   formatString += formatEscape(formatted.substr(lastIndex));
-  console.log(formatted);
 
   return formatString;
 }
