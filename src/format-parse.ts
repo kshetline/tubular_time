@@ -4,6 +4,7 @@ import { ILocale } from './i-locale';
 import { flatten, isArray, isEqual, isString, last, regexEscape, sortObjectEntries } from '@tubular/util';
 import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
+import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 
 let hasIntlDateTime = false;
 
@@ -29,13 +30,19 @@ function formatEscape(s: string): string {
         result += '[';
       }
     }
-    else if (inAlpha) {
+    else if (inAlpha && c.trim().length > 0 && c.charCodeAt(0) < 128) {
       inAlpha = false;
       result += ']';
+      result = result.replace(/(\s+)]$/, ']$1');
     }
 
     result += c;
   });
+
+  if (inAlpha) {
+    result += ']';
+    result = result.replace(/(\s+)]$/, ']$1');
+  }
 
   return result;
 }
@@ -371,7 +378,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
             let intlFormat = locale.dateTimeFormats[field] as Intl.DateTimeFormat;
 
             if (!intlFormat) {
-              const options: Intl.DateTimeFormatOptions = {};
+              const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
 
               if (dt.timezone.zoneName !== 'OS')
                 options.timeZone = (dt.timezone.zoneName === 'UT' ? 'UTC' : dt.timezone.zoneName);
@@ -438,7 +445,7 @@ function getDatePart(format: Intl.DateTimeFormat, date: number, partName: string
 }
 
 function quickFormat(localeNames: string | string[], timezone: string, opts: any) {
-  const options: Intl.DateTimeFormatOptions = {};
+  const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
 
   localeNames = normalizeLocale(localeNames);
 
@@ -484,7 +491,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 
     for (let day = 3; day <= 9; ++day) {
       const date = Date.UTC(2021, 0, day);
-      let format = new Intl.DateTimeFormat(localeNames, { timeZone: 'UTC', weekday: 'long' });
+      let format = new Intl.DateTimeFormat(localeNames, { timeZone: 'UTC', calendar: 'gregory', weekday: 'long' });
 
       locale.weekdays.push(getDatePart(format, date, 'weekday'));
       format = fmt({ w: 's' });
@@ -512,6 +519,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   locale.weekend = getWeekend(localeNames);
   locale.eras = getEras(localeNames);
   locale.ordinals = getOrdinals(localeNames);
+  locale.parsePatterns = {};
 
   cachedLocales[joinedNames] = locale;
 
@@ -554,11 +562,14 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
 
 function convertDigits(n: string): string {
   return n.replace(/[\u0660-\u0669]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0630)) // Arabic digits
-    .replace(/[\u06F0-\u06F9]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x06C0)); // Urdu/Persian digits
+    .replace(/[\u06F0-\u06F9]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x06C0)) // Urdu/Persian digits
+    .replace(/[\u0966-\u096F]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0936)) // Devanagari digits
+    .replace(/[\u09E6-\u09EF]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x09B6)) // Bengali digits
+    .replace(/[\u1040-\u1049]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x1010)); // Myanmar digits
 }
 
-export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: string): string {
-  const options: any = { timeZone: 'UTC' };
+export function analyzeFormat(locale: string | string[], dateStyle: string, timeStyle?: string): string {
+  const options: DateTimeFormatOptions = { timeZone: 'UTC', calendar: 'gregory' };
 
   if (dateStyle)
     options.dateStyle = dateStyle;
@@ -566,9 +577,9 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
   if (timeStyle)
     options.timeStyle = timeStyle;
 
-  const sampleDate = Date.UTC(2345, 9, 20, 11, 22, 33);
+  const sampleDate = Date.UTC(2345, 9 /* 10 */, 20, 11, 22, 33);
   const format = new Intl.DateTimeFormat(locale, options);
-  const formatted = convertDigits(format.format(sampleDate));
+  let formatted = convertDigits(format.format(sampleDate));
   const fields = {
     year: /((?:23)?45)/.exec(formatted),
     month: /(10)/.exec(formatted),
@@ -578,54 +589,110 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
     minute: /(22)/.exec(formatted),
     second: /(33)/.exec(formatted),
     ampm: null,
-    zone: /(UTC)/.exec(formatted)
+    zone: null
   };
+
+  // Year not found? Give up.
+  if (dateStyle && fields.year == null)
+    return null;
+
+  if ((timeStyle === 'full' || timeStyle === 'long') && fields.zone == null) {
+    const hourText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory',
+      hour: '2-digit', hourCycle: 'h23' }).format(sampleDate);
+    const zoneText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', timeZoneName: 'long',
+      hour: '2-digit', hourCycle: 'h23' }).format(sampleDate).replace(hourText, '').trim();
+    fields.zone = new RegExp('(' + regexEscape(zoneText) + ')', 'i').exec(formatted);
+
+    if (fields.zone == null) {
+      const zoneText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', timeZoneName: 'short',
+        hour: '2-digit', hourCycle: 'h23' }).format(sampleDate).replace(hourText, '').trim();
+      fields.zone = new RegExp('(' + regexEscape(zoneText) + ')', 'i').exec(formatted);
+    }
+
+    // Too much stuff inside long timezone names gets confused with other text, so blot it out.
+    if (fields.zone)
+      formatted = formatted.substr(0, fields.zone.index) + ' '.repeat(fields.zone[1].length) +
+        formatted.substr(fields.zone.index + fields.zone[1].length);
+  }
 
   if (dateStyle) {
     if (dateStyle === 'full')
       dateStyle = 'long';
+    else if (dateStyle === 'medium')
+      dateStyle = 'short';
 
-    const weekdayText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', weekday: dateStyle }).format(sampleDate);
-    fields.weekday = new RegExp('(' + regexEscape(weekdayText) + ')').exec(formatted);
+    const weekdayText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', weekday: dateStyle }).format(sampleDate);
+    fields.weekday = new RegExp('(' + regexEscape(weekdayText) + ')', 'i').exec(formatted);
   }
 
   if (dateStyle && fields.month == null) {
-    const monthText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: dateStyle }).format(sampleDate);
-    fields.month = new RegExp('(' + regexEscape(monthText) + ')').exec(formatted);
+    let monthText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', month: dateStyle }).format(sampleDate)
+      .replace(/\u0F0B$/, ''); // Remove trailing Tibetan tsheg, if present, before comparison
+
+    if (/"gd\b/.test(JSON.stringify(locale)))
+      monthText = monthText.replace(/^A[mn] /, '');
+
+    fields.month = new RegExp('(' + regexEscape(monthText) + ')', 'i').exec(formatted);
+
+    // If month doesn't match exactly, try to peel back characters until it does
+    while (!fields.month && (monthText = monthText.slice(0, -1)) && monthText.length > 2)
+      fields.month = new RegExp('(' + regexEscape(monthText) + '\\S*)', 'i').exec(formatted);
+
+    // Month not found? Give up.
+    if (fields.month == null)
+      return null;
   }
 
   let hourMode: string;
 
   if (timeStyle) {
+    // Hour not found? Give up.
+    if (fields.hour == null)
+      return null;
+
     const ams: string[] = [];
     const pms: string[] = [];
 
     for (const style of ['long', 'short', 'narrow']) {
+      let checkHourRange = true;
+
       for (const hour24 of [0, 11, 12, 23]) {
         const date = Date.UTC(2345, 9, 20, hour24, 22, 33);
         const timeText = convertDigits(new Intl.DateTimeFormat(locale,
-          { timeZone: 'UTC', hour: '2-digit', dayPeriod: style }).format(date));
+          { timeZone: 'UTC', calendar: 'gregory', hour: '2-digit', dayPeriod: style }).format(date));
         const $ = /(\D*)(\d+)(.*)/.exec(timeText);
+
+        if (!$)
+          continue;
+
         const hour = Number($[2]);
         const ampm = ($[1] || $[3]).trim();
 
         if (ampm)
           (hour24 < 12 ? ams : pms).push(ampm);
 
-        if (hour24 === 0 && hour === 24)
-          hourMode = 'h24';
-        else if (hour24 === 0 && hour === 12)
-          hourMode = 'h12';
-        else if (hour24 === 12 && hour === 0)
-          hourMode = 'h11';
-        else if (!hourMode && hour24 === 23 && hour === 23)
-          hourMode = 'h23';
+        if (checkHourRange) {
+          if (hour24 === 0 && hour === 24)
+            hourMode = 'h24';
+          else if (hour24 === 0 && hour === 12)
+            hourMode = 'h12';
+          else if (hour24 === 12 && hour === 0)
+            hourMode = 'h11';
+          else if (!hourMode && hour24 === 23 && hour === 23)
+            hourMode = 'h23';
+        }
       }
+
+      checkHourRange = false;
     }
 
     if (ams.length > 0 || pms.length > 0)
-      fields.ampm = new RegExp('(' + flatten([ams, pms]).map(s => regexEscape(s)).join('|') + ')').exec(formatted);
+      fields.ampm = new RegExp('(' + flatten([ams, pms]).map(s => regexEscape(s)).join('|') + ')', 'i').exec(formatted);
   }
+
+  // If the weekday is found in a position beyond the hour, it's probably a false match.
+  if (fields.hour && fields.weekday && fields.weekday.index > fields.hour.index && fields.hour.index > 0)
+    delete fields.weekday;
 
   Object.keys(fields).forEach(key => fields[key] == null && delete fields[key]);
   sortObjectEntries(fields, (a, b) => a[1].index - b[1].index, true);
@@ -652,7 +719,7 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
           formatString += 'MMM';
         break;
 
-      case 'date':
+      case 'day':
         formatString += 'DD';
         break;
 
@@ -661,7 +728,7 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
         break;
 
       case 'hour':
-        formatString += { h11: 'KK', h12: 'hh', h23: 'HH', h24: 'kk' }[hourMode];
+        formatString += { h11: 'KK', h12: 'hh', h23: 'HH', h24: 'kk' }[hourMode] ?? 'kk';
         break;
 
       case 'minute':
@@ -677,7 +744,7 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
         break;
 
       case 'zone':
-        formatString += 'z';
+        formatString += match[1].length < 4 ? 'z' : 'zzz';
         break;
     }
 
@@ -687,4 +754,32 @@ export function analyzeFormat(locale: string, dateStyle: string, timeStyle?: str
   formatString += formatEscape(formatted.substr(lastIndex));
 
   return formatString;
+}
+
+export function parse(input: string, format: string, locales?: string | string[]): DateTime {
+  locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
+
+  const locale = getLocaleInfo(locales);
+  const $ = /^(\s*)(I[FLMSx][FLMS]?)(\s*)/.exec(format);
+
+  if ($) {
+    const key = $[2];
+    const styles = { F: 'full', L: 'long', M: 'medium', S: 'short' };
+    format = locale.parsePatterns[key];
+
+    if (!format) {
+      format = analyzeFormat(locales, styles[key.charAt(1)], styles[key.charAt(2)]);
+
+      if (!format)
+        return DateTime.INVALID_DATE;
+
+      locale.parsePatterns[key] = format;
+    }
+
+    format = $[1] + format + $[3];
+  }
+
+  console.log(format);
+  // const parts = decomposeFormatString(format)
+  return null;
 }

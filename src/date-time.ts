@@ -74,6 +74,8 @@ export class DateTime extends Calendar {
     DateTime.defaultTimezone = newZone;
   }
 
+  static INVALID_DATE = new DateTime(NaN).lock();
+
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null,

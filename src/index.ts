@@ -5,6 +5,8 @@ import { Timezone } from './timezone';
 import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
+import { parse } from './format-parse';
+import { isString } from '@tubular/util';
 
 let win: any = null;
 
@@ -147,9 +149,13 @@ export function clearZonesUpdateListeners(): void {
   listeners.clear();
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string) {
-  return new DateTime(initialTime).lock();
+function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string): DateTime {
+  if (!format || !isString(initialTime))
+    return new DateTime(initialTime).lock();
+  else {
+    parse(initialTime, format);
+    return null;
+  }
 }
 
 export default ttime;

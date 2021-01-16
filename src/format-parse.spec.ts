@@ -2,8 +2,9 @@ import { expect } from 'chai';
 // import moment from './locale/moment-with-locales.js';
 
 import { DateTime } from './date-time';
-import { analyzeFormat } from './format-parse';
 import { initTimezoneLarge } from './index';
+import { localeList } from './locale-data';
+import { analyzeFormat } from './format-parse';
 
 describe('FormatParse', () => {
   before(() => initTimezoneLarge());
@@ -32,6 +33,27 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
     expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
-    console.log(analyzeFormat('fr', 'long', 'long'));
+  });
+
+  it('should properly decompose format strings', function () {
+    this.slow(30000);
+    this.timeout(45000);
+
+    localeList.forEach(lcl => {
+      const styles = ['full', 'long', 'medium', 'short', undefined];
+
+      for (let i = 0; i < 5; ++i) {
+        for (let j = 0; j < (i < 4 ? 5 : 4); ++j) {
+          const format = analyzeFormat(lcl, styles[i], styles[j]);
+
+          expect(!!format).is.true;
+          expect(i !== 0 || lcl === 'my' || format.includes('dddd')).is.true;
+          expect(i === 4 || format.includes('MM')).is.true;
+          expect(i === 4 || format.includes('DD')).is.true;
+          expect(j === 4 || /hh|kk/i.test(format)).is.true;
+          expect(j === 4 || /mm\b/i.test(format)).is.true;
+        }
+      }
+    });
   });
 });
