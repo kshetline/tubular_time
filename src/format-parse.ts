@@ -97,6 +97,9 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
   const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
   const locale = getLocaleInfo(localeNames);
+  const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
+  const toNumber = (n: number | string, pad = 1) => n.toString().padStart(pad, '0')
+    .replace(/\d/g, ch => String.fromCharCode(ch.charCodeAt(0) + zeroAdj));
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
   const wt = dt.wallTime;
@@ -127,25 +130,25 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
     switch (field) {
       case 'YYYYYY':
       case 'yyyyyy':
-        result.push((year < 0 ? '-' : '+') + abs(year).toString().padStart(6, '0'));
+        result.push((year < 0 ? '-' : '+') + toNumber(abs(year), 6));
         break;
 
       case 'YYYY':
       case 'yyyy':
-        result.push((year < 0 ? '-' : '') + abs(year).toString().padStart(4, '0'));
+        result.push((year < 0 ? '-' : '') + toNumber(abs(year), 4));
         break;
 
       case 'YY':
       case 'yy':
-        result.push((abs(year) % 100).toString().padStart(2, '0'));
+        result.push(toNumber(abs(year) % 100, 2));
         break;
 
       case 'Y':
-        result.push((year < 0 ? '-' : year <= 9999 ? '' : '+') + abs(year).toString().padStart(4, '0'));
+        result.push((year < 0 ? '-' : year <= 9999 ? '' : '+') + toNumber(abs(year), 4));
         break;
 
       case 'y':
-        result.push(eraYear.toString());
+        result.push(toNumber(eraYear));
         break;
 
       case 'Qo':
@@ -153,7 +156,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'Q':
-        result.push(quarter.toString());
+        result.push(toNumber(quarter));
         break;
 
       case 'MMMM':
@@ -165,7 +168,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'MM':
-        result.push(month.toString().padStart(2, '0'));
+        result.push(toNumber(month, 2));
         break;
 
       case 'Mo':
@@ -173,7 +176,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'M':
-        result.push(month.toString());
+        result.push(toNumber(month));
         break;
 
       case 'Wo':
@@ -183,7 +186,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'WW':
       case 'W':
-        result.push(wt.w.toString().padStart(field === 'WW' ? 2 : 1, '0'));
+        result.push(toNumber(wt.w, field === 'WW' ? 2 : 1));
         isoWeek = true;
         break;
 
@@ -194,12 +197,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'ww':
       case 'w':
-        result.push(wt.wl.toString().padStart(field === 'ww' ? 2 : 1, '0'));
+        result.push(toNumber(wt.wl, field === 'ww' ? 2 : 1));
         isoWeek = false;
         break;
 
       case 'DD':
-        result.push(day.toString().padStart(2, '0'));
+        result.push(toNumber(day, 2));
         break;
 
       case 'Do':
@@ -207,7 +210,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'D':
-        result.push(day.toString());
+        result.push(toNumber(day));
         break;
 
       case 'dddd':
@@ -227,55 +230,55 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'd':
-        result.push((isoWeek ? wt.dw : wt.dwl).toString());
+        result.push(toNumber(isoWeek ? wt.dw : wt.dwl));
         break;
 
       case 'HH':
-        result.push(hour.toString().padStart(2, '0'));
+        result.push(toNumber(hour, 2));
         break;
 
       case 'H':
-        result.push(hour.toString());
+        result.push(toNumber(hour));
         break;
 
       case 'hh':
-        result.push(h.toString().padStart(2, '0'));
+        result.push(toNumber(h, 2));
         break;
 
       case 'h':
-        result.push(h.toString());
+        result.push(toNumber(h));
         break;
 
       case 'KK':
-        result.push(K.toString().padStart(2, '0'));
+        result.push(toNumber(K, 2));
         break;
 
       case 'K':
-        result.push(K.toString());
+        result.push(toNumber(K));
         break;
 
       case 'kk':
-        result.push(k.toString().padStart(2, '0'));
+        result.push(toNumber(k, 2));
         break;
 
       case 'k':
-        result.push(k.toString());
+        result.push(toNumber(k));
         break;
 
       case 'mm':
-        result.push(min.toString().padStart(2, '0'));
+        result.push(toNumber(min, 2));
         break;
 
       case 'm':
-        result.push(min.toString());
+        result.push(toNumber(min));
         break;
 
       case 'ss':
-        result.push(sec.toString().padStart(2, '0'));
+        result.push(toNumber(sec, 2));
         break;
 
       case 's':
-        result.push(sec.toString());
+        result.push(toNumber(sec));
         break;
 
       case 'A':
@@ -425,7 +428,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           }
         }
         else if (field.startsWith('S'))
-          result.push(wt.millis.toString().padStart(3, '0').substr(0, field.length).padEnd(field.length, '0'));
+          result.push(toNumber(wt.millis.toString().padStart(3, '0').substr(0, field.length), field.length));
         else
           result.push('??');
     }
@@ -503,6 +506,8 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     // If weekdaysMin are so narrow that there are non-unique names, try either 2 or 3 characters from weekdaysShort.
     for (let len = 2; len < 4 && new Set(locale.weekdaysMin).size < 7; ++len)
       locale.weekdaysMin = locale.weekdaysShort.map(name => name.substr(0, len));
+
+    locale.zeroDigit = fmt({ m: 'd' }).format(0);
   }
   else {
     locale.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -510,6 +515,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     locale.weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     locale.weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     locale.weekdaysMin = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    locale.zeroDigit = '0';
   }
 
   locale.dateTimeFormats = {};
@@ -577,17 +583,17 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
   if (timeStyle)
     options.timeStyle = timeStyle;
 
-  const sampleDate = Date.UTC(2345, 9 /* 10 */, 20, 11, 22, 33);
+  const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
   const format = new Intl.DateTimeFormat(locale, options);
   let formatted = convertDigits(format.format(sampleDate));
   const fields = {
-    year: /((?:23)?45)/.exec(formatted),
-    month: /(10)/.exec(formatted),
-    day: /(20)/.exec(formatted),
+    year: /((?:22)?33)/.exec(formatted),
+    month: /(0?4)/.exec(formatted),
+    day: /(0?5)/.exec(formatted),
     weekday: null,
-    hour: /(11)/.exec(formatted),
-    minute: /(22)/.exec(formatted),
-    second: /(33)/.exec(formatted),
+    hour: /(0?6)/.exec(formatted),
+    minute: /(0?7)/.exec(formatted),
+    second: /(0?8)/.exec(formatted),
     ampm: null,
     zone: null
   };
@@ -623,6 +629,11 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
 
     const weekdayText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', weekday: dateStyle }).format(sampleDate);
     fields.weekday = new RegExp('(' + regexEscape(weekdayText) + ')', 'i').exec(formatted);
+
+    // Weekday name characters might be confused with other text, so blot them out.
+    if (fields.weekday && dateStyle !== 'short')
+      formatted = formatted.substr(0, fields.weekday.index) + ' '.repeat(fields.weekday[1].length) +
+        formatted.substr(fields.weekday.index + fields.weekday[1].length);
   }
 
   if (dateStyle && fields.month == null) {
@@ -630,7 +641,7 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
       .replace(/\u0F0B$/, ''); // Remove trailing Tibetan tsheg, if present, before comparison
 
     if (/"gd\b/.test(JSON.stringify(locale)))
-      monthText = monthText.replace(/^A[mn] /, '');
+      monthText = monthText.replace(/^A[mn] /, '').replace(/^Gible/, 'Ghible');
 
     fields.month = new RegExp('(' + regexEscape(monthText) + ')', 'i').exec(formatted);
 
@@ -643,7 +654,7 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
       return null;
   }
 
-  let hourMode: string;
+  const hourCycle = format.resolvedOptions().hourCycle ?? 'h23';
 
   if (timeStyle) {
     // Hour not found? Give up.
@@ -654,8 +665,6 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
     const pms: string[] = [];
 
     for (const style of ['long', 'short', 'narrow']) {
-      let checkHourRange = true;
-
       for (const hour24 of [0, 11, 12, 23]) {
         const date = Date.UTC(2345, 9, 20, hour24, 22, 33);
         const timeText = convertDigits(new Intl.DateTimeFormat(locale,
@@ -665,25 +674,15 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
         if (!$)
           continue;
 
-        const hour = Number($[2]);
         const ampm = ($[1] || $[3]).trim();
 
-        if (ampm)
-          (hour24 < 12 ? ams : pms).push(ampm);
+        if (ampm) {
+          const set = (hour24 < 12 ? ams : pms);
 
-        if (checkHourRange) {
-          if (hour24 === 0 && hour === 24)
-            hourMode = 'h24';
-          else if (hour24 === 0 && hour === 12)
-            hourMode = 'h12';
-          else if (hour24 === 12 && hour === 0)
-            hourMode = 'h11';
-          else if (!hourMode && hour24 === 23 && hour === 23)
-            hourMode = 'h23';
+          if (!set.includes(ampm))
+            set.push(ampm);
         }
       }
-
-      checkHourRange = false;
     }
 
     if (ams.length > 0 || pms.length > 0)
@@ -702,17 +701,18 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
 
   Object.keys(fields).forEach(key => {
     const match = fields[key];
+    const len = match[1].length;
 
     formatString += formatEscape(formatted.substring(lastIndex, match.index));
 
     switch (key) {
       case 'year':
-        formatString += match[1].length < 3 ? 'YY' : 'YYYY';
+        formatString += len < 3 ? 'YY' : 'YYYY';
         break;
 
       case 'month':
         if (/^\d+$/.test(match[1]))
-          formatString += 'MM';
+          formatString += 'MM'.substr(0, len);
         else if (dateStyle === 'full')
           formatString += 'MMMM';
         else
@@ -720,7 +720,7 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
         break;
 
       case 'day':
-        formatString += 'DD';
+        formatString += 'DD'.substr(0, len);
         break;
 
       case 'weekday':
@@ -728,15 +728,15 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
         break;
 
       case 'hour':
-        formatString += { h11: 'KK', h12: 'hh', h23: 'HH', h24: 'kk' }[hourMode] ?? 'kk';
+        formatString += ({ h11: 'KK', h12: 'hh', h23: 'HH', h24: 'kk' }[hourCycle] ?? 'kk').substr(0, len);
         break;
 
       case 'minute':
-        formatString += 'mm';
+        formatString += 'mm'.substr(0, len);
         break;
 
       case 'second':
-        formatString += 'ss';
+        formatString += 'ss'.substr(0, len);
         break;
 
       case 'ampm':
@@ -744,11 +744,11 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
         break;
 
       case 'zone':
-        formatString += match[1].length < 4 ? 'z' : 'zzz';
+        formatString += len < 4 ? 'z' : 'zzz';
         break;
     }
 
-    lastIndex = match.index + match[1].length;
+    lastIndex = match.index + len;
   });
 
   formatString += formatEscape(formatted.substr(lastIndex));

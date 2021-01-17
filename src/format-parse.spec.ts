@@ -9,7 +9,7 @@ import { analyzeFormat } from './format-parse';
 describe('FormatParse', () => {
   before(() => initTimezoneLarge());
 
-  it('should properly decompose format strings', () => {
+  it('should properly decompose format strings.', () => {
     expect(new DateTime('2022-07-07 8:08 ACST').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Australian Central Standard Time Australia/Adelaide GMT+9:30');
     expect(new DateTime('2022-07-07 8:08 PST').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 9:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('2022-07-07 8:08 PDT').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
@@ -33,6 +33,9 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
     expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
+    expect(new DateTime('1986-09-04').format('D\u200F/M\u200F/YYYY h:mm A', 'ar')).to.equal('٤\u200F/٩\u200F/١٩٨٦ ١٢:٠٠ ص');
+    expect(new DateTime('1986-09-04').format('D/M/YY h:mm A', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ রাত');
+    expect(new DateTime('1986-09-04').format('DD-MM-YY နံနက် H:mm', 'my')).to.equal('၀၄-၀၉-၈၆ နံနက် ၀:၀၀');
   });
 
   it('should properly decompose format strings', function () {
@@ -40,18 +43,20 @@ describe('FormatParse', () => {
     this.timeout(45000);
 
     localeList.forEach(lcl => {
+ //     console.log('\n\nLocale: %s', lcl);
       const styles = ['full', 'long', 'medium', 'short', undefined];
 
       for (let i = 0; i < 5; ++i) {
         for (let j = 0; j < (i < 4 ? 5 : 4); ++j) {
           const format = analyzeFormat(lcl, styles[i], styles[j]);
+//          console.log('%s%s: %s', i, j, format);
 
           expect(!!format).is.true;
           expect(i !== 0 || lcl === 'my' || format.includes('dddd')).is.true;
-          expect(i === 4 || format.includes('MM')).is.true;
-          expect(i === 4 || format.includes('DD')).is.true;
-          expect(j === 4 || /hh|kk/i.test(format)).is.true;
-          expect(j === 4 || /mm\b/i.test(format)).is.true;
+          expect(i === 4 || format.includes('M')).is.true;
+          expect(i === 4 || format.includes('D')).is.true;
+          expect(j === 4 || /[hk]/i.test(format)).is.true;
+          expect(j === 4 || /m\b/i.test(format)).is.true;
         }
       }
     });

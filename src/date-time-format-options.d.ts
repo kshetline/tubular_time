@@ -7,4 +7,8 @@ declare namespace Intl {
     hourCycle?: string;
     timeStyle?: string;
   }
+
+  interface ResolvedDateTimeFormatOptions {
+    hourCycle?: string;
+  }
 }

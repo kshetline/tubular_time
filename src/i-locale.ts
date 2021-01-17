@@ -14,4 +14,5 @@ export interface ILocale {
   eras: string[];
   ordinals: string[];
   parsePatterns: Record<string, string>;
+  zeroDigit: string;
 }

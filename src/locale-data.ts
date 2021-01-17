@@ -38,7 +38,7 @@ function getLocaleResource<T>(locale: string | string[], localeData: Record<stri
   if (!isArray(locale))
     locale = [locale];
 
-  for (let lcl in locale) {
+  for (let lcl of locale) {
     let next: string;
 
     do {
