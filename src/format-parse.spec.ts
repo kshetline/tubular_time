@@ -63,8 +63,14 @@ describe('FormatParse', () => {
   });
 
   it('should be able to parse dates', () => {
-    console.log(parse('1/17/2022 1:22:33', 'MM/DD/YYYY H:m:s').toIsoString());
-    console.log(parse('1/17/2022 1:22:33 am', 'MM/DD/YYYY H:m:s A').toIsoString());
-    console.log(parse('1/17/2022 1:22:33 pm', 'MM/DD/YYYY H:m:s a').toIsoString());
+    expect(parse('1/17/2022 1:22:33', 'MM/DD/YYYY H:m:s', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:33');
+    expect(parse('1/17/2022 1:22:33.44 am', 'MM/DD/YYYY H:m:s.S A', 'UTC').toIsoString(23)).to.equal('2022-01-17T01:22:33.440');
+    expect(parse('1/17/2022 1:22 am', 'MM/DD/YYYY H:m:s.S A', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:00');
+    expect(parse('1/17/2022 1:22:33 pm', 'MM/DD/YYYY H:m:s a', 'UTC').toIsoString(19)).to.equal('2022-01-17T13:22:33');
+    expect(parse('1-17.2022 1 22 33 pm', 'MM/DD/YYYY H:m:s a', 'UTC').toIsoString(19)).to.equal('2022-01-17T13:22:33');
+    expect(parse('Jan 17, 2022 at 1:22:33 pm', 'MMM DD, YYYY [at] H:m:s a', 'UTC').toIsoString(19)).to.equal('2022-01-17T13:22:33');
+    expect(parse('Sun Jan 17, 2022 at 1:22:33 pm', 'ddd MMM DD, YYYY [at] H:m:s a', 'UTC').toIsoString(19)).to.equal('2022-01-17T13:22:33');
+    expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ PM', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T13:22:33');
+    expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ রাত', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T01:22:33');
   });
 });

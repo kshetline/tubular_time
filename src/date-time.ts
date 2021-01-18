@@ -728,11 +728,11 @@ export class DateTime extends Calendar {
   }
 
   toYMDhmString(): string {
-    return formatter(this, 'YYYY-MM-DD HH:mm:ssv');
+    return formatter(this, 'YYYY-MM-DD HH:mm:ssv', 'en-US');
   }
 
   toIsoString(maxLength?: number): string {
-    let s = this.format();
+    let s = this.format(undefined, 'en-US');
 
     if (maxLength != null)
       s = s.substr(0, maxLength);
@@ -741,7 +741,7 @@ export class DateTime extends Calendar {
   }
 
   toHoursAndMinutesString(includeDst = false): string {
-    return this.format('HH:mm' + (includeDst ? 'v' : ''));
+    return this.format('HH:mm' + (includeDst ? 'v' : ''), 'en-US');
   }
 
   private updateUtcMillisFromWallTime(): void {

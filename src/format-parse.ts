@@ -99,7 +99,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
   const locale = getLocaleInfo(localeNames);
   const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
-  const toNumber = (n: number | string, pad = 1) => n.toString().padStart(pad, '0')
+  const toNum = (n: number | string, pad = 1) => n.toString().padStart(pad, '0')
     .replace(/\d/g, ch => String.fromCharCode(ch.charCodeAt(0) + zeroAdj));
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
@@ -131,22 +131,22 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
     switch (field) {
       case 'YYYYYY': // long year, always signed
       case 'yyyyyy':
-        result.push((year < 0 ? '-' : '+') + toNumber(abs(year), 6));
+        result.push((year < 0 ? '-' : '+') + toNum(abs(year), 6));
         break;
 
       case 'YYYY': // year, padded to at least 4 digits, signed if negative or > 9999
       case 'yyyy':
       case 'Y':
-        result.push((year < 0 ? '-' : year <= 9999 ? '' : '+') + toNumber(abs(year), 4));
+        result.push((year < 0 ? '-' : year <= 9999 ? '' : '+') + toNum(abs(year), 4));
         break;
 
       case 'YY': // 2-digit year
       case 'yy':
-        result.push(toNumber(abs(year) % 100, 2));
+        result.push(toNum(abs(year) % 100, 2));
         break;
 
       case 'y': // Era year, never signed, min value 1.
-        result.push(toNumber(eraYear));
+        result.push(toNum(eraYear));
         break;
 
       case 'Qo': // Quarter ordinal
@@ -154,7 +154,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'Q': // Quarter
-        result.push(toNumber(quarter));
+        result.push(toNum(quarter));
         break;
 
       case 'MMMM': // Long textual month
@@ -166,7 +166,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'MM': // 2-digit month
-        result.push(toNumber(month, 2));
+        result.push(toNum(month, 2));
         break;
 
       case 'Mo': // Month ordinal
@@ -174,7 +174,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'M': // Numerica month
-        result.push(toNumber(month));
+        result.push(toNum(month));
         break;
 
       case 'Wo': // ISO week ordinal
@@ -184,7 +184,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'WW': // ISO week number
       case 'W':
-        result.push(toNumber(wt.w, field === 'WW' ? 2 : 1));
+        result.push(toNum(wt.w, field === 'WW' ? 2 : 1));
         isoWeek = true;
         break;
 
@@ -195,12 +195,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'ww': // Locale week number
       case 'w':
-        result.push(toNumber(wt.wl, field === 'ww' ? 2 : 1));
+        result.push(toNum(wt.wl, field === 'ww' ? 2 : 1));
         isoWeek = false;
         break;
 
       case 'DD': // 2-digit day of month
-        result.push(toNumber(day, 2));
+        result.push(toNum(day, 2));
         break;
 
       case 'Do': // Day-of-month ordinal
@@ -208,7 +208,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'D': // Day-of-month number
-        result.push(toNumber(day));
+        result.push(toNum(day));
         break;
 
       case 'dddd': // Long textual day of week
@@ -228,55 +228,55 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'd': // Day-of-week number
-        result.push(toNumber(isoWeek ? wt.dw : wt.dwl));
+        result.push(toNum(isoWeek ? wt.dw : wt.dwl));
         break;
 
       case 'HH': // Two-digit 0-23 hour
-        result.push(toNumber(hour, 2));
+        result.push(toNum(hour, 2));
         break;
 
       case 'H': // Numeric 0-23 hour
-        result.push(toNumber(hour));
+        result.push(toNum(hour));
         break;
 
       case 'hh': // Two-digit 1-12 hour
-        result.push(toNumber(h, 2));
+        result.push(toNum(h, 2));
         break;
 
       case 'h':// Numeric 1-12 hour
-        result.push(toNumber(h));
+        result.push(toNum(h));
         break;
 
       case 'KK': // Two-digit 0-11 hour (needs AM/PM qualification)
-        result.push(toNumber(K, 2));
+        result.push(toNum(K, 2));
         break;
 
       case 'K': // Numeric 0-11 hour (needs AM/PM qualification)
-        result.push(toNumber(K));
+        result.push(toNum(K));
         break;
 
       case 'kk': // Two-digit 1-24 hour
-        result.push(toNumber(k, 2));
+        result.push(toNum(k, 2));
         break;
 
       case 'k': // Numeric 1-24 hour
-        result.push(toNumber(k));
+        result.push(toNum(k));
         break;
 
       case 'mm': // Two-digit minute
-        result.push(toNumber(min, 2));
+        result.push(toNum(min, 2));
         break;
 
       case 'm': // Numeric minute
-        result.push(toNumber(min));
+        result.push(toNum(min));
         break;
 
       case 'ss': // Two-digit second
-        result.push(toNumber(sec, 2));
+        result.push(toNum(sec, 2));
         break;
 
       case 's': // Numeric second
-        result.push(toNumber(sec));
+        result.push(toNum(sec));
         break;
 
       case 'A': // AM/PM indicator (may have more than just two forms)
@@ -380,9 +380,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
             if (!intlFormat) {
               const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
+              const zone = convertDigits(dt.timezone.zoneName);
 
-              if (dt.timezone.zoneName !== 'OS')
-                options.timeZone = (dt.timezone.zoneName === 'UT' ? 'UTC' : dt.timezone.zoneName);
+              if (/^UT[-+]\d\d(?::?00)/.test(zone))
+                options.timeZone = 'Etc/GMT' + (zone.charAt(2) === '-' ? '+' : '-') + toNumber(zone.substr(3));
+              else if (zone !== 'OS')
+                options.timeZone = (zone === 'UT' ? 'UTC' : zone);
 
               if (field.charAt(1) !== 'x')
                 options.dateStyle = styleOptValues[field.charAt(1)];
@@ -426,7 +429,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           }
         }
         else if (field.startsWith('S'))
-          result.push(toNumber(wt.millis.toString().padStart(3, '0').substr(0, field.length), field.length));
+          result.push(toNum(wt.millis.toString().padStart(3, '0').substr(0, field.length), field.length));
         else
           result.push('??');
     }
@@ -450,7 +453,9 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
 
   localeNames = normalizeLocale(localeNames);
 
-  if (timezone !== 'OS')
+  if (/^UT[-+]\d\d(?::?00)/.test(timezone))
+    options.timeZone = 'Etc/GMT' + (timezone.charAt(2) === '-' ? '+' : '-') + toNumber(timezone.substr(3));
+  else if (timezone !== 'OS')
     options.timeZone = (timezone === 'UT' ? 'UTC' : timezone);
 
   Object.keys(opts).forEach(key => {
@@ -476,6 +481,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   if (hasIntlDateTime) {
     locale.months = [];
     locale.monthsShort = [];
+    const narrow: string[] = [];
 
     for (let month = 1; month <= 12; ++month) {
       const date = Date.UTC(2021, month - 1, 1);
@@ -484,7 +490,12 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
       locale.months.push(getDatePart(format, date, 'month'));
       format = fmt({ M: 's' });
       locale.monthsShort.push(getDatePart(format, date, 'month'));
+      format = fmt({ M: 'n' });
+      narrow.push(getDatePart(format, date, 'month'));
     }
+
+    if (isEqual(locale.months, locale.monthsShort))
+      locale.monthsShort = narrow;
 
     locale.weekdays = [];
     locale.weekdaysShort = [];
@@ -765,23 +776,69 @@ function matchAmPm(locale: ILocale, input: string): [boolean, number] {
 
   input = input.toLowerCase();
 
-  for (let i = 0; i < locale.meridiem.length; ++i) {
-    const forms = locale.meridiem[i];
-    const isPM = (i > 11 || (locale.meridiem.length === 2 && i > 0));
+  for (const meridiem of [locale.meridiem, [['am'], ['pm']]]) {
+    for (let i = 0; i < meridiem.length; ++i) {
+      const forms = meridiem[i];
+      const isPM = (i > 11 || (meridiem.length === 2 && i > 0));
 
-    for (const form of forms) {
-      if (input.startsWith(form.toLowerCase()))
-        return [isPM, form.length];
+      for (const form of forms) {
+        if (input.startsWith(form.toLowerCase()))
+          return [isPM, form.length];
+      }
     }
   }
 
   return [false, 0];
 }
 
-export function parse(input: string, format: string, locales?: string | string[]): DateTime {
-  input = convertDigits(input.trim());
-  format = format.trim();
+function matchMonth(locale: ILocale, input: string): [number, number] {
+  if (!locale.months && !locale.monthsShort)
+    return [0, 0];
+
+  input = input.toLowerCase();
+
+  for (let i = 0; i < 12; ++i) {
+    const MMMM = locale.months[i].toLowerCase();
+    const MMM = locale.monthsShort[i].toLowerCase();
+
+    if (MMMM && input.startsWith(MMMM))
+      return [i + 1, MMMM.length];
+    else if (MMM && input.startsWith(MMM))
+      return [i + 1, MMM.length];
+  }
+
+  return [0, 0];
+}
+
+function skipDayOfWeek(locale: ILocale, input: string): number {
+  if (!locale.weekdays && !locale.weekdaysShort && !locale.weekdaysMin)
+    return 0;
+
+  input = input.toLowerCase();
+
+  for (let i = 0; i < 7; ++i) {
+    const dddd = locale.weekdays[i].toLowerCase();
+    const ddd = locale.weekdaysShort[i].toLowerCase();
+    const dd = locale.weekdaysMin[i].toLowerCase();
+
+    if (dddd && input.startsWith(dddd))
+      return dddd.length;
+    else if (ddd && input.startsWith(ddd))
+      return ddd.length;
+    else if (dd && input.startsWith(dd))
+      return dd.length;
+  }
+
+  return 0;
+}
+
+export function parse(input: string, format: string, zone?: Timezone | string, locales?: string | string[]): DateTime {
+  input = convertDigits(input.trim()).replace(/\u200F/g, '');
+  format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
+
+  if (isString(zone))
+    zone = Timezone.from(zone);
 
   const locale = getLocaleInfo(locales);
   const $ = /^(I[FLMSx][FLMS]?)/.exec(format);
@@ -813,6 +870,20 @@ export function parse(input: string, format: string, locales?: string | string[]
 
       if (input.startsWith(part))
         input = input.substr(part.length).trimLeft();
+      else if (i < parts.length - 1) {
+        // Exact in-between text wasn't matched, but if the next thing coming up is a numeric field,
+        // just skip over the text being parsed until the next digit is found.
+        const nextPart = parts[i + 1];
+
+        if (nextPart.toLowerCase().startsWith('y') || (nextPart.length < 3 && /^[MDHhKkmsS]/.test(nextPart))) {
+          const $ = /^\D*(?=\d)/.exec(input);
+
+          if ($)
+            input = input.substr($[0].length);
+          else if (!/^s/i.test(nextPart))
+            throw new Error(`Match for "${nextPart}" field not found`);
+        }
+      }
 
       continue;
     }
@@ -821,11 +892,11 @@ export function parse(input: string, format: string, locales?: string | string[]
       throw new Error('Parsing of ordinal forms is not supported');
 
     if (part === 'd' || part.toLowerCase() === 'w')
-      throw new Error('Parsing of week-of-year/day-of-week only supported for ISO 8601 dates');
+      throw new Error('Parsing of week-of-year/day-of-week only supported for ISO-8601 dates');
 
     const firstChar = part.substr(0, 1);
-    const newValueText = (/^([-+]?\d+)/.exec(input) ?? [])[1];
-    const newValue = toNumber(newValueText);
+    let newValueText = (/^([-+]?\d+)/.exec(input) ?? [])[1];
+    let newValue = toNumber(newValueText);
     let handled = false;
 
     if (newValueText != null && part.length < 3 || firstChar.toLowerCase() === 'y') {
@@ -873,6 +944,13 @@ export function parse(input: string, format: string, locales?: string | string[]
           w.sec = newValue;
           break;
 
+        case 'S':
+          newValueText = newValueText.padEnd(3, '0').substr(0, 3);
+          newValue = toNumber(newValueText);
+          validateField('millisecond', newValue, 0, 999);
+          w.millis = newValue;
+          break;
+
         default:
           handled = false;
       }
@@ -883,23 +961,56 @@ export function parse(input: string, format: string, locales?: string | string[]
       continue;
     }
 
-    switch (part) {
+    switch (firstChar) {
       case 'A':
       case 'a':
         {
           const [isPM, length] = matchAmPm(locale, input);
 
           if (length > 0) {
+            handled = true;
             pm = isPM;
-            input = input.substr(0, length).trimLeft();
+            input = input.substr(length).trimLeft();
 
             if (w.hrs != null && pm && w.hrs !== 12)
               w.hrs += 12;
           }
         }
         break;
+
+      case 'M':
+        {
+          const [month, length] = matchMonth(locale, input);
+
+          if (month > 0) {
+            handled = true;
+            input = input.substr(length).trimLeft();
+            w.m = month;
+          }
+        }
+        break;
+
+      case 'd':
+        {
+          const length = skipDayOfWeek(locale, input);
+
+          if (length > 0) {
+            handled = true;
+            input = input.substr(length).trimLeft();
+          }
+        }
+        break;
+    }
+
+    if (!handled) {
+      if (firstChar === 's')
+        w.sec = 0;
+      else if (firstChar === 'S')
+        w.millis = 0;
+      else
+        throw new Error(`Match for "${part}" field not found`);
     }
   }
 
-  return new DateTime(w, null, locales);
+  return new DateTime(w, zone, locales);
 }
