@@ -60,6 +60,7 @@
         "SwitchCase": 1
       }
     ],
+    "guard-for-in": "error",
     "key-spacing": "off",
     "multiline-ternary": "off",
     "no-control-regex": "off",

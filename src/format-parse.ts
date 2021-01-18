@@ -1,7 +1,8 @@
+import { DateAndTime } from './common';
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { ILocale } from './i-locale';
-import { flatten, isArray, isEqual, isString, last, regexEscape, sortObjectEntries } from '@tubular/util';
+import { flatten, isArray, isEqual, isString, last, regexEscape, sortObjectEntries, toNumber } from '@tubular/util';
 import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
@@ -128,160 +129,157 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       generatePredefinedFormats(locale, dt.timezone.zoneName);
 
     switch (field) {
-      case 'YYYYYY':
+      case 'YYYYYY': // long year, always signed
       case 'yyyyyy':
         result.push((year < 0 ? '-' : '+') + toNumber(abs(year), 6));
         break;
 
-      case 'YYYY':
+      case 'YYYY': // year, padded to at least 4 digits, signed if negative or > 9999
       case 'yyyy':
-        result.push((year < 0 ? '-' : '') + toNumber(abs(year), 4));
-        break;
-
-      case 'YY':
-      case 'yy':
-        result.push(toNumber(abs(year) % 100, 2));
-        break;
-
       case 'Y':
         result.push((year < 0 ? '-' : year <= 9999 ? '' : '+') + toNumber(abs(year), 4));
         break;
 
-      case 'y':
+      case 'YY': // 2-digit year
+      case 'yy':
+        result.push(toNumber(abs(year) % 100, 2));
+        break;
+
+      case 'y': // Era year, never signed, min value 1.
         result.push(toNumber(eraYear));
         break;
 
-      case 'Qo':
+      case 'Qo': // Quarter ordinal
         result.push(locale.ordinals[quarter]);
         break;
 
-      case 'Q':
+      case 'Q': // Quarter
         result.push(toNumber(quarter));
         break;
 
-      case 'MMMM':
+      case 'MMMM': // Long textual month
         result.push(locale.months[month - 1]);
         break;
 
-      case 'MMM':
+      case 'MMM': // Short textual month
         result.push(locale.monthsShort[month - 1]);
         break;
 
-      case 'MM':
+      case 'MM': // 2-digit month
         result.push(toNumber(month, 2));
         break;
 
-      case 'Mo':
+      case 'Mo': // Month ordinal
         result.push(locale.ordinals[month]);
         break;
 
-      case 'M':
+      case 'M': // Numerica month
         result.push(toNumber(month));
         break;
 
-      case 'Wo':
+      case 'Wo': // ISO week ordinal
         result.push(locale.ordinals[wt.w]);
         isoWeek = true;
         break;
 
-      case 'WW':
+      case 'WW': // ISO week number
       case 'W':
         result.push(toNumber(wt.w, field === 'WW' ? 2 : 1));
         isoWeek = true;
         break;
 
-      case 'wo':
+      case 'wo': // Locale week ordinal
         result.push(locale.ordinals[wt.wl]);
         isoWeek = false;
         break;
 
-      case 'ww':
+      case 'ww': // Locale week number
       case 'w':
         result.push(toNumber(wt.wl, field === 'ww' ? 2 : 1));
         isoWeek = false;
         break;
 
-      case 'DD':
+      case 'DD': // 2-digit day of month
         result.push(toNumber(day, 2));
         break;
 
-      case 'Do':
+      case 'Do': // Day-of-month ordinal
         result.push(locale.ordinals[day]);
         break;
 
-      case 'D':
+      case 'D': // Day-of-month number
         result.push(toNumber(day));
         break;
 
-      case 'dddd':
+      case 'dddd': // Long textual day of week
         result.push(locale.weekdays[dayOfWeek]);
         break;
 
-      case 'ddd':
+      case 'ddd': // Short textual day of week
         result.push(locale.weekdaysShort[dayOfWeek]);
         break;
 
-      case 'dd':
+      case 'dd': // Minimal textual day of week
         result.push(locale.weekdaysMin[dayOfWeek]);
         break;
 
-      case 'do':
+      case 'do': // Day-of-week ordinal
         result.push(locale.ordinals[isoWeek ? wt.dw : wt.dwl]);
         break;
 
-      case 'd':
+      case 'd': // Day-of-week number
         result.push(toNumber(isoWeek ? wt.dw : wt.dwl));
         break;
 
-      case 'HH':
+      case 'HH': // Two-digit 0-23 hour
         result.push(toNumber(hour, 2));
         break;
 
-      case 'H':
+      case 'H': // Numeric 0-23 hour
         result.push(toNumber(hour));
         break;
 
-      case 'hh':
+      case 'hh': // Two-digit 1-12 hour
         result.push(toNumber(h, 2));
         break;
 
-      case 'h':
+      case 'h':// Numeric 1-12 hour
         result.push(toNumber(h));
         break;
 
-      case 'KK':
+      case 'KK': // Two-digit 0-11 hour (needs AM/PM qualification)
         result.push(toNumber(K, 2));
         break;
 
-      case 'K':
+      case 'K': // Numeric 0-11 hour (needs AM/PM qualification)
         result.push(toNumber(K));
         break;
 
-      case 'kk':
+      case 'kk': // Two-digit 1-24 hour
         result.push(toNumber(k, 2));
         break;
 
-      case 'k':
+      case 'k': // Numeric 1-24 hour
         result.push(toNumber(k));
         break;
 
-      case 'mm':
+      case 'mm': // Two-digit minute
         result.push(toNumber(min, 2));
         break;
 
-      case 'm':
+      case 'm': // Numeric minute
         result.push(toNumber(min));
         break;
 
-      case 'ss':
+      case 'ss': // Two-digit second
         result.push(toNumber(sec, 2));
         break;
 
-      case 's':
+      case 's': // Numeric second
         result.push(toNumber(sec));
         break;
 
-      case 'A':
+      case 'A': // AM/PM indicator (may have more than just two forms)
       case 'a':
         {
           const values = locale.meridiem;
@@ -291,15 +289,15 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         }
         break;
 
-      case 'X':
+      case 'X': // Epoch 1970-01-01 00:00 UTC seconds
         result.push(floor(dt.utcTimeMillis / 1000).toString());
         break;
 
-      case 'x':
+      case 'x': // Epoch 1970-01-01 00:00 UTC milliseconds
         result.push(dt.utcTimeMillis.toString());
         break;
 
-      case 'LLLL':
+      case 'LLLL': // Various Moment.js-style shorthand date/time formats
       case 'llll':
       case 'LLL':
       case 'lll':
@@ -756,14 +754,40 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
   return formatString;
 }
 
+function validateField(name: string, value: number, min: number, max: number): void {
+  if (value < min || value > max)
+    throw new Error(`${name} value out of range [${min}, ${max}]`);
+}
+
+function matchAmPm(locale: ILocale, input: string): [boolean, number] {
+  if (!locale.meridiem)
+    return [false, 0];
+
+  input = input.toLowerCase();
+
+  for (let i = 0; i < locale.meridiem.length; ++i) {
+    const forms = locale.meridiem[i];
+    const isPM = (i > 11 || (locale.meridiem.length === 2 && i > 0));
+
+    for (const form of forms) {
+      if (input.startsWith(form.toLowerCase()))
+        return [isPM, form.length];
+    }
+  }
+
+  return [false, 0];
+}
+
 export function parse(input: string, format: string, locales?: string | string[]): DateTime {
+  input = convertDigits(input.trim());
+  format = format.trim();
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
 
   const locale = getLocaleInfo(locales);
-  const $ = /^(\s*)(I[FLMSx][FLMS]?)(\s*)/.exec(format);
+  const $ = /^(I[FLMSx][FLMS]?)/.exec(format);
 
-  if ($) {
-    const key = $[2];
+  if ($ && $[1] !== 'Ix') {
+    const key = $[1];
     const styles = { F: 'full', L: 'long', M: 'medium', S: 'short' };
     format = locale.parsePatterns[key];
 
@@ -775,11 +799,107 @@ export function parse(input: string, format: string, locales?: string | string[]
 
       locale.parsePatterns[key] = format;
     }
-
-    format = $[1] + format + $[3];
   }
 
-  console.log(format);
-  // const parts = decomposeFormatString(format)
-  return null;
+  const w = {} as DateAndTime;
+  const parts = decomposeFormatString(format);
+  let pm: boolean = null;
+
+  for (let i = 0; i < parts.length; ++i) {
+    let part = parts[i];
+
+    if (i % 2 === 0) {
+      part = part.trim();
+
+      if (input.startsWith(part))
+        input = input.substr(part.length).trimLeft();
+
+      continue;
+    }
+
+    if (part.endsWith('o'))
+      throw new Error('Parsing of ordinal forms is not supported');
+
+    if (part === 'd' || part.toLowerCase() === 'w')
+      throw new Error('Parsing of week-of-year/day-of-week only supported for ISO 8601 dates');
+
+    const firstChar = part.substr(0, 1);
+    const newValueText = (/^([-+]?\d+)/.exec(input) ?? [])[1];
+    const newValue = toNumber(newValueText);
+    let handled = false;
+
+    if (newValueText != null && part.length < 3 || firstChar.toLowerCase() === 'y') {
+      handled = true;
+
+      switch (firstChar) {
+        case 'Y':
+        case 'y':
+          w.y = newValue;
+          break;
+
+        case 'M':
+          validateField('month', newValue, 1, 12);
+          w.m = newValue;
+          break;
+
+        case 'D':
+          validateField('date', newValue, 1, 31);
+          w.d = newValue;
+          break;
+
+        case 'H':
+          validateField('hour-24', newValue, 0, 23);
+          w.hrs = newValue;
+          break;
+
+        case 'h':
+          validateField('hour-12', newValue, 1, 12);
+
+          if (pm == null)
+            w.hrs = newValue;
+          else if (pm)
+            w.hrs = newValue === 12 ? 12 : newValue - 12;
+          else
+            w.hrs = newValue === 12 ? 0 : newValue;
+          break;
+
+        case 'm':
+          validateField('minute', newValue, 0, 59);
+          w.min = newValue;
+          break;
+
+        case 's':
+          validateField('second', newValue, 0, 59);
+          w.sec = newValue;
+          break;
+
+        default:
+          handled = false;
+      }
+    }
+
+    if (handled) {
+      input = input.substr(newValueText.length).trimLeft();
+      continue;
+    }
+
+    switch (part) {
+      case 'A':
+      case 'a':
+        {
+          const [isPM, length] = matchAmPm(locale, input);
+
+          if (length > 0) {
+            pm = isPM;
+            input = input.substr(0, length).trimLeft();
+
+            if (w.hrs != null && pm && w.hrs !== 12)
+              w.hrs += 12;
+          }
+        }
+        break;
+    }
+  }
+
+  return new DateTime(w, null, locales);
 }

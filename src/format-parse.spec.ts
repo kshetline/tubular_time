@@ -4,12 +4,12 @@ import { expect } from 'chai';
 import { DateTime } from './date-time';
 import { initTimezoneLarge } from './index';
 import { localeList } from './locale-data';
-import { analyzeFormat } from './format-parse';
+import { analyzeFormat, parse } from './format-parse';
 
 describe('FormatParse', () => {
   before(() => initTimezoneLarge());
 
-  it('should properly decompose format strings.', () => {
+  it('should properly decompose format strings', () => {
     expect(new DateTime('2022-07-07 8:08 ACST').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Australian Central Standard Time Australia/Adelaide GMT+9:30');
     expect(new DateTime('2022-07-07 8:08 PST').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 9:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('2022-07-07 8:08 PDT').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
@@ -38,7 +38,7 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').format('DD-MM-YY နံနက် H:mm', 'my')).to.equal('၀၄-၀၉-၈၆ နံနက် ၀:၀၀');
   });
 
-  it('should properly decompose format strings', function () {
+  it('should properly analyze Intl.DateTimeFormat-generated formats', function () {
     this.slow(30000);
     this.timeout(45000);
 
@@ -60,5 +60,11 @@ describe('FormatParse', () => {
         }
       }
     });
+  });
+
+  it('should be able to parse dates', () => {
+    console.log(parse('1/17/2022 1:22:33', 'MM/DD/YYYY H:m:s').toIsoString());
+    console.log(parse('1/17/2022 1:22:33 am', 'MM/DD/YYYY H:m:s A').toIsoString());
+    console.log(parse('1/17/2022 1:22:33 pm', 'MM/DD/YYYY H:m:s a').toIsoString());
   });
 });
