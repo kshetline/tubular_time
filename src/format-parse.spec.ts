@@ -73,4 +73,43 @@ describe('FormatParse', () => {
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ PM', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T13:22:33');
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ রাত', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T01:22:33');
   });
+
+  it('should be able to parse back formatted output', function () {
+    this.slow(300000);
+    this.timeout(450000);
+
+    localeList.forEach(lcl => {
+      // if (lcl < 'et') return;
+      console.log('Locale: %s', lcl);
+      const styles = ['F', 'L', 'M', 'S'];
+
+      loop:
+      for (let i = 0; i < 4; ++i) {
+        for (let j = 0; j < 4; ++j) {
+          for (let t = 0; t < 31_622_400_000; t += 43_860_000) { // 12h:11m
+            const fmt = 'I' + styles[i] + styles[j];
+            const time = new DateTime(t, 'UTC', lcl);
+
+            if (time.getMinutesInDay() !== 1440)
+              continue;
+
+            const timeString = time.format(fmt, lcl);
+            let parsed: DateTime;
+
+            try {
+              parsed = parse(timeString, fmt, 'UTC', lcl);
+            }
+            catch (e) {
+              const t2 = time.format(fmt, 'en-us');
+              console.error(`${lcl}, ${fmt}: ${timeString}, ${t2}, parse failed: ${e.message}`);
+              parsed = parse(timeString, fmt, 'UTC', lcl);
+              break loop;
+            }
+
+            expect(parsed?.utcTimeMillis).to.equal(t, `${lcl}, ${fmt}: ${timeString} ==> ${parsed.toIsoString()}`);
+          }
+        }
+      }
+    });
+  });
 });

@@ -152,10 +152,8 @@ export function clearZonesUpdateListeners(): void {
 function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string): DateTime {
   if (!format || !isString(initialTime))
     return new DateTime(initialTime).lock();
-  else {
-    parse(initialTime, format);
-    return null;
-  }
+  else
+    return parse(initialTime, format)?.lock();
 }
 
 export default ttime;

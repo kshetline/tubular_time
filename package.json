@@ -5,11 +5,12 @@
   "browser:es5": "dist/web/index.js",
   "main": "dist/es5/index.js",
   "module": "dist/index.js",
+  "es2015": "dist/es6/index.js",
   "esm2015": "dist/index.js",
   "typings": "dist/index",
   "sideEffects": false,
   "scripts": {
-    "build": "rimraf dist/ && tsc && tsc --build tsconfig.es5.json && webpack && ts-node make-remote-zone-data.ts",
+    "build": "rimraf dist/ && tsc && tsc --build tsconfig.es6.json && tsc --build tsconfig.es5.json && webpack && ts-node make-remote-zone-data.ts",
     "prepublishOnly": "npm run build",
     "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
     "test": "TS_NODE_FILES=true nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",

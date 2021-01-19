@@ -14,7 +14,8 @@ try {
 }
 catch {}
 
-const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName' };
+const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName',
+                    ds: 'dateStyle', ts: 'timeStyle' };
 const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
@@ -90,6 +91,12 @@ function cleanUpLongTimezone(zone: string): string {
     return $[1];
 
   return zone.replace(/^[\p{P}\p{N}\s]*/u, '').replace(/[\p{P}\p{N}\s]*$/u, '');
+}
+
+function isLetter(char: string, checkDot = false): boolean {
+  return (checkDot && char === '.') ||
+    // eslint-disable-next-line no-misleading-character-class -- Deliberately including combining diacritical marks
+    /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-Ҁ\u05D0-\u05E9\u0620-\u064A\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FFऄ-\u0939\u0F00-\u0F14\u0F40-\u0FBC]/.test(char);
 }
 
 export function format(dt: DateTime, fmt: string, localeOverride?: string | string[]): string {
@@ -467,6 +474,29 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
   return new Intl.DateTimeFormat(localeNames, options);
 }
 
+// Find the shortest case-insensitive version of each string in the array that doesn't match
+// the starting characters of any other item in the array.
+function shortenItems(items: string[]): string[] {
+  items = items.map(item => item.toLowerCase().replace(/\u0307/g, ''));
+
+  for (let i = 0; i < items.length; ++i) {
+    for (let j = 1; j < items[i].length; ++j) {
+      const item = items[i].substr(0, j);
+      let matched = false;
+
+      for (let k = 0; k < items.length && !matched; ++k)
+        matched = (k !== i && items[k].startsWith(item));
+
+      if (!matched) {
+        items[i] = item;
+        break;
+      }
+    }
+  }
+
+  return items;
+}
+
 function getLocaleInfo(localeNames: string | string[]): ILocale {
   const joinedNames = isArray(localeNames) ? localeNames.join(',') : localeNames;
   const locale: ILocale = cachedLocales[joinedNames] ?? {} as ILocale;
@@ -485,7 +515,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 
     for (let month = 1; month <= 12; ++month) {
       const date = Date.UTC(2021, month - 1, 1);
-      let format = fmt({ M: 'l' });
+      let format = fmt({ ds: 'l' });
 
       locale.months.push(getDatePart(format, date, 'month'));
       format = fmt({ M: 's' });
@@ -494,8 +524,11 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
       narrow.push(getDatePart(format, date, 'month'));
     }
 
-    if (isEqual(locale.months, locale.monthsShort))
+    if (isEqual(locale.months, locale.monthsShort) && new Set(narrow).size === 12)
       locale.monthsShort = narrow;
+
+    locale.monthsMin = shortenItems(locale.months);
+    locale.monthsShortMin = shortenItems(locale.monthsShort);
 
     locale.weekdays = [];
     locale.weekdaysShort = [];
@@ -503,7 +536,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 
     for (let day = 3; day <= 9; ++day) {
       const date = Date.UTC(2021, 0, day);
-      let format = new Intl.DateTimeFormat(localeNames, { timeZone: 'UTC', calendar: 'gregory', weekday: 'long' });
+      let format = fmt({ w: 'l' });
 
       locale.weekdays.push(getDatePart(format, date, 'weekday'));
       format = fmt({ w: 's' });
@@ -520,7 +553,9 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   }
   else {
     locale.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    locale.monthsMin = shortenItems(locale.months);
     locale.monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    locale.monthsShortMin = shortenItems(locale.monthsShort);
     locale.weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     locale.weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     locale.weekdaysMin = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -580,6 +615,7 @@ function convertDigits(n: string): string {
     .replace(/[\u06F0-\u06F9]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x06C0)) // Urdu/Persian digits
     .replace(/[\u0966-\u096F]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0936)) // Devanagari digits
     .replace(/[\u09E6-\u09EF]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x09B6)) // Bengali digits
+    .replace(/[\u0F20-\u0F29]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0EF0)) // Tibetan digits
     .replace(/[\u1040-\u1049]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x1010)); // Myanmar digits
 }
 
@@ -599,12 +635,12 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
     year: /((?:22)?33)/.exec(formatted),
     month: /(0?4)/.exec(formatted),
     day: /(0?5)/.exec(formatted),
-    weekday: null,
+    weekday: null as RegExpExecArray,
     hour: /(0?6)/.exec(formatted),
     minute: /(0?7)/.exec(formatted),
     second: /(0?8)/.exec(formatted),
-    ampm: null,
-    zone: null
+    ampm: null as RegExpExecArray,
+    zone: null as RegExpExecArray
   };
 
   // Year not found? Give up.
@@ -639,10 +675,16 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
     const weekdayText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', weekday: dateStyle }).format(sampleDate);
     fields.weekday = new RegExp('(' + regexEscape(weekdayText) + ')', 'i').exec(formatted);
 
-    // Weekday name characters might be confused with other text, so blot them out.
-    if (fields.weekday && dateStyle !== 'short')
-      formatted = formatted.substr(0, fields.weekday.index) + ' '.repeat(fields.weekday[1].length) +
-        formatted.substr(fields.weekday.index + fields.weekday[1].length);
+    if (fields.weekday) {
+      let end = fields.weekday.index + fields.weekday[1].length;
+      while (isLetter(formatted.charAt(end), true)) ++end;
+      fields.weekday[1] = formatted.substring(fields.weekday.index, end);
+
+      if (dateStyle !== 'short')
+      // Weekday name characters might be confused with other text, so blot them out.
+        formatted = formatted.substr(0, fields.weekday.index) + ' '.repeat(fields.weekday[1].length) +
+          formatted.substr(fields.weekday.index + fields.weekday[1].length);
+    }
   }
 
   if (dateStyle && fields.month == null) {
@@ -661,6 +703,10 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
     // Month not found? Give up.
     if (fields.month == null)
       return null;
+
+    let end = fields.month.index + fields.month[1].length;
+    while (isLetter(formatted.charAt(end), true)) ++end;
+    fields.month[1] = formatted.substring(fields.month.index, end);
   }
 
   const hourCycle = format.resolvedOptions().hourCycle ?? 'h23';
@@ -767,16 +813,16 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
 
 function validateField(name: string, value: number, min: number, max: number): void {
   if (value < min || value > max)
-    throw new Error(`${name} value out of range [${min}, ${max}]`);
+    throw new Error(`${name} value (${value}) out of range [${min}, ${max}]`);
 }
 
 function matchAmPm(locale: ILocale, input: string): [boolean, number] {
   if (!locale.meridiem)
     return [false, 0];
 
-  input = input.toLowerCase();
+  input = input.toLowerCase().replace(/\xA0/g, ' ');
 
-  for (const meridiem of [locale.meridiem, [['am'], ['pm']]]) {
+  for (const meridiem of [locale.meridiem, [['am', 'a.m.', 'a. m.'], ['pm', 'p.m.', 'p. m.']]]) {
     for (let i = 0; i < meridiem.length; ++i) {
       const forms = meridiem[i];
       const isPM = (i > 11 || (meridiem.length === 2 && i > 0));
@@ -792,41 +838,55 @@ function matchAmPm(locale: ILocale, input: string): [boolean, number] {
 }
 
 function matchMonth(locale: ILocale, input: string): [number, number] {
-  if (!locale.months && !locale.monthsShort)
+  if (!locale.monthsMin || !locale.monthsShortMin)
     return [0, 0];
 
-  input = input.toLowerCase();
+  input = input.toLowerCase().replace(/\u0307/g, '');
 
-  for (let i = 0; i < 12; ++i) {
-    const MMMM = locale.months[i].toLowerCase();
-    const MMM = locale.monthsShort[i].toLowerCase();
+  for (const months of [locale.monthsMin, locale.monthsShortMin]) {
+    let maxLen = 0;
+    let month = 0;
 
-    if (MMMM && input.startsWith(MMMM))
-      return [i + 1, MMMM.length];
-    else if (MMM && input.startsWith(MMM))
-      return [i + 1, MMM.length];
+    for (let i = 0; i < 12; ++i) {
+      const MMM = months[i];
+
+      if (input.startsWith(MMM) && MMM.length > maxLen) {
+        maxLen = MMM.length;
+        month = i + 1;
+      }
+    }
+
+    if (maxLen > 0) {
+      // eslint-disable-next-line no-unmodified-loop-condition
+      while (isLetter(input.charAt(maxLen), true)) ++maxLen;
+      return [month, maxLen];
+    }
   }
 
   return [0, 0];
 }
 
 function skipDayOfWeek(locale: ILocale, input: string): number {
-  if (!locale.weekdays && !locale.weekdaysShort && !locale.weekdaysMin)
+  if (!locale.weekdays || !locale.weekdaysShort || !locale.weekdaysMin)
     return 0;
 
   input = input.toLowerCase();
 
-  for (let i = 0; i < 7; ++i) {
-    const dddd = locale.weekdays[i].toLowerCase();
-    const ddd = locale.weekdaysShort[i].toLowerCase();
-    const dd = locale.weekdaysMin[i].toLowerCase();
+  for (const days of [locale.weekdays, locale.weekdaysShort, locale.weekdaysMin]) {
+    let maxLen = 0;
 
-    if (dddd && input.startsWith(dddd))
-      return dddd.length;
-    else if (ddd && input.startsWith(ddd))
-      return ddd.length;
-    else if (dd && input.startsWith(dd))
-      return dd.length;
+    for (let i = 0; i < 7; ++i) {
+      const dd = days[i].toLowerCase();
+
+      if (input.startsWith(dd) && dd.length > maxLen)
+        maxLen = dd.length;
+    }
+
+    if (maxLen > 0) {
+      // eslint-disable-next-line no-unmodified-loop-condition
+      while (isLetter(input.charAt(maxLen), true)) ++maxLen;
+      return maxLen;
+    }
   }
 
   return 0;
@@ -854,6 +914,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       if (!format)
         return DateTime.INVALID_DATE;
 
+      format = format.replace(/\u200F/g, '');
       locale.parsePatterns[key] = format;
     }
   }
@@ -864,17 +925,20 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
   for (let i = 0; i < parts.length; ++i) {
     let part = parts[i];
+    const nextPart = parts[i + 1];
 
     if (i % 2 === 0) {
       part = part.trim();
+      // noinspection JSNonASCIINames
+      const altPart = { de: 'd’', 'd’': 'de' }[part];
 
       if (input.startsWith(part))
         input = input.substr(part.length).trimLeft();
+      else if (altPart && input.startsWith(altPart))
+        input = input.substr(altPart.length).trimLeft();
       else if (i < parts.length - 1) {
         // Exact in-between text wasn't matched, but if the next thing coming up is a numeric field,
         // just skip over the text being parsed until the next digit is found.
-        const nextPart = parts[i + 1];
-
         if (nextPart.toLowerCase().startsWith('y') || (nextPart.length < 3 && /^[MDHhKkmsS]/.test(nextPart))) {
           const $ = /^\D*(?=\d)/.exec(input);
 
@@ -905,7 +969,14 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       switch (firstChar) {
         case 'Y':
         case 'y':
-          w.y = newValue;
+        // TODO: Era handling
+          if (part.toLowerCase() === 'yy') {
+            const base = DateTime.getDefaultCenturyBase();
+            w.y = newValue - base % 100 + base + (newValue < base % 100 ? 100 : 0);
+          }
+          else
+            w.y = newValue;
+
           break;
 
         case 'M':
@@ -957,7 +1028,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     }
 
     if (handled) {
-      input = input.substr(newValueText.length).trimLeft();
+      input = input.substr(newValueText?.length ?? 0).trimLeft();
       continue;
     }
 
@@ -974,6 +1045,8 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
             if (w.hrs != null && pm && w.hrs !== 12)
               w.hrs += 12;
+            else if (w.hrs != null && !pm && w.hrs === 12)
+              w.hrs = 0;
           }
         }
         break;
@@ -999,6 +1072,13 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
             input = input.substr(length).trimLeft();
           }
         }
+        break;
+
+      case 'Z':
+      case 'z':
+        // Ignore for now
+        input = input.replace(/^[^,]+/, '');
+        handled = true;
         break;
     }
 

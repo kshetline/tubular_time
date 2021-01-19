@@ -1,7 +1,9 @@
 export interface ILocale {
   name: string;
   months: string[];
+  monthsMin: string[];
   monthsShort: string[];
+  monthsShortMin: string[];
   weekdays: string[];
   weekdaysShort: string[];
   weekdaysMin: string[];

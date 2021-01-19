@@ -42,6 +42,7 @@ const fullIsoFormat = 'yyyy-MM-DDTHH:mm:ss.SSSZ';
 const fullAltFormat = 'yyyy-MM-DDTHH:mm:ss.SSSRZv';
 
 export class DateTime extends Calendar {
+  private static defaultCenturyBase = 1970;
   private static defaultLocale: string | string[] = 'en-us';
   private static defaultTimezone = Timezone.OS_ZONE;
 
@@ -62,6 +63,9 @@ export class DateTime extends Calendar {
     return getDayNumber_SGC(year, month, day) + UNIX_TIME_ZERO_AS_JULIAN_DAY +
              (hour + (minute + second / 60.0) / 60.0) / 24.0;
   }
+
+  static getDefaultCenturyBase(): number { return DateTime.defaultCenturyBase; }
+  static setDefaultCenturyBase(newBase: number) { DateTime.defaultCenturyBase = newBase; }
 
   static getDefaultLocale(): string | string[] { return DateTime.defaultLocale; }
   static setDefaultLocale(newLocale: string | string[]) { DateTime.defaultLocale = newLocale; }
@@ -174,7 +178,7 @@ export class DateTime extends Calendar {
     if (this.locked)
       throw lockError;
 
-    if (this._utcTimeMillis !== newTime) {
+    if (this._utcTimeMillis !== newTime || !this.wallTime) {
       this._utcTimeMillis = newTime;
       this.updateWallTimeFromCurrentMillis();
     }
