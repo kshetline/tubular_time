@@ -79,7 +79,7 @@ describe('FormatParse', () => {
     this.timeout(450000);
 
     localeList.forEach(lcl => {
-      // if (lcl < 'et') return;
+      // if (lcl < 'zh') return;
       console.log('Locale: %s', lcl);
       const styles = ['F', 'L', 'M', 'S'];
 

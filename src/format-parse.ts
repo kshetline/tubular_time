@@ -2,7 +2,7 @@ import { DateAndTime } from './common';
 import { DateTime } from './date-time';
 import { abs, floor } from '@tubular/math';
 import { ILocale } from './i-locale';
-import { flatten, isArray, isEqual, isString, last, regexEscape, sortObjectEntries, toNumber } from '@tubular/util';
+import { flatten, isArray, isEqual, isString, last, toNumber } from '@tubular/util';
 import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
@@ -16,7 +16,7 @@ catch {}
 
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName',
                     ds: 'dateStyle', ts: 'timeStyle' };
-const shortOptValues = { n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
+const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
@@ -50,38 +50,68 @@ function formatEscape(s: string): string {
 }
 
 export function decomposeFormatString(format: string): string[] {
-  let parts: (string | string[])[] = [];
+  const parts: (string | string[])[] = [];
+  let inLiteral = true;
+  let inBraces = false;
+  let literal = '';
+  let token = '';
 
-  // For some reason I can't get a regex to do this first part quite right
-  while (format) {
-    const pos1 = format.indexOf('['); if (pos1 < 0) break;
-    const pos2 = format.indexOf(']', pos1 + 1); if (pos2 < 0) break;
+  for (const ch of format.split('')) {
+    if (/[a-z]/i.test(ch) || (inBraces && ch === '[')) {
+      if (inBraces)
+        literal += ch;
+      else if (inLiteral) {
+        parts.push(literal);
+        literal = '';
+        token = ch;
+        inLiteral = false;
+      }
+      else
+        token += ch;
+    }
+    else if (ch === '[') {
+      inBraces = true;
 
-    parts.push(format.substr(0, pos1));
-    parts.push(format.substring(pos1, pos2 + 1));
-    format = format.substr(pos2 + 1);
-  }
+      if (!inLiteral) {
+        parts.push(token);
+        token = '';
+        inLiteral = true;
+      }
+    }
+    else if (inBraces && ch === ']')
+      inBraces = false;
+    else {
+      if (!inLiteral) {
+        parts.push(token);
+        token = '';
+        inLiteral = true;
+      }
 
-  if (format)
-    parts.push(format);
-
-  for (let i = 0; i < parts.length; i += 2)
-    parts[i] = (parts[i] as string).split(patternsMoment);
-
-  parts = flatten(parts);
-
-  // Even indices should contain literal text, and odd indices format patterns. When a format pattern
-  // represents quoted literal text, move it to an even position.
-  for (let i = 1; i < parts.length; i += 2) {
-    const part = parts[i] as string;
-
-    if (part.startsWith('[') && part.endsWith(']')) {
-      parts[i - 1] += part.substr(1, part.length - 2) + (parts[i + 1] ?? '');
-      parts.splice(i, 2);
+      literal += ch;
     }
   }
 
-  return parts as string[];
+  if ((inLiteral && literal) || (!inLiteral && token))
+    parts.push(literal || token);
+
+  for (let i = 1; i < parts.length; i += 2) {
+    parts[i] = (parts[i] as string).split(patternsMoment);
+  }
+
+  parts.forEach((part, index) => {
+    if (index % 2 === 0)
+      return;
+
+    if (part.length === 3 && !part[0] && !part[2])
+      parts[index] = part[1];
+    else {
+      parts[index - 1] += part[0];
+      parts[index + 1] = last(part as string[]) + (parts[index + 1] ?? '');
+      parts[index] = part.slice(1, part.length - 1);
+    }
+  });
+
+  return flatten(parts) as string[];
 }
 
 function cleanUpLongTimezone(zone: string): string {
@@ -96,7 +126,7 @@ function cleanUpLongTimezone(zone: string): string {
 function isLetter(char: string, checkDot = false): boolean {
   return (checkDot && char === '.') ||
     // eslint-disable-next-line no-misleading-character-class -- Deliberately including combining diacritical marks
-    /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-Ҁ\u05D0-\u05E9\u0620-\u064A\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FFऄ-\u0939\u0F00-\u0F14\u0F40-\u0FBC]/.test(char);
+    /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-ҀҊ-ԯ\u05D0-\u05E9\u0620-\u065F\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FFऄ-\u0939\u0F00-\u0F14\u0F40-\u0FBC\u1000-\u103F]/.test(char);
 }
 
 export function format(dt: DateTime, fmt: string, localeOverride?: string | string[]): string {
@@ -180,7 +210,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         result.push(locale.ordinals[month]);
         break;
 
-      case 'M': // Numerica month
+      case 'M': // Numerical month
         result.push(toNum(month));
         break;
 
@@ -536,7 +566,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 
     for (let day = 3; day <= 9; ++day) {
       const date = Date.UTC(2021, 0, day);
-      let format = fmt({ w: 'l' });
+      let format = fmt({ ds: 'f' });
 
       locale.weekdays.push(getDatePart(format, date, 'weekday'));
       format = fmt({ w: 's' });
@@ -630,183 +660,61 @@ export function analyzeFormat(locale: string | string[], dateStyle: string, time
 
   const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
   const format = new Intl.DateTimeFormat(locale, options);
-  let formatted = convertDigits(format.format(sampleDate));
-  const fields = {
-    year: /((?:22)?33)/.exec(formatted),
-    month: /(0?4)/.exec(formatted),
-    day: /(0?5)/.exec(formatted),
-    weekday: null as RegExpExecArray,
-    hour: /(0?6)/.exec(formatted),
-    minute: /(0?7)/.exec(formatted),
-    second: /(0?8)/.exec(formatted),
-    ampm: null as RegExpExecArray,
-    zone: null as RegExpExecArray
-  };
-
-  // Year not found? Give up.
-  if (dateStyle && fields.year == null)
-    return null;
-
-  if ((timeStyle === 'full' || timeStyle === 'long') && fields.zone == null) {
-    const hourText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory',
-      hour: '2-digit', hourCycle: 'h23' }).format(sampleDate);
-    const zoneText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', timeZoneName: 'long',
-      hour: '2-digit', hourCycle: 'h23' }).format(sampleDate).replace(hourText, '').trim();
-    fields.zone = new RegExp('(' + regexEscape(zoneText) + ')', 'i').exec(formatted);
-
-    if (fields.zone == null) {
-      const zoneText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', timeZoneName: 'short',
-        hour: '2-digit', hourCycle: 'h23' }).format(sampleDate).replace(hourText, '').trim();
-      fields.zone = new RegExp('(' + regexEscape(zoneText) + ')', 'i').exec(formatted);
-    }
-
-    // Too much stuff inside long timezone names gets confused with other text, so blot it out.
-    if (fields.zone)
-      formatted = formatted.substr(0, fields.zone.index) + ' '.repeat(fields.zone[1].length) +
-        formatted.substr(fields.zone.index + fields.zone[1].length);
-  }
-
-  if (dateStyle) {
-    if (dateStyle === 'full')
-      dateStyle = 'long';
-    else if (dateStyle === 'medium')
-      dateStyle = 'short';
-
-    const weekdayText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', weekday: dateStyle }).format(sampleDate);
-    fields.weekday = new RegExp('(' + regexEscape(weekdayText) + ')', 'i').exec(formatted);
-
-    if (fields.weekday) {
-      let end = fields.weekday.index + fields.weekday[1].length;
-      while (isLetter(formatted.charAt(end), true)) ++end;
-      fields.weekday[1] = formatted.substring(fields.weekday.index, end);
-
-      if (dateStyle !== 'short')
-      // Weekday name characters might be confused with other text, so blot them out.
-        formatted = formatted.substr(0, fields.weekday.index) + ' '.repeat(fields.weekday[1].length) +
-          formatted.substr(fields.weekday.index + fields.weekday[1].length);
-    }
-  }
-
-  if (dateStyle && fields.month == null) {
-    let monthText = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', calendar: 'gregory', month: dateStyle }).format(sampleDate)
-      .replace(/\u0F0B$/, ''); // Remove trailing Tibetan tsheg, if present, before comparison
-
-    if (/"gd\b/.test(JSON.stringify(locale)))
-      monthText = monthText.replace(/^A[mn] /, '').replace(/^Gible/, 'Ghible');
-
-    fields.month = new RegExp('(' + regexEscape(monthText) + ')', 'i').exec(formatted);
-
-    // If month doesn't match exactly, try to peel back characters until it does
-    while (!fields.month && (monthText = monthText.slice(0, -1)) && monthText.length > 2)
-      fields.month = new RegExp('(' + regexEscape(monthText) + '\\S*)', 'i').exec(formatted);
-
-    // Month not found? Give up.
-    if (fields.month == null)
-      return null;
-
-    let end = fields.month.index + fields.month[1].length;
-    while (isLetter(formatted.charAt(end), true)) ++end;
-    fields.month[1] = formatted.substring(fields.month.index, end);
-  }
-
-  const hourCycle = format.resolvedOptions().hourCycle ?? 'h23';
-
-  if (timeStyle) {
-    // Hour not found? Give up.
-    if (fields.hour == null)
-      return null;
-
-    const ams: string[] = [];
-    const pms: string[] = [];
-
-    for (const style of ['long', 'short', 'narrow']) {
-      for (const hour24 of [0, 11, 12, 23]) {
-        const date = Date.UTC(2345, 9, 20, hour24, 22, 33);
-        const timeText = convertDigits(new Intl.DateTimeFormat(locale,
-          { timeZone: 'UTC', calendar: 'gregory', hour: '2-digit', dayPeriod: style }).format(date));
-        const $ = /(\D*)(\d+)(.*)/.exec(timeText);
-
-        if (!$)
-          continue;
-
-        const ampm = ($[1] || $[3]).trim();
-
-        if (ampm) {
-          const set = (hour24 < 12 ? ams : pms);
-
-          if (!set.includes(ampm))
-            set.push(ampm);
-        }
-      }
-    }
-
-    if (ams.length > 0 || pms.length > 0)
-      fields.ampm = new RegExp('(' + flatten([ams, pms]).map(s => regexEscape(s)).join('|') + ')', 'i').exec(formatted);
-  }
-
-  // If the weekday is found in a position beyond the hour, it's probably a false match.
-  if (fields.hour && fields.weekday && fields.weekday.index > fields.hour.index && fields.hour.index > 0)
-    delete fields.weekday;
-
-  Object.keys(fields).forEach(key => fields[key] == null && delete fields[key]);
-  sortObjectEntries(fields, (a, b) => a[1].index - b[1].index, true);
-
+  const parts = format.formatToParts(sampleDate);
+  const dateLong = (dateStyle === 'full' || dateStyle === 'long');
+  const timeLong = (timeStyle === 'full' || timeStyle === 'long');
   let formatString = '';
-  let lastIndex = 0;
 
-  Object.keys(fields).forEach(key => {
-    const match = fields[key];
-    const len = match[1].length;
+  parts.forEach(part => {
+    const value = part.value = convertDigits(part.value);
+    const len = value.length;
 
-    formatString += formatEscape(formatted.substring(lastIndex, match.index));
-
-    switch (key) {
-      case 'year':
-        formatString += len < 3 ? 'YY' : 'YYYY';
-        break;
-
-      case 'month':
-        if (/^\d+$/.test(match[1]))
-          formatString += 'MM'.substr(0, len);
-        else if (dateStyle === 'full')
-          formatString += 'MMMM';
-        else
-          formatString += 'MMM';
-        break;
-
+    switch (part.type) {
       case 'day':
-        formatString += 'DD'.substr(0, len);
+        formatString += 'DD'.substring(0, len);
         break;
 
-      case 'weekday':
-        formatString += { long: 'dddd', medium: 'ddd', short: 'dd' }[dateStyle];
-        break;
-
-      case 'hour':
-        formatString += ({ h11: 'KK', h12: 'hh', h23: 'HH', h24: 'kk' }[hourCycle] ?? 'kk').substr(0, len);
-        break;
-
-      case 'minute':
-        formatString += 'mm'.substr(0, len);
-        break;
-
-      case 'second':
-        formatString += 'ss'.substr(0, len);
-        break;
-
-      case 'ampm':
+      case 'dayPeriod':
         formatString += 'A';
         break;
 
-      case 'zone':
-        formatString += len < 4 ? 'z' : 'zzz';
+      case 'hour':
+        formatString += ({ h11: 'KK', h12: 'hh', h23: 'HH', h24: 'kk' }
+          [format.resolvedOptions().hourCycle ?? 'h23'] ?? 'HH').substr(0, len);
+        break;
+
+      case 'literal':
+        formatString += formatEscape(value);
+        break;
+
+      case 'minute':
+        formatString += 'mm'.substring(0, len);
+        break;
+
+      case 'month':
+        if (/^\d+$/.test(value))
+          formatString += 'MM'.substring(0, len);
+        else
+          formatString += (dateLong ? 'MMMM' : 'MMM');
+        break;
+
+      case 'second':
+        formatString += 'ss'.substring(0, len);
+        break;
+
+      case 'timeZoneName':
+        formatString += (timeLong ? 'zzz' : 'z');
+        break;
+
+      case 'weekday':
+        formatString += (dateLong ? 'dddd' : dateStyle === 'medium' ? 'ddd' : 'dd');
+        break;
+
+      case 'year':
+        formatString += (len < 3 ? 'YY' : 'YYYY');
         break;
     }
-
-    lastIndex = match.index + len;
   });
-
-  formatString += formatEscape(formatted.substr(lastIndex));
 
   return formatString;
 }
@@ -848,9 +756,9 @@ function matchMonth(locale: ILocale, input: string): [number, number] {
     let month = 0;
 
     for (let i = 0; i < 12; ++i) {
-      const MMM = months[i];
+      const MMM = convertDigits(months[i]);
 
-      if (input.startsWith(MMM) && MMM.length > maxLen) {
+      if (MMM.length > maxLen && input.startsWith(MMM)) {
         maxLen = MMM.length;
         month = i + 1;
       }
@@ -878,7 +786,7 @@ function skipDayOfWeek(locale: ILocale, input: string): number {
     for (let i = 0; i < 7; ++i) {
       const dd = days[i].toLowerCase();
 
-      if (input.startsWith(dd) && dd.length > maxLen)
+      if (dd.length > maxLen && input.startsWith(dd))
         maxLen = dd.length;
     }
 
@@ -922,6 +830,8 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
   const w = {} as DateAndTime;
   const parts = decomposeFormatString(format);
   let pm: boolean = null;
+  let pos: number;
+  let trimmed: boolean;
 
   for (let i = 0; i < parts.length; ++i) {
     let part = parts[i];
@@ -929,24 +839,24 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
     if (i % 2 === 0) {
       part = part.trim();
-      // noinspection JSNonASCIINames
+      // noinspection JSNonASCIINames,NonAsciiCharacters
       const altPart = { de: 'd’', 'd’': 'de' }[part];
 
       if (input.startsWith(part))
         input = input.substr(part.length).trimLeft();
       else if (altPart && input.startsWith(altPart))
         input = input.substr(altPart.length).trimLeft();
-      else if (i < parts.length - 1) {
-        // Exact in-between text wasn't matched, but if the next thing coming up is a numeric field,
-        // just skip over the text being parsed until the next digit is found.
-        if (nextPart.toLowerCase().startsWith('y') || (nextPart.length < 3 && /^[MDHhKkmsS]/.test(nextPart))) {
-          const $ = /^\D*(?=\d)/.exec(input);
 
-          if ($)
-            input = input.substr($[0].length);
-          else if (!/^s/i.test(nextPart))
-            throw new Error(`Match for "${nextPart}" field not found`);
-        }
+      // Exact in-between text wasn't matched, but if the next thing coming up is a numeric field,
+      // just skip over the text being parsed until the next digit is found.
+      if (i < parts.length - 1 &&
+        (nextPart.toLowerCase().startsWith('y') || (nextPart.length < 3 && /^[MDHhKkmsS]/.test(nextPart)))) {
+        const $ = /^\D*(?=\d)/.exec(input);
+
+        if ($)
+          input = input.substr($[0].length);
+        else if (!/^s/i.test(nextPart))
+          throw new Error(`Match for "${nextPart}" field not found`);
       }
 
       continue;
@@ -1000,7 +910,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           if (pm == null)
             w.hrs = newValue;
           else if (pm)
-            w.hrs = newValue === 12 ? 12 : newValue - 12;
+            w.hrs = newValue === 12 ? 12 : newValue + 12;
           else
             w.hrs = newValue === 12 ? 0 : newValue;
           break;
@@ -1076,8 +986,37 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
       case 'Z':
       case 'z':
-        // Ignore for now
-        input = input.replace(/^[^,]+/, '');
+        // Ignore value of zone for now
+        // This is very hard to match when in comes before other parts of the time, especially (as with
+        // Vietnamese) there's no clear delimiter between the zone name and subsequent text.
+        trimmed = false;
+
+        if (locale.name.startsWith('vi')) {
+          if ((pos = input.toLowerCase().indexOf('tế')) >= 0) {
+            input = input.substr(pos + 2).trimStart();
+            trimmed = true;
+          }
+          else if ((pos = (/\s(chủ|thứ)\s/.exec(input.toLowerCase()) ?? { index: -1 }).index) >= 0)  {
+            input = input.substr(pos + 1);
+            trimmed = true;
+          }
+        }
+        else if (locale.name.startsWith('zh')) {
+          if ((pos = input.toLowerCase().indexOf(' ')) >= 0) {
+            input = input.substr(pos).trimStart();
+            trimmed = true;
+          }
+        }
+
+        if (!trimmed && nextPart?.trim()) {
+          pos = input.toLowerCase().indexOf(nextPart);
+
+          if (pos >= 0)
+            input = input.substr(pos).trimStart();
+          else
+            input = input.replace(/^[^,]+/, '');
+        }
+
         handled = true;
         break;
     }
