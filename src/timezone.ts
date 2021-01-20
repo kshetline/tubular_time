@@ -206,6 +206,9 @@ export class Timezone {
   static ZONELESS = new Timezone({ zoneName: 'ZONELESS', currentUtcOffset: 0, usesDst: false,
                             dstOffset: 0, transitions: null });
 
+  static DATELESS = new Timezone({ zoneName: 'DATELESS', currentUtcOffset: 0, usesDst: false,
+                            dstOffset: 0, transitions: null });
+
   private static zoneLookup: { [id: string]: Timezone } = {};
 
   private readonly _zoneName: string;

@@ -74,19 +74,21 @@ describe('FormatParse', () => {
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ রাত', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T01:22:33');
   });
 
-  it('should be able to parse back formatted output', function () {
-    this.slow(300000);
-    this.timeout(450000);
+  xit('should be able to parse back formatted output', function () {
+    const years = 10;
+    const skip = 50;
+    this.slow(Math.max(years * 400000 / skip, 4000));
+    this.timeout(Math.max(years * 550000 / skip, 6000));
 
     localeList.forEach(lcl => {
       // if (lcl < 'zh') return;
-      console.log('Locale: %s', lcl);
+      // console.log('Locale: %s', lcl);
       const styles = ['F', 'L', 'M', 'S'];
 
       loop:
       for (let i = 0; i < 4; ++i) {
         for (let j = 0; j < 4; ++j) {
-          for (let t = 0; t < 31_622_400_000; t += 43_860_000) { // 12h:11m
+          for (let t = 0; t < 31_622_400_000 * years; t += 43_860_000 * skip) { // 12h:11m
             const fmt = 'I' + styles[i] + styles[j];
             const time = new DateTime(t, 'UTC', lcl);
 
@@ -111,5 +113,9 @@ describe('FormatParse', () => {
         }
       }
     });
+  });
+
+  it('should be able to parse dateless times', () => {
+    expect(parse('5:18:19pm', 'IxF', 'en-us').toString()).to.equal('DateTime<17:18:19.000>');
   });
 });

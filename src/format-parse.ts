@@ -114,19 +114,14 @@ export function decomposeFormatString(format: string): string[] {
   return flatten(parts) as string[];
 }
 
-function cleanUpLongTimezone(zone: string): string {
-  const $ = /\b(GMT[-+]\d[:\d]*)/.exec(zone);
-
-  if ($)
-    return $[1];
-
-  return zone.replace(/^[\p{P}\p{N}\s]*/u, '').replace(/[\p{P}\p{N}\s]*$/u, '');
-}
-
 function isLetter(char: string, checkDot = false): boolean {
   return (checkDot && char === '.') ||
     // eslint-disable-next-line no-misleading-character-class -- Deliberately including combining diacritical marks
     /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-ҀҊ-ԯ\u05D0-\u05E9\u0620-\u065F\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FFऄ-\u0939\u0F00-\u0F14\u0F40-\u0FBC\u1000-\u103F]/.test(char);
+}
+
+function isCased(s: string): boolean {
+  return s.toLowerCase() !== s.toUpperCase();
 }
 
 export function format(dt: DateTime, fmt: string, localeOverride?: string | string[]): string {
@@ -320,9 +315,15 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'a':
         {
           const values = locale.meridiem;
-          const forHour = values[values.length === 2 ? floor(hour / 12) : hour];
+          const dayPartsForHour = values[values.length === 2 ? floor(hour / 12) : hour];
 
-          result.push(forHour[field === 'A' && forHour.length > 1 ? 1 : 0]);
+          // If there is no case distinction between the first two forms, use the first form
+          // (the rest are there for parsing, not formatting).
+          if (dayPartsForHour.length === 1 ||
+              (!isCased(dayPartsForHour[0]) && !isCased(dayPartsForHour[0])))
+            result.push(dayPartsForHour[0]);
+          else
+            result.push(dayPartsForHour[field === 'A' && dayPartsForHour.length > 1 ? 1 : 0]);
         }
         break;
 
@@ -369,7 +370,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
         if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof Intl.DateTimeFormat) {
-          result.push(cleanUpLongTimezone(locale.dateTimeFormats.Z.format(dt.utcTimeMillis)));
+          result.push(getDatePart(locale.dateTimeFormats.Z, dt.utcTimeMillis, 'timeZoneName'));
           break;
         }
 
@@ -377,7 +378,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
         if (hasIntlDateTime && locale.dateTimeFormats.z instanceof Intl.DateTimeFormat) {
-          result.push(cleanUpLongTimezone(locale.dateTimeFormats.z.format(dt.utcTimeMillis)));
+          result.push(getDatePart(locale.dateTimeFormats.z, dt.utcTimeMillis, 'timeZoneName'));
           break;
         }
         else if (dt.timezone.zoneName !== 'OS') {
@@ -492,6 +493,8 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
 
   if (/^UT[-+]\d\d(?::?00)/.test(timezone))
     options.timeZone = 'Etc/GMT' + (timezone.charAt(2) === '-' ? '+' : '-') + toNumber(timezone.substr(3));
+  else if (timezone === 'DATELESS' || timezone === 'ZONELESS')
+    options.timeZone = 'UTC';
   else if (timezone !== 'OS')
     options.timeZone = (timezone === 'UT' ? 'UTC' : timezone);
 
@@ -1029,6 +1032,13 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       else
         throw new Error(`Match for "${part}" field not found`);
     }
+  }
+
+  if (w.y == null) {
+    zone = Timezone.DATELESS;
+    w.y = 1970;
+    w.m = 1;
+    w.d = 1;
   }
 
   return new DateTime(w, zone, locales);

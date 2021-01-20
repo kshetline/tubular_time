@@ -40,6 +40,7 @@ const nonIntError = new Error('Amounts for add/roll must be integers');
 const fullIsoFormat = 'yyyy-MM-DDTHH:mm:ss.SSSZ';
 // noinspection SpellCheckingInspection
 const fullAltFormat = 'yyyy-MM-DDTHH:mm:ss.SSSRZv';
+const timeOnlyFormat = 'HH:mm:ss.SSS';
 
 export class DateTime extends Calendar {
   private static defaultCenturyBase = 1970;
@@ -728,7 +729,7 @@ export class DateTime extends Calendar {
   }
 
   toString(): string {
-    return 'DateTime<' + this.format(fullAltFormat) + '>';
+    return 'DateTime<' + this.format(this.timezone === Timezone.DATELESS ? timeOnlyFormat : fullAltFormat) + '>';
   }
 
   toYMDhmString(): string {
