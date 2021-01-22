@@ -160,18 +160,20 @@ export function parseISODateTime(date: string): DateAndTime {
   let $ = /^([-+]?\d+)-(\d{1,2})-(\d{1,2})/.exec(date);
 
   if ($ || ($ = /^([-+]?\d{4,})(\d\d)(\d\d)/.exec(date)))
-    time = { y: toNumber($[1]), m: Number($[2]), d: Number($[3]) } as DateAndTime;
+    time = { y: toNumber($[1]), m: Number($[2]), d: Number($[3]) };
   else if (($ = /^([-+]?\d+)-(W)(\d+)-(\d)/i.exec(date)) || ($ = /^([-+]?\d{4,})(W)(\d\d)(\d)/i.exec(date))) {
     if ($[2] === 'W')
-      time = { yw: toNumber($[1]), w: Number($[3]), dw: Number($[4]) } as DateAndTime;
+      time = { yw: toNumber($[1]), w: Number($[3]), dw: Number($[4]) };
     else
-      time = { ywl: toNumber($[1]), wl: Number($[3]), dwl: Number($[4]) } as DateAndTime;
+      time = { ywl: toNumber($[1]), wl: Number($[3]), dwl: Number($[4]) };
   }
   else if (($ = /^(\d+)-(\d+)/.exec(date)) || ($ = /^(\d{4})(\d){3}/.exec(date))) {
-    time = { y: toNumber($[1]), dy: Number($[2]) } as DateAndTime;
+    time = { y: toNumber($[1]), dy: Number($[2]) };
   }
-  else
-    throw invalidDateTime;
+  else {
+    $ = [''] as RegExpExecArray; // Keep trying to parse as time-only string
+    time = {};
+  }
 
   date = date.substr($[0].length).trim();
 

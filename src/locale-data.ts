@@ -147,33 +147,6 @@ export function getWeekend(locale: string | string[]): number[] {
 }
 
 // noinspection SpellCheckingInspection
-const eras = {
-  'ar': ['ق.م', 'م'], 'be': ['да н.е.', 'н.е.'], 'bg': ['пр.н.е.', 'н.е.'], 'ca': ['aC', 'dC'], 'cs': ['př.Kr.', 'po Kr.'],
-  'da': ['f.Kr.', 'e.Kr.'], 'de': ['v. Chr.', 'n. Chr.'], 'el': ['π.Χ.', 'μ.Χ.'], 'es': ['antes de Cristo', 'anno Dómini'],
-  'es-us': ['a.C.', 'd.C.'], 'et': ['e.m.a.', 'm.a.j.'], 'fi': ['eKr.', 'jKr.'], 'fr': ['BC', 'ap. J.-C.'],
-  'ga': ['RC', 'AD'], 'hi-in': ['ईसापूर्व', 'सन'], 'hr': ['Prije Krista', 'Poslije Krista'], 'hu': ['i.e.', 'i.u.'],
-  'in': ['BCE', 'CE'], 'is': ['f.Kr.', 'e.Kr.'], 'it': ['BC', 'dopo Cristo'], 'iw': ['לסה"נ', 'לפסה"נ'],
-  'ja': ['紀元前', '西暦'], 'ko': ['기원전', '서기'], 'lt': ['pr.Kr.', 'po.Kr.'], 'lv': ['pmē', 'mē'], 'mk': ['пр.н.е.', 'ае.'],
-  'ms': ['BCE', 'CE'], 'mt': ['QK', 'WK'], 'nb': ['f.Kr.', 'e.Kr.'], 'nl': ['v. Chr.', 'n. Chr.'], 'nn': ['f.Kr.', 'e.Kr.'],
-  'no': ['f.Kr.', 'e.Kr.'], 'pl': ['p.n.e.', 'n.e.'], 'pt': ['a.C.', 'd.C.'], 'ro': ['d.C.', 'î.d.C.'],
-  'ru': ['до н.э.', 'н.э.'], 'sk': ['pred n.l.', 'n.l.'], 'sl': ['pr.n.š.', 'po Kr.'], 'sq': ['p.e.r.', 'n.e.r.'],
-  'sr': ['п. н. е.', 'н. е'], 'sr-ba-#latn': ['p. n. e.', 'n. e'], 'sr-me-#latn': ['p. n. e.', 'n. e'],
-  'sr-rs-#latn': ['p. n. e.', 'n. e'], 'sr-xk-#latn': ['p. n. e.', 'n. e'], 'sr--#latn': ['p. n. e.', 'n. e'],
-  'sv': ['före Kristus', 'efter Kristus'], 'th': ['ปีก่อนคริสต์กาลที่', 'ค.ศ.'], 'tr': ['MÖ', 'MS'],
-  'uk': ['до н.е.', 'після н.е.'], 'vi': ['tr. CN', 'sau CN'], 'zh': ['公元前', '公元'], 'zh-tw': ['西元前', '西元'],
-  'zh--#hant': ['西元前', '西元']
-};
-
-export function getEras(locale: string | string[]): string[] {
-  let result = getLocaleResource<string[]>(locale, eras);
-
-  if (result == null)
-    result = ['BC', 'AD'];
-
-  return result;
-}
-
-// noinspection SpellCheckingInspection
 const ordinals = {
   'af': ['0de', '1ste', '2de', '3de', '4de', '5de', '6de', '7de', '8ste', '9de', '10de', '11de', '12de', '13de', '14de', '15de', '16de', '17de', '18de', '19de', '20ste', '21ste', '22ste', '23ste', '24ste', '25ste', '26ste', '27ste', '28ste', '29ste', '30ste', '31ste'],
   'ar': 1,

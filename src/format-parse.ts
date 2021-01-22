@@ -1,9 +1,9 @@
 import { DateAndTime } from './common';
 import { DateTime } from './date-time';
-import { abs, floor } from '@tubular/math';
+import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
 import { flatten, isArray, isEqual, isString, last, toNumber } from '@tubular/util';
-import { getEras, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
+import { getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 
@@ -15,7 +15,7 @@ try {
 catch {}
 
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName',
-                    ds: 'dateStyle', ts: 'timeStyle' };
+                    ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
 const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
@@ -115,6 +115,7 @@ export function decomposeFormatString(format: string): string[] {
 }
 
 function isLetter(char: string, checkDot = false): boolean {
+  // This custom test works out better than the \p{L} character class for parsing purposes here.
   return (checkDot && char === '.') ||
     // eslint-disable-next-line no-misleading-character-class -- Deliberately including combining diacritical marks
     /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-ҀҊ-ԯ\u05D0-\u05E9\u0620-\u065F\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FFऄ-\u0939\u0F00-\u0F14\u0F40-\u0FBC\u1000-\u103F]/.test(char);
@@ -174,7 +175,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'YY': // 2-digit year
       case 'yy':
-        result.push(toNum(abs(year) % 100, 2));
+        result.push(toNum(mod(abs(year), 100), 2));
         break;
 
       case 'y': // Era year, never signed, min value 1.
@@ -411,7 +412,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       default:
         if (field.startsWith('N'))
-          result.push(locale.eras[year < 1 ? 0 : 1]);
+          result.push(locale.eras[(year < 1 ? 0 : 1) + (field.length === 4 ? 2 : 0)]);
         else if (field.startsWith('I')) {
           if (hasIntlDateTime) {
             let intlFormat = locale.dateTimeFormats[field] as Intl.DateTimeFormat;
@@ -582,9 +583,15 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     for (let len = 2; len < 4 && new Set(locale.weekdaysMin).size < 7; ++len)
       locale.weekdaysMin = locale.weekdaysShort.map(name => name.substr(0, len));
 
+    locale.eras = [getDatePart(fmt({ y: 'n', e: 's' }), Date.UTC(-1, 0, 1), 'era')];
+    locale.eras.push(getDatePart(fmt({ y: 'n', e: 's' }), Date.UTC(1, 0, 1), 'era'));
+    locale.eras.push(getDatePart(fmt({ y: 'n', e: 'l' }), Date.UTC(-1, 0, 1), 'era'));
+    locale.eras.push(getDatePart(fmt({ y: 'n', e: 'l' }), Date.UTC(1, 0, 1), 'era'));
+
     locale.zeroDigit = fmt({ m: 'd' }).format(0);
   }
   else {
+    locale.eras = ['BC', 'AD', 'Before Christ', 'Anno Domini'];
     locale.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     locale.monthsMin = shortenItems(locale.months);
     locale.monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -600,7 +607,6 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   locale.startOfWeek = getStartOfWeek(localeNames);
   locale.minDaysInWeek = getMinDaysInWeek(localeNames);
   locale.weekend = getWeekend(localeNames);
-  locale.eras = getEras(localeNames);
   locale.ordinals = getOrdinals(localeNames);
   locale.parsePatterns = {};
 
@@ -728,12 +734,12 @@ function validateField(name: string, value: number, min: number, max: number): v
 }
 
 function matchAmPm(locale: ILocale, input: string): [boolean, number] {
-  if (!locale.meridiem)
-    return [false, 0];
-
   input = input.toLowerCase().replace(/\xA0/g, ' ');
 
   for (const meridiem of [locale.meridiem, [['am', 'a.m.', 'a. m.'], ['pm', 'p.m.', 'p. m.']]]) {
+    if (meridiem == null)
+      continue;
+
     for (let i = 0; i < meridiem.length; ++i) {
       const forms = meridiem[i];
       const isPM = (i > 11 || (meridiem.length === 2 && i > 0));
@@ -742,6 +748,24 @@ function matchAmPm(locale: ILocale, input: string): [boolean, number] {
         if (input.startsWith(form.toLowerCase()))
           return [isPM, form.length];
       }
+    }
+  }
+
+  return [false, 0];
+}
+
+function matchEra(locale: ILocale, input: string): [boolean, number] {
+  input = input.toLowerCase().replace(/\xA0/g, ' ');
+
+  for (const eras of [locale.eras, ['BC', 'AD', 'BCE', 'CE', 'Before Christ', 'Anno Domini', 'Before Common Era', 'Common Era']]) {
+    if (eras == null)
+      continue;
+
+    for (let i = eras.length - 1; i >= 0; --i) {
+      const form = eras[i];
+
+      if (input.startsWith(form.toLowerCase()))
+        return [i % 2 === 0, form.length];
     }
   }
 
@@ -832,6 +856,8 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
   const w = {} as DateAndTime;
   const parts = decomposeFormatString(format);
+  const hasEraField = !!parts.find(part => part.toLowerCase().startsWith('n'));
+  let bce: boolean = null;
   let pm: boolean = null;
   let pos: number;
   let trimmed: boolean;
@@ -871,7 +897,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     if (part === 'd' || part.toLowerCase() === 'w')
       throw new Error('Parsing of week-of-year/day-of-week only supported for ISO-8601 dates');
 
-    const firstChar = part.substr(0, 1);
+    let firstChar = part.substr(0, 1);
     let newValueText = (/^([-+]?\d+)/.exec(input) ?? [])[1];
     let newValue = toNumber(newValueText);
     let handled = false;
@@ -887,8 +913,16 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
             const base = DateTime.getDefaultCenturyBase();
             w.y = newValue - base % 100 + base + (newValue < base % 100 ? 100 : 0);
           }
+          else if (bce)
+            w.y = 1 - newValue;
           else
             w.y = newValue;
+
+          if (!hasEraField) {
+            firstChar = 'n';
+            handled = false;
+            input = input.substr(newValueText?.length ?? 0).trimLeft();
+          }
 
           break;
 
@@ -946,6 +980,23 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     }
 
     switch (firstChar) {
+      case 'N':
+      case 'n':
+        {
+          const [isBCE, length] = matchEra(locale, input);
+
+          if (length > 0) {
+            bce = isBCE;
+            input = input.substr(length).trimLeft();
+
+            if (w.y != null && bce)
+              w.y = 1 - w.y;
+          }
+        }
+
+        handled = true; // Treat as handled no matter what, defaulting to CE.
+        break;
+
       case 'A':
       case 'a':
         {

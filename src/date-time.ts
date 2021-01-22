@@ -120,6 +120,13 @@ export class DateTime extends Calendar {
       if (initialTime) {
         try {
           initialTime = parseISODateTime(initialTime);
+
+          if (initialTime.y == null) {
+            timezone = Timezone.DATELESS;
+            initialTime.y = 1970;
+            initialTime.m = 1;
+            initialTime.d = 1;
+          }
         }
         catch {
           initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
