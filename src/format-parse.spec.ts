@@ -7,7 +7,10 @@ import { localeList } from './locale-data';
 import { analyzeFormat, parse } from './format-parse';
 
 describe('FormatParse', () => {
-  before(() => initTimezoneLarge());
+  before(() => {
+    initTimezoneLarge();
+    DateTime.setDefaultLocale('en-us');
+  });
 
   it('should properly decompose format strings', () => {
     expect(new DateTime('2022-07-07 8:08 ACST').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Australian Central Standard Time Australia/Adelaide GMT+9:30');
@@ -132,5 +135,22 @@ describe('FormatParse', () => {
     expect(parse('Jul 7, 2022 bc', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
     expect(parse('Jul 7, 2022 bce', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
     expect(parse('Jul 7, 2022 Before Common Era', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
+  });
+
+  it('should be able to parse times with timezones', () => {
+    expect(parse('Jul 7, 2022 04:05 PM America/Chicago', 'MMM D, y n hh:mm A z').utcTimeMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 5 * 3_600_000);
+    expect(parse('Jul 7, 2022 04:05 PM EDT', 'MMM D, y n hh:mm A z').utcTimeMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 4 * 3_600_000);
+    expect(parse('Jul 7, 2022 04:05 PM PST', 'MMM D, y n hh:mm A z').utcTimeMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 8 * 3_600_000);
+    expect(parse('Jul 7, 2022 04:05 PM PST', 'MMM D, y n hh:mm A z', 'America/New_York').format('IMM z'))
+      .to.equal('Jul 7, 2022, 8:05:00 PM EDT');
+    expect(parse('Jul 7, 2022 04:05 PM +03:00', 'MMM D, y n hh:mm A z').utcTimeMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) - 3 * 3_600_000);
+    expect(parse('Jul 7, 2022 04:05 PM UT+0300', 'MMM D, y n hh:mm A z').utcTimeMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) - 3 * 3_600_000);
+    expect(parse('Jul 7, 2022 04:05 PM GMT+0300', 'MMM D, y n hh:mm A z').utcTimeMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 3 * 3_600_000);
   });
 });

@@ -1,4 +1,4 @@
-import { DateAndTime } from './common';
+import { DateAndTime, parseTimeOffset } from './common';
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
@@ -828,15 +828,18 @@ function skipDayOfWeek(locale: ILocale, input: string): number {
 }
 
 export function parse(input: string, format: string, zone?: Timezone | string, locales?: string | string[]): DateTime {
+  let origZone = zone;
+  let restoreZone = false;
+
   input = convertDigits(input.trim()).replace(/\u200F/g, '');
   format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
 
   if (isString(zone))
-    zone = Timezone.from(zone);
+    origZone = zone = Timezone.from(zone);
 
   const locale = getLocaleInfo(locales);
-  const $ = /^(I[FLMSx][FLMS]?)/.exec(format);
+  let $ = /^(I[FLMSx][FLMS]?)/.exec(format);
 
   if ($ && $[1] !== 'Ix') {
     const key = $[1];
@@ -908,7 +911,6 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       switch (firstChar) {
         case 'Y':
         case 'y':
-        // TODO: Era handling
           if (part.toLowerCase() === 'yy') {
             const base = DateTime.getDefaultCenturyBase();
             w.y = newValue - base % 100 + base + (newValue < base % 100 ? 100 : 0);
@@ -1040,12 +1042,39 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
       case 'Z':
       case 'z':
-        // Ignore value of zone for now
-        // This is very hard to match when in comes before other parts of the time, especially (as with
-        // Vietnamese) there's no clear delimiter between the zone name and subsequent text.
         trimmed = false;
 
-        if (locale.name.startsWith('vi')) {
+        if (($ = /^(Z|[_/a-z]+)([^-+_/a-z]|$)/i.exec(input))) {
+          let embeddedZone: string | Timezone = $[1];
+
+          if (/^(Z|UT|UTC|GMT)$/i.test(embeddedZone))
+            embeddedZone = 'UT';
+
+          embeddedZone = Timezone.from(embeddedZone);
+          restoreZone = !!origZone;
+
+          if (embeddedZone instanceof Timezone && embeddedZone.error) {
+            const szni = Timezone.getShortZoneNameInfo($[1]);
+
+            if (szni) {
+              w.utcOffset = szni.utcOffset;
+              embeddedZone = Timezone.from(szni.ianaName);
+            }
+          }
+
+          zone = embeddedZone;
+          input = input.substr($[1].length).trimStart();
+          trimmed = true;
+        }
+        else if (($ = /^(UTC|UT|GMT)?([-+](?:\d\d\d\d|\d\d:\d\d))/i.exec(input))) {
+          w.utcOffset = parseTimeOffset($[2]) * ($[1] === 'GMT' ? -1 : 1);
+          input = input.substr($[0].length).trimStart();
+          trimmed = true;
+        }
+        // Timezone text is very hard to match when it comes before other parts of the time rather than being
+        // the very last thing in a time string, especially (as with Vietnamese) when there's no clear delimiter
+        // between the zone name and subsequent text.
+        else if (locale.name.startsWith('vi')) {
           if ((pos = input.toLowerCase().indexOf('tế')) >= 0) {
             input = input.substr(pos + 2).trimStart();
             trimmed = true;
@@ -1092,5 +1121,10 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     w.d = 1;
   }
 
-  return new DateTime(w, zone, locales);
+  let result = new DateTime(w, zone, locales);
+
+  if (restoreZone && origZone)
+    result = result.tz(origZone);
+
+  return result;
 }
