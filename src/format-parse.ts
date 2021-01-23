@@ -2,7 +2,7 @@ import { DateAndTime, parseTimeOffset } from './common';
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
-import { flatten, isArray, isEqual, isString, last, toNumber } from '@tubular/util';
+import { flatten, isArray, isEqual, isNumber, isString, last, toNumber } from '@tubular/util';
 import { getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
@@ -132,8 +132,13 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
   const locale = getLocaleInfo(localeNames);
   const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
-  const toNum = (n: number | string, pad = 1) => n.toString().padStart(pad, '0')
-    .replace(/\d/g, ch => String.fromCharCode(ch.charCodeAt(0) + zeroAdj));
+  const toNum = (n: number | string, pad = 1) => {
+    if (n == null || (isNumber(n) && isNaN(n)))
+      return '?'.repeat(pad);
+    else
+      return n.toString().padStart(pad, '0').replace(/\d/g, ch => String.fromCharCode(ch.charCodeAt(0) + zeroAdj));
+  };
+
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
   const wt = dt.wallTime;
@@ -1114,12 +1119,8 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     }
   }
 
-  if (w.y == null) {
-    zone = Timezone.DATELESS;
-    w.y = 1970;
-    w.m = 1;
-    w.d = 1;
-  }
+  if (w.y == null)
+    zone = undefined;
 
   let result = new DateTime(w, zone, locales);
 

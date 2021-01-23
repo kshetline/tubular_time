@@ -121,12 +121,8 @@ export class DateTime extends Calendar {
         try {
           initialTime = parseISODateTime(initialTime);
 
-          if (initialTime.y == null) {
+          if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null)
             timezone = Timezone.DATELESS;
-            initialTime.y = 1970;
-            initialTime.m = 1;
-            initialTime.d = 1;
-          }
         }
         catch {
           initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
@@ -192,14 +188,36 @@ export class DateTime extends Calendar {
     }
   }
 
-  get wallTime(): DateAndTime { return clone(this._wallTime); }
+  get wallTime(): DateAndTime {
+    const w = clone(this._wallTime);
+
+    if (this._timezone === Timezone.DATELESS)
+      ['y', 'year', 'm', 'month', 'd', 'day', 'dy', 'dayOfYear',
+       'n', 'epochDay', 'j', 'isJulian', 'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayOfWeek',
+       'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayOfWeekLocale',
+       'utcOffset', 'dstOffset', 'occurrence'].forEach(key => delete w[key]);
+
+    return w;
+  }
+
   set wallTime(newTime: DateAndTime) {
     if (this.locked)
       throw lockError;
 
+    newTime = clone(newTime);
+
     if (!isEqual(this._wallTime, newTime)) {
+      if (newTime.y == null && newTime.yw == null && newTime.ywl == null) {
+        newTime.y = 1970;
+        newTime.m = 1;
+        newTime.d = 1;
+        this._timezone = Timezone.DATELESS;
+      }
+      else if (this._timezone === Timezone.DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null))
+        this._timezone = Timezone.ZONELESS;
+
       validateDateAndTime(newTime);
-      this._wallTime = clone(newTime);
+      this._wallTime = newTime;
       this.updateUtcMillisFromWallTime();
       this.updateWallTimeFromCurrentMillis();
     }
@@ -272,6 +290,11 @@ export class DateTime extends Calendar {
     return this._timezone.getDisplayName(this._utcTimeMillis);
   }
 
+  private checkDateless(field: DateTimeField) {
+    if (this._timezone === Timezone.DATELESS)
+      throw new Error(`${DateTimeField[field]} cannot be used with a dateless time value`);
+  }
+
   add(field: DateTimeField, amount: number): DateTime {
     const result = this.locked ? this.clone(false) : this;
 
@@ -302,14 +325,17 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DAY:
+        this.checkDateless(field);
         result._utcTimeMillis += amount * 86_400_000;
         break;
 
       case DateTimeField.WEEK:
+        this.checkDateless(field);
         result._utcTimeMillis += amount * 604_800_000;
         break;
 
       case DateTimeField.MONTH:
+        this.checkDateless(field);
         // eslint-disable-next-line no-case-declarations
         const m = wallTime.m;
         updateFromWall = true;
@@ -320,6 +346,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.YEAR:
+        this.checkDateless(field);
         updateFromWall = true;
         wallTime.y += amount;
         normalized = result.normalizeDate(wallTime);
@@ -335,6 +362,9 @@ export class DateTime extends Calendar {
       delete wallTime.utcOffset;
       result.updateUtcMillisFromWallTime();
     }
+
+    if (this._timezone === Timezone.DATELESS)
+      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
 
     result.updateWallTimeFromCurrentMillis();
 
@@ -388,6 +418,7 @@ export class DateTime extends Calendar {
       }
 
       case DateTimeField.DAY:
+        this.checkDateless(field);
         {
           const missing = result.getMissingDateRange();
           const daysInMonth = result.getLastDateInMonth();
@@ -403,6 +434,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DAY_OF_WEEK:
+        this.checkDateless(field);
         wallTime.dw = mod(wallTime.dw + amount - 1, 7) + 1;
         delete wallTime.y;
         delete wallTime.ywl;
@@ -410,6 +442,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DAY_OF_WEEK_LOCALE:
+        this.checkDateless(field);
         wallTime.dwl = mod(wallTime.dwl + amount - 1, 7) + 1;
         delete wallTime.y;
         delete wallTime.yw;
@@ -417,12 +450,14 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DAY_OF_YEAR:
+        this.checkDateless(field);
         wallTime.dy = mod(wallTime.dy + amount - 1, this.getDaysInYear(wallTime.y)) + 1;
         delete wallTime.m;
         delete wallTime.utcOffset;
         break;
 
       case DateTimeField.WEEK:
+        this.checkDateless(field);
         {
           const weeksInYear = result.getWeeksInYear(wallTime.yw, 1, 4);
 
@@ -434,6 +469,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.WEEK_LOCALE:
+        this.checkDateless(field);
         {
           const weeksInYear = result.getWeeksInYear(wallTime.ywl,
             getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
@@ -446,6 +482,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.MONTH:
+        this.checkDateless(field);
         wallTime.m = mod(wallTime.m + amount - 1, 12) + 1;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
@@ -453,6 +490,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.YEAR:
+        this.checkDateless(field);
         wallTime.y = mod(wallTime.y - minYear + amount, maxYear - minYear + 1) + minYear;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
@@ -460,6 +498,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.YEAR_WEEK:
+        this.checkDateless(field);
         wallTime.yw = mod(wallTime.yw - minYear + amount, maxYear - minYear + 1) + minYear;
         delete wallTime.y;
         delete wallTime.ywl;
@@ -467,6 +506,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.YEAR_WEEK_LOCALE:
+        this.checkDateless(field);
         wallTime.ywl = mod(wallTime.ywl - minYear + amount, maxYear - minYear + 1) + minYear;
         delete wallTime.y;
         delete wallTime.yw;
@@ -474,6 +514,8 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.ERA:
+        this.checkDateless(field);
+
         if (amount % 2 === 0)
           return result._lock(this.locked);
 
@@ -486,6 +528,10 @@ export class DateTime extends Calendar {
 
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
+
+    if (this._timezone === Timezone.DATELESS)
+      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+
     result.updateWallTimeFromCurrentMillis();
 
     return result._lock(this.locked);
@@ -540,6 +586,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DATE:
+        this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 32 : this.getLastDateInMonth();
         wallTime.d = value;
@@ -552,6 +599,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DAY_OF_WEEK:
+        this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 8 : 7;
         wallTime.dw = value;
@@ -561,6 +609,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DAY_OF_WEEK_LOCALE:
+        this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 8 : 7;
         wallTime.dwl = value;
@@ -570,6 +619,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.DAY_OF_YEAR:
+        this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 367 : this.getDaysInYear(wallTime.y);
         wallTime.dy = value;
@@ -578,6 +628,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.WEEK:
+        this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 54 : this.getWeeksInYear(wallTime.yw, 1, 4);
         wallTime.w = value;
@@ -587,6 +638,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.WEEK_LOCALE:
+        this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 54 : result.getWeeksInYear(wallTime.ywl, getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
         wallTime.wl = value;
@@ -596,6 +648,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.MONTH:
+        this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 13 : 12;
         wallTime.m = value;
@@ -605,6 +658,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.YEAR:
+        this.checkDateless(field);
         min = -271820;
         max = 275759;
         wallTime.y = value;
@@ -614,6 +668,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.YEAR_WEEK:
+        this.checkDateless(field);
         min = -271820;
         max = 275759;
         wallTime.yw = value;
@@ -623,6 +678,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.YEAR_WEEK_LOCALE:
+        this.checkDateless(field);
         min = -271820;
         max = 275759;
         wallTime.ywl = value;
@@ -632,6 +688,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.ERA:
+        this.checkDateless(field);
         max = 1;
 
         if ((value === 0 && wallTime.y > 0) || (value === 1 && wallTime.y <= 0)) {
@@ -648,6 +705,10 @@ export class DateTime extends Calendar {
 
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
+
+    if (this._timezone === Timezone.DATELESS)
+      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+
     result.updateWallTimeFromCurrentMillis();
 
     return result._lock(this.locked);

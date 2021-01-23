@@ -158,6 +158,7 @@ describe('DateTime', () => {
     expect(new DateTime('1970-08-01').add(DateTimeField.MONTH, 5).toIsoString(10)).to.equal('1971-01-01');
     expect(new DateTime('1970-03-31').add(DateTimeField.MONTH, -1).toIsoString(10)).to.equal('1970-02-28');
     expect(new DateTime('1972-02-29').add(DateTimeField.YEAR, 50).toIsoString(10)).to.equal('2022-02-28');
+    expect(() => new DateTime('04:05').add(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
   });
 
   it('should correctly roll DateTime fields', () => {
@@ -203,6 +204,7 @@ describe('DateTime', () => {
     expect(new DateTime('1970-03-31').roll(DateTimeField.YEAR_WEEK, -1).toIsoString(10)).to.equal('1969-04-01');
     expect(new DateTime('1970-03-31').roll(DateTimeField.YEAR_WEEK_LOCALE, -1).toIsoString(10)).to.equal('1969-04-01');
     expect(new DateTime('1970-03-31').roll(DateTimeField.ERA, 1).toIsoString(11)).to.equal('-1969-03-31');
+    expect(() => new DateTime('04:05').roll(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
   });
 
   it('should correctly set DateTime fields', () => {
@@ -246,6 +248,7 @@ describe('DateTime', () => {
     expect(new DateTime('1970-W20-5').set(DateTimeField.YEAR_WEEK, 1850).format('yyyy-[W]WW-d')).to.equal('1850-W20-5');
     expect(new DateTime('1970-w03-3').set(DateTimeField.YEAR_WEEK_LOCALE, 2).format('yyyy-[w]ww-d')).to.equal('0002-w03-3');
     expect(new DateTime('1970-03-31').set(DateTimeField.ERA, 0).toIsoString(11)).to.equal('-1969-03-31');
+    expect(() => new DateTime('04:05').set(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
   });
 
   it('should correctly report week numbers', () => {
