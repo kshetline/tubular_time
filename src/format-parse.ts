@@ -832,6 +832,10 @@ function skipDayOfWeek(locale: ILocale, input: string): number {
   return 0;
 }
 
+function isNumericPart(part: string): boolean {
+  return part.toLowerCase().startsWith('y') || (part.length < 3 && /^[MDHhKkmsS]/.test(part));
+}
+
 export function parse(input: string, format: string, zone?: Timezone | string, locales?: string | string[]): DateTime {
   let origZone = zone;
   let restoreZone = false;
@@ -886,8 +890,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
       // Exact in-between text wasn't matched, but if the next thing coming up is a numeric field,
       // just skip over the text being parsed until the next digit is found.
-      if (i < parts.length - 1 &&
-        (nextPart.toLowerCase().startsWith('y') || (nextPart.length < 3 && /^[MDHhKkmsS]/.test(nextPart)))) {
+      if (i < parts.length - 1 && isNumericPart(nextPart)) {
         const $ = /^\D*(?=\d)/.exec(input);
 
         if ($)
@@ -925,7 +928,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           else
             w.y = newValue;
 
-          if (!hasEraField) {
+          if (!hasEraField && (parts[i + 2] == null || isNumericPart(parts[i + 2]))) {
             firstChar = 'n';
             handled = false;
             input = input.substr(newValueText?.length ?? 0).trimLeft();
@@ -1056,7 +1059,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
             embeddedZone = 'UT';
 
           embeddedZone = Timezone.from(embeddedZone);
-          restoreZone = !!origZone;
+          restoreZone = origZone && !embeddedZone.error;
 
           if (embeddedZone instanceof Timezone && embeddedZone.error) {
             const szni = Timezone.getShortZoneNameInfo($[1]);
@@ -1064,22 +1067,28 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
             if (szni) {
               w.utcOffset = szni.utcOffset;
               embeddedZone = Timezone.from(szni.ianaName);
+              restoreZone = !!origZone;
             }
+            else
+              embeddedZone = null;
           }
 
-          zone = embeddedZone;
-          input = input.substr($[1].length).trimStart();
-          trimmed = true;
+          if (embeddedZone) {
+            zone = embeddedZone;
+            input = input.substr($[1].length).trimStart();
+            trimmed = true;
+          }
         }
         else if (($ = /^(UTC|UT|GMT)?([-+](?:\d\d\d\d|\d\d:\d\d))/i.exec(input))) {
           w.utcOffset = parseTimeOffset($[2]) * ($[1] === 'GMT' ? -1 : 1);
           input = input.substr($[0].length).trimStart();
           trimmed = true;
         }
+
         // Timezone text is very hard to match when it comes before other parts of the time rather than being
         // the very last thing in a time string, especially (as with Vietnamese) when there's no clear delimiter
         // between the zone name and subsequent text.
-        else if (locale.name.startsWith('vi')) {
+        if (!trimmed && locale.name.startsWith('vi')) {
           if ((pos = input.toLowerCase().indexOf('tế')) >= 0) {
             input = input.substr(pos + 2).trimStart();
             trimmed = true;

@@ -77,11 +77,11 @@ describe('FormatParse', () => {
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ রাত', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T01:22:33');
   });
 
-  xit('should be able to parse back formatted output', function () {
+  it('should be able to parse back formatted output', function () {
     const years = 10;
-    const skip = 50;
-    this.slow(Math.max(years * 400000 / skip, 4000));
-    this.timeout(Math.max(years * 550000 / skip, 6000));
+    const skip = 5000; // 50 or less for anything more than a cursory test
+    this.slow(Math.max(years * 400000 / skip, 15000));
+    this.timeout(Math.max(years * 550000 / skip, 20000));
 
     localeList.forEach(lcl => {
       // if (lcl < 'zh') return;
@@ -132,7 +132,7 @@ describe('FormatParse', () => {
     expect(parse('Jul 7, 2022', 'MMM D, y n').toIsoString(10)).to.equal('2022-07-07');
     expect(parse('Jul 7, 2022 ad', 'MMM D, y n').toIsoString(10)).to.equal('2022-07-07');
     expect(parse('Jul 7, 2022 bc', 'MMM D, y n').toIsoString(11)).to.equal('-2021-07-07');
-    expect(parse('Jul 7, 2022 bc', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
+    expect(parse('Jul 7, 2022 bc, 3:00', 'MMM D, Y, H:mm').toIsoString(11)).to.equal('-2021-07-07');
     expect(parse('Jul 7, 2022 bce', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
     expect(parse('Jul 7, 2022 Before Common Era', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
   });

@@ -204,6 +204,7 @@ export class DateTime extends Calendar {
     if (this.locked)
       throw lockError;
 
+    validateDateAndTime(newTime);
     newTime = clone(newTime);
 
     if (!isEqual(this._wallTime, newTime)) {
@@ -216,7 +217,6 @@ export class DateTime extends Calendar {
       else if (this._timezone === Timezone.DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null))
         this._timezone = Timezone.ZONELESS;
 
-      validateDateAndTime(newTime);
       this._wallTime = newTime;
       this.updateUtcMillisFromWallTime();
       this.updateWallTimeFromCurrentMillis();

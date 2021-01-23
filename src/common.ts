@@ -66,8 +66,11 @@ export interface YMDDate {
 
 export interface DateAndTime extends YMDDate {
   hrs?: number;
+  hour?: number;
   min?: number;
+  minute?: number;
   sec?: number;
+  second?: number;
   millis?: number;
   utcOffset?: number;
   dstOffset?: number;
@@ -112,9 +115,10 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
     }
   });
 
-  if (obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
-      obj.ywl == null && obj.yearByWeekLocale == null)
-    throw new Error('A year value must be specified');
+  if ((obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
+       obj.ywl == null && obj.yearByWeekLocale == null) &&
+      ((obj as DateAndTime).hrs == null && (obj as DateAndTime).hour == null))
+    throw new Error('A year value or an hour value must be specified');
 }
 
 export const MINUTE_MSEC =    60000;
