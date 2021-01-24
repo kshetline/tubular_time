@@ -1,36 +1,57 @@
+const { Compilation, sources } = require('webpack');
 const { resolve } = require('path');
 
 module.exports = env => {
-  const target = env?.target === 'umd' ? 'es5' : 'es2015';
-  const libraryTarget = env?.target === 'umd' ? 'umd' : 'commonjs';
-  const library = env?.target === 'umd' ? 'tbTime' : undefined;
-
-  const config = {
+  // noinspection JSUnresolvedVariable,JSUnresolvedFunction,JSUnresolvedFunction
+  return {
     mode: env?.dev ? 'development' : 'production',
-    target,
+    target: ['es5', 'web'],
     entry: {
-      index: './dist/index.js',
-      'timezone-large': './dist/timezone-large.js',
-      'timezone-large-alt': './dist/timezone-large-alt.js',
-      'timezone-small': './dist/timezone-small.js'
+      index: './dist/index.js'
     },
     output: {
-      path: resolve(__dirname, 'dist'),
-      filename: `[name].${env?.target || 'cjs'}.js`,
-      libraryTarget,
-      library
+      path: resolve(__dirname, 'dist/web'),
+      filename: `index.js`,
+      libraryTarget: 'umd',
+      library: 'tbTime'
     },
     module: {
       rules: [
-        { test: /\.js$/, use: 'babel-loader', resolve: { fullySpecified: false } }
+        {
+          test: /\.js$/,
+          use: {
+            loader: 'babel-loader',
+            options: { presets: ['@babel/preset-env'] }
+          },
+          resolve: { fullySpecified: false }
+        }
       ]
     },
-    externals: ['lodash']
+    resolve: {
+      mainFields: ['esm2015', 'es2015', 'module', 'main', 'browser']
+    },
+    externals: { 'by-request': 'by-request' },
+    plugins: [
+      new class OutputMonitor {
+        // noinspection JSUnusedGlobalSymbols
+        apply(compiler) {
+          compiler.hooks.thisCompilation.tap('OutputMonitor', (compilation) => {
+            compilation.hooks.processAssets.tap(
+              { name: 'OutputMonitor', stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE },
+              () => {
+                const file = compilation.getAsset('index.js');
+                let contents = file.source.source();
+                // Strip out dynamic import() so it doesn't generate warnings.
+                contents = contents.replace(/return import\(.*?\/\* webpackIgnore: true \*\/.*?tseuqer-yb.*?\.join\(''\)\)/s, 'return null');
+                // Strip out large and large-alt timezone definitions from this build.
+                contents = contents.replace(/\/\* trim-file-start \*\/.*?\/\* trim-file-end \*\//sg, 'null');
+                compilation.updateAsset('index.js', new sources.RawSource(contents));
+              }
+            );
+          });
+        }
+      }()
+    ],
+    devtool: 'source-map'
   };
-
-  // Allow umd target to bundle @tubular/math and @tubular/util.
-  if (env?.target !== 'umd')
-    config.externals.push(...['@tubular/math', '@tubular/util']);
-
-  return config;
 };

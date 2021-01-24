@@ -17,16 +17,11 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { div_rd, div_tt0, mod } from '@tubular/math';
-import { padLeft } from '@tubular/util';
-import isArray from 'lodash/isArray';
-import isNil from 'lodash/isNil';
-import isNumber from 'lodash/isNumber';
-import isObject from 'lodash/isObject';
-import isString from 'lodash/isString';
-import isUndefined from 'lodash/isUndefined';
+import { div_rd, div_tt0, floor, mod } from '@tubular/math';
+import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
+import { syncDateAndTime, YMDDate } from './common';
 
-export enum CalendarType {PURE_GREGORIAN, PURE_JULIAN}
+export enum CalendarType { PURE_GREGORIAN, PURE_JULIAN }
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
 export const GREGORIAN_CHANGE_MAX_YEAR = 3900;
 
@@ -50,23 +45,6 @@ const DISTANT_YEAR_FUTURE = 9999999;
 const FIRST_GREGORIAN_DAY_SGC = -141427; // 1582-10-15
 
 /**
- * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
- * or Gregorian.
- */
-export interface YMDDate {
-  /** Year as signed integer (0 = 1 BCE, -1 = 2 BCE, etc.). */
-  y: number;
-  /** Month as 1-12. */
-  m: number;
-  /** Day of month. */
-  d: number;
-  /** Day number where 1970-01-01 = 0. */
-  n?: number;
-  /** true if this is a Julian calendar date, false for Gregorian. */
-  j?: boolean;
-}
-
-/**
  * Type allowing a year alone to be specified, a full date as a [[YMDDate]], or a full date as a numeric array in the
  * form [year, month, date].
  */
@@ -75,7 +53,21 @@ export type YearOrDate = number | YMDDate | number[];
  * Type for specifying the date when a calendar switches from Julian to Gregorian, or if the calendar is purely Julian
  * or purely Gregorian. As a string, the letters 'J' or 'G' can be used.
  */
-export type GregorianChange = YMDDate | CalendarType | string;
+export type GregorianChange = YMDDate | CalendarType | string | number[];
+
+function hasYearField(obj: any): boolean {
+  return obj.y != null || obj.yw != null || obj.ywl != null ||
+         obj.year != null || obj.yearByWeek != null || obj.yearByWeekLocale != null;
+}
+
+export function isGregorianType(obj: any): obj is GregorianChange {
+  return isNumber(obj) ||
+         (isArray(obj) && obj.length === 3 && obj.findIndex(n => !isNumber(n)) < 0) ||
+         (isString(obj) && /^(g|j|(\d+)-(\d+)-(\d+))$/i.test(obj)) ||
+         (isObject(obj) && hasYearField(obj));
+}
+
+const lockError = new Error('This DateTime instance is locked and immutable');
 
 /** @hidden */
 export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, day?: number): number[] {
@@ -86,12 +78,13 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   else if (isArray(yearOrDate) && (<number[]> yearOrDate).length >= 3 && isNumber((<number[]> yearOrDate)[0]))
     return yearOrDate as number[];
   else if (isObject(yearOrDate)) {
+    syncDateAndTime(yearOrDate as YMDDate);
     year  = (yearOrDate as YMDDate).y;
     month = (yearOrDate as YMDDate).m;
     day   = (yearOrDate as YMDDate).d;
   }
 
-  if (isUndefined(year) || isUndefined(month) || isUndefined(day))
+  if (year == null || month == null || day == null)
     throw new Error('Calendar: Invalid date arguments');
 
   return [year, month, day];
@@ -275,7 +268,7 @@ export function getDayOfWeek(dayNum: number): number {
  * @return Day of week as 0-6: 0 for Sunday, 1 for Monday... 6 for Saturday.
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-  if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
+  if (isNumber(yearOrDateOrDayNum) && month == null)
     return mod((yearOrDateOrDayNum as number) + 4, 7);
   else
     return getDayOfWeek(getDayNumber_SGC(yearOrDateOrDayNum, month, day));
@@ -390,6 +383,7 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   let year: number;
   let month: number;
   let day: number;
+  let dayOfYear: number;
   let lastDay: number;
 
   year = Math.floor((dayNum + 719528) / 365.2425);
@@ -400,12 +394,12 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   while (dayNum >= getDayNumberGregorian(year + 1, 1, 1))
     ++year;
 
-  day = dayNum - getDayNumberGregorian(year, 1, 1) + 1;
+  day = dayOfYear = dayNum - getDayNumberGregorian(year, 1, 1) + 1;
 
   for (month = 1; day > (lastDay = getLastDateInMonthGregorian(year, month)); ++month)
     day -= lastDay;
 
-  return { y: year, m: month, d: day, n: dayNum, j: false };
+  return syncDateAndTime({ y: year, m: month, d: day, dy: dayOfYear, n: dayNum, j: false });
 }
 
 export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
@@ -427,7 +421,7 @@ export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
   for (month = 1; day > (lastDay = getLastDateInMonthJulian(year, month)); ++month)
     day -= lastDay;
 
-  return { y: year, m: month, d: day, n: dayNum, j: true };
+  return syncDateAndTime({ y: year, m: month, d: day, n: dayNum, j: true });
 }
 
 export function isValidDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -474,7 +468,7 @@ export function parseISODate(date: string): YMDDate {
   if (!match)
     throw new Error('Invalid ISO date');
 
-  return { y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) };
+  return syncDateAndTime({ y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) });
 }
 
 export class Calendar {
@@ -488,18 +482,31 @@ export class Calendar {
   private lastJulianMonth: number = Number.MIN_SAFE_INTEGER;
   private lastJulianDate = 4;
 
+  protected _locked = false;
+
   constructor(gcYearOrDateOrType?: YearOrDate | CalendarType | string, gcMonth?: number, gcDate?: number) {
     if (gcYearOrDateOrType === CalendarType.PURE_GREGORIAN)
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else if (gcYearOrDateOrType === CalendarType.PURE_JULIAN)
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
-    else if (arguments.length === 0 || isNil(gcYearOrDateOrType))
+    else if (arguments.length === 0 || gcYearOrDateOrType == null)
       this.setGregorianChange(1582, 10, 15);
     else
-      this.setGregorianChange(<YearOrDate | string> gcYearOrDateOrType, gcMonth, gcDate);
+      this.setGregorianChange(gcYearOrDateOrType as YearOrDate | string, gcMonth, gcDate);
   }
 
+  lock = () => this._lock();
+  protected _lock(doLock = true): Calendar {
+    this._locked = this._locked || doLock;
+    return this;
+  }
+
+  get locked(): boolean { return this._locked; }
+
   setPureGregorian(pureGregorian: boolean): void {
+    if (this.locked)
+      throw lockError;
+
     if (pureGregorian)
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else
@@ -511,6 +518,9 @@ export class Calendar {
   }
 
   setPureJulian(pureJulian: boolean): void {
+    if (this.locked)
+      throw lockError;
+
     if (pureJulian)
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
     else
@@ -522,6 +532,9 @@ export class Calendar {
   }
 
   setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
+    if (this.locked)
+      throw lockError;
+
     if (gcYearOrDate === 'g' || gcYearOrDate === 'G') {
       this.setPureGregorian(true);
 
@@ -579,7 +592,7 @@ export class Calendar {
   }
 
   getGregorianChange(): YMDDate {
-    return { y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false };
+    return syncDateAndTime({ y: this.gcYear, m: this.gcMonth, d: this.gcDate, n: this.firstGregorianDay, j: false });
   }
 
   isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
@@ -589,6 +602,29 @@ export class Calendar {
   }
 
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {
+    // Note: month/day can be used internally to pass startOfWeek/minDaysInWeek.
+    if (isObject(yearOrDate) && !isArray(yearOrDate)) {
+      syncDateAndTime(yearOrDate);
+
+      if (yearOrDate.y == null && (yearOrDate.yw != null || yearOrDate.ywl != null)) {
+        const localeWeek = (yearOrDate.ywl != null);
+        const year = yearOrDate.ywl ?? yearOrDate.yw;
+        const startOfWeek = (localeWeek && month != null ? month : 1);
+        const minDaysInWeek = (localeWeek && day != null ? day : 4);
+        const week = (localeWeek ? yearOrDate.wl : yearOrDate.w) ?? 1;
+        const dayOfWeek = (localeWeek ? yearOrDate.dwl : yearOrDate.dw) ?? 1;
+        ++this.computeWeekValues;
+
+        const w = this.getStartDateOfFirstWeekOfYear(year, startOfWeek, minDaysInWeek);
+        const dayNum = w.n + (week - 1) * 7 + dayOfWeek - 1;
+
+        yearOrDate = this.getDateFromDayNumber(dayNum);
+        --this.computeWeekValues;
+      }
+      else if (yearOrDate.y != null && yearOrDate.m == null && yearOrDate.dy != null)
+        yearOrDate = this.addDaysToDate(yearOrDate.dy - 1, { y: yearOrDate.y, m: 1, d: 1 });
+    }
+
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
 
     while (month <  1) { month += 12; --year; }
@@ -609,11 +645,20 @@ export class Calendar {
       return getDayNumberGregorian(year, month, day);
   }
 
-  getDateFromDayNumber(dayNum: number): YMDDate {
+  private computeWeekValues = 0; // To prevent infinite recursion, compute week values only when this is 0.
+
+  getDateFromDayNumber(dayNum: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate {
+    let result: YMDDate;
+
     if (dayNum >= this.firstGregorianDay)
-      return getDateFromDayNumberGregorian(dayNum);
+      result = getDateFromDayNumberGregorian(dayNum);
     else
-      return getDateFromDayNumberJulian(dayNum);
+      result = getDateFromDayNumberJulian(dayNum);
+
+    if (this.computeWeekValues === 0)
+      [result.yw, result.w, result.dw] = this.getYearWeekAndWeekday(result, startingDayOfWeek, minDaysInCalendarYear);
+
+    return syncDateAndTime(result);
   }
 
   getFirstDateInMonth(year: number, month: number): number {
@@ -672,7 +717,7 @@ export class Calendar {
   }
 
   getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
-    if (isNumber(yearOrDateOrDayNum) && isUndefined(month))
+    if (isNumber(yearOrDateOrDayNum) && month == null)
       return getDayOfWeek(yearOrDateOrDayNum as number);
     else
       return getDayOfWeek(this.getDayNumber(yearOrDateOrDayNum, month, day));
@@ -778,7 +823,9 @@ export class Calendar {
     return this.getDateFromDayNumber(this.getDayNumber(yearOrDate, month, day) + deltaDays);
   }
 
-  getCalendarMonth(year: number, month: number, startingDayOfWeek: number): YMDDate[] {
+  getCalendarMonth(year: number, month: number, startingDayOfWeek?: number): YMDDate[] {
+    startingDayOfWeek = startingDayOfWeek ?? SUNDAY;
+
     const dates: YMDDate[] = [];
     let dateOffset;
     let dayNum = this.getDayNumber(year, month, this.getFirstDateInMonth(year, month));
@@ -789,7 +836,7 @@ export class Calendar {
     dateOffset = mod(startingDayOfWeek - getDayOfWeek(dayNum), -7); // First time I recall ever wanting to use a negative modulus.
     dayNum += dateOffset; // dateOffset will be 0 or negative
 
-    ymd = this.getDateFromDayNumber(dayNum);
+    ymd = this.getDateFromDayNumber(dayNum, startingDayOfWeek);
 
     // This loop will fill in a calendar month's full set of dates in such a way as to obtain dates which
     // should be shown from previous and subsequent months, while also skipping over Julian-to-Gregorian
@@ -844,7 +891,7 @@ export class Calendar {
       }
     }
 
-    return { y: year, m: month, d: day };
+    return syncDateAndTime({ y: year, m: month, d: day });
   }
 
   getMissingDateRange(year: number, month: number): number[] | null {
@@ -858,5 +905,64 @@ export class Calendar {
       return [this.lastJulianDate + 1, this.gcDate - 1];
 
     return null;
+  }
+
+  getStartDateOfFirstWeekOfYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): YMDDate {
+    let day = 1;
+
+    // 7 is a special case, where start week is first full week *after* January 1st.
+    if (minDaysInCalendarYear === 7) {
+      ++day;
+      --minDaysInCalendarYear;
+    }
+
+    const daysIntoWeek = mod(this.getDayOfWeek(year, 1, day) - startingDayOfWeek, 7);
+
+    return this.addDaysToDate(-daysIntoWeek + (daysIntoWeek > 7 - minDaysInCalendarYear ? 7 : 0), year, 1, day);
+  }
+
+  getWeeksInYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): number {
+    const w1 = this.getStartDateOfFirstWeekOfYear(year, startingDayOfWeek, minDaysInCalendarYear);
+    const w2 = this.getStartDateOfFirstWeekOfYear(year + 1, startingDayOfWeek, minDaysInCalendarYear);
+
+    return (w2.n - w1.n) / 7;
+  }
+
+  getYearWeekAndWeekday(year: number, month: number, day: number,
+    startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+
+  getYearWeekAndWeekday(date: YearOrDate | number,
+    startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+
+  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
+                      startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
+    const [year, month, day] = handleVariableDateArgs(yearOrDate, monthOrSDW, dayOrMDiCY);
+
+    if (isObject(yearOrDate)) {
+      startingDayOfWeek = monthOrSDW;
+      minDaysInCalendarYear = dayOrMDiCY;
+    }
+
+    startingDayOfWeek = startingDayOfWeek ?? 1;
+    minDaysInCalendarYear = minDaysInCalendarYear ?? 4;
+    ++this.computeWeekValues;
+
+    let resultYear = year;
+    let w = this.getStartDateOfFirstWeekOfYear(year, startingDayOfWeek, minDaysInCalendarYear);
+    const w2 = this.getStartDateOfFirstWeekOfYear(year + 1, startingDayOfWeek, minDaysInCalendarYear);
+    const dayNum = this.getDayNumber(year, month, day);
+
+    if (w.n > dayNum) {
+      w = this.getStartDateOfFirstWeekOfYear(year - 1, startingDayOfWeek, minDaysInCalendarYear);
+      --resultYear;
+    }
+    else if (w2.n + 6 < dayNum) {
+      w = w2;
+      ++resultYear;
+    }
+
+    --this.computeWeekValues;
+
+    return [resultYear, floor((dayNum - w.n) / 7) + 1, mod(dayNum - w.n, 7) + 1];
   }
 }

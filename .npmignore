@@ -10,3 +10,5 @@
 *.spec.d.ts
 *.spec.js
 /webpack.config.cjs
+/make-remote-zone-data.ts
+*.tgz
