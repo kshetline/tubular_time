@@ -2,7 +2,7 @@ import { expect } from 'chai';
 // import moment from './locale/moment-with-locales.js';
 
 import { DateTime } from './date-time';
-import { initTimezoneLarge } from './index';
+import ttime, { initTimezoneLarge } from './index';
 import { localeList } from './locale-data';
 import { analyzeFormat, parse } from './format-parse';
 
@@ -10,6 +10,7 @@ describe('FormatParse', () => {
   before(() => {
     initTimezoneLarge();
     DateTime.setDefaultLocale('en-us');
+    DateTime.setDefaultTimezone('America/New_York');
   });
 
   it('should properly decompose format strings', () => {
@@ -75,6 +76,16 @@ describe('FormatParse', () => {
     expect(parse('Sun Jan 17, 2022 at 1:22:33 pm', 'ddd MMM DD, YYYY [at] H:m:s a', 'UTC').toIsoString(19)).to.equal('2022-01-17T13:22:33');
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ PM', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T13:22:33');
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ রাত', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T01:22:33');
+  });
+
+  it('should correctly handle two-digit years', () => {
+    const saveBase = DateTime.getDefaultCenturyBase();
+
+    DateTime.setDefaultCenturyBase(1970);
+    expect(ttime('7/20/76', 'IS').toIsoString(10)).to.equal('1976-07-20');
+    DateTime.setDefaultCenturyBase(2000);
+    expect(ttime('7/20/76', 'IS').toIsoString(10)).to.equal('2076-07-20');
+    DateTime.setDefaultCenturyBase(saveBase);
   });
 
   it('should be able to parse back formatted output', function () {

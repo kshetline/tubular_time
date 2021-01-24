@@ -919,7 +919,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       switch (firstChar) {
         case 'Y':
         case 'y':
-          if (part.toLowerCase() === 'yy') {
+          if (part.toLowerCase() === 'yy' && newValueText.length < 3) {
             const base = DateTime.getDefaultCenturyBase();
             w.y = newValue - base % 100 + base + (newValue < base % 100 ? 100 : 0);
           }

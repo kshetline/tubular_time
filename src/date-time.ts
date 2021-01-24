@@ -56,6 +56,8 @@ export class DateTime extends Calendar {
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
 
+  static INVALID_DATE = new DateTime(NaN).lock();
+
   static julianDay(millis: number): number {
     return millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
   }
@@ -83,6 +85,8 @@ export class DateTime extends Calendar {
     DateTime.defaultTimezone = newZone;
   }
 
+  static isDateTime(obj: any): obj is DateTime { return obj instanceof DateTime; }
+
   static compare(d1: DateTime, d2: DateTime | string | number | Date, resolution = DateTimeField.FULL): number {
     if (isString(d2) || isNumber(d2) || d2 instanceof Date)
       d2 = new DateTime(d2, d1.timezone, d1.locale, d1.getGregorianChange());
@@ -109,8 +113,6 @@ export class DateTime extends Calendar {
     throw new Error(`Resolution ${DateTimeField[resolution]} not valid`);
   }
 
-  static INVALID_DATE = new DateTime(NaN).lock();
-
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null,
@@ -120,9 +122,8 @@ export class DateTime extends Calendar {
     if (isString(initialTime)) {
       const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
       let zone: string;
-      const origTime = initialTime;
 
-      if ($) {
+      if ($ && $.index > 0) {
         zone = $[1];
 
         initialTime = initialTime.slice(0, -zone.length).trim();
@@ -139,11 +140,8 @@ export class DateTime extends Calendar {
             timezone = Timezone.from(szni.ianaName);
             initialTime += ' ' + Timezone.formatUtcOffset(szni.utcOffset);
           }
-          else {
-            timezone = undefined;
-            zone = undefined;
-            initialTime = origTime;
-          }
+          else
+            throw new Error(`Bad timezone: ${zone}`);
         }
       }
 
@@ -164,6 +162,9 @@ export class DateTime extends Calendar {
 
     if (isString(timezone))
       timezone = Timezone.from(timezone);
+
+    if (timezone?.error)
+      throw new Error(`Bad timezone: ${timezone.zoneName}`);
 
     if (timezone)
       this._timezone = timezone;
@@ -323,6 +324,10 @@ export class DateTime extends Calendar {
 
   get dstOffsetMinutes(): number {
     return round(this._timezone.getOffsets(this._utcTimeMillis)[1] / 60);
+  }
+
+  isDST(): boolean {
+    return this.dstOffsetSeconds !== 0;
   }
 
   getTimezoneDisplayName(): string {
@@ -869,7 +874,7 @@ export class DateTime extends Calendar {
   }
 
   toYMDhmString(): string {
-    return formatter(this, 'YYYY-MM-DD HH:mm:ssv', 'en-US');
+    return formatter(this, 'YYYY-MM-DD HH:mmv', 'en-US');
   }
 
   toIsoString(maxLength?: number): string {
@@ -989,6 +994,10 @@ export class DateTime extends Calendar {
 
   getDaysInYear(year?: number): number {
     return super.getDaysInYear(year ?? this._wallTime.y);
+  }
+
+  isLeapYear(year?: number) {
+    return this.isValidDate(year ?? this._wallTime.y, 2, 29);
   }
 
   getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number {

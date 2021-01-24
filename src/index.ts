@@ -149,11 +149,18 @@ export function clearZonesUpdateListeners(): void {
   listeners.clear();
 }
 
-function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string): DateTime {
+export function isDateTime(obj: any): obj is DateTime { return obj instanceof DateTime; }
+
+export function isDate(obj: any): obj is Date { return obj instanceof Date; }
+
+function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string, locale?: string | string[]): DateTime {
   if (!format || !isString(initialTime))
-    return new DateTime(initialTime).lock();
+    return new DateTime(initialTime, null, locale).lock();
   else
-    return parse(initialTime, format)?.lock();
+    return parse(initialTime, format, null, locale)?.lock();
 }
+
+ttime.isDateTime = isDateTime;
+ttime.isDate = isDate;
 
 export default ttime;

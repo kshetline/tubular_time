@@ -1,9 +1,15 @@
 import { assert, expect } from 'chai';
 import { getISOFormatDate, Calendar, LAST } from './calendar';
 import { YMDDate } from './common';
+import { DateTime } from './date-time';
 
 describe('Calendar', () => {
   const calendar = new Calendar();
+
+  beforeEach(() => {
+    DateTime.setDefaultLocale('en-us');
+    DateTime.setDefaultTimezone('America/New_York');
+  });
 
   it('should consistently convert the date for a day number back to the same day number.', () => {
     let match = true;

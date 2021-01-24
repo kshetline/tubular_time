@@ -18,6 +18,7 @@ describe('DateTime', () => {
       'Pacific/Apia': '+123304 +1300 60;cx.4/0/LMT -bq.U/0/LMT -bu/0 -b0/0 -a0/10 e0/10 d0/0;12343456565656565656565656565656565656565656;-38Fox.4 J1A0 1yW03.4 2rRbu 1ff0 1a00 CI0 AQ0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0;2012 4 1 1 4:0 0 0,2012 9 0 1 3:0 0 60'
     });
     DateTime.setDefaultLocale('en-us');
+    DateTime.setDefaultTimezone('America/New_York');
   });
 
   it('should properly create Datetime instances', () => {
@@ -210,13 +211,13 @@ describe('DateTime', () => {
   it('should correctly set DateTime fields', () => {
     expect(new DateTime('2300-05-05T04:08:10.909').set(DateTimeField.MILLI, 123).toIsoString(23))
       .to.equal('2300-05-05T04:08:10.123');
-    expect(() => new DateTime().set(DateTimeField.MILLI, -7)).to.throw('MILLIS (-7) must be in the range [0, 999]');
+    expect(() => new DateTime().set(DateTimeField.MILLI, -7)).to.throw('MILLI (-7) must be in the range [0, 999]');
     expect(new DateTime('2020-11-29 23:24:35').set(DateTimeField.SECOND, 30).toIsoString(19))
       .to.equal('2020-11-29T23:24:30');
-    expect(() => new DateTime().set(DateTimeField.SECOND, 63)).to.throw('SECONDS (63) must be in the range [0, 59]');
+    expect(() => new DateTime().set(DateTimeField.SECOND, 63)).to.throw('SECOND (63) must be in the range [0, 59]');
     expect(new DateTime('1884-02-03 22:14').set(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T22:14');
-    expect(() => new DateTime().set(DateTimeField.MINUTE, 77)).to.throw('MINUTES (77) must be in the range [0, 59]');
+    expect(() => new DateTime().set(DateTimeField.MINUTE, 77)).to.throw('MINUTE (77) must be in the range [0, 59]');
     expect(new DateTime('1884-02-03 22:53').set(DateTimeField.HOUR_12, 8).toIsoString(16))
       .to.equal('1884-02-03T20:53');
     expect(() => new DateTime().set(DateTimeField.HOUR_12, 19)).to.throw('HOUR_12 (19) must be in the range [1, 12]');
@@ -225,7 +226,7 @@ describe('DateTime', () => {
     expect(() => new DateTime().set(DateTimeField.HOUR, 24)).to.throw('HOUR (24) must be in the range [0, 23]');
     expect(new DateTime('7070-06-07').set(DateTimeField.DAY, 12).toIsoString(10)).to.equal('7070-06-12');
     expect(new DateTime('7070-02-01').set(DateTimeField.DAY, 29, true).toIsoString(10)).to.equal('7070-03-01');
-    expect(() => new DateTime('7070-02-01').set(DateTimeField.DAY, 29)).to.throw('DATE (29) must be in the range [1, 28]');
+    expect(() => new DateTime('7070-02-01').set(DateTimeField.DAY, 29)).to.throw('DAY (29) must be in the range [1, 28]');
     expect(() => new DateTime('1582-10-20').set(DateTimeField.DAY, 7)).to.throw('7 is an invalid date in the month 10/1582');
     expect(new DateTime('1582-10-20').set(DateTimeField.DAY, 7, true).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('2021-01-04').set(DateTimeField.DAY_OF_WEEK, 0, true).toIsoString(10)).to.equal('2021-01-03');
@@ -313,5 +314,41 @@ describe('DateTime', () => {
     expect(new DateTime().isBetween('1776-06-04', '9999-12-31')).to.be.true;
     expect(new DateTime().isBetween('1776-06-04', '1809-02-12')).to.be.false;
     expect(new DateTime().isBetween('9976-06-04', '9999-12-31')).to.be.false;
+    expect(DateTime.isDateTime(dt)).to.be.true;
+    expect(DateTime.isDateTime({})).to.be.false;
+  });
+
+  it('should correctly handle various utility functions', () => {
+    expect(new DateTime('2021-07-04 UTC').utcOffsetSeconds).to.equal(0);
+    expect(new DateTime('2021-01-04 America/New_York').utcOffsetMinutes).to.equal(-300);
+    expect(new DateTime('2021-07-04 America/New_York').utcOffsetSeconds).to.equal(-14400);
+    expect(() => new DateTime('2021-01-04 Atlantis/Xanadu')).to.throw('Bad timezone: Atlantis/Xanadu');
+    expect(() => new DateTime('2021-01-04', 'Atlantis/Xanadu')).to.throw('Bad timezone: Atlantis/Xanadu');
+    expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetSeconds).to.equal(0);
+    expect(new DateTime('2021-07-04 Europe/Dublin').utcOffsetSeconds).to.equal(3600);
+    expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetMinutes).to.equal(0);
+    expect(new DateTime('2021-07-04 Europe/Dublin').utcOffsetMinutes).to.equal(60);
+    expect(new DateTime('2021-07-04 UTC').dstOffsetSeconds).to.equal(0);
+    expect(new DateTime('2021-01-04 America/New_York').dstOffsetMinutes).to.equal(0);
+    expect(new DateTime('2021-07-04 America/New_York').dstOffsetMinutes).to.equal(60);
+    expect(new DateTime('2021-01-04 Europe/Dublin').dstOffsetMinutes).to.equal(-60);
+    expect(new DateTime('2021-01-04 Europe/Dublin').isDST()).to.be.true;
+    expect(new DateTime('2021-07-04 Europe/Dublin').isDST()).to.be.false;
+    expect(new DateTime('2021-01-04 America/New_York').getTimezoneDisplayName()).to.equal('EST');
+    expect(new DateTime('2021-07-04 America/New_York').getTimezoneDisplayName()).to.equal('EDT');
+    expect(new DateTime('05:06').toHoursAndMinutesString()).to.equal('05:06');
+    expect(new DateTime('2021-01-04 05:06 America/New_York').toHoursAndMinutesString()).to.equal('05:06');
+    expect(new DateTime('2021-01-04 05:06 America/New_York').toHoursAndMinutesString(true)).to.equal('05:06');
+    expect(new DateTime('2021-07-04 05:06 America/New_York').toHoursAndMinutesString()).to.equal('05:06');
+    expect(new DateTime('2021-07-04 05:06 America/New_York').toHoursAndMinutesString(true)).to.equal('05:06§');
+    expect(new DateTime('2021-07-04 05:06 America/New_York').toYMDhmString()).to.equal('2021-07-04 05:06§');
+    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(0);
+    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
+    expect(new DateTime().isLeapYear(1900)).to.be.false;
+    expect(new DateTime().isLeapYear(1904)).to.be.true;
+    expect(new DateTime().isLeapYear(2000)).to.be.true;
+    expect(new DateTime().isLeapYear(2003)).to.be.false;
+    expect(new DateTime('2023-12-31').isLeapYear()).to.be.false;
+    expect(new DateTime('2024-12-31').isLeapYear()).to.be.true;
   });
 });
