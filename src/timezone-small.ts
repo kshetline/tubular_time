@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 // -5qy 2015,2025 -z .../tzdir/usr/share/zoneinfo
 // noinspection SpellCheckingInspection
-const timezoneSmall = { // tz database version: 2020e, years 2015-2025
+const timezoneSmall = { // tz database version: 2021a, years 2015-2025
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;',
   'Africa/Addis_Ababa': '+0300 +0300 0;30/0/EAT;',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;',
@@ -11,6 +11,7 @@ const timezoneSmall = { // tz database version: 2020e, years 2015-2025
   'Africa/Casablanca': '+0000 +0100 0;0/0 10/10 10/0 0/-10;101010101010101232323232323232;1O9e0 uM0 e00 Dc0 11A0 s00 e00 IM0 WM0 mo0 gM0 LA0 WM0 jA0 e00 Rc0 1fA0 e00 2600 gM0 2600 e00 2600 gM0 2600 gM0 2600 e00 2600 gM0',
   'Africa/Ceuta': '+0100 +0100 60;10/0/CET 20/10/CEST;1010101010101010101010;1O9d0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60',
   'Africa/Johannesburg': '+0200 +0200 0;20/0/SAST;',
+  'Africa/Juba': '+0300 +0200 0;30/0/EAT 20/0/CAT;1;24nx0',
   'Africa/Khartoum': '+0300 +0200 0;30/0/EAT 20/0/CAT;1;1Usl0',
   'Africa/Sao_Tome': '+0000 +0000 0;0/0/GMT 10/0/WAT;10;1UQN0 2q00',
   'Africa/Windhoek': '+0200 +0200 0;20/0/CAT 10/-10/WAT;101010;1Oc00 11B0 1nX0 11B0 1nX0 11B0',
@@ -163,7 +164,6 @@ const timezoneSmall = { // tz database version: 2020e, years 2015-2025
   'Africa/Freetown': 'Africa/Abidjan',
   'Africa/Gaborone': 'Africa/Blantyre',
   'Africa/Harare': 'Africa/Blantyre',
-  'Africa/Juba': 'Africa/Addis_Ababa',
   'Africa/Kampala': 'Africa/Addis_Ababa',
   'Africa/Kigali': 'Africa/Blantyre',
   'Africa/Kinshasa': 'Africa/Bangui',
