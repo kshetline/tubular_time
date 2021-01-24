@@ -31,11 +31,11 @@ describe('DateTime', () => {
 
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
     expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
-    time.add(DateTimeField.SECONDS, 1);
+    time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
     expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
     expect(time.wallTime.hrs).to.equal(3);
-    time.add(DateTimeField.SECONDS, -1);
+    time.add(DateTimeField.SECOND, -1);
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.getSecondsInDay()).to.equal(82800);
     expect(time.getMinutesInDay()).to.equal(1380);
@@ -47,12 +47,12 @@ describe('DateTime', () => {
 
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
     expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
-    time.add(DateTimeField.SECONDS, 1);
+    time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
     expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(2);
-    time.add(DateTimeField.SECONDS, -1);
+    time.add(DateTimeField.SECOND, -1);
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(1);
     expect(time.getSecondsInDay()).to.equal(90000);
@@ -65,12 +65,12 @@ describe('DateTime', () => {
 
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
     expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
-    time.add(DateTimeField.SECONDS, 1);
+    time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
     expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(2);
-    time.add(DateTimeField.SECONDS, -1);
+    time.add(DateTimeField.SECOND, -1);
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(1);
   });
@@ -134,11 +134,11 @@ describe('DateTime', () => {
   });
 
   it('should correctly add DateTime fields', () => {
-    expect(new DateTime('2300-05-05T04:08:10.909').add(DateTimeField.MILLIS, -1001).toIsoString(23))
+    expect(new DateTime('2300-05-05T04:08:10.909').add(DateTimeField.MILLI, -1001).toIsoString(23))
       .to.equal('2300-05-05T04:08:09.908');
-    expect(new DateTime('2020-11-29 23:24:35').add(DateTimeField.SECONDS, 30).toIsoString(19))
+    expect(new DateTime('2020-11-29 23:24:35').add(DateTimeField.SECOND, 30).toIsoString(19))
       .to.equal('2020-11-29T23:25:05');
-    expect(new DateTime('1884-02-03 22:53').add(DateTimeField.MINUTES, 14).toIsoString(16))
+    expect(new DateTime('1884-02-03 22:53').add(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T23:07');
     expect(new DateTime('1884-02-03 22:53').add(DateTimeField.HOUR, -25).toIsoString(16))
       .to.equal('1884-02-02T21:53');
@@ -162,11 +162,11 @@ describe('DateTime', () => {
   });
 
   it('should correctly roll DateTime fields', () => {
-    expect(new DateTime('2300-05-05T04:08:10.909').roll(DateTimeField.MILLIS, -1001).toIsoString(23))
+    expect(new DateTime('2300-05-05T04:08:10.909').roll(DateTimeField.MILLI, -1001).toIsoString(23))
       .to.equal('2300-05-05T04:08:10.908');
-    expect(new DateTime('2020-11-29 23:24:35').roll(DateTimeField.SECONDS, 30).toIsoString(19))
+    expect(new DateTime('2020-11-29 23:24:35').roll(DateTimeField.SECOND, 30).toIsoString(19))
       .to.equal('2020-11-29T23:24:05');
-    expect(new DateTime('1884-02-03 22:53').roll(DateTimeField.MINUTES, 14).toIsoString(16))
+    expect(new DateTime('1884-02-03 22:53').roll(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T22:07');
     expect(new DateTime('1884-02-03 22:53').roll(DateTimeField.HOUR, -25).toIsoString(16))
       .to.equal('1884-02-03T21:53');
@@ -208,26 +208,26 @@ describe('DateTime', () => {
   });
 
   it('should correctly set DateTime fields', () => {
-    expect(new DateTime('2300-05-05T04:08:10.909').set(DateTimeField.MILLIS, 123).toIsoString(23))
+    expect(new DateTime('2300-05-05T04:08:10.909').set(DateTimeField.MILLI, 123).toIsoString(23))
       .to.equal('2300-05-05T04:08:10.123');
-    expect(() => new DateTime().set(DateTimeField.MILLIS, -7)).to.throw('MILLIS (-7) must be in the range [0, 999]');
-    expect(new DateTime('2020-11-29 23:24:35').set(DateTimeField.SECONDS, 30).toIsoString(19))
+    expect(() => new DateTime().set(DateTimeField.MILLI, -7)).to.throw('MILLIS (-7) must be in the range [0, 999]');
+    expect(new DateTime('2020-11-29 23:24:35').set(DateTimeField.SECOND, 30).toIsoString(19))
       .to.equal('2020-11-29T23:24:30');
-    expect(() => new DateTime().set(DateTimeField.SECONDS, 63)).to.throw('SECONDS (63) must be in the range [0, 59]');
-    expect(new DateTime('1884-02-03 22:14').set(DateTimeField.MINUTES, 14).toIsoString(16))
+    expect(() => new DateTime().set(DateTimeField.SECOND, 63)).to.throw('SECONDS (63) must be in the range [0, 59]');
+    expect(new DateTime('1884-02-03 22:14').set(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T22:14');
-    expect(() => new DateTime().set(DateTimeField.MINUTES, 77)).to.throw('MINUTES (77) must be in the range [0, 59]');
+    expect(() => new DateTime().set(DateTimeField.MINUTE, 77)).to.throw('MINUTES (77) must be in the range [0, 59]');
     expect(new DateTime('1884-02-03 22:53').set(DateTimeField.HOUR_12, 8).toIsoString(16))
       .to.equal('1884-02-03T20:53');
     expect(() => new DateTime().set(DateTimeField.HOUR_12, 19)).to.throw('HOUR_12 (19) must be in the range [1, 12]');
     expect(new DateTime('1884-02-03 22:53').set(DateTimeField.HOUR, 21).toIsoString(16))
       .to.equal('1884-02-03T21:53');
     expect(() => new DateTime().set(DateTimeField.HOUR, 24)).to.throw('HOUR (24) must be in the range [0, 23]');
-    expect(new DateTime('7070-06-07').set(DateTimeField.DATE, 12).toIsoString(10)).to.equal('7070-06-12');
-    expect(new DateTime('7070-02-01').set(DateTimeField.DATE, 29, true).toIsoString(10)).to.equal('7070-03-01');
-    expect(() => new DateTime('7070-02-01').set(DateTimeField.DATE, 29)).to.throw('DATE (29) must be in the range [1, 28]');
-    expect(() => new DateTime('1582-10-20').set(DateTimeField.DATE, 7)).to.throw('7 is an invalid date in the month 10/1582');
-    expect(new DateTime('1582-10-20').set(DateTimeField.DATE, 7, true).toIsoString(10)).to.equal('1582-10-15');
+    expect(new DateTime('7070-06-07').set(DateTimeField.DAY, 12).toIsoString(10)).to.equal('7070-06-12');
+    expect(new DateTime('7070-02-01').set(DateTimeField.DAY, 29, true).toIsoString(10)).to.equal('7070-03-01');
+    expect(() => new DateTime('7070-02-01').set(DateTimeField.DAY, 29)).to.throw('DATE (29) must be in the range [1, 28]');
+    expect(() => new DateTime('1582-10-20').set(DateTimeField.DAY, 7)).to.throw('7 is an invalid date in the month 10/1582');
+    expect(new DateTime('1582-10-20').set(DateTimeField.DAY, 7, true).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('2021-01-04').set(DateTimeField.DAY_OF_WEEK, 0, true).toIsoString(10)).to.equal('2021-01-03');
     expect(new DateTime('1930-07-04').set(DateTimeField.DAY_OF_YEAR, 32).toIsoString(10)).to.equal('1930-02-01');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK, 1)
@@ -286,5 +286,32 @@ describe('DateTime', () => {
     d.utcTimeMillis = 0;
     expect(d.wallTime.y).to.equal(1970);
     expect(() => d.lock().utcTimeMillis = 1).to.throw('This DateTime instance is locked and immutable');
+  });
+
+  it('should correctly perform DateTime comparisons', () => {
+    const dt = new DateTime('2021-03-04T05:06:07.888');
+    const dt2 = new DateTime('1969-07-12T20:17');
+
+    expect(dt.isAfter('2021-03-04T05:06:07.887')).to.be.true;
+    expect(dt.isAfter('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.false;
+    expect(dt.isSameOrAfter('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
+    expect(() => dt.isAfter('05:06:07.887')).to.throw('Mismatched DateTime types DATETIME/DATELESS');
+    expect(dt.isBefore('2021-03-04T05:06:07.887')).to.be.false;
+    expect(dt.isBefore('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.false;
+    expect(dt.isSameOrBefore('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
+    expect(dt.isSame('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
+    expect(dt2.isAfter('1969-07-12', DateTimeField.MINUTE)).to.be.true;
+    expect(dt2.isAfter('1969-07-12', DateTimeField.HOUR)).to.be.true;
+    expect(dt2.isAfter('1969-07-12', DateTimeField.DAY)).to.be.false;
+    expect(dt2.isAfter('1969-07-11', DateTimeField.DAY)).to.be.true;
+    expect(dt2.isSame('1969-07-01', DateTimeField.MONTH)).to.be.true;
+    expect(dt2.isBefore('1969-07-01', DateTimeField.MONTH)).to.be.false;
+    expect(dt2.isBefore('1969-08-01', DateTimeField.MONTH)).to.be.true;
+    expect(dt2.isBefore('1969-08-01', DateTimeField.YEAR)).to.be.false;
+    expect(dt2.isBefore('1970-08-01', DateTimeField.YEAR)).to.be.true;
+    expect(new DateTime().isAfter('1776-06-04')).to.be.true;
+    expect(new DateTime().isBetween('1776-06-04', '9999-12-31')).to.be.true;
+    expect(new DateTime().isBetween('1776-06-04', '1809-02-12')).to.be.false;
+    expect(new DateTime().isBetween('9976-06-04', '9999-12-31')).to.be.false;
   });
 });

@@ -26,7 +26,8 @@ import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek } from './locale-data';
 
 export enum DateTimeField {
-  MILLIS, SECONDS, MINUTES, HOUR_12, HOUR, AM_PM, DAY, DATE = DAY,
+  FULL = -1,
+  MILLI, SECOND, MINUTE, HOUR_12, HOUR, AM_PM, DAY,
   DAY_OF_WEEK, DAY_OF_WEEK_LOCALE, DAY_OF_YEAR, WEEK, WEEK_LOCALE,
   MONTH, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
 }
@@ -41,6 +42,9 @@ const fullIsoFormat = 'yyyy-MM-DDTHH:mm:ss.SSSZ';
 // noinspection SpellCheckingInspection
 const fullAltFormat = 'yyyy-MM-DDTHH:mm:ss.SSSRZv';
 const timeOnlyFormat = 'HH:mm:ss.SSS';
+
+const DATELESS = Timezone.DATELESS;
+const ZONELESS = Timezone.ZONELESS;
 
 export class DateTime extends Calendar {
   private static defaultCenturyBase = 1970;
@@ -77,6 +81,32 @@ export class DateTime extends Calendar {
       newZone = Timezone.from(newZone);
 
     DateTime.defaultTimezone = newZone;
+  }
+
+  static compare(d1: DateTime, d2: DateTime | string | number | Date, resolution = DateTimeField.FULL): number {
+    if (isString(d2) || isNumber(d2) || d2 instanceof Date)
+      d2 = new DateTime(d2, d1.timezone, d1.locale, d1.getGregorianChange());
+
+    if (d1.type !== d2.type)
+      throw new Error(`Mismatched DateTime types ${d1.type}/${d2.type}`);
+    else if (d1._timezone === DATELESS && resolution > DateTimeField.HOUR)
+      throw new Error(`Resolution ${DateTimeField[resolution]} not valid for time-only values`);
+
+    if (resolution === DateTimeField.FULL || resolution === DateTimeField.MILLI)
+      return d1._utcTimeMillis - d2._utcTimeMillis;
+
+    const divisor = [1, 1000, 60_000, undefined, 3_600_000][resolution];
+
+    if (divisor != null)
+      return floor(d1._utcTimeMillis / divisor) - floor(d2._utcTimeMillis / divisor);
+    else if (resolution === DateTimeField.DAY)
+      return floor(d1._wallTime.n) - floor(d2._wallTime.n);
+    else if (resolution === DateTimeField.MONTH)
+      return (d1.wallTime.y !== d2.wallTime.y ? d1.wallTime.y - d2.wallTime.y : d1.wallTime.m - d2.wallTime.m);
+    else if (resolution === DateTimeField.YEAR)
+      return d1.wallTime.y - d2.wallTime.y;
+
+    throw new Error(`Resolution ${DateTimeField[resolution]} not valid`);
   }
 
   static INVALID_DATE = new DateTime(NaN).lock();
@@ -122,7 +152,7 @@ export class DateTime extends Calendar {
           initialTime = parseISODateTime(initialTime);
 
           if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null)
-            timezone = Timezone.DATELESS;
+            timezone = DATELESS;
         }
         catch {
           initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
@@ -175,6 +205,15 @@ export class DateTime extends Calendar {
     return copy;
   }
 
+  get type(): 'ZONELESS' | 'DATELESS' | 'DATETIME' {
+    if (this._timezone === ZONELESS)
+      return 'ZONELESS';
+    else if (this._timezone === DATELESS)
+      return 'DATELESS';
+    else
+      return 'DATETIME';
+  }
+
   get valid(): boolean { return this._utcTimeMillis != null && !isNaN(this._utcTimeMillis); }
 
   get utcTimeMillis(): number { return this._utcTimeMillis; }
@@ -191,7 +230,7 @@ export class DateTime extends Calendar {
   get wallTime(): DateAndTime {
     const w = clone(this._wallTime);
 
-    if (this._timezone === Timezone.DATELESS)
+    if (this._timezone === DATELESS)
       ['y', 'year', 'm', 'month', 'd', 'day', 'dy', 'dayOfYear',
        'n', 'epochDay', 'j', 'isJulian', 'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayOfWeek',
        'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayOfWeekLocale',
@@ -212,10 +251,10 @@ export class DateTime extends Calendar {
         newTime.y = 1970;
         newTime.m = 1;
         newTime.d = 1;
-        this._timezone = Timezone.DATELESS;
+        this._timezone = DATELESS;
       }
-      else if (this._timezone === Timezone.DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null))
-        this._timezone = Timezone.ZONELESS;
+      else if (this._timezone === DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null))
+        this._timezone = ZONELESS;
 
       this._wallTime = newTime;
       this.updateUtcMillisFromWallTime();
@@ -291,7 +330,7 @@ export class DateTime extends Calendar {
   }
 
   private checkDateless(field: DateTimeField) {
-    if (this._timezone === Timezone.DATELESS)
+    if (this._timezone === DATELESS)
       throw new Error(`${DateTimeField[field]} cannot be used with a dateless time value`);
   }
 
@@ -308,15 +347,15 @@ export class DateTime extends Calendar {
     const wallTime = result._wallTime;
 
     switch (field) {
-      case DateTimeField.MILLIS:
+      case DateTimeField.MILLI:
         result._utcTimeMillis += amount;
         break;
 
-      case DateTimeField.SECONDS:
+      case DateTimeField.SECOND:
         result._utcTimeMillis += amount * 1000;
         break;
 
-      case DateTimeField.MINUTES:
+      case DateTimeField.MINUTE:
         result._utcTimeMillis += amount * 60_000;
         break;
 
@@ -363,7 +402,7 @@ export class DateTime extends Calendar {
       result.updateUtcMillisFromWallTime();
     }
 
-    if (this._timezone === Timezone.DATELESS)
+    if (this._timezone === DATELESS)
       this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
 
     result.updateWallTimeFromCurrentMillis();
@@ -383,15 +422,15 @@ export class DateTime extends Calendar {
     const wallTime = result._wallTime;
 
     switch (field) {
-      case DateTimeField.MILLIS:
+      case DateTimeField.MILLI:
         wallTime.millis = mod(wallTime.millis + amount, 1000);
         break;
 
-      case DateTimeField.SECONDS:
+      case DateTimeField.SECOND:
         wallTime.sec = mod(wallTime.sec + amount, 60);
         break;
 
-      case DateTimeField.MINUTES:
+      case DateTimeField.MINUTE:
         wallTime.min = mod(wallTime.min + amount, 60);
         break;
 
@@ -529,7 +568,7 @@ export class DateTime extends Calendar {
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
 
-    if (this._timezone === Timezone.DATELESS)
+    if (this._timezone === DATELESS)
       this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
 
     result.updateWallTimeFromCurrentMillis();
@@ -549,16 +588,16 @@ export class DateTime extends Calendar {
     let max = 59;
 
     switch (field) {
-      case DateTimeField.MILLIS:
+      case DateTimeField.MILLI:
         max = 999;
         wallTime.millis = value;
         break;
 
-      case DateTimeField.SECONDS:
+      case DateTimeField.SECOND:
         wallTime.sec = value;
         break;
 
-      case DateTimeField.MINUTES:
+      case DateTimeField.MINUTE:
         wallTime.min = value;
         break;
 
@@ -585,7 +624,7 @@ export class DateTime extends Calendar {
           wallTime.hrs += 12;
         break;
 
-      case DateTimeField.DATE:
+      case DateTimeField.DAY:
         this.checkDateless(field);
         min = loose ? 0 : 1;
         max = loose ? 32 : this.getLastDateInMonth();
@@ -706,12 +745,41 @@ export class DateTime extends Calendar {
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
 
-    if (this._timezone === Timezone.DATELESS)
+    if (this._timezone === DATELESS)
       this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
 
     result.updateWallTimeFromCurrentMillis();
 
     return result._lock(this.locked);
+  }
+
+  compare(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): number {
+    return DateTime.compare(this, other, resolution);
+  }
+
+  isBefore(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+    return this.compare(other, resolution) < 0;
+  }
+
+  isSameOrBefore(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+    return this.compare(other, resolution) <= 0;
+  }
+
+  isSame(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+    return this.compare(other, resolution) === 0;
+  }
+
+  isSameOrAfter(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+    return this.compare(other, resolution) >= 0;
+  }
+
+  isAfter(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+    return this.compare(other, resolution) > 0;
+  }
+
+  isBetween(low: DateTime | string | number | Date, high: DateTime | string | number | Date,
+            resolution = DateTimeField.FULL): boolean {
+    return this.compare(low, resolution) > 0 && this.compare(high, resolution) < 0;
   }
 
   getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number {
@@ -797,7 +865,7 @@ export class DateTime extends Calendar {
   }
 
   toString(): string {
-    return 'DateTime<' + this.format(this.timezone === Timezone.DATELESS ? timeOnlyFormat : fullAltFormat) + '>';
+    return 'DateTime<' + this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat) + '>';
   }
 
   toYMDhmString(): string {

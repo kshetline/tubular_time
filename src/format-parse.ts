@@ -118,7 +118,7 @@ function isLetter(char: string, checkDot = false): boolean {
   // This custom test works out better than the \p{L} character class for parsing purposes here.
   return (checkDot && char === '.') ||
     // eslint-disable-next-line no-misleading-character-class -- Deliberately including combining diacritical marks
-    /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-ҀҊ-ԯ\u05D0-\u05E9\u0620-\u065F\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FFऄ-\u0939\u0F00-\u0F14\u0F40-\u0FBC\u1000-\u103F]/.test(char);
+    /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-ҀҊ-ԯ\u05D0-\u05E9\u0620-\u065F\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FF\u0904-\u0939\u0F00-\u0F14\u0F40-\u0FBC\u1000-\u103F]/.test(char);
 }
 
 function isCased(s: string): boolean {
