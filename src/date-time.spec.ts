@@ -134,14 +134,14 @@ describe('DateTime', () => {
     expect(time3.wallTime.sec).to.equal(4);
   });
 
-  it('should correctly add DateTime fields', () => {
+  it('should correctly add/subtract DateTime fields', () => {
     expect(new DateTime('2300-05-05T04:08:10.909').add(DateTimeField.MILLI, -1001).toIsoString(23))
       .to.equal('2300-05-05T04:08:09.908');
     expect(new DateTime('2020-11-29 23:24:35').add(DateTimeField.SECOND, 30).toIsoString(19))
       .to.equal('2020-11-29T23:25:05');
     expect(new DateTime('1884-02-03 22:53').add(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T23:07');
-    expect(new DateTime('1884-02-03 22:53').add(DateTimeField.HOUR, -25).toIsoString(16))
+    expect(new DateTime('1884-02-03 22:53').subtract(DateTimeField.HOUR, 25).toIsoString(16))
       .to.equal('1884-02-02T21:53');
     expect(new DateTime('2021-03-14T01:23-05:00', 'America/New_York').add(DateTimeField.HOUR, 1).toIsoString())
       .to.equal('2021-03-14T03:23:00.000-04:00'); // DST start
@@ -152,7 +152,7 @@ describe('DateTime', () => {
     expect(new DateTime('2020-02-28').add(DateTimeField.DAY, 1).toIsoString(10)).to.equal('2020-02-29');
     expect(new DateTime('2019-02-28').add(DateTimeField.DAY, 1).toIsoString(10)).to.equal('2019-03-01');
     expect(new DateTime('1582-10-20').add(DateTimeField.DAY, -6).toIsoString(10)).to.equal('1582-10-04');
-    expect(new DateTime('1582-10-20').add(DateTimeField.DAY, -7).toIsoString(10)).to.equal('1582-10-03');
+    expect(new DateTime('1582-10-20').subtract(DateTimeField.DAY, 7).toIsoString(10)).to.equal('1582-10-03');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAY, 1).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAY, 2).toIsoString(10)).to.equal('1582-10-16');
     expect(new DateTime('2021-02-28').add(DateTimeField.WEEK, -3).toIsoString(10)).to.equal('2021-02-07');
