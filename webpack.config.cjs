@@ -2,15 +2,19 @@ const { Compilation, sources } = require('webpack');
 const { resolve } = require('path');
 
 module.exports = env => {
+  const esVersion = env?.esver === '5' ? 'es5' : 'es6';
+  const dir = env?.esver === '5' ? 'web5' : 'web';
+  const chromeVersion = env?.esver === '5' ? '23' : '51';
+
   // noinspection JSUnresolvedVariable,JSUnresolvedFunction,JSUnresolvedFunction
   return {
     mode: env?.dev ? 'development' : 'production',
-    target: ['es5', 'web'],
+    target: [esVersion, 'web'],
     entry: {
       index: './dist/index.js'
     },
     output: {
-      path: resolve(__dirname, 'dist/web'),
+      path: resolve(__dirname, 'dist/' + dir),
       filename: `index.js`,
       libraryTarget: 'umd',
       library: 'tbTime'
@@ -21,7 +25,7 @@ module.exports = env => {
           test: /\.js$/,
           use: {
             loader: 'babel-loader',
-            options: { presets: ['@babel/preset-env'] }
+            options: { presets: [['@babel/preset-env', { targets: { chrome: chromeVersion } }]] }
           },
           resolve: { fullySpecified: false }
         }
@@ -31,6 +35,7 @@ module.exports = env => {
       mainFields: ['esm2015', 'es2015', 'module', 'main', 'browser']
     },
     externals: { 'by-request': 'by-request' },
+    devtool: 'source-map',
     plugins: [
       new class OutputMonitor {
         // noinspection JSUnusedGlobalSymbols
@@ -51,7 +56,6 @@ module.exports = env => {
           });
         }
       }()
-    ],
-    devtool: 'source-map'
+    ]
   };
 };
