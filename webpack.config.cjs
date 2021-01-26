@@ -45,12 +45,19 @@ module.exports = env => {
               { name: 'OutputMonitor', stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE },
               () => {
                 const file = compilation.getAsset('index.js');
+                const { devtool } = compiler.options;
                 let contents = file.source.source();
+                const { map } = file.source.sourceAndMap();
+
                 // Strip out dynamic import() so it doesn't generate warnings.
                 contents = contents.replace(/return import\(.*?\/\* webpackIgnore: true \*\/.*?tseuqer-yb.*?\.join\(''\)\)/s, 'return null');
                 // Strip out large and large-alt timezone definitions from this build.
                 contents = contents.replace(/\/\* trim-file-start \*\/.*?\/\* trim-file-end \*\//sg, 'null');
-                compilation.updateAsset('index.js', new sources.RawSource(contents));
+
+                compilation.updateAsset('index.js', devtool
+                  ? new sources.SourceMapSource(contents, 'index.js', map)
+                  : new sources.RawSource(contents)
+                );
               }
             );
           });

@@ -95,19 +95,20 @@ export class DateTime extends Calendar {
   }
 
   constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null, gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string| null,
+  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
+  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null,
               gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
     if (isString(initialTime)) {
+      const saveTime = initialTime;
       const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
       let zone: string;
 
-      if ($ && $.index > 0) {
+      if ($) {
         zone = $[1];
 
-        initialTime = initialTime.slice(0, -zone.length).trim();
+        initialTime = initialTime.slice(0, -zone.length).trim() || null;
 
         if (/^(Z|UT|UTC|GMT)$/i.test(zone))
           zone = 'UT';
@@ -119,7 +120,13 @@ export class DateTime extends Calendar {
 
           if (szni) {
             timezone = Timezone.from(szni.ianaName);
-            initialTime += ' ' + Timezone.formatUtcOffset(szni.utcOffset);
+
+            if (initialTime)
+              initialTime += ' ' + Timezone.formatUtcOffset(szni.utcOffset);
+          }
+          else if ($.index === 0) {
+            initialTime = saveTime;
+            timezone = null;
           }
           else
             throw new Error(`Bad timezone: ${zone}`);

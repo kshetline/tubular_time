@@ -61,9 +61,11 @@ describe('Zone updates', () => {
   });
 
   it('should provide alternate access to DateTime instance creation and parsing', () => {
+    initTimezoneSmall();
     expect(ttime().utcTimeMillis).approximately(Date.now(), 1000);
-    expect(ttime('1945-05-08').utcTimeMillis).to.equal(Date.parse('May 8, 1945'));
-    expect(ttime('May 8, 1945', 'MMM D, Y').utcTimeMillis).to.equal(Date.parse('May 8, 1945'));
+    expect(ttime('Europe/Prague').getTimezoneDisplayName()).to.match(/^CES?T$/);
+    expect(ttime('1945-05-08').utcTimeMillis).to.equal(Date.parse('May 8, 1945 00:00 EDT'));
+    expect(ttime('May 8, 1945', 'MMM D, Y').utcTimeMillis).to.equal(Date.parse('May 8, 1945 00:00 EDT'));
     expect(ttime('8/5/1945', 'IS', 'es').format('IM')).to.equal('8 may. 1945');
     expect(ttime('8/5/45', 'IS', 'es').format('IM')).to.equal('8 may. 2045');
   });
