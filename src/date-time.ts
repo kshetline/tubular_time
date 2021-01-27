@@ -19,9 +19,9 @@ const localeTest = /^[a-z][a-z][-_a-z]*$/i;
 const lockError = new Error('This DateTime instance is locked and immutable');
 const nonIntError = new Error('Amounts for add/roll must be integers');
 // noinspection SpellCheckingInspection
-const fullIsoFormat = 'yyyy-MM-DDTHH:mm:ss.SSSZ';
+const fullIsoFormat = 'Y-MM-DDTHH:mm:ss.SSSZ';
 // noinspection SpellCheckingInspection
-const fullAltFormat = 'yyyy-MM-DDTHH:mm:ss.SSSRZv';
+const fullAltFormat = 'Y-MM-DDTHH:mm:ss.SSSRZv';
 const timeOnlyFormat = 'HH:mm:ss.SSS';
 
 const DATELESS = Timezone.DATELESS;
@@ -152,7 +152,7 @@ export class DateTime extends Calendar {
       timezone = Timezone.from(timezone);
 
     if (timezone?.error)
-      throw new Error(`Bad timezone: ${timezone.zoneName}`);
+      throw new Error(`Bad timezone: ${timezone!.zoneName}`);
 
     if (timezone)
       this._timezone = timezone;
@@ -266,8 +266,20 @@ export class DateTime extends Calendar {
   }
 
   tz(newZone: Timezone | string, keepLocalTime = false): DateTime {
-    if (isString(newZone))
-      newZone = Timezone.from(newZone);
+    if (isString(newZone)) {
+      const zone = Timezone.from(newZone);
+
+      if (zone.error) {
+        const szni = Timezone.getShortZoneNameInfo(newZone);
+
+        if (szni)
+          newZone = Timezone.from(szni.ianaName);
+        else
+          throw new Error(`Bad timezone: ${newZone}`);
+      }
+      else
+        newZone = zone;
+    }
 
     const result = this.clone();
     const wallTime = result.wallTime; // copy
@@ -866,7 +878,7 @@ export class DateTime extends Calendar {
   }
 
   toYMDhmString(): string {
-    return formatter(this, 'YYYY-MM-DD HH:mmv', 'en-US');
+    return formatter(this, 'Y-MM-DD HH:mmv', 'en-US');
   }
 
   toIsoString(maxLength?: number): string {

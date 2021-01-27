@@ -19,8 +19,13 @@ describe('FormatParse', () => {
     expect(new DateTime('2022-07-07 8:08 PDT').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('1995-05-06 EDT').format('IMM zzz ZZZ z')).to.equal('May 6, 1995, 4:00:00 AM Eastern Daylight Time America/New_York EDT');
     expect(new DateTime('foo').valid).is.false;
-    expect(new DateTime('2021-W06-4').format('YYYY-[W]WW-d')).to.equal('2021-W06-4');
-    expect(new DateTime('2021-W06-4').format('YYYY-[w]ww-d')).to.equal('2021-w07-5');
+    expect(new DateTime('2021-01-02').format('YYYY-[W]WW-E')).to.equal('2020-W53-6');
+    expect(new DateTime('2021-01-03').format('YYYY-[W]WW-E')).to.equal('2020-W53-7');
+    expect(new DateTime('2021-01-04').format('YYYY-[W]WW-E')).to.equal('2021-W01-1');
+    expect(new DateTime('2021-W06-4').format('YYYY-[W]WW-E')).to.equal('2021-W06-4');
+    expect(new DateTime('2021-W06-4').format('YYYY-[w]ww-e')).to.equal('2021-w07-5');
+    expect(new DateTime('20212-06-04').format('YYYY-MM-DD')).to.equal('20212-06-04');
+    expect(new DateTime('20212-06-04').format('Y-MM-DD')).to.equal('+20212-06-04');
     expect(new DateTime('1986-09-04T20:30:03').format('yyyy-MMM-DD, hh:mm A')).to.equal('1986-Sep-04, 08:30 PM');
     expect(new DateTime('1986-09-04T20:30:03').format('LTS')).to.equal('8:30:03 PM');
     expect(new DateTime('1986-09-04T20:30:03').format('LLLL')).to.equal('Thursday, September 4, 1986, 8:30 PM');
@@ -32,8 +37,8 @@ describe('FormatParse', () => {
     expect(new DateTime('-1986-09-04').format('MMM D, y n')).to.equal('Sep 4, 1987 BC');
     expect(new DateTime('1986-09-04T20:30:03').toLocale('fr').format('yyyy MMMM DD, hh:mm A')).to.equal('1986 septembre 04, 08:30 PM');
     expect(new DateTime('1986-05-04T20:30:03').format('yyyy MMMM DD, HH:mm', 'es')).to.equal('1986 mayo 04, 20:30');
-    expect(new DateTime('2021-05-04').format('YYYY-MM-DD [Q:]Q Qo [M:]Mo [W:]Wo [d:]do [w:]wo [d:]do [D:]Do'))
-      .to.equal('2021-05-04 Q:2 2nd M:5th W:18th d:2nd w:19th d:3rd D:4th');
+    expect(new DateTime('2021-05-04').format('YYYY-MM-DD [Q:]Q Qo [M:]Mo [W:]Wo [d:]do [w:]wo [E:]E [e:]e'))
+      .to.equal('2021-05-04 Q:2 2nd M:5th W:18th d:2nd w:19th E:2 e:3');
     expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
     expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');

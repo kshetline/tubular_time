@@ -18,7 +18,7 @@ const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m:
                     ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
 const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|e|E|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
+const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 
 function formatEscape(s: string): string {
@@ -142,8 +142,6 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
   const wt = dt.wallTime;
-  const year = wt.y;
-  const eraYear = abs(year) + (year <= 0 ? 1 : 0);
   const month = wt.m;
   const quarter = floor((month + 2) / 3);
   const day = wt.d;
@@ -154,11 +152,15 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const min = wt.min;
   const sec = wt.sec;
   const dayOfWeek = dt.getDayOfWeek();
-  let isoWeek = !parts.find((value, index) => index % 2 === 1 && /ww?/.test(value));
+  let localeWeek = !!parts.find((value, index) => index % 2 === 1 && /ww?/.test(value));
+  let isoWeek = !!parts.find((value, index) => index % 2 === 1 && /WW?/.test(value));
 
   for (let i = 0; i < parts.length; i += 2) {
     result.push(parts[i]);
+
     const field = parts[i + 1];
+    const year = (localeWeek ? wt.ywl : isoWeek ? wt.yw : wt.y);
+    const eraYear = abs(year) + (year <= 0 ? 1 : 0);
 
     if (field == null)
       break;
@@ -175,7 +177,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'YYYY': // year, padded to at least 4 digits, signed if negative or > 9999
       case 'yyyy':
       case 'Y':
-        result.push((year < 0 ? '-' : year <= 9999 ? '' : '+') + toNum(abs(year), 4));
+        result.push((year < 0 ? '-' : year <= 9999 ? '' : field === 'Y' ? '+' : '') + toNum(abs(year), 4));
         break;
 
       case 'YY': // 2-digit year
@@ -218,23 +220,27 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'Wo': // ISO week ordinal
         result.push(locale.ordinals[wt.w]);
         isoWeek = true;
+        localeWeek = false;
         break;
 
       case 'WW': // ISO week number
       case 'W':
         result.push(toNum(wt.w, field === 'WW' ? 2 : 1));
         isoWeek = true;
+        localeWeek = false;
         break;
 
       case 'wo': // Locale week ordinal
         result.push(locale.ordinals[wt.wl]);
         isoWeek = false;
+        localeWeek = true;
         break;
 
       case 'ww': // Locale week number
       case 'w':
         result.push(toNum(wt.wl, field === 'ww' ? 2 : 1));
         isoWeek = false;
+        localeWeek = true;
         break;
 
       case 'DD': // 2-digit day of month
@@ -262,11 +268,19 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'do': // Day-of-week ordinal
-        result.push(locale.ordinals[isoWeek ? wt.dw : wt.dwl]);
+        result.push(locale.ordinals[dayOfWeek]);
         break;
 
       case 'd': // Day-of-week number
-        result.push(toNum(isoWeek ? wt.dw : wt.dwl));
+        result.push(toNum(dayOfWeek));
+        break;
+
+      case 'E': // Day-of-week ISO
+        result.push(toNum(wt.dw));
+        break;
+
+      case 'e': // Day-of-week locale
+        result.push(toNum(wt.dwl));
         break;
 
       case 'HH': // Two-digit 0-23 hour

@@ -60,6 +60,10 @@ export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
 export { zonePollerNode } from './zone-poller-node';
 
+export const julianDay = DateTime.julianDay;
+export const millisFromJulianDay = DateTime.millisFromJulianDay;
+export const julianDay_SGC = DateTime.julianDay_SGC;
+
 export function initTimezoneSmall(): void {
   Timezone.defineTimezones(timezoneSmall);
 }
