@@ -142,6 +142,8 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
   const wt = dt.wallTime;
+  const year = wt.y;
+  const eraYear = abs(year) + (year <= 0 ? 1 : 0);
   const month = wt.m;
   const quarter = floor((month + 2) / 3);
   const day = wt.d;
@@ -152,15 +154,11 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const min = wt.min;
   const sec = wt.sec;
   const dayOfWeek = dt.getDayOfWeek();
-  let localeWeek = !!parts.find((value, index) => index % 2 === 1 && /ww?/.test(value));
-  let isoWeek = !!parts.find((value, index) => index % 2 === 1 && /WW?/.test(value));
 
   for (let i = 0; i < parts.length; i += 2) {
     result.push(parts[i]);
 
     const field = parts[i + 1];
-    const year = (localeWeek ? wt.ywl : isoWeek ? wt.yw : wt.y);
-    const eraYear = abs(year) + (year <= 0 ? 1 : 0);
 
     if (field == null)
       break;
@@ -187,6 +185,16 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'y': // Era year, never signed, min value 1.
         result.push(toNum(eraYear));
+        break;
+
+      case 'GGGG': // ISO-week year
+      case 'GG':
+        result.push((wt.yw < 0 ? '-' : '') + toNum(field.length === 2 ? abs(wt.yw) % 100 : abs(wt.yw), field.length));
+        break;
+
+      case 'gggg': // Locale-week year
+      case 'gg':
+        result.push((wt.ywl < 0 ? '-' : '') + toNum(field.length === 2 ? abs(wt.ywl) % 100 : abs(wt.ywl), field.length));
         break;
 
       case 'Qo': // Quarter ordinal
@@ -219,28 +227,20 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'Wo': // ISO week ordinal
         result.push(locale.ordinals[wt.w]);
-        isoWeek = true;
-        localeWeek = false;
         break;
 
       case 'WW': // ISO week number
       case 'W':
         result.push(toNum(wt.w, field === 'WW' ? 2 : 1));
-        isoWeek = true;
-        localeWeek = false;
         break;
 
       case 'wo': // Locale week ordinal
         result.push(locale.ordinals[wt.wl]);
-        isoWeek = false;
-        localeWeek = true;
         break;
 
       case 'ww': // Locale week number
       case 'w':
         result.push(toNum(wt.wl, field === 'ww' ? 2 : 1));
-        isoWeek = false;
-        localeWeek = true;
         break;
 
       case 'DD': // 2-digit day of month
@@ -847,7 +847,7 @@ function skipDayOfWeek(locale: ILocale, input: string): number {
 }
 
 function isNumericPart(part: string): boolean {
-  return part.toLowerCase().startsWith('y') || (part.length < 3 && /^[MDHhKkmsS]/.test(part));
+  return /^[gy]/i.test(part) || (part.length < 3 && /^[WwMDEeHhKkmsS]/.test(part));
 }
 
 export function parse(input: string, format: string, zone?: Timezone | string, locales?: string | string[]): DateTime {
@@ -883,6 +883,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
   const w = {} as DateAndTime;
   const parts = decomposeFormatString(format);
   const hasEraField = !!parts.find(part => part.toLowerCase().startsWith('n'));
+  const base = DateTime.getDefaultCenturyBase();
   let bce: boolean = null;
   let pm: boolean = null;
   let pos: number;
@@ -918,25 +919,23 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
     if (part.endsWith('o'))
       throw new Error('Parsing of ordinal forms is not supported');
-
-    if (part === 'd' || part.toLowerCase() === 'w')
-      throw new Error('Parsing of week-of-year/day-of-week only supported for ISO-8601 dates');
+    else if (part === 'd')
+      throw new Error('Parsing "d" token is not supported');
 
     let firstChar = part.substr(0, 1);
     let newValueText = (/^([-+]?\d+)/.exec(input) ?? [])[1];
     let newValue = toNumber(newValueText);
+    const value2d = newValue - base % 100 + base + (newValue < base % 100 ? 100 : 0);
     let handled = false;
 
-    if (newValueText != null && part.length < 3 || firstChar.toLowerCase() === 'y') {
+    if (newValueText != null && part.length < 3 || /[gy]/i.test(part)) {
       handled = true;
 
       switch (firstChar) {
         case 'Y':
         case 'y':
-          if (part.toLowerCase() === 'yy' && newValueText.length < 3) {
-            const base = DateTime.getDefaultCenturyBase();
-            w.y = newValue - base % 100 + base + (newValue < base % 100 ? 100 : 0);
-          }
+          if (part.toLowerCase() === 'yy' && newValueText.length < 3)
+            w.y = value2d;
           else if (bce)
             w.y = 1 - newValue;
           else
@@ -947,7 +946,20 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
             handled = false;
             input = input.substr(newValueText?.length ?? 0).trimLeft();
           }
+          break;
 
+        case 'G':
+          if (part.length === 2 && newValueText.length < 3)
+            w.yw = value2d;
+          else
+            w.yw = newValue;
+          break;
+
+        case 'g':
+          if (part.length === 2 && newValueText.length < 3)
+            w.ywl = value2d;
+          else
+            w.ywl = newValue;
           break;
 
         case 'M':
@@ -955,9 +967,29 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           w.m = newValue;
           break;
 
+        case 'W':
+          validateField('week-iso', newValue, 1, 53);
+          w.w = newValue;
+          break;
+
+        case 'w':
+          validateField('week-locale', newValue, 1, 53);
+          w.wl = newValue;
+          break;
+
         case 'D':
           validateField('date', newValue, 1, 31);
           w.d = newValue;
+          break;
+
+        case 'E':
+          validateField('day-of-week-iso', newValue, 1, 7);
+          w.dw = newValue;
+          break;
+
+        case 'e':
+          validateField('day-of-week-locale', newValue, 1, 7);
+          w.dwl = newValue;
           break;
 
         case 'H':
@@ -1142,7 +1174,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     }
   }
 
-  if (w.y == null)
+  if (w.y == null && w.yw == null && w.ywl == null)
     zone = undefined;
 
   let result = new DateTime(w, zone, locales);

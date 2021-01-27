@@ -232,9 +232,9 @@ describe('DateTime', () => {
     expect(new DateTime('2021-01-04').set(DateTimeField.DAY_OF_WEEK, 0, true).toIsoString(10)).to.equal('2021-01-03');
     expect(new DateTime('1930-07-04').set(DateTimeField.DAY_OF_YEAR, 32).toIsoString(10)).to.equal('1930-02-01');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK, 1)
-      .set(DateTimeField.DAY_OF_WEEK, 1).format('yyyy-[W]WW-E')).to.equal('2021-W01-1');
+      .set(DateTimeField.DAY_OF_WEEK, 1).format('GGGG-[W]WW-E')).to.equal('2021-W01-1');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK, 0, true)
-      .set(DateTimeField.DAY_OF_WEEK, 1).format('yyyy-[W]WW-E')).to.equal('2020-W53-1');
+      .set(DateTimeField.DAY_OF_WEEK, 1).format('GGGG-[W]WW-E')).to.equal('2020-W53-1');
     expect(() => new DateTime('2021-02-01').set(DateTimeField.WEEK, 0)).to.throw('WEEK (0) must be in the range [1, 52]');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK_LOCALE, 1)
       .set(DateTimeField.DAY_OF_WEEK, 1).toIsoString(10)).to.equal('2020-12-28');
@@ -246,8 +246,8 @@ describe('DateTime', () => {
     expect(() => new DateTime('1433-11-30').set(DateTimeField.MONTH, 0)).to.throw('MONTH (0) must be in the range [1, 12]');
     expect(new DateTime('-9999-01-01').set(DateTimeField.YEAR, -1).toIsoString(11)).to.equal('-0001-01-01');
     expect(new DateTime('2099-01-01').set(DateTimeField.YEAR, 1).toIsoString(10)).to.equal('0001-01-01');
-    expect(new DateTime('1970-W20-5').set(DateTimeField.YEAR_WEEK, 1850).format('yyyy-[W]WW-E')).to.equal('1850-W20-5');
-    expect(new DateTime('1970-w03-3').set(DateTimeField.YEAR_WEEK_LOCALE, 2).format('yyyy-[w]ww-e')).to.equal('0002-w03-3');
+    expect(new DateTime('1970-W20-5').set(DateTimeField.YEAR_WEEK, 1850).format('GGGG-[W]WW-E')).to.equal('1850-W20-5');
+    expect(new DateTime('1970-w03-3').set(DateTimeField.YEAR_WEEK_LOCALE, 2).format('gggg-[w]ww-e')).to.equal('0002-w03-3');
     expect(new DateTime('1970-03-31').set(DateTimeField.ERA, 0).toIsoString(11)).to.equal('-1969-03-31');
     expect(() => new DateTime('04:05').set(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
   });

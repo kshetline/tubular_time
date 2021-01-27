@@ -43,15 +43,17 @@ The first script element is an example of optionally loading extended timezone d
 
 The package will be available via the global variable `tbTime`. `tbTime.default` is the default function, and other functions an classes will be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, etc.
 
-
-
 | | Token | Output |
 | -------|------:|------- |
+| Era | NNNNN<br>NNN,&nbsp;NN,&nbsp;N | BC AD<br><br>Abbreviated era (no distinctions between narrow and abbreviated). |
+| | n | BC<br><br>Abbreviated era, only shows BC, not AD. When AD, leading space before `n` token is removed. |
 | Year | YYYYYY | -001970 -001971 ... +001907 +001971<br><br>Always-signed years, padded to six digits |
 | | YYYY | 1970 1971 ... 2029 2030<br><br>Padded to at least four digits. |
 | | YY | 70 71 ... 29 30 |
 | | Y | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. |
 | | y | 1 2 ... 2020 ...<br>Era year, for use with BC/AD, never 0 or negative. |
+| Quarter | Qo | 1st 2nd 3rd 4th |
+| | Q | 1 2 3 4 |
 | Month | MMMM | January February ... November December |
 | | MMM | Jan Feb ... Nov Dec |
 | | MM | 01 02 ... 11 12 |
@@ -73,6 +75,9 @@ The package will be available via the global variable `tbTime`. `tbTime.default`
 | | dd | Su Mo ... Fr Sa |
 | | do | 0th 1st ... 5th 6th |
 | | d | 0 1 ... 5 6 |
+| Day of Week (ISO) | E | 1 2 ... 6 7 |
+| Day of Week (locale) | e | 1 2 ... 6 7<br><br>Note: this is 1-based, not 0-based, as in Moment.js |
+
 
 
 **Format not supported by @tubular/time:** DDDo

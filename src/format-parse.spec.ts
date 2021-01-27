@@ -19,11 +19,11 @@ describe('FormatParse', () => {
     expect(new DateTime('2022-07-07 8:08 PDT').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('1995-05-06 EDT').format('IMM zzz ZZZ z')).to.equal('May 6, 1995, 4:00:00 AM Eastern Daylight Time America/New_York EDT');
     expect(new DateTime('foo').valid).is.false;
-    expect(new DateTime('2021-01-02').format('YYYY-[W]WW-E')).to.equal('2020-W53-6');
-    expect(new DateTime('2021-01-03').format('YYYY-[W]WW-E')).to.equal('2020-W53-7');
-    expect(new DateTime('2021-01-04').format('YYYY-[W]WW-E')).to.equal('2021-W01-1');
-    expect(new DateTime('2021-W06-4').format('YYYY-[W]WW-E')).to.equal('2021-W06-4');
-    expect(new DateTime('2021-W06-4').format('YYYY-[w]ww-e')).to.equal('2021-w07-5');
+    expect(new DateTime('2021-01-02').format('GGGG-[W]WW-E')).to.equal('2020-W53-6');
+    expect(new DateTime('2021-01-03').format('GGGG-[W]WW-E')).to.equal('2020-W53-7');
+    expect(new DateTime('2021-01-04').format('GGGG-[W]WW-E')).to.equal('2021-W01-1');
+    expect(new DateTime('2021-W06-4').format('GGGG-[W]WW-E')).to.equal('2021-W06-4');
+    expect(new DateTime('2021-W06-4').format('gggg-[w]ww-e')).to.equal('2021-w07-5');
     expect(new DateTime('20212-06-04').format('YYYY-MM-DD')).to.equal('20212-06-04');
     expect(new DateTime('20212-06-04').format('Y-MM-DD')).to.equal('+20212-06-04');
     expect(new DateTime('1986-09-04T20:30:03').format('yyyy-MMM-DD, hh:mm A')).to.equal('1986-Sep-04, 08:30 PM');
@@ -81,6 +81,10 @@ describe('FormatParse', () => {
     expect(parse('Sun Jan 17, 2022 at 1:22:33 pm', 'ddd MMM DD, YYYY [at] H:m:s a', 'UTC').toIsoString(19)).to.equal('2022-01-17T13:22:33');
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ PM', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T13:22:33');
     expect(parse('১৭ জানু, ২০২২ ১:২২:৩৩ রাত', 'IMM', 'UTC', 'bn').toIsoString(19)).to.equal('2022-01-17T01:22:33');
+    expect(parse('2020, W1, D1', 'GGGG, [W]W, [D]E', 'UTC').toIsoString(10)).to.equal('2019-12-30');
+    expect(parse('2020, W7, D5', 'GGGG, [W]W, [D]E', 'UTC').format('GGGG-[W]WW-E')).to.equal('2020-W07-5');
+    expect(parse('2020, w1, d1', 'gggg, [w]w, [d]e', 'UTC').toIsoString(10)).to.equal('2019-12-29');
+    expect(parse('2020, w32, d4', 'gggg, [w]w, [d]e', 'UTC').format('gggg-[w]ww-e')).to.equal('2020-w32-4');
   });
 
   it('should correctly handle two-digit years', () => {
