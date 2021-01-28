@@ -225,17 +225,9 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         result.push(toNum(month));
         break;
 
-      case 'Wo': // ISO week ordinal
-        result.push(locale.ordinals[wt.w]);
-        break;
-
       case 'WW': // ISO week number
       case 'W':
         result.push(toNum(wt.w, field === 'WW' ? 2 : 1));
-        break;
-
-      case 'wo': // Locale week ordinal
-        result.push(locale.ordinals[wt.wl]);
         break;
 
       case 'ww': // Locale week number
@@ -283,7 +275,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         result.push(toNum(wt.dwl));
         break;
 
-      case 'HH': // Two-digit 0-23 hour
+      case 'HH': // Two-digit 00-23 hour
         result.push(toNum(hour, 2));
         break;
 
@@ -291,7 +283,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         result.push(toNum(hour));
         break;
 
-      case 'hh': // Two-digit 1-12 hour
+      case 'hh': // Two-digit 01-12 hour
         result.push(toNum(h, 2));
         break;
 
@@ -299,7 +291,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         result.push(toNum(h));
         break;
 
-      case 'KK': // Two-digit 0-11 hour (needs AM/PM qualification)
+      case 'KK': // Two-digit 00-11 hour (needs AM/PM qualification)
         result.push(toNum(K, 2));
         break;
 
@@ -307,7 +299,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         result.push(toNum(K));
         break;
 
-      case 'kk': // Two-digit 1-24 hour
+      case 'kk': // Two-digit 01-24 hour
         result.push(toNum(k, 2));
         break;
 
@@ -369,9 +361,9 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           const localeFormat = locale.dateTimeFormats[field];
 
           if (localeFormat == null)
-            result.push('???');
+            result.push(`[${field}?]`);
           else if (isString(localeFormat))
-            result.push(format(dt, localeFormat));
+            result.push(format(dt, localeFormat, localeOverride));
           else
             result.push(localeFormat.format(dt.utcTimeMillis));
         }
@@ -643,16 +635,22 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
   if (hasIntlDateTime) {
     locale.dateTimeFormats.LLLL = fmt({ Y: 'd', M: 'l', D: 'd', w: 'l', h: 'd', m: 'dd' }); // Thursday, September 4, 1986 8:30 PM
     locale.dateTimeFormats.llll = fmt({ Y: 'd', M: 's', D: 'd', w: 's', h: 'd', m: 'dd' }); // Thu, Sep 4, 1986 8:30 PM
-    locale.dateTimeFormats.LLL = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // September 4, 1986 8:30 PM
+    locale.dateTimeFormats.LLL = fmt({ Y: 'd', M: 'l', D: 'd', h: 'd', m: 'dd' }); // September 4, 1986 8:30 PM
     locale.dateTimeFormats.lll = fmt({ Y: 'd', M: 's', D: 'd', h: 'd', m: 'dd' }); // Sep 4, 1986 8:30 PM
     locale.dateTimeFormats.LTS = fmt({ h: 'd', m: 'dd', s: 'dd' }); // 8:30:25 PM
     locale.dateTimeFormats.LT = fmt({ h: 'd', m: 'dd' }); // 8:30 PM
-    locale.dateTimeFormats.LL = fmt({ Y: 'd', M: 's', D: 'd' }); // September 4, 1986
+    locale.dateTimeFormats.LL = fmt({ Y: 'd', M: 'l', D: 'd' }); // September 4, 1986
     locale.dateTimeFormats.ll = fmt({ Y: 'd', M: 's', D: 'd' }); // Sep 4, 1986
     locale.dateTimeFormats.L = fmt({ Y: 'd', M: 'dd', D: 'dd' }); // 09/04/1986
     locale.dateTimeFormats.l = fmt({ Y: 'd', M: 'd', D: 'd' }); // 9/4/1986
     locale.dateTimeFormats.Z = fmt({ z: 'l', Y: 'd' }); // Don't really want the year, but without *something* else
     locale.dateTimeFormats.z = fmt({ z: 's', Y: 'd' }); //   a whole date appears, and just a year is easier to remove.
+
+    Object.keys(locale.dateTimeFormats).forEach(key => {
+      if (/^L/i.test(key))
+        locale.dateTimeFormats['_' + key] = analyzeFormat(locale.name.split(','),
+          locale.dateTimeFormats[key] as Intl.DateTimeFormat);
+    });
   }
   else {
     locale.dateTimeFormats.LLLL = 'dddd, MMMM D, YYYY h:mm A'; // Thursday, September 4, 1986 8:30 PM
@@ -677,14 +675,27 @@ function convertDigits(n: string): string {
     .replace(/[\u1040-\u1049]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x1010)); // Myanmar digits
 }
 
-export function analyzeFormat(locale: string | string[], dateStyle: string, timeStyle?: string): string {
+export function analyzeFormat(locale: string | string[], formatter: Intl.DateTimeFormat): string;
+export function analyzeFormat(locale: string | string[], dateStyle: string, timeStyle?: string): string;
+export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: string | Intl.DateTimeFormat,
+                              timeStyle?: string): string {
   const options: DateTimeFormatOptions = { timeZone: 'UTC', calendar: 'gregory' };
+  let dateStyle: string;
 
-  if (dateStyle)
-    options.dateStyle = dateStyle;
+  if (dateStyleOrFormatter == null || isString(dateStyleOrFormatter)) {
+    if (dateStyleOrFormatter)
+      options.dateStyle = dateStyle = dateStyleOrFormatter as string;
 
-  if (timeStyle)
-    options.timeStyle = timeStyle;
+    if (timeStyle)
+      options.timeStyle = timeStyle;
+  }
+  else {
+    const formatOptions = dateStyleOrFormatter.resolvedOptions();
+
+    Object.assign(options, formatOptions);
+    dateStyle = (options.month === 'full' || options.month === 'long' ? 'long' : options.month === 'medium' ? 'medium' : null);
+    timeStyle = null;
+  }
 
   const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
   const format = new Intl.DateTimeFormat(locale, options);
@@ -879,6 +890,8 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       locale.parsePatterns[key] = format;
     }
   }
+  else if (/^L(L{1,3}|TS?)$/i.test(format))
+    format = (locale.dateTimeFormats['_' + format] ?? locale.dateTimeFormats[format]) as string ?? format;
 
   const w = {} as DateAndTime;
   const parts = decomposeFormatString(format);

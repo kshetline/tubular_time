@@ -37,8 +37,8 @@ describe('FormatParse', () => {
     expect(new DateTime('-1986-09-04').format('MMM D, y n')).to.equal('Sep 4, 1987 BC');
     expect(new DateTime('1986-09-04T20:30:03').toLocale('fr').format('yyyy MMMM DD, hh:mm A')).to.equal('1986 septembre 04, 08:30 PM');
     expect(new DateTime('1986-05-04T20:30:03').format('yyyy MMMM DD, HH:mm', 'es')).to.equal('1986 mayo 04, 20:30');
-    expect(new DateTime('2021-05-04').format('YYYY-MM-DD [Q:]Q Qo [M:]Mo [W:]Wo [d:]do [w:]wo [E:]E [e:]e'))
-      .to.equal('2021-05-04 Q:2 2nd M:5th W:18th d:2nd w:19th E:2 e:3');
+    expect(new DateTime('2021-05-04').format('YYYY-MM-DD [Q:]Q Qo [M:]Mo [d:]do [E:]E [e:]e'))
+      .to.equal('2021-05-04 Q:2 2nd M:5th d:2nd E:2 e:3');
     expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
     expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
@@ -85,6 +85,8 @@ describe('FormatParse', () => {
     expect(parse('2020, W7, D5', 'GGGG, [W]W, [D]E', 'UTC').format('GGGG-[W]WW-E')).to.equal('2020-W07-5');
     expect(parse('2020, w1, d1', 'gggg, [w]w, [d]e', 'UTC').toIsoString(10)).to.equal('2019-12-29');
     expect(parse('2020, w32, d4', 'gggg, [w]w, [d]e', 'UTC').format('gggg-[w]ww-e')).to.equal('2020-w32-4');
+    expect(parse('January 27, 2021 9:43 PM', 'LLL').toString()).to.equal('DateTime<2021-01-27T21:43:00.000 -05:00>');
+    expect(parse('1:05:57 AM', 'LTS').toString()).to.equal('DateTime<01:05:57.000>');
   });
 
   it('should correctly handle two-digit years', () => {

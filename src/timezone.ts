@@ -517,6 +517,8 @@ export class Timezone {
   }
 
   private static extractZoneShortNames(): void {
+    this.shortZoneNames = {};
+
     const preferredZones = new Set([
       'Australia/ACT', 'Australia/Adelaide', 'Asia/Tokyo', 'Asia/Hong_Kong',
       'Asia/Jakarta', 'Asia/Novosibirsk', 'Asia/Calcutta', 'Asia/Karachi', 'Europe/Moscow',
