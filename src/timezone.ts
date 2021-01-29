@@ -1,7 +1,7 @@
-import { div_tt0, mod2, round } from '@tubular/math';
+import { div_tt0, floor, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft } from '@tubular/util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
-import { dateAndTimeFromMillis_SGC, DAY_MSEC, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
+import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
 
 export interface RegionAndSubzones {
   region: string;
@@ -114,9 +114,8 @@ let osDstOffset: number;
 
     const currentOffset = -date.getTimezoneOffset() * 60;
 
-    if (osProbableStdOffset === undefined && sampleTime >= aBitLater) {
+    if (osProbableStdOffset === undefined && sampleTime >= aBitLater)
       osProbableStdOffset = osProbableDstOffset = currentOffset;
-    }
 
     if (currentOffset !== lastOffset) {
       if (sampleTime >= aBitLater) {
@@ -416,6 +415,108 @@ export class Timezone {
     return result * sign;
   }
 
+  private static extractTimezoneTransitionsFromIntl(zone: string, endYear: number): Transition[] {
+    const transitions: Transition[] = [];
+    const timeOptions = { timeZone: zone, hourCycle: 'h23',
+                          year: 'numeric', month: 'numeric', day: 'numeric',
+                          hour: 'numeric', minute: 'numeric', second: 'numeric' };
+    const zoneDTF = new Intl.DateTimeFormat('en', timeOptions);
+    let lastSampleTime = millisFromDateTime_SGC(1901, 1, 1, 0, 0, 0, 0);
+    let hour: number;
+
+    do {
+      lastSampleTime += 3600000;
+      hour = getDateValue(zoneDTF, lastSampleTime, 'hour');
+    } while (hour !== 0 && hour !== 1);
+
+    lastSampleTime += 43200000;
+
+    const getUtcOffset = (millis: number): number => {
+      const fields = zoneDTF.formatToParts(millis);
+      return floor((millis - millisFromDateTime_SGC(
+        getDateValue(fields, 'year'), getDateValue(fields, 'month'), getDateValue(fields, 'day'),
+        getDateValue(fields, 'hour'), getDateValue(fields, 'minute'), getDateValue(fields, 'second'))) / 1000);
+    };
+
+    const MONTH_MSEC = 30 * DAY_MSEC;
+    const aBitLater = lastSampleTime + MONTH_MSEC * 12 * 2;
+    const muchLater = millisFromDateTime_SGC(endYear + 1, 1, 1, 0, 0, 0, 0);
+    let lastOffset = getUtcOffset(lastSampleTime);
+    let probableStdOffset: number;
+    let probableDstOffset: number;
+
+    while (lastSampleTime < muchLater) {
+      const sampleTime = lastSampleTime + MONTH_MSEC;
+      const currentOffset = getUtcOffset(sampleTime);
+
+      if (probableStdOffset === undefined && sampleTime >= aBitLater)
+        probableStdOffset = probableDstOffset = currentOffset;
+
+      if (currentOffset !== lastOffset) {
+        if (sampleTime >= aBitLater) {
+          probableStdOffset = Math.min(probableStdOffset, currentOffset);
+          probableDstOffset = Math.max(probableDstOffset, currentOffset);
+        }
+
+        let low = lastSampleTime;
+        let high = sampleTime;
+
+        while (high - low > MINUTE_MSEC) {
+          const mid = Math.floor((high + low) / 2 / MINUTE_MSEC) * MINUTE_MSEC;
+          const sampleOffset = getUtcOffset(mid);
+
+          if (sampleOffset === lastOffset)
+            low = mid;
+          else
+            high = mid;
+        }
+
+        transitions.push({ transitionTime: high, utcOffset: currentOffset, dstOffset: 0 });
+        lastOffset = currentOffset;
+      }
+
+      lastSampleTime = sampleTime;
+    }
+
+    if (transitions.length < 2 || probableDstOffset <= probableStdOffset)
+      return [];
+
+    // If the timezone isn't historical, but instead projects DST rules indefinitely backward in time, we might have accidentally
+    // captured a DST offset for the first transition, something that will wrongly make DST look like the starting base UTC offset.
+    if (transitions[0].utcOffset === probableDstOffset && transitions[1].utcOffset === probableStdOffset) {
+      transitions.splice(0, 1);
+      transitions[0].transitionTime = Number.MIN_SAFE_INTEGER;
+    }
+
+    transitions.forEach((transition: Transition, index: number) => {
+      if (transition.utcOffset === probableDstOffset && transitions[index - 1].utcOffset === probableStdOffset)
+        transition.dstOffset = probableDstOffset - probableStdOffset;
+    });
+
+    return transitions;
+  }
+
+  private static applyTransitionRules(transitions: Transition[], startYear: number, endYear: number,
+                                      currentUtcOffset: number, stdRule: Rule, dstRule: Rule, lastTTime: number,
+                                      dstOffset: number, dstName: string, stdName: string, backfill = false): void {
+    for (let year = startYear; year < endYear; ++year) {
+      const stdTime = stdRule.getTransitionTime(year, currentUtcOffset, dstOffset);
+      const dstTime = dstRule.getTransitionTime(year, currentUtcOffset, 0);
+      const firstRule = (dstTime < stdTime ? dstRule : stdRule);
+      const firstTime = (dstTime < stdTime ? dstTime : stdTime);
+      const secondRule = (dstTime > stdTime ? dstRule : stdRule);
+      const secondTime = (dstTime > stdTime ? dstTime : stdTime);
+
+      if (firstTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && (backfill || year >= firstRule.startYear))
+        transitions.push({ transitionTime: firstTime, utcOffset: currentUtcOffset + firstRule.save, dstOffset: firstRule.save,
+                           name: firstRule.save ? dstName : stdName });
+
+      if (secondTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && (backfill || year >= secondRule.startYear))
+        transitions.push({ transitionTime: secondTime, utcOffset: currentUtcOffset + secondRule.save, dstOffset: secondRule.save,
+                           name: secondRule.save ? dstName : stdName });
+    }
+  }
+
   private static parseEncodedTimezone(name: string, etz: string): ZoneInfo {
     let transitions: Transition[] = [];
     const sections = etz.split(';');
@@ -426,6 +527,7 @@ export class Timezone {
     let displayName;
     let lastStdName;
     let lastDstName;
+    let firstTTime = Number.MIN_SAFE_INTEGER;
 
     transitions.push({ transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: baseUtcOffset, dstOffset: 0 });
 
@@ -462,6 +564,9 @@ export class Timezone {
           transitions.push({ transitionTime: ttime * 1000, utcOffset: utcOffsets[offsetIndex], dstOffset: dstOffsets[offsetIndex], name: names[offsetIndex] });
           lastTTime = ttime;
 
+          if (i === 0)
+            firstTTime = ttime;
+
           if (dstOffsets[offsetIndex] !== 0)
             lastDstName = names[offsetIndex];
           else
@@ -477,26 +582,36 @@ export class Timezone {
           const dstRule = new Rule(rules[1]);
           const startYear = dateAndTimeFromMillis_SGC(lastTTime).y - 1;
 
-          for (let year = startYear; year < LAST_DST_YEAR; ++year) {
-            const stdTime = stdRule.getTransitionTime(year, currentUtcOffset, dstOffset);
-            const dstTime = dstRule.getTransitionTime(year, currentUtcOffset, 0);
-            const firstRule = (dstTime < stdTime ? dstRule : stdRule);
-            const firstTime = (dstTime < stdTime ? dstTime : stdTime);
-            const secondRule = (dstTime > stdTime ? dstRule : stdRule);
-            const secondTime = (dstTime > stdTime ? dstTime : stdTime);
-
-            if (firstTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && year >= firstRule.startYear)
-              transitions.push({ transitionTime: firstTime, utcOffset: currentUtcOffset + firstRule.save, dstOffset: firstRule.save,
-                                 name: firstRule.save ? lastDstName : lastStdName });
-
-            if (secondTime > lastTTime + TIME_GAP_AFTER_LAST_TRANSITION && year >= secondRule.startYear)
-              transitions.push({ transitionTime: secondTime, utcOffset: currentUtcOffset + secondRule.save, dstOffset: secondRule.save,
-                                 name: secondRule.save ? lastDstName : lastStdName });
-          }
+          this.applyTransitionRules(transitions, startYear, LAST_DST_YEAR, currentUtcOffset, stdRule, dstRule,
+            lastTTime, dstOffset, lastDstName, lastStdName);
 
           // Make sure last transition isn't DST
           if (transitions[transitions.length - 1].dstOffset !== 0)
             transitions.length -= 1;
+
+          const firstExplicitTransitionYear = dateAndTimeFromMillis_SGC(firstTTime * 1000).y;
+
+          // Backfill transitions table with rules-based Daylight Saving Time changes.
+          if (firstExplicitTransitionYear > 2000 && currentUtcOffset === baseUtcOffset && transitions.length > 1) {
+            const insertTransitions: Transition[] = this.extractTimezoneTransitionsFromIntl(name, firstExplicitTransitionYear);
+
+            if (insertTransitions.length === 0)
+              this.applyTransitionRules(insertTransitions, 1925, firstExplicitTransitionYear + 1, currentUtcOffset,
+                stdRule, dstRule, Number.MIN_SAFE_INTEGER + 1, dstOffset, lastDstName, lastStdName, true);
+
+            if (insertTransitions.length > 0) {
+              // Make sure first added transition isn't to standard time.
+              if (insertTransitions[0].dstOffset === 0)
+                insertTransitions.splice(0, 1);
+
+              // Make sure first added transition IS to standard time, and doesn't overlap already-created transitions.
+              while (insertTransitions.length > 0 && last(insertTransitions).dstOffset !== 0 ||
+                     last(insertTransitions).transitionTime >= transitions[1].transitionTime)
+                insertTransitions.splice(insertTransitions.length - 1, 1);
+
+              transitions.splice(1, 0, ...insertTransitions);
+            }
+          }
         }
       }
     }

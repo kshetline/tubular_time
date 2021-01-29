@@ -201,3 +201,33 @@ export function parseTimeOffset(offset: string): number {
 
   return sign * offsetSeconds;
 }
+
+export function convertDigits(n: string): string {
+  return n.replace(/[\u0660-\u0669]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0630)) // Arabic digits
+    .replace(/[\u06F0-\u06F9]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x06C0)) // Urdu/Persian digits
+    .replace(/[\u0966-\u096F]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0936)) // Devanagari digits
+    .replace(/[\u09E6-\u09EF]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x09B6)) // Bengali digits
+    .replace(/[\u0F20-\u0F29]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0EF0)) // Tibetan digits
+    .replace(/[\u1040-\u1049]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x1010)); // Myanmar digits
+}
+
+export function getDatePart(format: Intl.DateTimeFormat, date: number, partName: string): string;
+export function getDatePart(fields: Intl.DateTimeFormatPart[], partName: string): string;
+export function getDatePart(source: Intl.DateTimeFormat | Intl.DateTimeFormatPart[],
+                            dateOrPart: number | string, partName?: string): string {
+  const parts = (source instanceof Intl.DateTimeFormat ? source.formatToParts(dateOrPart as number) : source);
+  partName = partName ?? dateOrPart as string;
+  const part = parts.find(part => part.type === partName);
+
+  if (part)
+    return part.value;
+  else
+    return '???';
+}
+
+export function getDateValue(format: Intl.DateTimeFormat, date: number, partName: string): number;
+export function getDateValue(fields: Intl.DateTimeFormatPart[], partName: string): number;
+export function getDateValue(source: Intl.DateTimeFormat | Intl.DateTimeFormatPart[],
+                            dateOrPart: number | string, partName?: string): number {
+  return toNumber(convertDigits(getDatePart(source as any, dateOrPart as any, partName)));
+}

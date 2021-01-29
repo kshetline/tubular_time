@@ -1,4 +1,4 @@
-import { DateAndTime, parseTimeOffset } from './common';
+import { convertDigits, DateAndTime, getDatePart, getDateValue, parseTimeOffset } from './common';
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
@@ -125,11 +125,26 @@ function isCased(s: string): boolean {
   return s.toLowerCase() !== s.toUpperCase();
 }
 
+function timeMatch(dt: DateTime, locale: ILocale): boolean {
+  const format = locale.dateTimeFormats.check as Intl.DateTimeFormat;
+
+  if (!format)
+    return false;
+
+  const fields = format.formatToParts(dt.utcTimeMillis);
+  const wt = dt.wallTime;
+
+  return wt.hrs === getDateValue(fields, 'hour') &&
+         wt.min === getDateValue(fields, 'minute') &&
+         wt.sec === getDateValue(fields, 'second');
+}
+
 export function format(dt: DateTime, fmt: string, localeOverride?: string | string[]): string {
   if (!dt.valid)
     return '##Invalid_Date##';
 
-  const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(localeOverride ?? dt.locale);
+  const currentLocale = localeOverride ?? dt.locale;
+  const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(currentLocale);
   const locale = getLocaleInfo(localeNames);
   const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
   const toNum = (n: number | string, pad = 1) => {
@@ -453,7 +468,17 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
               }
             }
 
-            result.push(intlFormat.format(dt.utcTimeMillis));
+            if (timeMatch(dt, locale))
+              result.push(intlFormat.format(dt.utcTimeMillis));
+            else {
+              // Don't trust Intl.DateTimeFormat to handle pre-1900 UTC offsets correctly.
+              let intlFormatAlt = locale.dateTimeFormats['_' + field] as string;
+
+              if (!intlFormatAlt)
+                intlFormatAlt = locale.dateTimeFormats['_' + field] = analyzeFormat(currentLocale, intlFormat);
+
+              result.push(format(dt, intlFormatAlt, localeOverride));
+            }
           }
           else {
             let intlFormat = '';
@@ -488,16 +513,6 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   return result.join('');
 }
 
-function getDatePart(format: Intl.DateTimeFormat, date: number, partName: string): string {
-  const parts = format.formatToParts(date);
-  const part = parts.find(part => part.type === partName);
-
-  if (part)
-    return part.value;
-  else
-    return '???';
-}
-
 function quickFormat(localeNames: string | string[], timezone: string, opts: any) {
   const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
 
@@ -512,7 +527,7 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
 
   Object.keys(opts).forEach(key => {
     const value = shortOptValues[opts[key]] ?? opts[key];
-    key = shortOpts[key];
+    key = shortOpts[key] ?? key;
     options[key] = value;
   });
 
@@ -645,6 +660,7 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
     locale.dateTimeFormats.l = fmt({ Y: 'd', M: 'd', D: 'd' }); // 9/4/1986
     locale.dateTimeFormats.Z = fmt({ z: 'l', Y: 'd' }); // Don't really want the year, but without *something* else
     locale.dateTimeFormats.z = fmt({ z: 's', Y: 'd' }); //   a whole date appears, and just a year is easier to remove.
+    locale.dateTimeFormats.check = fmt({ h: 'd', m: 'd', s: 'd', hourCycle: 'h23' });
 
     Object.keys(locale.dateTimeFormats).forEach(key => {
       if (/^L/i.test(key))
@@ -664,15 +680,6 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
     locale.dateTimeFormats.L = 'MM/DD/YYYY'; // 09/04/1986
     locale.dateTimeFormats.l = 'M/D/YYYY'; // 9/4/1986
   }
-}
-
-function convertDigits(n: string): string {
-  return n.replace(/[\u0660-\u0669]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0630)) // Arabic digits
-    .replace(/[\u06F0-\u06F9]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x06C0)) // Urdu/Persian digits
-    .replace(/[\u0966-\u096F]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0936)) // Devanagari digits
-    .replace(/[\u09E6-\u09EF]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x09B6)) // Bengali digits
-    .replace(/[\u0F20-\u0F29]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0EF0)) // Tibetan digits
-    .replace(/[\u1040-\u1049]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x1010)); // Myanmar digits
 }
 
 export function analyzeFormat(locale: string | string[], formatter: Intl.DateTimeFormat): string;

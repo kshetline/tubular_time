@@ -101,6 +101,7 @@ export class DateTime extends Calendar {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
     if (isString(initialTime)) {
+      initialTime = initialTime.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim();
       const saveTime = initialTime;
       const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
       let zone: string;
@@ -232,8 +233,8 @@ export class DateTime extends Calendar {
     if (this.locked)
       throw lockError;
 
+    newTime = syncDateAndTime(clone(newTime));
     validateDateAndTime(newTime);
-    newTime = clone(newTime);
 
     if (!isEqual(this._wallTime, newTime)) {
       if (newTime.y == null && newTime.yw == null && newTime.ywl == null) {
