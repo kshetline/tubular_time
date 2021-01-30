@@ -94,9 +94,8 @@ export function decomposeFormatString(format: string): string[] {
   if ((inLiteral && literal) || (!inLiteral && token))
     parts.push(literal || token);
 
-  for (let i = 1; i < parts.length; i += 2) {
+  for (let i = 1; i < parts.length; i += 2)
     parts[i] = (parts[i] as string).split(patternsMoment);
-  }
 
   parts.forEach((part, index) => {
     if (index % 2 === 0)
@@ -143,8 +142,8 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   if (!dt.valid)
     return '##Invalid_Date##';
 
-  const currentLocale = localeOverride ?? dt.locale;
-  const localeNames = !hasIntlDateTime ? 'en' : normalizeLocale(currentLocale);
+  const currentLocale = normalizeLocale(localeOverride ?? dt.locale);
+  const localeNames = !hasIntlDateTime ? 'en' : currentLocale;
   const locale = getLocaleInfo(localeNames);
   const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
   const toNum = (n: number | string, pad = 1) => {
@@ -341,7 +340,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'A': // AM/PM indicator (may have more than just two forms)
       case 'a':
         {
-          const values = locale.meridiem;
+          const values = locale.meridiemAlt ?? locale.meridiem;
           const dayPartsForHour = values[values.length === 2 ? floor(hour / 12) : hour];
 
           // If there is no case distinction between the first two forms, use the first form
@@ -471,7 +470,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
             if (timeMatch(dt, locale))
               result.push(intlFormat.format(dt.utcTimeMillis));
             else {
-              // Don't trust Intl.DateTimeFormat to handle pre-1900 UTC offsets correctly.
+              // Favor @tubular/time timezone offsets over those derived from Intl.
               let intlFormatAlt = locale.dateTimeFormats['_' + field] as string;
 
               if (!intlFormatAlt)
@@ -572,19 +571,20 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     locale.months = [];
     locale.monthsShort = [];
     const narrow: string[] = [];
+    let format: Intl.DateTimeFormat;
 
     for (let month = 1; month <= 12; ++month) {
       const date = Date.UTC(2021, month - 1, 1);
-      let format = fmt({ ds: 'l' });
 
+      format = fmt({ ds: 'l' });
       locale.months.push(getDatePart(format, date, 'month'));
-      format = fmt({ M: 's' });
+      format = fmt({ ds: 'm' });
       locale.monthsShort.push(getDatePart(format, date, 'month'));
       format = fmt({ M: 'n' });
       narrow.push(getDatePart(format, date, 'month'));
     }
 
-    if (isEqual(locale.months, locale.monthsShort) && new Set(narrow).size === 12)
+    if (isEqual(locale.months, locale.monthsShort) && new Set(narrow).size === 12 && narrow.find(m => !/^\d+$/.test(m)))
       locale.monthsShort = narrow;
 
     locale.monthsMin = shortenItems(locale.months);
@@ -593,11 +593,12 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     locale.weekdays = [];
     locale.weekdaysShort = [];
     locale.weekdaysMin = [];
+    locale.meridiemAlt = [];
 
     for (let day = 3; day <= 9; ++day) {
       const date = Date.UTC(2021, 0, day);
-      let format = fmt({ ds: 'f' });
 
+      format = fmt({ ds: 'f' });
       locale.weekdays.push(getDatePart(format, date, 'weekday'));
       format = fmt({ w: 's' });
       locale.weekdaysShort.push(getDatePart(format, date, 'weekday'));
@@ -608,6 +609,28 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     // If weekdaysMin are so narrow that there are non-unique names, try either 2 or 3 characters from weekdaysShort.
     for (let len = 2; len < 4 && new Set(locale.weekdaysMin).size < 7; ++len)
       locale.weekdaysMin = locale.weekdaysShort.map(name => name.substr(0, len));
+
+    const hourForms = new Set<string>();
+
+    format = fmt({ h: 'd', hourCycle: 'h12' });
+
+    for (let hour = 0; hour < 24; ++hour) {
+      const date = Date.UTC(2021, 0, 1, hour,  0, 0);
+      const value = getDatePart(format, date, 'dayPeriod');
+      const lcValue = value.toLowerCase();
+
+      hourForms.add(value);
+
+      if (value === lcValue)
+        locale.meridiemAlt.push([value]);
+      else
+        locale.meridiemAlt.push([lcValue, value]);
+    }
+
+    if (hourForms.size < 3) {
+      locale.meridiemAlt.splice(13, 11);
+      locale.meridiemAlt.splice(1, 11);
+    }
 
     locale.eras = [getDatePart(fmt({ y: 'n', e: 's' }), Date.UTC(-1, 0, 1), 'era')];
     locale.eras.push(getDatePart(fmt({ y: 'n', e: 's' }), Date.UTC(1, 0, 1), 'era'));
@@ -682,6 +705,15 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
   }
 }
 
+function isLocale(locale: string | string[], matcher: string): boolean {
+  if (isString(locale))
+    return locale.startsWith(matcher);
+  else if (locale.length > 0)
+    return locale[0].startsWith(matcher);
+  else
+    return false;
+}
+
 export function analyzeFormat(locale: string | string[], formatter: Intl.DateTimeFormat): string;
 export function analyzeFormat(locale: string | string[], dateStyle: string, timeStyle?: string): string;
 export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: string | Intl.DateTimeFormat,
@@ -700,15 +732,18 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
     const formatOptions = dateStyleOrFormatter.resolvedOptions();
 
     Object.assign(options, formatOptions);
-    dateStyle = (options.month === 'full' || options.month === 'long' ? 'long' : options.month === 'medium' ? 'medium' : null);
-    timeStyle = null;
+    options.timeZone = 'UTC';
+    dateStyle = formatOptions.dateStyle ??
+      (options.month === 'full' || options.month === 'long' ? 'long' : options.month === 'medium' ? 'medium' : null);
+    timeStyle = formatOptions.timeStyle;
   }
 
   const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
   const format = new Intl.DateTimeFormat(locale, options);
   const parts = format.formatToParts(sampleDate);
   const dateLong = (dateStyle === 'full' || dateStyle === 'long');
-  const timeLong = (timeStyle === 'full' || timeStyle === 'long');
+  const monthLong = (dateLong || (dateStyle === 'medium' && isLocale(locale, 'ne')));
+  const timeFull = (timeStyle === 'full');
   let formatString = '';
 
   parts.forEach(part => {
@@ -741,7 +776,7 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
         if (/^\d+$/.test(value))
           formatString += 'MM'.substring(0, len);
         else
-          formatString += (dateLong ? 'MMMM' : 'MMM');
+          formatString += (monthLong ? 'MMMM' : 'MMM');
         break;
 
       case 'second':
@@ -749,7 +784,7 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
         break;
 
       case 'timeZoneName':
-        formatString += (timeLong ? 'zzz' : 'z');
+        formatString += (timeFull ? 'zzz' : 'z');
         break;
 
       case 'weekday':
@@ -758,6 +793,10 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
 
       case 'year':
         formatString += (len < 3 ? 'YY' : 'YYYY');
+        break;
+
+      case 'era':
+        formatString += 'N';
         break;
     }
   });
@@ -773,7 +812,7 @@ function validateField(name: string, value: number, min: number, max: number): v
 function matchAmPm(locale: ILocale, input: string): [boolean, number] {
   input = input.toLowerCase().replace(/\xA0/g, ' ');
 
-  for (const meridiem of [locale.meridiem, [['am', 'a.m.', 'a. m.'], ['pm', 'p.m.', 'p. m.']]]) {
+  for (const meridiem of [locale.meridiemAlt, locale.meridiem, [['am', 'a.m.', 'a. m.'], ['pm', 'p.m.', 'p. m.']]]) {
     if (meridiem == null)
       continue;
 

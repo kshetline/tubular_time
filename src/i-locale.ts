@@ -10,6 +10,7 @@ export interface ILocale {
   cachedTimezone?: string;
   dateTimeFormats: Record<string, string | Intl.DateTimeFormat>;
   meridiem: string[][];
+  meridiemAlt?: string[][];
   startOfWeek: number;
   minDaysInWeek: number;
   weekend: number[];

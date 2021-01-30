@@ -9,6 +9,8 @@ declare namespace Intl {
   }
 
   interface ResolvedDateTimeFormatOptions {
+    dateStyle?: string;
     hourCycle?: string;
+    timeStyle?: string;
   }
 }
