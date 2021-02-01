@@ -1,4 +1,4 @@
-import { div_tt0, floor, mod2, round } from '@tubular/math';
+import { div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
@@ -180,6 +180,10 @@ let osDstOffset: number;
 export class Timezone {
   private static encodedTimezones: {[id: string]: string} = {};
   private static shortZoneNames: {[id: string]: ShortZoneNameInfo} = {};
+  private static zonesByOffsetAndDst: {[key: string]: Set<string>} = {};
+  private static countriesForZone: {[key: string]: Set<string>} = {};
+  private static zonesForCountry: {[key: string]: Set<string>} = {};
+  private static populationForZone: {[key: string]: number} = {};
 
   static OS_ZONE = new Timezone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                             dstOffset: osDstOffset, transitions: osTransitions });
@@ -202,10 +206,11 @@ export class Timezone {
   private readonly displayName: string;
   private readonly transitions: Transition[] | null;
 
-  private _aliasFor: string;
-  private _countries = new Set<string>();
+  private readonly _aliasFor: string;
+  private readonly _countries = new Set<string>();
+  private readonly _population: number;
+
   private _error: string;
-  private _population = 0;
 
   private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
   private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
@@ -214,7 +219,7 @@ export class Timezone {
     const changed = !isEqual(this.encodedTimezones, encodedTimezones);
 
     this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
-    this.extractZoneShortNames();
+    this.extractZoneInfo();
 
     if (changed)
       this.zoneLookup = {};
@@ -297,10 +302,38 @@ export class Timezone {
 
   private static _guess: string;
 
-  static guess(recheck = false): string {
+  static guess(recheck = false, testCountry?: string, testZone?: string): string {
     if (!this._guess || recheck) {
-      if (hasIntlDateTime)
+      if (hasIntlDateTime && !testCountry && !testZone)
         this._guess = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+      else {
+        let country = testCountry;
+
+        if (!country) {
+          try {
+            if (typeof process !== 'undefined')
+              country = (process.env?.LANG ?? process.env?.LC_CTYPE ?? '').split(/[-._]/)[1]?.toUpperCase();
+          }
+          catch {}
+        }
+
+        if (!country) {
+          try {
+            if (typeof navigator !== 'undefined')
+              country = (navigator.language ?? '').split(/[-._]/)[1]?.toUpperCase();
+          }
+          catch {}
+        }
+
+        const osZone = testZone ? Timezone.from(testZone) : this.OS_ZONE;
+        const zoneKey = osZone.getFormattedOffset(osZone.utcOffset, true) + ';' + floor(osZone.dstOffset / 60);
+        const candidateZones = Array.from(this.zonesByOffsetAndDst[zoneKey] ?? [])
+          .filter(zone => !country || this.doesZoneMatchCountry(zone, country))
+          .map(zone => ({ zone, rating: osZone.matchRating(Timezone.from(zone)), pop: this.populationForZone[zone] }))
+          .sort((a, b) => b.rating !== a.rating ? b.rating - a.rating : b.pop - a.pop);
+
+        this._guess = candidateZones[0]?.zone ?? 'OS';
+      }
     }
 
     return this._guess;
@@ -389,6 +422,18 @@ export class Timezone {
 
   static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo {
     return clone(this.shortZoneNames[shortName]);
+  }
+
+  static getPopulation(zoneName: string): number {
+    return this.populationForZone[zoneName] ?? 0;
+  }
+
+  static getCountries(zoneName: string): Set<string> {
+    return new Set(this.countriesForZone[zoneName] ?? []);
+  }
+
+  static doesZoneMatchCountry(zoneName: string, country: string): boolean {
+    return this.getCountries(zoneName).has(country.toUpperCase());
   }
 
   private static parseTimeOffset(offset: string): number {
@@ -557,6 +602,12 @@ export class Timezone {
     }
   }
 
+  private static countriesStringToSet(s: string): Set<string> {
+    return s.includes(' ') ?
+      new Set(s.split(/\s+/)) :
+      new Set(s.split(/(\w\w)/).filter(s => !!s));
+  }
+
   private static parseEncodedTimezone(name: string, etz: string, aliasFor?: string, popAndC?: string): ZoneInfo {
     let transitions: Transition[] = [];
     const sections = etz.split(';');
@@ -688,15 +739,17 @@ export class Timezone {
       displayName: displayName,
       transitions: transitions,
       population,
-      countries: countries.includes(' ') ?
-        new Set(countries.split(/\s+/)) :
-        new Set(countries.split(/(\w\w)/).filter(s => !!s)),
+      countries: this.countriesStringToSet(countries),
       aliasFor
     };
   }
 
-  private static extractZoneShortNames(): void {
+  private static extractZoneInfo(): void {
     this.shortZoneNames = {};
+    this.zonesByOffsetAndDst = {};
+    this.countriesForZone = {};
+    this.zonesForCountry = {};
+    this.populationForZone = {};
 
     const preferredZones = new Set([
       'Australia/ACT', 'Australia/Adelaide', 'Asia/Tokyo', 'Asia/Hong_Kong',
@@ -712,9 +765,18 @@ export class Timezone {
 
     keys.forEach(ianaName => {
       let etz = this.encodedTimezones[ianaName];
+      let popAndC: string;
 
-      if (!etz.includes(';'))
-        etz = this.encodedTimezones[etz.replace(/^!(.*,)?/, '')];
+      if (!etz.includes(';')) {
+        const $ = /^!(.*,)?(.*)$/.exec(etz);
+
+        if ($) {
+          popAndC = $[1];
+          etz = this.encodedTimezones[$[2]];
+        }
+        else
+          return; // Simple alias, do not process
+      }
 
       const sections = etz.split(';');
       let parts = sections[0].split(' ');
@@ -722,6 +784,8 @@ export class Timezone {
       const currentDstOffset = round(Number(parts[2]) * 60);
 
       if (sections.length > 1) {
+        const baseOffset = sections[0].split(' ');
+        const offsetKey = (baseOffset.length > 2 ? baseOffset[1] + ';' + baseOffset[2] : null);
         const offsets = sections[1].split(' ');
 
         for (let i = 0; i < offsets.length; ++i) {
@@ -740,6 +804,36 @@ export class Timezone {
                 (!dstOffset || (dstOffset && dstOffset === currentDstOffset))) {
               this.shortZoneNames[name] = { utcOffset, dstOffset, ianaName };
             }
+          }
+
+          if (!popAndC && sections.length > 5)
+            popAndC = sections[5] + ',' + (sections[6] ?? '');
+
+          if (offsetKey) {
+            let zones = this.zonesByOffsetAndDst[offsetKey];
+
+            if (!zones)
+              this.zonesByOffsetAndDst[offsetKey] = zones = new Set();
+
+            zones.add(ianaName);
+          }
+
+          if (popAndC) {
+            const parts = popAndC.split(',');
+            const countries = this.countriesStringToSet(parts[1] ?? '');
+
+            if (countries.size > 0)
+              this.countriesForZone[ianaName] = countries;
+
+            this.populationForZone[ianaName] = toNumber(parts[0]);
+            countries.forEach(country => {
+              let zones = this.zonesForCountry[country];
+
+              if (!zones)
+                this.zonesForCountry[country] = zones = new Set();
+
+              zones.add(ianaName);
+            });
           }
         }
       }
@@ -932,5 +1026,34 @@ export class Timezone {
     }
 
     return last(this.transitions);
+  }
+
+  matchRating(other: Timezone): number {
+    if (other === this)
+      return Number.MAX_SAFE_INTEGER;
+    else if (other.utcOffset !== this.utcOffset || other.dstOffset !== this.dstOffset)
+      return 0;
+    else if ((this.transitions == null && other.transitions == null) ||
+             (this.transitions.length < 25 && isEqual(this.transitions, other.transitions)))
+      return Number.MAX_SAFE_INTEGER;
+
+    let thisIndex = this.transitions.length - 1;
+    let otherIndex = other.transitions.length - 1;
+
+    while (this.transitions[thisIndex].transitionTime > other.transitions[otherIndex].transitionTime) --thisIndex;
+    while (other.transitions[otherIndex].transitionTime > this.transitions[thisIndex].transitionTime) --otherIndex;
+
+    for (let i = 0; i < thisIndex && i < otherIndex; ++i) {
+      const tt = this.transitions[thisIndex - 1];
+      const to = other.transitions[otherIndex - 1];
+
+      if (tt.transitionTime !== to.transitionTime ||
+          tt.utcOffset !== to.utcOffset ||
+          tt.dstOffset !== to.dstOffset ||
+          tt.baseOffsetChanged !== to.baseOffsetChanged)
+        return i;
+    }
+
+    return thisIndex === otherIndex ? Number.MAX_SAFE_INTEGER : min(thisIndex, otherIndex);
   }
 }
