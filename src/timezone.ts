@@ -1,5 +1,5 @@
 import { div_tt0, floor, mod2, round } from '@tubular/math';
-import { clone, compareStrings, isEqual, last, padLeft } from '@tubular/util';
+import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
 import { hasIntlDateTime } from './locale-data';
@@ -27,6 +27,9 @@ export interface ZoneInfo {
   dstOffset: number; // in seconds
   displayName?: string;
   transitions: Transition[] | null;
+  population?: number;
+  countries?: Set<string>;
+  aliasFor?: string;
 }
 
 export interface ShortZoneNameInfo {
@@ -198,7 +201,11 @@ export class Timezone {
   private readonly _dstOffset: number;
   private readonly displayName: string;
   private readonly transitions: Transition[] | null;
+
+  private _aliasFor: string;
+  private _countries = new Set<string>();
   private _error: string;
+  private _population = 0;
 
   private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
   private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
@@ -344,11 +351,24 @@ export class Timezone {
     }
     else if (this.encodedTimezones[name]) {
       let encodedTimezone = this.encodedTimezones[name];
+      let aliasFor: string = null;
+      let popAndC: string = null;
 
-      if (!encodedTimezone.includes(';')) // If no semicolon, must be a link to a duplicate timezone.
+      if (!encodedTimezone.includes(';')) { // If no semicolon, must be a link to a (close) duplicate timezone.
+        const $ = /^!(.*,)?(.*)$/.exec(encodedTimezone);
+
+        // Not an alias timezone, just similar, with possibly different population and country info?
+        if ($) {
+          popAndC = $[1];
+          encodedTimezone = $[2];
+        }
+        else
+          aliasFor = encodedTimezone;
+
         encodedTimezone = this.encodedTimezones[encodedTimezone];
+      }
 
-      zone = new Timezone(this.parseEncodedTimezone(name, encodedTimezone));
+      zone = new Timezone(this.parseEncodedTimezone(name, encodedTimezone, aliasFor, popAndC));
     }
     else {
       // Create a timezone equivalent to the OS zone, except with the requested name and an attached error condition.
@@ -537,7 +557,7 @@ export class Timezone {
     }
   }
 
-  private static parseEncodedTimezone(name: string, etz: string): ZoneInfo {
+  private static parseEncodedTimezone(name: string, etz: string, aliasFor?: string, popAndC?: string): ZoneInfo {
     let transitions: Transition[] = [];
     const sections = etz.split(';');
     let parts = sections[0].split(' ');
@@ -548,8 +568,27 @@ export class Timezone {
     let lastStdName;
     let lastDstName;
     let firstTTime = Number.MIN_SAFE_INTEGER;
+    let population = 0;
+    let countries = '';
 
     transitions.push({ transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: baseUtcOffset, dstOffset: 0 });
+
+    if (sections.length > 5) {
+      if (!popAndC)
+        popAndC = sections[5] + ',' + (sections[6] ?? '');
+
+      sections.length = 5;
+
+      while (!last(sections))
+        --sections.length;
+    }
+
+    if (popAndC) {
+      const parts = popAndC.split(',');
+
+      population = toNumber(parts[0]);
+      countries = parts[1] ?? '';
+    }
 
     if (sections.length > 1) {
       const offsets = sections[1].split(' ');
@@ -647,7 +686,12 @@ export class Timezone {
       usesDst: dstOffset !== 0,
       dstOffset: dstOffset,
       displayName: displayName,
-      transitions: transitions
+      transitions: transitions,
+      population,
+      countries: countries.includes(' ') ?
+        new Set(countries.split(/\s+/)) :
+        new Set(countries.split(/(\w\w)/).filter(s => !!s)),
+      aliasFor
     };
   }
 
@@ -670,7 +714,7 @@ export class Timezone {
       let etz = this.encodedTimezones[ianaName];
 
       if (!etz.includes(';'))
-        etz = this.encodedTimezones[etz];
+        etz = this.encodedTimezones[etz.replace(/^!(.*,)?/, '')];
 
       const sections = etz.split(';');
       let parts = sections[0].split(' ');
@@ -744,6 +788,9 @@ export class Timezone {
     this._dstOffset  = zoneInfo.dstOffset;
     this.displayName = zoneInfo.displayName;
     this.transitions = zoneInfo.transitions;
+    this._aliasFor = zoneInfo.aliasFor;
+    this._population = zoneInfo.population ?? 0;
+    this._countries = zoneInfo.countries ?? new Set();
 
     if (this.transitions && this.transitions.length > 0) {
       let lastOffset = this.transitions[0].utcOffset;
@@ -773,6 +820,9 @@ export class Timezone {
   get usesDst(): boolean { return this._usesDst; }
   get dstOffset(): number { return this._dstOffset; }
   get error(): string { return this._error; }
+  get aliasFor(): string { return this._aliasFor; }
+  get countries(): Set<string> { return new Set(this._countries); }
+  get population(): number { return this._population; }
 
   getOffset(utcTime: number): number {
     if (!this.transitions || this.transitions.length === 0)
@@ -820,6 +870,10 @@ export class Timezone {
     }
 
     return name;
+  }
+
+  supportsCountry(twoCharCode: string): boolean {
+    return this._countries.has(twoCharCode.toUpperCase());
   }
 
   getOffsetForWallTime(wallTime: number): number {

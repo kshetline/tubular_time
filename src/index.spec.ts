@@ -15,7 +15,7 @@ describe('Zone updates', () => {
 
   it('should retrieve remote timezone updates', function (done) {
     this.slow(3000);
-    this.timeout(10000);
+    this.timeout(61000);
 
     addZonesUpdateListener(result => {
       clearZonesUpdateListeners();
@@ -28,7 +28,7 @@ describe('Zone updates', () => {
 
   it('should fail to retrieve remote timezone update', function (done) {
     this.slow(3000);
-    this.timeout(10000);
+    this.timeout(61000);
 
     addZonesUpdateListener(result => {
       clearZonesUpdateListeners();
