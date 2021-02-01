@@ -4,7 +4,7 @@ import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianT
 import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
-import { getMinDaysInWeek, getStartOfWeek } from './locale-data';
+import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime } from './locale-data';
 
 export enum DateTimeField {
   FULL = -1,
@@ -31,6 +31,7 @@ export class DateTime extends Calendar {
   private static defaultCenturyBase = 1970;
   private static defaultLocale: string | string[] = 'en-us';
   private static defaultTimezone = Timezone.OS_ZONE;
+  private static defaultTimezoneExplicit = false;
 
   private _locale = DateTime.defaultLocale;
   private _timezone = DateTime.defaultTimezone;
@@ -63,7 +64,8 @@ export class DateTime extends Calendar {
     if (isString(newZone))
       newZone = Timezone.from(newZone);
 
-    DateTime.defaultTimezone = newZone;
+    this.defaultTimezone = newZone;
+    this.defaultTimezoneExplicit = true;
   }
 
   static isDateTime(obj: any): obj is DateTime { return obj instanceof DateTime; }
@@ -100,6 +102,13 @@ export class DateTime extends Calendar {
               gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
+    if (!DateTime.defaultTimezoneExplicit) {
+      if (hasIntlDateTime && Timezone.guess())
+        DateTime.defaultTimezone = Timezone.from(Timezone.guess());
+
+      DateTime.defaultTimezoneExplicit = true;
+    }
+
     if (isString(initialTime)) {
       initialTime = initialTime.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim();
       const saveTime = initialTime;
@@ -114,10 +123,10 @@ export class DateTime extends Calendar {
         if (/^(Z|UT|UTC|GMT)$/i.test(zone))
           zone = 'UT';
 
-        timezone = timezone ?? Timezone.from(zone);
+        timezone = timezone ?? (Timezone.has(zone) ? Timezone.from(zone) : null);
 
-        if (timezone instanceof Timezone && timezone.error) {
-          const szni = Timezone.getShortZoneNameInfo(zone);
+        if (!timezone || (timezone instanceof Timezone && timezone.error)) {
+          const szni = Timezone.hasShortName(zone) ? Timezone.getShortZoneNameInfo(zone) : null;
 
           if (szni) {
             timezone = Timezone.from(szni.ianaName);

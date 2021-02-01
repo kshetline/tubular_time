@@ -1,5 +1,14 @@
 import { isArray, isNumber, isString } from '@tubular/util';
 
+let _hasIntl = false;
+
+try {
+  _hasIntl = typeof Intl !== 'undefined' && !!Intl?.DateTimeFormat;
+}
+catch {}
+
+export const hasIntlDateTime = _hasIntl;
+
 export const localeList = [
   'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bn', 'bn-bd',
   'bo', 'br', 'bs', 'ca', 'cs', 'cy', 'da', 'de', 'de-at', 'de-ch', 'el', 'en', 'en-au', 'en-ca', 'en-gb',
@@ -14,7 +23,7 @@ export const localeList = [
 Object.freeze(localeList);
 
 export function normalizeLocale(locale: string | string[]): string | string[] {
-  if (!Intl?.DateTimeFormat)
+  if (!hasIntlDateTime)
     return 'en';
 
   if (isString(locale) && locale.includes(','))

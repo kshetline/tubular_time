@@ -2,6 +2,7 @@ import { div_tt0, floor, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft } from '@tubular/util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
+import { hasIntlDateTime } from './locale-data';
 
 export interface RegionAndSubzones {
   region: string;
@@ -287,6 +288,21 @@ export class Timezone {
     return regionAndSubzones;
   }
 
+  private static _guess: string;
+
+  static guess(recheck = false): string {
+    if (!this._guess || recheck) {
+      if (hasIntlDateTime)
+        this._guess = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    }
+
+    return this._guess;
+  }
+
+  static has(name: string): boolean {
+    return !!this.zoneLookup[name] || !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS)$/.test(name);
+  }
+
   static from(name: string): Timezone {
     return Timezone.getTimezone(name);
   }
@@ -345,6 +361,10 @@ export class Timezone {
       this.zoneLookup[name] = zone;
 
     return zone;
+  }
+
+  static hasShortName(name: string): boolean {
+    return !!this.shortZoneNames[name];
   }
 
   static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo {

@@ -3,16 +3,9 @@ import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
 import { flatten, isArray, isEqual, isNumber, isString, last, toNumber } from '@tubular/util';
-import { getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, normalizeLocale } from './locale-data';
+import { getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, hasIntlDateTime, normalizeLocale } from './locale-data';
 import { Timezone } from './timezone';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
-
-let hasIntlDateTime = false;
-
-try {
-  hasIntlDateTime = typeof Intl !== 'undefined' && !!Intl?.DateTimeFormat;
-}
-catch {}
 
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName',
                     ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
@@ -911,7 +904,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
   let origZone = zone;
   let restoreZone = false;
 
-  input = convertDigits(input.trim()).replace(/\u200F/g, '');
+  input = convertDigits(input.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim()).replace(/\u200F/g, '');
   format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
 
