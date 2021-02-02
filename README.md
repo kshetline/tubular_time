@@ -63,7 +63,7 @@ While there are a wide range of functions and classes available from **@tubular/
 |  |  | .toString() |
 |---|---|---|
 | `ttime()` | Current time | `DateTime<2021‑01‑28T03:29:12.040 ‑05:00>` |
-| `ttime('1969‑07‑12T20:17Z')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>The trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<2020-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>`
+| `ttime('1969‑07‑12T20:17')`<br>`ttime('1969‑07‑12T20:17Z')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>The trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<1969‑07‑12T20:17:00.000 ‑04:00§>`<br>`DateTime<1969-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>`
 | `ttime('2021-w05-5')` | DateTime from an ISO-8601-like date/time variant for locale-based week numbering | `DateTime<2021-01-28T00:00:00.000 -05:00>` |
 | `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
 | `ttime('20:17:15')` | Dateless time from an ISO-8601 time string | `'DateTime<20:17:15.000>` |
@@ -126,10 +126,10 @@ While there are a wide range of functions and classes available from **@tubular/
 | Day of Week (locale) | e | 1 2 ... 6 7<br><br>Note: this is 1-based, not 0-based, as in Moment.js |
 | Hour | HH | 00-23 |
 | | H | 0-23 |
-| | hh | 01-12 |
-| | h | 1-12, use with AM/PM |
-| | KK | 00-11 |
-| | K | 0-11, use with AM/PM |
+| | hh | 01-12, for use with AM/PM |
+| | h | 1-12, for use with AM/PM |
+| | KK | 00-11, for use with AM/PM |
+| | K | 0-11, for use with AM/PM |
 | | kk | 01-24 |
 | | k | 1-24 |
 | Day period | A | AM PM |
@@ -143,8 +143,9 @@ While there are a wide range of functions and classes available from **@tubular/
 | | SSS | 000-999 (milliseconds) |
 | | SSSS... | Additional zeros after milliseconds. |
 | Timezone | ZZZ | America/New_York, Europe/Paris, etc.<br><br>IANA timezone, if available. |
+| | zzz | Australian Central Standard Time, Pacific Daylight Time, etc.<br><br>Long form names, only for output &mdash; cannot be parsed. |
 | | ZZ | -0700 -0600 ... +0600 +0700
-| | zz,&nbsp;z | EST, CDT, etc.<br><br>Please note that timezones in this format are not internationalized, and are not unambiguous when parsed. |
+| | zz,&nbsp;z | EST, CDT, MST, PDT, AEST, etc.<br><br>Please note that timezones in this format are not internationalized, and are not unambiguous when parsed. |
 | | Z | -07:00 -06:00 ... +06:00 +07:00
 | Unix timestamp | X | 1360013296 |
 | Unix millisecond timestamp | x | 1360013296123 |

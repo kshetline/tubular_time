@@ -166,7 +166,7 @@ let osDstOffset: number;
       }
 
       osTransitions.forEach((transition: Transition, index: number) => {
-        if (index > 0 && transition.utcOffset === osProbableDstOffset && osTransitions[index - 1].utcOffset === osProbableStdOffset)
+        if (index > 0 && transition.utcOffset === osProbableDstOffset && osTransitions[index - 1]?.utcOffset === osProbableStdOffset)
           transition.dstOffset = osProbableDstOffset - osProbableStdOffset;
       });
 
@@ -326,7 +326,7 @@ export class Timezone {
         }
 
         const osZone = testZone ? Timezone.from(testZone) : this.OS_ZONE;
-        const zoneKey = osZone.getFormattedOffset(osZone.utcOffset, true) + ';' + floor(osZone.dstOffset / 60);
+        const zoneKey = this.formatUtcOffset(osZone.utcOffset, true) + ';' + floor(osZone.dstOffset / 60);
         const candidateZones = Array.from(this.zonesByOffsetAndDst[zoneKey] ?? [])
           .filter(zone => !country || this.doesZoneMatchCountry(zone, country))
           .map(zone => ({ zone, rating: osZone.matchRating(Timezone.from(zone)), pop: this.populationForZone[zone] }))
@@ -574,7 +574,7 @@ export class Timezone {
     }
 
     transitions.forEach((transition: Transition, index: number) => {
-      if (transition.utcOffset === probableDstOffset && transitions[index - 1].utcOffset === probableStdOffset)
+      if (transition.utcOffset === probableDstOffset && transitions[index - 1]?.utcOffset === probableStdOffset)
         transition.dstOffset = probableDstOffset - probableStdOffset;
     });
 
