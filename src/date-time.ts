@@ -109,6 +109,8 @@ export class DateTime extends Calendar {
       DateTime.defaultTimezoneExplicit = true;
     }
 
+    let parseZone: Timezone;
+
     if (isString(initialTime)) {
       initialTime = initialTime.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim();
       const saveTime = initialTime;
@@ -123,20 +125,21 @@ export class DateTime extends Calendar {
         if (/^(Z|UT|UTC|GMT)$/i.test(zone))
           zone = 'UT';
 
-        timezone = timezone ?? (Timezone.has(zone) ? Timezone.from(zone) : null);
+        parseZone = Timezone.has(zone) ? Timezone.from(zone) : null;
 
-        if (!timezone || (timezone instanceof Timezone && timezone.error)) {
+        if (!parseZone || (parseZone instanceof Timezone && parseZone.error)) {
           const szni = Timezone.hasShortName(zone) ? Timezone.getShortZoneNameInfo(zone) : null;
 
           if (szni) {
-            timezone = Timezone.from(szni.ianaName);
+            if (szni.ianaName && Timezone.has(szni.ianaName))
+              parseZone = Timezone.from(szni.ianaName);
 
             if (initialTime)
               initialTime += ' ' + Timezone.formatUtcOffset(szni.utcOffset);
           }
           else if ($.index === 0) {
             initialTime = saveTime;
-            timezone = null;
+            parseZone = null;
           }
           else
             throw new Error(`Bad timezone: ${zone}`);
@@ -147,8 +150,10 @@ export class DateTime extends Calendar {
         try {
           initialTime = parseISODateTime(initialTime);
 
-          if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null)
-            timezone = DATELESS;
+          if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null) {
+            parseZone = DATELESS;
+            timezone = null;
+          }
         }
         catch {
           initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
@@ -164,7 +169,9 @@ export class DateTime extends Calendar {
     if (timezone?.error)
       throw new Error(`Bad timezone: ${timezone!.zoneName}`);
 
-    if (timezone)
+    if (parseZone)
+      this._timezone = parseZone;
+    else if (timezone)
       this._timezone = timezone;
 
     if (!isNumber(gregorianOrLocale) && isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale))
@@ -173,13 +180,16 @@ export class DateTime extends Calendar {
     if (initialTime instanceof Date)
       this.utcTimeMillis = +initialTime;
     else if (isObject(initialTime)) {
-      if (!timezone && initialTime!.utcOffset != null && initialTime!.utcOffset !== 0)
+      if (!parseZone && !timezone && initialTime!.utcOffset != null && initialTime!.utcOffset !== 0)
         this._timezone = Timezone.from(Timezone.formatUtcOffset(initialTime!.utcOffset));
 
       this.wallTime = initialTime;
     }
     else
       this.utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
+
+    if (parseZone && timezone)
+      this.timezone = timezone;
   }
 
   lock = () => this._lock();

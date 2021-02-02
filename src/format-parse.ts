@@ -510,10 +510,14 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
 
   localeNames = normalizeLocale(localeNames);
 
-  if (/^UT[-+]\d\d(?::?00)/.test(timezone))
-    options.timeZone = 'Etc/GMT' + (timezone.charAt(2) === '-' ? '+' : '-') + toNumber(timezone.substr(3));
-  else if (timezone === 'DATELESS' || timezone === 'ZONELESS')
+  if (timezone === 'DATELESS' || timezone === 'ZONELESS')
     options.timeZone = 'UTC';
+  else if (/^UT[-+]\d\d(?::?\d\d)/.test(timezone)) {
+    options.timeZone = 'Etc/GMT' + (timezone.charAt(2) === '-' ? '+' : '-') + toNumber(timezone.substr(3));
+
+    if (!Timezone.has(options.timeZone))
+      delete options.timeZone;
+  }
   else if (timezone !== 'OS')
     options.timeZone = (timezone === 'UT' ? 'UTC' : timezone);
 
