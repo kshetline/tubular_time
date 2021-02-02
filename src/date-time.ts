@@ -103,8 +103,8 @@ export class DateTime extends Calendar {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
     if (!DateTime.defaultTimezoneExplicit) {
-      if (hasIntlDateTime && Timezone.guess())
-        DateTime.defaultTimezone = Timezone.from(Timezone.guess());
+      if (hasIntlDateTime && Timezone.guess() !== 'OS')
+        this._timezone = DateTime.defaultTimezone = Timezone.from(Timezone.guess());
 
       DateTime.defaultTimezoneExplicit = true;
     }
@@ -317,7 +317,7 @@ export class DateTime extends Calendar {
 
   toLocale(newLocale: string | string[]): DateTime {
     const result = this.clone();
-    result.locale = newLocale;
+    result._locale = newLocale;
     return result;
   }
 

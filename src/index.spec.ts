@@ -79,6 +79,8 @@ describe('Zone updates', () => {
     expect(ttime('2/5/1955 03:12:27 am', 'ISM').format('LTS')).to.equal('3:12:27 AM');
     expect(ttime('2/5/1955 03:12:27 am', 'ISM').format('LT')).to.equal('3:12 AM');
     expect(ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 }).toString()).to.equal('DateTime<2008-01-20T12:00:00.000 -05:00>');
+    expect(ttime('1945-05-08').toLocale('no').format('lll')).to.equal('8. mai 1945, 0:00');
+    expect(ttime('1945-05-08', null, 'no').format('lll')).to.equal('8. mai 1945, 0:00');
   });
 
   it('should recognize Date and DateTime classes', () => {

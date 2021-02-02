@@ -305,7 +305,7 @@ export class Timezone {
   static guess(recheck = false, testCountry?: string, testZone?: string): string {
     if (!this._guess || recheck) {
       if (hasIntlDateTime && !testCountry && !testZone)
-        this._guess = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+        this._guess = new Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'OS';
       else {
         let country = testCountry;
 
@@ -518,9 +518,9 @@ export class Timezone {
 
     const getUtcOffset = (millis: number): number => {
       const fields = zoneDTF.formatToParts(millis);
-      return floor((millis - millisFromDateTime_SGC(
+      return floor((millisFromDateTime_SGC(
         getDateValue(fields, 'year'), getDateValue(fields, 'month'), getDateValue(fields, 'day'),
-        getDateValue(fields, 'hour'), getDateValue(fields, 'minute'), getDateValue(fields, 'second'))) / 1000);
+        getDateValue(fields, 'hour'), getDateValue(fields, 'minute'), getDateValue(fields, 'second')) - millis) / 1000);
     };
 
     const MONTH_MSEC = 30 * DAY_MSEC;
