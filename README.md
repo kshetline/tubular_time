@@ -7,10 +7,10 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47.
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
 * IANA timezone support, with features beyond simply parsing and formatting using timezones, including an accessible listing of all available timezones and live updates of timezone definitions.
 * Supports and recognizes negative Daylight Saving Time.
-* Many features available using a familiar Moment.js-style interface.
+* Many features available using a familiar Moment.js-style API.
 * Extensive date/time manipulation and calculation capabilities.
 * Astronomical time functions.
-* Internationalization via `Intl`, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
+* Internationalization via JavaScript's `Intl`, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Suitable for tree shaking.
 * Full TypeScript typing support.
 
@@ -24,7 +24,7 @@ This library was originally developed for an astronomy website, https://skyviewc
 
 Unlike Moment.js, IANA timezone handling is built in, not a separate module, with a compact set of timezone data that reaches roughly five years into the past and five years into the future, expanded into the past and future using Daylight Saving Time rules and/or values extracted from `Intl.DateTimeFormat`. Unlike the `Intl` API, the full list of available timezones is exposed, allowing the creation of timezone selection interfaces.
 
-Two alternate large timezone definition sets, of approximately 280K each, are available, each serving slightly different purposes. Each can be bundled at compile time, or loaded dynamically at run time. You can also download live updates when the IANA Time Zone Database is updated.
+Two alternate large timezone definition sets, of approximately 280K each, are available, each serving slightly different purposes. These definitions can be bundled at compile time, or loaded dynamically at run time. You can also download live updates when the IANA Time Zone Database is updated.
 
 ### Installation
 
@@ -32,12 +32,12 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 `npm install @tubular/time`
 
-```typescript
-import ttime, { DateTime,  Timezone } from '@tubular/time';
+```
+import ttime, { DateTime,  Timezone... } from '@tubular/time';
 ```
 ...or...
-```javascript
-const { default: ttime, DateTime, Timezone } = require('@tubular/time');
+```
+const { default: ttime, DateTime, Timezone... } = require('@tubular/time');
 ```
 
 Documentation examples will assume **@tubular/time** has been imported as above.
@@ -56,35 +56,33 @@ The package will be available via the global variable `tbTime`. `tbTime.default`
 
 While there are a wide range of functions and classes available from **@tubular/time**, the workhorse is the `ttime()` function, which produces immutable instances of the `DateTime` class.
 
-`function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string, locale?: string | string[]): DateTime`
+`function ttime(initialTime?: number | string | DateAndTime | Date | number[] | null, format?: string, locale?: string | string[]): DateTime`
 
-#### Creating immutable `DateTime` instances
+#### Creating immutable `DateTime` instances with `ttime()`
+
+`DateTime` instances can be created in many ways. The simplest way is to create a current-time instance, done by passing no arguments at all. Dates and times can also be expressed as strings, objects, and arrays of numbers.
 
 |  |  | .toString() |
 |---|---|---|
 | `ttime()` | Current time | `DateTime<2021‑01‑28T03:29:12.040 ‑05:00>` |
-| `ttime('1969‑07‑12T20:17')`<br>`ttime('1969‑07‑12T20:17Z')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>The trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<1969‑07‑12T20:17:00.000 ‑04:00§>`<br>`DateTime<1969-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>`
+| `ttime('1969‑07‑12T20:17')`<br>`ttime('1969‑07‑12T20:17Z')`<br>`ttime('20210704T0945-03')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>The trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<1969‑07‑12T20:17:00.000 ‑04:00§>`<br>`DateTime<1969-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-07-04T09:45:00.000 -03:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>`
 | `ttime('2021-w05-5')` | DateTime from an ISO-8601-like date/time variant for locale-based week numbering | `DateTime<2021-01-28T00:00:00.000 -05:00>` |
 | `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
 | `ttime('20:17:15')` | Dateless time from an ISO-8601 time string | `'DateTime<20:17:15.000>` |
 | `ttime(1200848400000)` | From millisecond timestamp | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })` | From `DateAndTime` object, short-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })` | From `DateAndTime` object, long-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime([2013, 12, 11, 10, 9, 8, 765])` | From numeric array: year, month, day, (hour, minute, second, millisecond). | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
+| `ttime([2013, 12, 11, 10, 9, 8, 765])` | From numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order. | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
 | `ttime(new Date(2008, 0, 20, 12, 0))` | From JavaScript `Date` object | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`) | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
 
-### Parsing with a format string, optional locale, with formatted output.
+### Formatting output
 
-| | .format('IMM') |
-|---|---|
-| `ttime('02/03/32', 'MM-DD-YY')` | `Feb 3, 2032, 12:00:00 AM` |
-| `ttime('02/03/32', 'DD-MM-YY')` | `Mar 2, 2032, 12:00:00 AM` |
-| `ttime('02/03/32 4:30 pm', 'DD-MM-YY hh:mm a', 'fr')` | `2 mars 2032 à 16:30:00` |
-| `ttime('02/03/32', 'DD-MM-YYYY')` | `2 mars 2032 à 16:30:00` |
-| `ttime('2032-03-02T16:30', null, 'ru')` | `2 мар. 2032 г., 16:30:00'` |
-| `ttime('2032-03-02T16:30', null, 'ar-sa')` | `٠٢‏/٠٣‏/٢٠٣٢ ٤:٣٠:٠٠ م` |
-| `ttime('2032-03-02T16:30', null, 'zh-cn')` | `2032年3月2日 下午4:30:00` |
+Dates and times can be formatted in a great variety of ways, using a broad selection of format tokens, described in the table below.
+
+For the greatest adherence to localized formats for dates and times, you can use the I*XX* format strings, which directly call upon `Intl.DateTimeFormat` (if available) to created localized dates, times, and combined dates/times.
+
+You can also produce much more flexible formatting, as might be suitable for your 
 
 ### Format string tokens
 
@@ -189,3 +187,15 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 | IS | `9/4/86` |
 | IxL | `8:30:00 PM EDT` |
 
+
+### Parsing with a format string, optional locale, with formatted output.
+
+| | .format('IMM') |
+|---|---|
+| `ttime('02/03/32', 'MM-DD-YY')` | `Feb 3, 2032, 12:00:00 AM` |
+| `ttime('02/03/32', 'DD-MM-YY')` | `Mar 2, 2032, 12:00:00 AM` |
+| `ttime('02/03/32 4:30 pm', 'DD-MM-YY hh:mm a', 'fr')` | `2 mars 2032 à 16:30:00` |
+| `ttime('02/03/32', 'DD-MM-YYYY')` | `2 mars 2032 à 16:30:00` |
+| `ttime('2032-03-02T16:30', null, 'ru')` | `2 мар. 2032 г., 16:30:00'` |
+| `ttime('2032-03-02T16:30', null, 'ar-sa')` | `٠٢‏/٠٣‏/٢٠٣٢ ٤:٣٠:٠٠ م` |
+| `ttime('2032-03-02T16:30', null, 'zh-cn')` | `2032年3月2日 下午4:30:00` |

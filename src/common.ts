@@ -160,23 +160,28 @@ export function parseISODateTime(date: string): DateAndTime {
     time = {};
   }
 
-  date = date.substr($[0].length).trim();
+  date = date.substr($[0].length).trim().replace(/^T\s*/i, '');
 
   if (!date)
-    $ = [] as RegExpExecArray;
-  else if (!($ = /(?:T\s*)?(\d{1,2}):(\d{1,2})(?::(?:(\d{1,2})(?:[.,](\d+))?))?(?:\s*([-+](?:\d\d\d\d|\d\d:\d\d)))?$/i.exec(date)) &&
-           !($ = /(?:T\s*)?(\d{4})(\d\d)(\d\d)(?:\.(\d+))?/i.exec(date)))
+    Object.assign(time, { hrs: 0, min: 0, sec: 0 });
+  else if (($ = /^(\d{1,2})(?::(\d{1,2}))(?::(?:(\d{1,2})(?:[.,](\d+))?))?(?=\D|$)/.exec(date)) ||
+           ($ = /^(\d\d)(?:(\d\d)(?:(\d\d)(?:[.,](\d+))?)?)?(?=\D|$)/.exec(date))) {
+    Object.assign(time, {
+      hrs: Number($[1]), min: Number($[2] ?? 0),
+      sec: Number($[3] ?? 0), millis: Number(($[4] ?? '0').padEnd(3, '0').substr(0, 3)) });
+
+    if ($[4] == null && time.millis === 0)
+      delete time.millis;
+
+    date = date.substr($[0].length).trim();
+  }
+
+  $ = /^([-+](\d\d|\d\d\d\d|\d\d:\d\d))$/i.exec(date);
+
+  if ($)
+    time.utcOffset = parseTimeOffset($[1]);
+  else if (date)
     throw invalidDateTime;
-
-  Object.assign(time, {
-    hrs: Number($[1] ?? 0), min: Number($[2] ?? 0),
-    sec: Number($[3] ?? 0), millis: Number(($[4] ?? '0').padEnd(3, '0').substr(0, 3)) });
-
-  if ($[4] == null && time.millis === 0)
-    delete time.millis;
-
-  if ($[5])
-    time.utcOffset = parseTimeOffset($[5]);
 
   return syncDateAndTime(time);
 }

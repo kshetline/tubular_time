@@ -26,6 +26,13 @@ describe('DateTime', () => {
     expect(() => new DateTime({ y: 1900.7 })).to.throw('y must be an integer value');
     expect(new DateTime('2021-07-04T12:34 Europe/Dublin', 'America/Chicago').toString()).to.equal('DateTime<2021-07-04T06:34:00.000 -05:00§>');
     expect(new DateTime().locale).to.equal('en-us');
+    expect(new DateTime('20210704Z').toString()).to.equal('DateTime<2021-07-04T00:00:00.000 +00:00>');
+    expect(new DateTime('20210704T09Z').toString()).to.equal('DateTime<2021-07-04T09:00:00.000 +00:00>');
+    expect(new DateTime('20210704T0945Z').toString()).to.equal('DateTime<2021-07-04T09:45:00.000 +00:00>');
+    expect(new DateTime('20210704T094533Z').toString()).to.equal('DateTime<2021-07-04T09:45:33.000 +00:00>');
+    expect(new DateTime('20210704T094533,707Z').toString()).to.equal('DateTime<2021-07-04T09:45:33.707 +00:00>');
+    expect(new DateTime('20210704T0945-03').toString()).to.equal('DateTime<2021-07-04T09:45:00.000 -03:00>');
+    expect(new DateTime('20210704T0945+0530').toString()).to.equal('DateTime<2021-07-04T09:45:00.000 +05:30>');
 
     const dt = new DateTime();
 
