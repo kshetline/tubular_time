@@ -63,6 +63,8 @@ describe('Zone updates', () => {
   it('should provide alternate access to DateTime instance creation and parsing', () => {
     initTimezoneSmall();
     expect(ttime().utcTimeMillis).approximately(Date.now(), 1000);
+    expect(ttime([]).utcTimeMillis).approximately(Date.now(), 1000);
+    expect(ttime({}).utcTimeMillis).approximately(Date.now(), 1000);
     expect(ttime('Europe/Prague').getTimezoneDisplayName()).to.match(/^CES?T$/);
     expect(ttime('1945-05-08 UTC').utcTimeMillis).to.equal(Date.parse('May 8, 1945 00:00+00:00'));
     expect(ttime('May 8, 1945 UTC', 'MMM D, Y z').utcTimeMillis).to.equal(Date.parse('May 8, 1945 00:00+00:00'));
@@ -71,7 +73,7 @@ describe('Zone updates', () => {
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLLL')).to.equal('Saturday, February 5, 1955, 3:12 AM');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('llll')).to.equal('Sat, Feb 5, 1955, 3:12 AM');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLL')).to.equal('February 5, 1955, 3:12 AM');
-    expect(ttime('2/5/1955 03:12 am', 'ISS').format('lll')).to.equal('Feb 5, 1955, 3:12 AM');
+    expect(ttime([1955, 2, 5, 3, 12]).format('lll')).to.equal('Feb 5, 1955, 3:12 AM');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('LL')).to.equal('February 5, 1955');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('ll')).to.equal('Feb 5, 1955');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('L')).to.equal('02/05/1955');

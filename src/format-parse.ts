@@ -439,8 +439,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
               const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
               const zone = convertDigits(dt.timezone.zoneName);
 
-              if (/^UT[-+]\d\d(?::?00)/.test(zone))
+              if (/^UT[-+]\d\d(?::?\d\d)/.test(zone)) {
                 options.timeZone = 'Etc/GMT' + (zone.charAt(2) === '-' ? '+' : '-') + toNumber(zone.substr(3));
+
+                if (!Timezone.has(options.timeZone))
+                  delete options.timeZone;
+              }
               else if (zone !== 'OS')
                 options.timeZone = (zone === 'UT' ? 'UTC' : zone);
 

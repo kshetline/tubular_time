@@ -25,6 +25,12 @@ describe('DateTime', () => {
     expect(new DateTime('2021-11-07T01:23-04:00').timezone.zoneName).to.equal('UT-04:00');
     expect(() => new DateTime({ y: 1900.7 })).to.throw('y must be an integer value');
     expect(new DateTime('2021-07-04T12:34 Europe/Dublin', 'America/Chicago').toString()).to.equal('DateTime<2021-07-04T06:34:00.000 -05:00§>');
+    expect(new DateTime().locale).to.equal('en-us');
+
+    const dt = new DateTime();
+
+    dt.locale = 'fr';
+    expect(dt.locale).to.equal('fr');
   });
 
   it('should skip an hour starting Daylight Saving Time', () => {

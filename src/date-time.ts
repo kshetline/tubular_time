@@ -1,10 +1,12 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
-import { clone, isArray, isEqual, isNumber, isObject, isString } from '@tubular/util';
+import { clone, forEach, isArray, isEqual, isNumber, isObject, isString } from '@tubular/util';
 import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate } from './calendar';
 import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime } from './locale-data';
+
+export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
 export enum DateTimeField {
   FULL = -1,
@@ -96,9 +98,9 @@ export class DateTime extends Calendar {
     throw new Error(`Resolution ${DateTimeField[resolution]} not valid`);
   }
 
-  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
-  constructor(initialTime?: number | string | DateAndTime | Date | null, timezone?: Timezone | string | null,
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null,
               gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
@@ -109,10 +111,19 @@ export class DateTime extends Calendar {
       DateTime.defaultTimezoneExplicit = true;
     }
 
+    if (isArray(initialTime)) {
+      const t = {} as DateAndTime;
+      [t.y, t.m, t.d, t.hrs, t.min, t.sec, t.millis] = initialTime;
+      forEach((initialTime = t) as any, (key, value) => value === undefined ? delete t[key] : null);
+    }
+
+    if (isEqual(initialTime, {}))
+      initialTime = null;
+
     let parseZone: Timezone;
 
     if (isString(initialTime)) {
-      initialTime = initialTime.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim();
+      initialTime = initialTime!.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim();
       const saveTime = initialTime;
       const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
       let zone: string;
@@ -180,10 +191,10 @@ export class DateTime extends Calendar {
     if (initialTime instanceof Date)
       this.utcTimeMillis = +initialTime;
     else if (isObject(initialTime)) {
-      if (!parseZone && !timezone && initialTime!.utcOffset != null && initialTime!.utcOffset !== 0)
-        this._timezone = Timezone.from(Timezone.formatUtcOffset(initialTime!.utcOffset));
+      if (!parseZone && !timezone && (initialTime as any).utcOffset != null && (initialTime as any).utcOffset !== 0)
+        this._timezone = Timezone.from(Timezone.formatUtcOffset((initialTime as any).utcOffset));
 
-      this.wallTime = initialTime;
+      this.wallTime = initialTime as DateAndTime;
     }
     else
       this.utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());

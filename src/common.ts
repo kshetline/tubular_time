@@ -91,7 +91,7 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
     if (key !== 'j' && key !== 'isJulian') {
       const value = obj[key];
 
-      if (!isNumber(value) || value !== floor(value))
+      if (value != null && !isNumber(value) || value !== floor(value))
         throw new Error(key + ' must be an integer value');
     }
   });

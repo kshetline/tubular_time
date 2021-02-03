@@ -17,8 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-import { DateAndTime } from './common';
-import { DateTime } from './date-time';
+import { DateTime, DateTimeArg } from './date-time';
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
 import timezoneSmall from './timezone-small';
@@ -176,7 +175,7 @@ export function isDateTime(obj: any): obj is DateTime { return obj instanceof Da
 
 export function isDate(obj: any): obj is Date { return obj instanceof Date; }
 
-function ttime(initialTime?: number | string | DateAndTime | Date | null, format?: string, locale?: string | string[]): DateTime {
+function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | string[]): DateTime {
   if (!format || !isString(initialTime))
     return new DateTime(initialTime, null, locale).lock();
   else
