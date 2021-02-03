@@ -439,12 +439,17 @@ export function getISOFormatDate(yearOrDate: YearOrDate, month?: number, day?: n
 export function parseISODate(date: string): YMDDate {
   let sign = 1;
 
+  date = date.trim();
+
   if (date.startsWith('-')) {
     sign = -1;
-    date = date.substring(1);
+    date = date.substring(1).trim();
   }
 
-  const match = /(\d+)-(\d+)-(\d+)/.exec(date);
+  let match = /(\d+)-(\d+)-(\d+)/.exec(date);
+
+  if (!match)
+    match = /(\d{4,})(\d\d)(\d\d)/.exec(date);
 
   if (!match)
     throw new Error('Invalid ISO date');
