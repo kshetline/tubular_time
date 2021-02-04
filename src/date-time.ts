@@ -40,7 +40,7 @@ export class DateTime extends Calendar {
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
 
-  static INVALID_DATE = new DateTime(NaN).lock();
+  static INVALID_DATE = new DateTime(NaN, 'UTC').lock();
 
   static julianDay(millis: number): number {
     return millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
@@ -104,11 +104,14 @@ export class DateTime extends Calendar {
               gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
-    if (!DateTime.defaultTimezoneExplicit) {
+    if (!DateTime.defaultTimezoneExplicit && !timezone) {
       if (hasIntlDateTime && Timezone.guess() !== 'OS')
         this._timezone = DateTime.defaultTimezone = Timezone.from(Timezone.guess());
 
-      DateTime.defaultTimezoneExplicit = true;
+      if (this._timezone.error)
+        this._timezone = Timezone.OS_ZONE;
+      else
+        DateTime.defaultTimezoneExplicit = true;
     }
 
     if (isArray(initialTime)) {

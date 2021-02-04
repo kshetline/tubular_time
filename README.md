@@ -78,11 +78,19 @@ While there are a wide range of functions and classes available from **@tubular/
 
 ### Formatting output
 
-Dates and times can be formatted in a great variety of ways, using a broad selection of format tokens, described in the table below.
+Dates and times can be formatted in a many ways, using a broad selection of format tokens, described in the table below.
 
 For the greatest adherence to localized formats for dates and times, you can use the I*XX* format strings, which directly call upon `Intl.DateTimeFormat` (if available) to created localized dates, times, and combined dates/times.
 
-You can also produce much more flexible formatting, as might be suitable for your 
+You can also produce more customized, flexible formatting, specifying the order, positioning, and style (text vs. number, fully spelled out or abbreviated, with or without leading zeros) of each date/time field, with embedded punctuation and text as desired.
+
+For example:
+
+`ttime().format('ddd MMM D, y N [at] h:mm A z')` →<br>
+`Wed Feb 3, 2021 AD at 8:59 PM EST`
+
+`ttime().toLocale('de').format('ddd MMM D, y N [at] h:mm A z')` →<br>
+`Mi 02 3, 2021 n. Chr. at 9:43 PM GMT-5`
 
 ### Format string tokens
 
