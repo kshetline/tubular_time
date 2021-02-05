@@ -221,7 +221,7 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
   day: 4,
   dayOfYear: 35,
   epochDay: 18662, // days since January, 1 1970
-  isJulian: false, // true if a Julian calendar date instead of a Gregorian date (output-only value)
+  isJulian: false, // true if a Julian calendar date instead of a Gregorian date
 
   yw: 2021, // short for yearByWeek
   w: 5, // short for week
@@ -250,6 +250,7 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
   occurrence: 1 // usual 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
 }
 ```
+
 When using a `DateAndTime` object to create a `DateTime` instance, you need only set a minimal number of fields to specify the date and/or time you are trying to specify. You can use short or long names for field (if you use both, the short form takes priority).
 
 At minimum, you must specify a date or a time. If you only specify a date, the time will be treated as midnight at the start of that date. If you only specify a time, you can create a special dateless time instance. You can also, of course, specify both date and time together.

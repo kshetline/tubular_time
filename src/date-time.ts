@@ -440,6 +440,7 @@ export class DateTime extends Calendar {
       delete wallTime.occurrence;
       delete wallTime.utcOffset;
       delete wallTime.n;
+      delete wallTime.j;
       result.updateUtcMillisFromWallTime();
     }
 
@@ -615,6 +616,7 @@ export class DateTime extends Calendar {
     }
 
     delete wallTime.n;
+    delete wallTime.j;
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
 
@@ -799,6 +801,7 @@ export class DateTime extends Calendar {
       throw new Error(`${DateTimeField[field]} (${value}) must be in the range [${min}, ${max}]`);
 
     delete wallTime.n;
+    delete wallTime.j;
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
 
@@ -1008,13 +1011,13 @@ export class DateTime extends Calendar {
     const wallTimeMillis = ticks;
     const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000), 1, 4) as DateAndTime;
 
-    wallTime.millis = mod(ticks, 1000);
+    wallTime.millis = mod(ticks, 1000) || 0; // The `|| 0` cleans up negative zeros.
     ticks = div_rd(ticks, 1000);
-    wallTime.sec = mod(ticks, 60);
+    wallTime.sec = mod(ticks, 60) || 0;
     ticks = div_rd(ticks, 60);
-    wallTime.min = mod(ticks, 60);
+    wallTime.min = mod(ticks, 60) || 0;
     ticks = div_rd(ticks, 60);
-    wallTime.hrs = mod(ticks, 24);
+    wallTime.hrs = mod(ticks, 24) || 0;
     const offsets = this._timezone.getOffsets(millis);
     wallTime.utcOffset = offsets[0];
     wallTime.dstOffset = offsets[1];

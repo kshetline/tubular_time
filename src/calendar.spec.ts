@@ -1,5 +1,5 @@
 import { assert, expect } from 'chai';
-import { getISOFormatDate, Calendar, LAST, getDayNumber_SGC, getDayNumberGregorian, getDayNumberJulian } from './calendar';
+import { getISOFormatDate, Calendar, LAST, getDayNumber_SGC, getDayNumberGregorian, getDayNumberJulian, isValidDate_SGC } from './calendar';
 import { YMDDate } from './common';
 import { DateTime } from './date-time';
 
@@ -33,6 +33,10 @@ describe('Calendar', () => {
     expect(getDayNumberJulian({ n: 34567 })).to.equal(34567);
     expect(getDayNumberJulian({ n: -234567 })).to.equal(-234567);
     expect(() => getDayNumber_SGC({})).to.throw('Calendar: Invalid date arguments');
+    expect(getDayNumber_SGC({ y: 2021, j: false })).to.equal(18628);
+    expect(getDayNumber_SGC({ y: 2021, j: true })).to.equal(18641);
+    expect(isValidDate_SGC({ y: 1582, m: 10, d: 7 })).to.be.false;
+    expect(isValidDate_SGC({ y: 1582, m: 10, d: 7, j: true })).to.be.true;
   });
 
   it('should consistently convert the date for a day number back to the same day number.', () => {
