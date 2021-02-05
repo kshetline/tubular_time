@@ -164,7 +164,7 @@ export class DateTime extends Calendar {
         try {
           initialTime = parseISODateTime(initialTime);
 
-          if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null) {
+          if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null && initialTime.n == null) {
             parseZone = DATELESS;
             timezone = null;
           }
@@ -270,13 +270,13 @@ export class DateTime extends Calendar {
     validateDateAndTime(newTime);
 
     if (!isEqual(this._wallTime, newTime)) {
-      if (newTime.y == null && newTime.yw == null && newTime.ywl == null) {
+      if (newTime.y == null && newTime.yw == null && newTime.ywl == null && newTime.n == null) {
         newTime.y = 1970;
         newTime.m = 1;
         newTime.d = 1;
         this._timezone = DATELESS;
       }
-      else if (this._timezone === DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null))
+      else if (this._timezone === DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null || newTime.n != null))
         this._timezone = ZONELESS;
 
       this._wallTime = newTime;
@@ -438,6 +438,7 @@ export class DateTime extends Calendar {
     if (updateFromWall) {
       delete wallTime.occurrence;
       delete wallTime.utcOffset;
+      delete wallTime.n;
       result.updateUtcMillisFromWallTime();
     }
 
@@ -608,6 +609,7 @@ export class DateTime extends Calendar {
         break;
     }
 
+    delete wallTime.n;
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
 
@@ -706,6 +708,7 @@ export class DateTime extends Calendar {
         max = loose ? 367 : this.getDaysInYear(wallTime.y);
         wallTime.dy = value;
         delete wallTime.m;
+        delete wallTime.d;
         delete wallTime.utcOffset;
         break;
 
@@ -785,6 +788,7 @@ export class DateTime extends Calendar {
     if (value < min || value > max)
       throw new Error(`${DateTimeField[field]} (${value}) must be in the range [${min}, ${max}]`);
 
+    delete wallTime.n;
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
 
@@ -832,7 +836,7 @@ export class DateTime extends Calendar {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
-      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this);
 
     let dayMillis = this.getDayNumber(year, month, day) * DAY_MSEC;
 
@@ -864,7 +868,7 @@ export class DateTime extends Calendar {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
-      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this);
 
     return (this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / 1000;
   }
@@ -876,7 +880,7 @@ export class DateTime extends Calendar {
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
     }
     else
-      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+      [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this);
 
     return round((this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / MINUTE_MSEC);
   }
@@ -929,21 +933,36 @@ export class DateTime extends Calendar {
   }
 
   private updateUtcMillisFromWallTime(): void {
-    this._utcTimeMillis = this.computeUtcMillisFromWallTimeAux(this._wallTime);
+    const wallTime = purgeAliasFields(clone(this._wallTime));
+
+    this._utcTimeMillis = this.computeUtcMillisFromWallTimeAux(wallTime);
   }
 
   public computeUtcMillisFromWallTime(wallTime: DateAndTime): number {
-    return this.computeUtcMillisFromWallTimeAux(clone(wallTime));
+    return this.computeUtcMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
   }
 
   private computeUtcMillisFromWallTimeAux(wallTime: DateAndTime): number {
-    purgeAliasFields(this._wallTime);
+    if (wallTime.y != null) {
+      if (wallTime.dy == null) {
+        wallTime.m = wallTime.m ?? 1;
+        wallTime.d = wallTime.d ?? 1;
+      }
+    }
+    else if (wallTime.yw != null) {
+      wallTime.w = wallTime.w ?? 1;
+      wallTime.dw = wallTime.dw ?? 1;
+    }
+    else if (wallTime.ywl != null) {
+      wallTime.wl = wallTime.wl ?? 1;
+      wallTime.dwl = wallTime.dwl ?? 1;
+    }
 
     let millis = (wallTime.millis ?? 0) +
                  (wallTime.sec ?? 0) * 1000 +
                  (wallTime.min ?? 0) * 60000 +
                  (wallTime.hrs ?? 0) * 3600000 +
-                 this.getDayNumber(wallTime) * 86400000;
+                 (wallTime.n ?? this.getDayNumber(wallTime)) * 86400000;
 
     if (wallTime.utcOffset != null)
       millis -= wallTime.utcOffset * 1000;

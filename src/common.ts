@@ -96,10 +96,10 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
     }
   });
 
-  if ((obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
-       obj.ywl == null && obj.yearByWeekLocale == null) &&
-      ((obj as DateAndTime).hrs == null && (obj as DateAndTime).hour == null))
-    throw new Error('A year value or an hour value must be specified');
+  if (obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
+      obj.ywl == null && obj.yearByWeekLocale == null && obj.n == null && obj.epochDay == null &&
+      (obj as DateAndTime).hrs == null && (obj as DateAndTime).hour == null)
+    throw new Error('A year value, an epoch day, or an hour value must be specified');
 }
 
 export const MINUTE_MSEC =    60000;

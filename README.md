@@ -10,8 +10,8 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47.
 * Many features available using a familiar Moment.js-style API.
 * Extensive date/time manipulation and calculation capabilities.
 * Astronomical time functions.
-* Internationalization via JavaScript's `Intl`, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
-* Suitable for tree shaking.
+* Internationalization via JavaScript's `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
+* Suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
 
 <img src="https://shetline.com/readme/tubular-time/2.4.0/oct_1582.jpg" alt="October 1582">
@@ -32,13 +32,11 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 `npm install @tubular/time`
 
-```
-import ttime, { DateTime,  Timezone... } from '@tubular/time';
-```
+`import ttime, { DateTime,  Timezone`...`} from '@tubular/time';`
+
 ...or...
-```
-const { default: ttime, DateTime, Timezone... } = require('@tubular/time');
-```
+
+`const { default: ttime, DateTime, Timezone`...`} = require('@tubular/time');`
 
 Documentation examples will assume **@tubular/time** has been imported as above.
 
@@ -207,3 +205,50 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 | `ttime('2032-03-02T16:30', null, 'ru')` | `2 мар. 2032 г., 16:30:00'` |
 | `ttime('2032-03-02T16:30', null, 'ar-sa')` | `٠٢‏/٠٣‏/٢٠٣٢ ٤:٣٠:٠٠ م` |
 | `ttime('2032-03-02T16:30', null, 'zh-cn')` | `2032年3月2日 下午4:30:00` |
+
+### The `DateAndTime` object
+
+```json5
+{
+  y: 2021, // short for year
+  m: 2, // short for month
+  d: 4, // short for day
+  dy: 35, // short for dayOfYear
+  n: 18662, // short for epochDay
+  j: false, // short for isJulian
+
+  year: 2021,
+  month: 2,
+  day: 4,
+  dayOfYear: 35,
+  epochDay: 18662, // days since January, 1 1970
+  isJulian: false, // true if a Julian calendar date instead of a Gregorian date
+
+  yw: 2021, // short for yearByWeek
+  w: 5, // short for week
+  dw: 4, // short for dayOfWeek
+  yearByWeek: 2021, // year that accompanies an ISO year/week/day-of-week style date
+  week: 5, // week that accompanies an ISO year/week/day-of-week style date
+  dayOfWeek: 4, // day that accompanies an ISO year/week/day-of-week style date
+
+  ywl: 2021, // short for yearByWeekLocale
+  wl: 6, // short for weekLocale
+  dwl: 5, // short for dayOfWeekLocale
+  yearByWeekLocale: 2021, // year that accompanies an locale-specific year/week/day-of-week style date
+  weekLocale: 6, // week that accompanies an locale-specific year/week/day-of-week style date
+  dayOfWeekLocale: 5, // day that accompanies an locale-specific year/week/day-of-week style date
+
+  hrs: 0, // short for hour
+  min: 18, // short for minute
+  sec: 32, // short for second
+  hour: 0,
+  minute: 18,
+  second: 32,
+  millis: 125, // 0-999 milliseconds part of time
+
+  utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
+  dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative
+  occurrence: 1 // usual 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
+}
+```
+When using a `DateAndTime` object to create a `DateTime` instance, you need only set a minimal number of fields to specify the date and/or time you are trying to specify. You can use short or long names for field (if you use both, the short form takes priority).
