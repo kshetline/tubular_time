@@ -42,7 +42,7 @@ describe('Zone updates', () => {
 
   it('should retrieve one-off remote timezone update', function (done) {
     this.slow(3000);
-    this.timeout(10000);
+    this.timeout(61000);
 
     getTimezones(zonePollerNode, 'large')
       .then(result => {
@@ -84,6 +84,8 @@ describe('Zone updates', () => {
     expect(ttime('1945-05-08').toLocale('no').format('lll')).to.equal('8. mai 1945, 0:00');
     expect(ttime('1945-05-08', null, 'no').format('lll')).to.equal('8. mai 1945, 0:00');
     expect(ttime('20210203T2115').toLocale('de').format('ddd MMM D, y N [at] h:mm A z')).to.equal('Mi 02 3, 2021 n. Chr. at 9:15 PM GMT-5');
+    expect(ttime({ n: 40 }).format('l')).to.equal('2/10/1970');
+    expect(ttime({ y: 2021, dy: 40 }).format('l')).to.equal('2/9/2021');
   });
 
   it('should recognize Date and DateTime classes', () => {

@@ -1,5 +1,5 @@
 import { assert, expect } from 'chai';
-import { getISOFormatDate, Calendar, LAST } from './calendar';
+import { getISOFormatDate, Calendar, LAST, getDayNumber_SGC, getDayNumberGregorian, getDayNumberJulian } from './calendar';
 import { YMDDate } from './common';
 import { DateTime } from './date-time';
 
@@ -9,6 +9,30 @@ describe('Calendar', () => {
   beforeEach(() => {
     DateTime.setDefaultLocale('en-us');
     DateTime.setDefaultTimezone('America/New_York');
+  });
+
+  it('should handle various forms of date information', () => {
+    expect(getDayNumber_SGC(2021, 1, 1)).to.equal(18628);
+    expect(getDayNumber_SGC([2021, 1, 1])).to.equal(18628);
+    expect(getDayNumber_SGC({ y: 2021 })).to.equal(18628);
+    expect(getDayNumber_SGC({ y: 2021, m: 3 })).to.equal(18687);
+    expect(getDayNumber_SGC({ y: 2021, m: 3, d: 2 })).to.equal(18688);
+    expect(getDayNumber_SGC({ y: 2021, dy: 40 })).to.equal(18667);
+    expect(getDayNumber_SGC({ n: 34567 })).to.equal(34567);
+    expect(getDayNumber_SGC({ n: -234567 })).to.equal(-234567);
+    expect(getDayNumberGregorian({ y: 2021 })).to.equal(18628);
+    expect(getDayNumberGregorian({ y: 2021, m: 3 })).to.equal(18687);
+    expect(getDayNumberGregorian({ y: 2021, m: 3, d: 2 })).to.equal(18688);
+    expect(getDayNumberGregorian({ y: 2021, dy: 40 })).to.equal(18667);
+    expect(getDayNumberGregorian({ n: 34567 })).to.equal(34567);
+    expect(getDayNumberGregorian({ n: -234567 })).to.equal(-234567);
+    expect(getDayNumberJulian({ y: 2021 })).to.equal(18641);
+    expect(getDayNumberJulian({ y: 2021, m: 3 })).to.equal(18700);
+    expect(getDayNumberJulian({ y: 2021, m: 3, d: 2 })).to.equal(18701);
+    expect(getDayNumberJulian({ y: 2021, dy: 40 })).to.equal(18680);
+    expect(getDayNumberJulian({ n: 34567 })).to.equal(34567);
+    expect(getDayNumberJulian({ n: -234567 })).to.equal(-234567);
+    expect(() => getDayNumber_SGC({})).to.throw('Calendar: Invalid date arguments');
   });
 
   it('should consistently convert the date for a day number back to the same day number.', () => {

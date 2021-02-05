@@ -1,7 +1,7 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, forEach, isArray, isEqual, isNumber, isObject, isString } from '@tubular/util';
 import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate } from './calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC, parseISODateTime, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC, orderFields, parseISODateTime, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime } from './locale-data';
@@ -436,6 +436,7 @@ export class DateTime extends Calendar {
     }
 
     if (updateFromWall) {
+      delete wallTime.dy;
       delete wallTime.occurrence;
       delete wallTime.utcOffset;
       delete wallTime.n;
@@ -512,6 +513,7 @@ export class DateTime extends Calendar {
             wallTime.d = amount < 0 ? missing[0] - 1 : missing[1] + 1;
 
           wallTime.d = min(max(wallTime.d, result.getFirstDateInMonth()), daysInMonth);
+          delete wallTime.dy;
           delete wallTime.utcOffset;
         }
         break;
@@ -536,6 +538,7 @@ export class DateTime extends Calendar {
         this.checkDateless(field);
         wallTime.dy = mod(wallTime.dy + amount - 1, this.getDaysInYear(wallTime.y)) + 1;
         delete wallTime.m;
+        delete wallTime.d;
         delete wallTime.utcOffset;
         break;
 
@@ -569,6 +572,7 @@ export class DateTime extends Calendar {
         wallTime.m = mod(wallTime.m + amount - 1, 12) + 1;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.dy;
         delete wallTime.utcOffset;
         break;
 
@@ -577,6 +581,7 @@ export class DateTime extends Calendar {
         wallTime.y = mod(wallTime.y - minYear + amount, maxYear - minYear + 1) + minYear;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.dy;
         delete wallTime.utcOffset;
         break;
 
@@ -674,6 +679,8 @@ export class DateTime extends Calendar {
         min = loose ? 0 : 1;
         max = loose ? 32 : this.getLastDateInMonth();
         wallTime.d = value;
+        delete wallTime.dy;
+
         if (!loose) {
           const missing = this.getMissingDateRange();
 
@@ -739,6 +746,7 @@ export class DateTime extends Calendar {
         wallTime.m = value;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.dy;
         delete wallTime.utcOffset;
         break;
 
@@ -749,6 +757,7 @@ export class DateTime extends Calendar {
         wallTime.y = value;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.dy;
         delete wallTime.utcOffset;
         break;
 
@@ -780,6 +789,7 @@ export class DateTime extends Calendar {
           wallTime.y = -wallTime.y + 1;
           normalized = result.normalizeDate(wallTime);
           [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+          delete wallTime.dy;
           delete wallTime.utcOffset;
           break;
         }
@@ -944,10 +954,17 @@ export class DateTime extends Calendar {
 
   private computeUtcMillisFromWallTimeAux(wallTime: DateAndTime): number {
     if (wallTime.y != null) {
-      if (wallTime.dy == null) {
+      if (wallTime.m != null || wallTime.d != null) {
         wallTime.m = wallTime.m ?? 1;
         wallTime.d = wallTime.d ?? 1;
       }
+      else if (wallTime.dy != null) {
+        ++this.computeWeekValues;
+        ({ m: wallTime.m, d: wallTime.d } = this.getDateFromDayNumber(this.getDayNumber(wallTime.y, 1, 0) + wallTime.dy));
+        --this.computeWeekValues;
+      }
+      else
+        wallTime.m = wallTime.d = 1;
     }
     else if (wallTime.yw != null) {
       wallTime.w = wallTime.w ?? 1;
@@ -980,7 +997,7 @@ export class DateTime extends Calendar {
   }
 
   private updateWallTimeFromCurrentMillis(): void {
-    this._wallTime = this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis);
+    this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis));
   }
 
   getTimeOfDayFieldsFromMillis(millis: number): DateAndTime {

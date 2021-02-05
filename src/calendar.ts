@@ -51,9 +51,11 @@ export function isGregorianType(obj: any): obj is GregorianChange {
 const lockError = new Error('This DateTime instance is locked and immutable');
 
 /** @hidden */
-export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, day?: number, calendar?: Calendar): number[] {
-  let year: number;
+export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, day?: number,
+                                       calendar?: Calendar | 'g' | 'j'): number[] {
   let n: number;
+  let year: number;
+  let dy: number;
 
   if (isNumber(yearOrDate))
     year = yearOrDate as number;
@@ -61,20 +63,49 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
     return yearOrDate as number[];
   else if (isObject(yearOrDate)) {
     syncDateAndTime(yearOrDate as YMDDate);
+    n     = (yearOrDate as YMDDate).n;
     year  = (yearOrDate as YMDDate).y;
+    dy    = (yearOrDate as YMDDate).dy;
     month = (yearOrDate as YMDDate).m;
     day   = (yearOrDate as YMDDate).d;
-    n     = (yearOrDate as YMDDate).n;
   }
 
-  if (year == null || month == null || day == null) {
-    if (n == null)
-      throw new Error('Calendar: Invalid date arguments');
-    else if (calendar)
-      return handleVariableDateArgs(calendar.getDateFromDayNumber(n));
+  if (year != null) {
+    if (month == null && day == null && dy != null) {
+      if (calendar === 'g')
+        return handleVariableDateArgs(getDateFromDayNumberGregorian(getDayNumberGregorian(year, 1, 0) + dy));
+      else if (calendar === 'j')
+        return handleVariableDateArgs(getDateFromDayNumberJulian(getDayNumberJulian(year, 1, 0) + dy));
+      else if (calendar) {
+        ++(calendar as any).computeWeekValues;
+        const ymd = handleVariableDateArgs(calendar.getDateFromDayNumber(calendar.getDayNumber(year, 1, 0) + dy));
+        --(calendar as any).computeWeekValues;
+        return ymd;
+      }
+      else
+        return handleVariableDateArgs(getDateFromDayNumber_SGC(getDayNumber_SGC(year, 1, 0) + dy));
+    }
+    else {
+      month = month ?? 1;
+      day = day ?? 1;
+    }
+  }
+  else if (n != null) {
+    if (calendar === 'g')
+      return handleVariableDateArgs(getDateFromDayNumberGregorian(n));
+    else if (calendar === 'j')
+      return handleVariableDateArgs(getDateFromDayNumberJulian(n));
+    else if (calendar) {
+      ++(calendar as any).computeWeekValues;
+      const ymd = handleVariableDateArgs(calendar.getDateFromDayNumber(n));
+      --(calendar as any).computeWeekValues;
+      return ymd;
+    }
     else
       return handleVariableDateArgs(getDateFromDayNumber_SGC(n));
   }
+  else
+    throw new Error('Calendar: Invalid date arguments');
 
   return [year, month, day];
 }
@@ -121,7 +152,7 @@ export function getDayNumber_SGC(yearOrDate: YearOrDate, month?: number, day?: n
  * @returns Day number.
  */
 export function getDayNumberGregorian(yearOrDate: YearOrDate, month?: number, day?: number): number {
-  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, 'g');
 
   while (month <  1) { month += 12; --year; }
   while (month > 12) { month -= 12; ++year; }
@@ -138,7 +169,7 @@ export function getDayNumberGregorian(yearOrDate: YearOrDate, month?: number, da
  * @returns Day number.
  */
 export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?: number): number {
-  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, 'j');
 
   while (month <  1) { month += 12; --year; }
   while (month > 12) { month -= 12; ++year; }
@@ -421,14 +452,14 @@ export function isValidDate_SGC(yearOrDate: YearOrDate, month?: number, day?: nu
 }
 
 export function isValidDateGregorian(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
-  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, 'g');
   const ymd: YMDDate = getDateFromDayNumberGregorian(getDayNumberGregorian(year, month, day));
 
   return (year === ymd.y && month === ymd.m && day === ymd.d);
 }
 
 export function isValidDateJulian(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
-  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, 'j');
   const ymd: YMDDate = getDateFromDayNumberJulian(getDayNumberJulian(year, month, day));
 
   return (year === ymd.y && month === ymd.m && day === ymd.d);
@@ -639,7 +670,7 @@ export class Calendar {
       return getDayNumberGregorian(year, month, day);
   }
 
-  private computeWeekValues = 0; // To prevent infinite recursion, compute week values only when this is 0.
+  protected computeWeekValues = 0; // To prevent infinite recursion, compute week values only when this is 0.
 
   getDateFromDayNumber(dayNum: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate {
     let result: YMDDate;

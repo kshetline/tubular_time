@@ -193,7 +193,6 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 | IS | `9/4/86` |
 | IxL | `8:30:00 PM EDT` |
 
-
 ### Parsing with a format string, optional locale, with formatted output.
 
 | | .format('IMM') |
@@ -222,7 +221,7 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
   day: 4,
   dayOfYear: 35,
   epochDay: 18662, // days since January, 1 1970
-  isJulian: false, // true if a Julian calendar date instead of a Gregorian date
+  isJulian: false, // true if a Julian calendar date instead of a Gregorian date (output-only value)
 
   yw: 2021, // short for yearByWeek
   w: 5, // short for week
@@ -252,3 +251,29 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 }
 ```
 When using a `DateAndTime` object to create a `DateTime` instance, you need only set a minimal number of fields to specify the date and/or time you are trying to specify. You can use short or long names for field (if you use both, the short form takes priority).
+
+At minimum, you must specify a date or a time. If you only specify a date, the time will be treated as midnight at the start of that date. If you only specify a time, you can create a special dateless time instance. You can also, of course, specify both date and time together.
+
+In specifying a date, the date fields have the following priority:
+
+* `n` / `epochDay`: Number of days before/after epoch day 0, which is January 1, 1970.
+* `y` / `year`: A normal calendar year. Along with the year, you can specify:
+  * Nothing more, in which case the date is treated as January 1 of that year.
+  * `m` / `month`: The month (a normal 1-12 month, not the weird 0-11 month the JavaScript `Date` uses!).
+    * If nothing more is given, the date is treated as the first of the month.
+    * `d` / `day`: The date of the month.
+  * `dy` / `dayOfYear`: The 1-based number of days into the year, such that 32 means February 1.
+* `yw` / `yearByWeek`: An ISO week-based calendar year, where each week starts on Monday. This year is the same as the normal calendar year for most of the calendar year, except for, possibly, a few days at the beginning and end of the year. Week 1 is the first week that contains January 4. Along with this style of year, you can specify:
+    * Nothing more, in which case the date is treated as the first day of the first week of the year.
+    * `w` / `week`: The 1-based week number.
+      * If nothing more, the date is treated as the first day of the given week.
+      * `dw` / `dayOfWeek`: The 1-based day of the given week.
+* `ywl` / `yearByWeekLocale`, etc: These fields work the same as `yw` / `yearByWeek`, etc., except that they apply to locale-specific rules for the day of the week on which each week starts, and for the definition of the first week of the year.
+
+In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
+
+When dealing Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
+
+By default, any ambiguous time is treated as the later, second occurrence of that time during a day. You can, however, use `occurrence: 1` to explicitly specify the earlier time.
+
+As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all fields will be filled in with synchronized values.

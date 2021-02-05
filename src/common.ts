@@ -65,6 +65,19 @@ const altFields = [
   ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
 ];
 
+const fieldOrder = [
+  'y', 'm', 'd', 'dy', 'n', 'j',
+  'year', 'month', 'day', 'dayOfYear', 'epochDay', 'isJulian',
+  'yw', 'w', 'dw',
+  'yearByWeek', 'week', 'dayOfWeek',
+  'ywl', 'wl', 'dwl',
+  'yearByWeekLocale', 'weekLocale', 'dayOfWeekLocale',
+  'hrs', 'min', 'sec',
+  'hour', 'minute', 'second',
+  'millis',
+  'utcOffset', 'dstOffset', 'occurrence'
+];
+
 export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {
   for (const [key1, key2] of altFields) {
     // eslint-disable-next-line no-prototype-builtins
@@ -82,6 +95,19 @@ export function purgeAliasFields<T extends YMDDate | DateAndTime>(obj: T): T {
   // noinspection JSUnusedLocalSymbols
   for (const [_, alias] of altFields) // eslint-disable-line @typescript-eslint/no-unused-vars
     delete obj[alias];
+
+  return obj;
+}
+
+export function orderFields<T extends YMDDate | DateAndTime>(obj: T): T {
+  for (const key of fieldOrder) {
+    const value = obj[key];
+
+    delete obj[key];
+
+    if (value != null)
+      obj[key] = value;
+  }
 
   return obj;
 }
