@@ -175,6 +175,10 @@ export function isDateTime(obj: any): obj is DateTime { return obj instanceof Da
 
 export function isDate(obj: any): obj is Date { return obj instanceof Date; }
 
+export function unix(seconds: number, zone?:  Timezone | string | null): DateTime {
+  return new DateTime(Math.round(seconds * 1000), zone).lock();
+}
+
 function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | string[]): DateTime {
   if (!format || !isString(initialTime))
     return new DateTime(initialTime, null, locale).lock();
@@ -184,5 +188,6 @@ function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | str
 
 ttime.isDateTime = isDateTime;
 ttime.isDate = isDate;
+ttime.unix = unix;
 
 export default ttime;

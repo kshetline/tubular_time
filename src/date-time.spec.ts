@@ -34,6 +34,7 @@ describe('DateTime', () => {
     expect(new DateTime('20210704T0945-03').toString()).to.equal('DateTime<2021-07-04T09:45:00.000 -03:00>');
     expect(new DateTime('20210704T0945+0530').toString()).to.equal('DateTime<2021-07-04T09:45:00.000 +05:30>');
     expect(new DateTime({ n: 3333 }).toString()).to.equal('DateTime<1979-02-16T00:00:00.000 -05:00>');
+    expect(new DateTime('/Date(1198908717056-0700)/').toString()).to.equal('DateTime<2007-12-28T23:11:57.056 -07:00>');
 
     const dt = new DateTime();
 

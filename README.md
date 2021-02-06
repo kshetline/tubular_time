@@ -277,4 +277,5 @@ When dealing Daylight Saving Time, and days when clocks are turned backward, som
 
 By default, any ambiguous time is treated as the later, second occurrence of that time during a day. You can, however, use `occurrence: 1` to explicitly specify the earlier time.
 
-As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all fields will be filled in with synchronized values.
+As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all `DateAndTime` fields will be filled in with synchronized values.
+

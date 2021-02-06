@@ -1,7 +1,7 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
-import { clone, forEach, isArray, isEqual, isNumber, isObject, isString } from '@tubular/util';
+import { clone, forEach, isArray, isEqual, isNumber, isObject, isString, toNumber } from '@tubular/util';
 import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate } from './calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC, orderFields, parseISODateTime, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
+import { DateAndTime, DAY_MSEC, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime } from './locale-data';
@@ -127,9 +127,18 @@ export class DateTime extends Calendar {
 
     if (isString(initialTime)) {
       initialTime = initialTime!.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim();
+      let $ = /^\/Date\((\d+)([-+]\d\d\d\d)?\)\/$/i.exec(initialTime);
+
+      if ($) {
+        const offset = $[2] ? parseTimeOffset($[2]) * 1000 : 0;
+
+        initialTime = new Date(toNumber($[1]) + offset).toISOString().slice(0, -1) + ($[2] ?? '');
+      }
+
       const saveTime = initialTime;
-      const $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
       let zone: string;
+
+      $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
 
       if ($) {
         zone = $[1];
@@ -315,7 +324,7 @@ export class DateTime extends Calendar {
         newZone = zone;
     }
 
-    const result = this.clone();
+    const result = this.clone(false);
     const wallTime = result.wallTime; // copy
 
     result.timezone = newZone;
@@ -326,7 +335,11 @@ export class DateTime extends Calendar {
       result.wallTime = wallTime;
     }
 
-    return result;
+    return result._lock(this.locked);
+  }
+
+  utc(keepLocalTime = false) {
+    return this.tz(Timezone.UT_ZONE, keepLocalTime);
   }
 
   toLocale(newLocale: string | string[]): DateTime {
