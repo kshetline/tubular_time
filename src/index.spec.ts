@@ -64,7 +64,7 @@ describe('Zone updates', () => {
     initTimezoneSmall();
     expect(ttime().utcTimeMillis).approximately(Date.now(), 1000);
     expect(ttime([]).utcTimeMillis).approximately(Date.now(), 1000);
-    expect(ttime({}).utcTimeMillis).approximately(Date.now(), 1000);
+    expect(ttime({}).utcTimeSeconds).approximately(Date.now() / 1000, 2);
     expect(ttime('Europe/Prague').getTimezoneDisplayName()).to.match(/^CES?T$/);
     expect(ttime('1945-05-08 UTC').utcTimeMillis).to.equal(Date.parse('May 8, 1945 00:00+00:00'));
     expect(ttime('May 8, 1945 UTC', 'MMM D, Y z').utcTimeMillis).to.equal(Date.parse('May 8, 1945 00:00+00:00'));

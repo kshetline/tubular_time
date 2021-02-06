@@ -153,7 +153,7 @@ describe('DateTime', () => {
   it('should correctly add/subtract DateTime fields', () => {
     expect(new DateTime('2300-05-05T04:08:10.909').add(DateTimeField.MILLI, -1001).toIsoString(23))
       .to.equal('2300-05-05T04:08:09.908');
-    expect(new DateTime('2020-11-29 23:24:35').add(DateTimeField.SECOND, 30).toIsoString(19))
+    expect(new DateTime('2020-11-29 23:24:35').add('seconds', 30).toIsoString(19))
       .to.equal('2020-11-29T23:25:05');
     expect(new DateTime('1884-02-03 22:53').add(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T23:07');
@@ -166,16 +166,17 @@ describe('DateTime', () => {
     expect(new DateTime('2021-11-07T01:23-04:00', 'America/New_York').add(DateTimeField.HOUR, 26).toIsoString())
       .to.equal('2021-11-08T02:23:00.000-05:00'); // DST end
     expect(new DateTime('2020-02-28').add(DateTimeField.DAY, 1).toIsoString(10)).to.equal('2020-02-29');
-    expect(new DateTime('2019-02-28').add(DateTimeField.DAY, 1).toIsoString(10)).to.equal('2019-03-01');
-    expect(new DateTime('1582-10-20').add(DateTimeField.DAY, -6).toIsoString(10)).to.equal('1582-10-04');
-    expect(new DateTime('1582-10-20').subtract(DateTimeField.DAY, 7).toIsoString(10)).to.equal('1582-10-03');
+    expect(new DateTime('2019-02-28').add('day', 1).toIsoString(10)).to.equal('2019-03-01');
+    expect(new DateTime('1582-10-20').add('days', -6).toIsoString(10)).to.equal('1582-10-04');
+    expect(new DateTime('1582-10-20').subtract('date', 7).toIsoString(10)).to.equal('1582-10-03');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAY, 1).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAY, 2).toIsoString(10)).to.equal('1582-10-16');
     expect(new DateTime('2021-02-28').add(DateTimeField.WEEK, -3).toIsoString(10)).to.equal('2021-02-07');
-    expect(new DateTime('1970-08-01').add(DateTimeField.MONTH, 5).toIsoString(10)).to.equal('1971-01-01');
+    expect(new DateTime('1970-08-01').add('months', 5).toIsoString(10)).to.equal('1971-01-01');
     expect(new DateTime('1970-03-31').add(DateTimeField.MONTH, -1).toIsoString(10)).to.equal('1970-02-28');
     expect(new DateTime('1972-02-29').add(DateTimeField.YEAR, 50).toIsoString(10)).to.equal('2022-02-28');
     expect(() => new DateTime('04:05').add(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
+    expect(() => new DateTime().add('era', 1)).to.throw('"era" is not a valid add()/subtract() field');
   });
 
   it('should correctly roll DateTime fields', () => {
@@ -236,7 +237,7 @@ describe('DateTime', () => {
     expect(() => new DateTime().set(DateTimeField.MINUTE, 77)).to.throw('MINUTE (77) must be in the range [0, 59]');
     expect(new DateTime('1884-02-03 22:53').set(DateTimeField.HOUR_12, 8).toIsoString(16))
       .to.equal('1884-02-03T20:53');
-    expect(() => new DateTime().set(DateTimeField.HOUR_12, 19)).to.throw('HOUR_12 (19) must be in the range [1, 12]');
+    expect(() => new DateTime().set('hour12', 19)).to.throw('HOUR_12 (19) must be in the range [1, 12]');
     expect(new DateTime('1884-02-03 22:53').set(DateTimeField.HOUR, 21).toIsoString(16))
       .to.equal('1884-02-03T21:53');
     expect(() => new DateTime().set(DateTimeField.HOUR, 24)).to.throw('HOUR (24) must be in the range [0, 23]');
@@ -245,8 +246,8 @@ describe('DateTime', () => {
     expect(() => new DateTime('7070-02-01').set(DateTimeField.DAY, 29)).to.throw('DAY (29) must be in the range [1, 28]');
     expect(() => new DateTime('1582-10-20').set(DateTimeField.DAY, 7)).to.throw('7 is an invalid date in the month 10/1582');
     expect(new DateTime('1582-10-20').set(DateTimeField.DAY, 7, true).toIsoString(10)).to.equal('1582-10-15');
-    expect(new DateTime('2021-01-04').set(DateTimeField.DAY_OF_WEEK, 0, true).toIsoString(10)).to.equal('2021-01-03');
-    expect(new DateTime('1930-07-04').set(DateTimeField.DAY_OF_YEAR, 32).toIsoString(10)).to.equal('1930-02-01');
+    expect(new DateTime('2021-01-04').set('dayOfWeek', 0, true).toIsoString(10)).to.equal('2021-01-03');
+    expect(new DateTime('1930-07-04').set('dayOfYear', 32).toIsoString(10)).to.equal('1930-02-01');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK, 1)
       .set(DateTimeField.DAY_OF_WEEK, 1).format('GGGG-[W]WW-E')).to.equal('2021-W01-1');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK, 0, true)
@@ -300,9 +301,9 @@ describe('DateTime', () => {
   it('should lock DateTime instances to make them immutable', () => {
     const d = new DateTime(null, 'UT');
 
-    d.utcTimeMillis = 0;
+    d.utcTimeSeconds = 0;
     expect(d.wallTime.y).to.equal(1970);
-    expect(() => d.lock().utcTimeMillis = 1).to.throw('This DateTime instance is locked and immutable');
+    expect(() => d.lock().utcTimeSeconds = 1).to.throw('This DateTime instance is locked and immutable');
   });
 
   it('should correctly perform DateTime comparisons', () => {
@@ -368,5 +369,6 @@ describe('DateTime', () => {
     expect(new DateTime('2024-12-31').isLeapYear()).to.be.true;
     expect(() => new DateTime().tz('foo')).to.throw('Bad timezone: foo');
     expect(new DateTime().tz('EST').timezone.zoneName).to.equal('America/New_York');
+    expect(new DateTime().utc().timezone.zoneName).to.equal('UT');
   });
 });

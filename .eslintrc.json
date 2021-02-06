@@ -54,7 +54,8 @@
         "ignoreComments": true,
         "ignoredNodes": [
           "ClassProperty[value]",
-          "NewExpression[arguments] :expression *"
+          "NewExpression[arguments] :expression *",
+          "TSUnionType"
         ],
         "ObjectExpression": "first",
         "SwitchCase": 1
