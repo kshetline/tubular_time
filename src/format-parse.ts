@@ -911,8 +911,12 @@ function isNumericPart(part: string): boolean {
 export function parse(input: string, format: string, zone?: Timezone | string, locales?: string | string[]): DateTime {
   let origZone = zone;
   let restoreZone = false;
+  let occurrence = 0;
 
-  input = convertDigits(input.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim()).replace(/\u200F/g, '');
+  if (input.includes('₂'))
+    occurrence = 2;
+
+  input = convertDigits(input.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim()).replace(/[\u200F₂]/g, '');
   format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
 
@@ -1236,6 +1240,9 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
   if (w.y == null && w.yw == null && w.ywl == null)
     zone = undefined;
+
+  if (occurrence)
+    w.occurrence = occurrence;
 
   let result = new DateTime(w, zone, locales);
 

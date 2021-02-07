@@ -87,6 +87,8 @@ describe('FormatParse', () => {
     expect(parse('2020, w32, d4', 'gggg, [w]w, [d]e', 'UTC').format('gggg-[w]ww-e')).to.equal('2020-w32-4');
     expect(parse('January 27, 2021 9:43 PM', 'LLL').toString()).to.equal('DateTime<2021-01-27T21:43:00.000 -05:00>');
     expect(parse('1:05:57 AM', 'LTS').toString()).to.equal('DateTime<01:05:57.000>');
+    expect(parse('11/7/2021 1:25 AM', 'MM/DD/YYYY h:m a', 'America/Denver').toString()).to.equal('DateTime<2021-11-07T01:25:00.000 -06:00§>');
+    expect(parse('11/7/2021 1:25₂ AM', 'MM/DD/YYYY h:m a', 'America/Denver').toString()).to.equal('DateTime<2021-11-07T01:25:00.000₂-07:00>');
   });
 
   it('should correctly handle two-digit years', () => {

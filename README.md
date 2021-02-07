@@ -74,6 +74,19 @@ While there are a wide range of functions and classes available from **@tubular/
 | `ttime(new Date(2008, 0, 20, 12, 0))` | From JavaScript `Date` object | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`) | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
 
+When dealing Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
+
+By default, any ambiguous time is treated as the earlier time, the first occurrence of that time during a day. You can, however, use either an explicit UTC offset, or a subscript 2 (₂), to indicate the later time.
+
+`ttime('11/7/2021 1:25 AM America/Denver', 'MM/DD/YYYY h:m a z').toString()` →<br>
+`DateTime<2021-11-07T01:25:00.000 -06:00§>`
+
+`ttime('11/7/2021 1:25₂ AM America/Denver', 'MM/DD/YYYY h:m a z').toString()` →<br>
+`DateTime<2021-11-07T01:25:00.000₂-07:00>`
+
+`ttime('2021-11-07 01:25 -07:00 America/Denver').toString()` →<br>
+`DateTime<2021-11-07T01:25:00.000₂-07:00>`
+
 ### Formatting output
 
 Dates and times can be formatted in a many ways, using a broad selection of format tokens, described in the table below.
@@ -251,7 +264,7 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 }
 ```
 
-When using a `DateAndTime` object to create a `DateTime` instance, you need only set a minimal number of fields to specify the date and/or time you are trying to specify. You can use short or long names for field (if you use both, the short form takes priority).
+When using a `DateAndTime` object to create a `DateTime` instance, you need only set a minimal number of fields to specify the date and/or time you are trying to specify. You can use either short or long names for fields (if you use both, the short form takes priority).
 
 At minimum, you must specify a date or a time. If you only specify a date, the time will be treated as midnight at the start of that date. If you only specify a time, you can create a special dateless time instance. You can also, of course, specify both date and time together.
 
@@ -273,9 +286,67 @@ In specifying a date, the date fields have the following priority:
 
 In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
 
-When dealing Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
+As discussed earlier when parsing strings, ambiguous times due to Daylight Saving Time can default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish disambiguation.
 
-By default, any ambiguous time is treated as the later, second occurrence of that time during a day. You can, however, use `occurrence: 1` to explicitly specify the earlier time.
+### Reading individual `DateTime` fields
 
-As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all `DateAndTime` fields will be filled in with synchronized values.
+As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all `DateAndTime` fields will be filled in with synchronized values. `ttime().wallTime.hour` provides the hour value, `ttime().wallTime.utcOffset` provides the UTC offset in seconds for the given time, etc.
 
+### Modifying `DateTime` values
+
+There are four main methods for modifying a `DateTime` value:
+
+* `add(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = true): DateTime`
+* `subtract(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = true): DateTime`
+* `roll(field: DateTimeField | DateTimeFieldName, amount: number, minYear = 1900, maxYear = 2099)`
+* `set(field: DateTimeField | DateTimeFieldName, value: number, loose = false): DateTime`
+
+> Before going further, it needs to be mentioned that `DateTime` instances can be either locked, and thus immutable, or unlocked. Instances generated using `ttime(`...`)` are locked. Instances created using [the `DateTime` constructor](#the-datetime-constructor) (covered later in this document) are created unlocked, but can be locked after creation.
+
+When you use the add/subtract/roll/set methods on a locked instance, a new modified and locked instance is returned. When used on an unlocked instance, these methods modify the instance itself is modified, and a reference to that same instance is returned.
+
+#### `add` (and `subtract`)
+
+The `add()` method is the main method here. `subtract()` is nothing more than a convenience method that negates the amount being added, and then calls `add()`, so I will speak of this going forward in terms of the `add()` method.
+
+An example of using `add()`:
+
+`ttime().add('year', 1)` or `ttime().add(DateTimeField.YEAR, 1)`
+
+The above produces a date one year later than the current time. In most cases, this means that the resulting date has the same month and date, but in the case of a leap day:
+
+`ttime('2024-02-29').add('year', 1)..toIsoString(10)` → `2025-02-28'`
+
+...the date is pinned to 28 so that an invalid date is not created. Similarly, when adding months, invalid dates are prevented:
+
+`ttime('2021-01-31').add(DateTimeField.MONTH, 1).toIsoString(10)` → `2021-02-28`
+
+You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `YEAR`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.)
+
+For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amount` you pass, are applied. When dealing with months and years, the variable lengths of months and years apply.
+
+`DAY` amounts can be handled either way, as variable in length (due to possible effects of Daylight Saving Time), or fixed units of 24 hours. The default for `variableDays` is `true`.
+
+DST can alter the duration of days, typically adding or subtracting an hour, but other changes are possible, like the half-hour shift used by Australia's Lord Howe Island!), so adding days can possibly cause hour (and even minute) fields to change:
+
+`ttime('2021-02-28T07:00 Europe/London', false).add('days', 100).toIsoString()` →<br>
+`2021-06-08T08:00:00.000+01:00` (note shift from 7:00 to 8:00)
+
+`ttime('2021-02-28T07:00 Australia/Lord_Howe, false').add('days', 100).toIsoString()` →<br>
+`'2021-06-08T06:30:00.000+10:30` (note shift from 7:00 to 6:30)
+
+By default, however, hour and minute fields remain unchanged.
+
+`ttime('2021-02-28T07:00 Australia/Lord_Howe').add('days', 100).toIsoString()` →<br>
+`'2021-06-08T07:00:00.000+10:30`
+
+Even with the default behavior, however, it is still possible hours and minutes my change, in just the same way adding one month to January 31 does not yield February 31. When clocks are turned forward, some times of day simply do not exist, so a result might have to be adjusted to a valid hour and minute in some cases.
+
+`ttime('2000-04-27T00:30 Africa/Cairo').add('day', 1).toString()` →<br>
+`DateTime<2000-04-28T01:30:00.000 +03:00§>` (clock turned forward at midnight to 1:00)
+
+
+
+
+
+### The `DateTime` constructor

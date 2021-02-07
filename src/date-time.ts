@@ -172,9 +172,13 @@ export class DateTime extends Calendar {
       initialTime = null;
 
     let parseZone: Timezone;
+    let occurrence = 0;
 
     if (isString(initialTime)) {
-      initialTime = initialTime!.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim();
+      if (initialTime.includes('₂'))
+        occurrence = 2;
+
+      initialTime = initialTime!.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
       let $ = /^\/Date\((\d+)([-+]\d\d\d\d)?\)\/$/i.exec(initialTime);
 
       if ($) {
@@ -223,7 +227,22 @@ export class DateTime extends Calendar {
 
           if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null && initialTime.n == null) {
             parseZone = DATELESS;
+            delete initialTime.utcOffset;
             timezone = null;
+          }
+          else if (occurrence)
+            initialTime.occurrence = occurrence;
+
+          if (initialTime.utcOffset && !timezone) {
+            if (parseZone)
+              timezone = parseZone;
+
+            parseZone = new Timezone({
+              dstOffset: 0,
+              transitions: null,
+              usesDst: false,
+              zoneName: 'UT' + Timezone.formatUtcOffset(initialTime.utcOffset),
+              currentUtcOffset: initialTime.utcOffset });
           }
         }
         catch {
@@ -437,7 +456,7 @@ export class DateTime extends Calendar {
       throw new Error(`${DateTimeField[field]} cannot be used with a dateless time value`);
   }
 
-  add(field: DateTimeField | DateTimeFieldName, amount: number): DateTime {
+  add(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): DateTime {
     const result = this.locked ? this.clone(false) : this;
 
     if (amount === 0)
@@ -469,7 +488,16 @@ export class DateTime extends Calendar {
 
       case DateTimeField.DAY:
         this.checkDateless(fieldN);
-        result._utcTimeMillis += amount * 86_400_000;
+
+        if (variableDays) {
+          updateFromWall = true;
+          wallTime.n += amount;
+          delete wallTime.y;
+          delete wallTime.yw;
+          delete wallTime.ywl;
+        }
+        else
+          result._utcTimeMillis += amount * 86_400_000;
         break;
 
       case DateTimeField.WEEK:
@@ -486,6 +514,7 @@ export class DateTime extends Calendar {
         wallTime.y += div_rd(m - 1 + amount, 12);
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.n;
         break;
 
       case DateTimeField.YEAR:
@@ -494,6 +523,7 @@ export class DateTime extends Calendar {
         wallTime.y += amount;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.n;
         break;
 
       default:
@@ -504,7 +534,6 @@ export class DateTime extends Calendar {
       delete wallTime.dy;
       delete wallTime.occurrence;
       delete wallTime.utcOffset;
-      delete wallTime.n;
       delete wallTime.j;
       result.updateUtcMillisFromWallTime();
     }
@@ -517,8 +546,8 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  subtract(field: DateTimeField | DateTimeFieldName, amount: number): DateTime {
-    return this.add(field, -amount);
+  subtract(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): DateTime {
+    return this.add(field, -amount, variableDays);
   }
 
   roll(field: DateTimeField | DateTimeFieldName, amount: number, minYear = 1900, maxYear = 2099): DateTime {
@@ -532,6 +561,7 @@ export class DateTime extends Calendar {
     let normalized: YMDDate;
     const wallTime = result._wallTime;
     const fieldN = fieldNameToField(field);
+    let clearOccurrence = true;
 
     switch (fieldN) {
       case DateTimeField.MILLI:
@@ -550,6 +580,15 @@ export class DateTime extends Calendar {
         {
           const hoursInDay = floor(result.getSecondsInDay() / 3600);
           wallTime.hrs = mod(wallTime.hrs + amount, hoursInDay);
+
+          if (amount > 0 && (wallTime.occurrence ?? 1) === 1) {
+            clearOccurrence = false;
+            wallTime.occurrence = 2;
+          }
+          else if (amount < 0 && (wallTime.occurrence ?? 1) > 1) {
+            clearOccurrence = false;
+            wallTime.occurrence = 1;
+          }
         }
         break;
 
@@ -686,7 +725,10 @@ export class DateTime extends Calendar {
 
     delete wallTime.n;
     delete wallTime.j;
-    delete wallTime.occurrence;
+
+    if (clearOccurrence)
+      delete wallTime.occurrence;
+
     result.updateUtcMillisFromWallTime();
 
     if (this._timezone === DATELESS)
@@ -1062,7 +1104,7 @@ export class DateTime extends Calendar {
     else
       millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
 
-    if (wallTime.occurrence === 1) {
+    if ((wallTime.occurrence ?? 1) < 2) {
       const transition = this.timezone.findTransitionByUtc(millis);
 
       if (transition !== null && transition.deltaOffset < 0 && millis < transition.transitionTime - transition.deltaOffset * 1000)
