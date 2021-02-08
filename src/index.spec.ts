@@ -94,4 +94,15 @@ describe('Zone updates', () => {
     expect(ttime.isDate(new Date())).to.be.true;
     expect(ttime.isDate('kitten')).to.be.false;
   });
+
+  it('should find min/max DateTime instances', () => {
+    const a = ttime('1649-11-25');
+    const b = ttime('1821-06-07');
+    const c = ttime('1898-08-20');
+    const d = ttime('1873-01-28');
+
+    expect(ttime.min()).to.be.undefined;
+    expect(ttime.min(a, b, c, d)).to.equal(a);
+    expect(ttime.max(a, b, c, d)).to.equal(c);
+  });
 });

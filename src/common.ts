@@ -13,6 +13,9 @@ export interface YMDDate {
   /** Year as signed integer (0 = 1 BCE, -1 = 2 BCE, etc.). */
   y?: number;
   year?: number;
+  /** Quarter as 1-4 */
+  q?: number;
+  quarter?: number;
   /** Month as 1-12. */
   m?: number;
   month?: number;
@@ -64,15 +67,15 @@ export interface DateAndTime extends YMDDate {
 }
 
 const altFields = [
-  ['y', 'year'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
+  ['y', 'year'], ['q', 'quarter'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
   ['j', 'isJulian'], ['yw', 'yearByWeek'], ['w', 'week'], ['dw', 'dayOfWeek'],
   ['ywl', 'yearByWeekLocale'], ['wl', 'weekLocale'], ['dwl', 'dayOfWeekLocale'],
   ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
 ];
 
 const fieldOrder = [
-  'y', 'm', 'd', 'dy', 'n', 'j',
-  'year', 'month', 'day', 'dayOfYear', 'epochDay', 'isJulian',
+  'y', 'q', 'm', 'd', 'dy', 'n', 'j',
+  'year', 'quarter', 'month', 'day', 'dayOfYear', 'epochDay', 'isJulian',
   'yw', 'w', 'dw',
   'yearByWeek', 'week', 'dayOfWeek',
   'ywl', 'wl', 'dwl',
@@ -124,7 +127,7 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
       const value = obj[key];
 
       if (value != null && !isNumber(value) || value !== floor(value))
-        throw new Error(key + ' must be an integer value');
+        throw new Error(`${key} must be an integer value (${value})`);
     }
   });
 
@@ -236,6 +239,9 @@ export function parseISODateTime(date: string, allowLeapSecond = false): DateAnd
     throw new Error(`Invalid second: ${time.sec}`);
   else if (time.utcOffset && (time.utcOffset < -57600 || time.utcOffset > 57600))
     throw new Error(`Invalid UTC offset: ${$[1]}`);
+
+  if (time.m != null)
+    time.q = floor((time.m - 1) / 3) + 1;
 
   return syncDateAndTime(time);
 }

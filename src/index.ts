@@ -179,7 +179,29 @@ export function unix(seconds: number, zone?:  Timezone | string | null): DateTim
   return new DateTime(Math.round(seconds * 1000), zone).lock();
 }
 
-function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | string[]): DateTime {
+export function max(...dates: DateTime[]): DateTime {
+  let result = dates[0];
+
+  for (let i = 1; i < dates.length; ++i) {
+    if (dates[i].utcTimeMillis > result.utcTimeMillis)
+      result = dates[i];
+  }
+
+  return result;
+}
+
+export function min(...dates: DateTime[]): DateTime {
+  let result = dates[0];
+
+  for (let i = 1; i < dates.length; ++i) {
+    if (dates[i].utcTimeMillis < result.utcTimeMillis)
+      result = dates[i];
+  }
+
+  return result;
+}
+
+export function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | string[]): DateTime {
   if (!format || !isString(initialTime))
     return new DateTime(initialTime, null, locale).lock();
   else
@@ -188,7 +210,22 @@ function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | str
 
 ttime.isDateTime = isDateTime;
 ttime.isDate = isDate;
+ttime.max = max;
+ttime.min = min;
 ttime.unix = unix;
 ttime.parse = parse;
+
+ttime.DATETIME_LOCAL         = 'YYYY-MM-DD[T]HH:mm';
+ttime.DATETIME_LOCAL_SECONDS = 'YYYY-MM-DD[T]HH:mm:ss';
+ttime.DATETIME_LOCAL_MS      = 'YYYY-MM-DD[T]HH:mm:ss.SSS';
+ttime.DATE                   = 'YYYY-MM-DD';
+ttime.TIME                   = 'HH:mm';
+ttime.TIME_SECONDS           = 'HH:mm:ss';
+ttime.TIME_MS                = 'HH:mm:ss.SSS';
+ttime.WEEK                   = 'GGGG-[W]WW';
+ttime.WEEK_AND_DAY           = 'GGGG-[W]WW-E';
+ttime.MONTH                  = 'YYYY-MM';
+
+Object.freeze(ttime);
 
 export default ttime;

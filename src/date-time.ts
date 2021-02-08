@@ -121,7 +121,10 @@ export class DateTime extends Calendar {
 
   static isDateTime(obj: any): obj is DateTime { return obj instanceof DateTime; }
 
-  static compare(d1: DateTime, d2: DateTime | string | number | Date, resolution = DateTimeField.FULL): number {
+  static compare(d1: DateTime, d2: DateTime | string | number | Date,
+                 resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): number {
+    resolution = fieldNameToField(resolution);
+
     if (isString(d2) || isNumber(d2) || d2 instanceof Date)
       d2 = new DateTime(d2, d1.timezone, d1.locale, d1.getGregorianChange());
 
@@ -946,32 +949,38 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  compare(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): number {
+  compare(other: DateTime | string | number | Date,
+          resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): number {
     return DateTime.compare(this, other, resolution);
   }
 
-  isBefore(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+  isBefore(other: DateTime | string | number | Date,
+           resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): boolean {
     return this.compare(other, resolution) < 0;
   }
 
-  isSameOrBefore(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+  isSameOrBefore(other: DateTime | string | number | Date,
+                 resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): boolean {
     return this.compare(other, resolution) <= 0;
   }
 
-  isSame(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+  isSame(other: DateTime | string | number | Date,
+         resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): boolean {
     return this.compare(other, resolution) === 0;
   }
 
-  isSameOrAfter(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+  isSameOrAfter(other: DateTime | string | number | Date,
+                resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): boolean {
     return this.compare(other, resolution) >= 0;
   }
 
-  isAfter(other: DateTime | string | number | Date, resolution = DateTimeField.FULL): boolean {
+  isAfter(other: DateTime | string | number | Date,
+          resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): boolean {
     return this.compare(other, resolution) > 0;
   }
 
   isBetween(low: DateTime | string | number | Date, high: DateTime | string | number | Date,
-            resolution = DateTimeField.FULL): boolean {
+            resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): boolean {
     return this.compare(low, resolution) > 0 && this.compare(high, resolution) < 0;
   }
 
@@ -1193,6 +1202,7 @@ export class DateTime extends Calendar {
     wallTime.n = this.getDayNumber(wallTime);
     const date = this.getDateFromDayNumber(wallTime.n);
     [wallTime.y, wallTime.m, wallTime.d] = [date.y, date.m, date.d];
+    wallTime.q = floor((wallTime.m - 1) / 3) + 1;
     [wallTime.yw, wallTime.w, wallTime.dw] = this.getYearWeekAndWeekday(wallTime, 1, 4);
     [wallTime.ywl, wallTime.wl, wallTime.dwl] =
       this.getYearWeekAndWeekday(wallTime, getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));

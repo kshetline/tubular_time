@@ -32,11 +32,11 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 `npm install @tubular/time`
 
-`import ttime, { DateTime,  Timezone`...`} from '@tubular/time';`
+`import { ttime, DateTime, Timezone`...`} from '@tubular/time';`
 
 ...or...
 
-`const { default: ttime, DateTime, Timezone`...`} = require('@tubular/time');`
+`const { ttime, DateTime, Timezone`...`} = require('@tubular/time');`
 
 Documentation examples will assume **@tubular/time** has been imported as above.
 
@@ -48,7 +48,7 @@ Documentation examples will assume **@tubular/time** has been imported as above.
 
 The first script element is an example of optionally loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
-The package will be available via the global variable `tbTime`. `tbTime.default` is the default function, and other functions and classes will be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, etc.
+The package will be available via the global variable `tbTime`. `tbTime.ttime` is the default function, and other functions, classes, and constants will be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, `tbTime.TIME_MS`, etc.
 
 ## Basic usage
 
@@ -73,6 +73,8 @@ While there are a wide range of functions and classes available from **@tubular/
 | `ttime([2013, 12, 11, 10, 9, 8, 765])` | From numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order. | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
 | `ttime(new Date(2008, 0, 20, 12, 0))` | From JavaScript `Date` object | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`) | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
+| `ttime.unix(1318781876.721)` | From Unix timestamp | `DateTime<2011-10-16T12:17:56.721 -04:00§>` |
+| `ttime.unix(1318781876.721, 'UTC')` | From Unix timestamp, with timezone | `DateTime<2011-10-16T16:17:56.721 +00:00>` |
 
 When dealing Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
 
@@ -197,6 +199,21 @@ These start with a capital letter `I`, followed by one letter for the date forma
 
 The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'full'`, `'long'`, `'medium'`, and `'short'`. `ILS` thus specifies a long style date and a short style time. `IL` is a long style date alone, without time. `IxS` a short style time without a date.
 
+## Pre-defined formats
+
+```javascript
+ttime.DATETIME_LOCAL         = 'YYYY-MM-DD[T]HH:mm';
+ttime.DATETIME_LOCAL_SECONDS = 'YYYY-MM-DD[T]HH:mm:ss';
+ttime.DATETIME_LOCAL_MS      = 'YYYY-MM-DD[T]HH:mm:ss.SSS';
+ttime.DATE                   = 'YYYY-MM-DD';
+ttime.TIME                   = 'HH:mm';
+ttime.TIME_SECONDS           = 'HH:mm:ss';
+ttime.TIME_MS                = 'HH:mm:ss.SSS';
+ttime.WEEK                   = 'GGGG-[W]WW';
+ttime.WEEK_AND_DAY           = 'GGGG-[W]WW-E';
+ttime.MONTH                  = 'YYYY-MM';
+```
+
 ### Examples
 
 | Format | Output |
@@ -236,6 +253,7 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 ```json5
 {
   y: 2021, // short for year
+  q: 1, // short for quarter
   m: 2, // short for month
   d: 4, // short for day
   dy: 35, // short for dayOfYear
@@ -243,6 +261,7 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
   j: false, // short for isJulian
 
   year: 2021,
+  quarter: 1, // quarter of the year 1-4
   month: 2,
   day: 4,
   dayOfYear: 35,
@@ -342,7 +361,7 @@ For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amoun
 
 `DAY` amounts can be handled either way, as variable in length (due to possible effects of Daylight Saving Time), or fixed units of 24 hours. The default for `variableDays` is `true`.
 
-DST can alter the duration of days, typically adding or subtracting an hour, but other changes are possible, like the half-hour shift used by Australia's Lord Howe Island!), so adding days can possibly cause hour (and even minute) fields to change:
+DST can alter the duration of days, typically adding or subtracting an hour, but other changes are possible (like the half-hour shift used by Australia's Lord Howe Island!), so adding days can possibly cause hour (and even minute) fields to change:
 
 `ttime('2021-02-28T07:00 Europe/London', false).add('days', 100).toIsoString()` →<br>
 `2021-06-08T08:00:00.000+01:00` (note shift from 7:00 to 8:00)
@@ -405,5 +424,31 @@ When parsing using a format string, especially formats where months are numeric,
 Except in compact, delimiter-free ISO formats like `20210208`, leading zeros are never required. Extra, unexpected leading zeros are generally ignored, although when a two-digit year is expected, a 3-digit year such as 021 will be treated as 21 AD, not 2021.
 
 Future releases may offer options for stricter parsing.
+
+## Comparison and sorting
+
+You can test whether moments in time expressed as `DateTime` instances are before, after, or the same as each other. By default, this comparison is exact to the milliseconds. You can, however, pass an optional unit of time for the resolution of the comparison.
+
+`ttime('2020-08-31').isBefore('2020-09-01')` → `true`<br>
+`ttime('2020-08-31').isBefore('2020-09-01', 'year')` → `false`<br>
+`ttime('2020-08-31').isSameOrBefore('2020-08-03')` → `false`<br>
+`ttime('2020-08-31').isSameOrBefore('2020-08-03', 'month')` → `true`<br>
+`ttime('2020-08-31 07:45').isAfter('2020-08-31 07:43')` → `true`<br>
+`ttime('2020-08-31 07:45').isAfter('2020-08-31 07:43', 'hour')` → `true`
+
+The full list of functions for these comparisons is as follows: `isBefore`, `isSameOrBefore`, `isSame`, `isSameOrAfter`, `isAfter`.
+
+You can also check if a `DateTime` instance is chronologically, non-inclusively between two other `DateTime` instances:
+
+`ttime().isBetween('1776-06-04', '1809-02-12')` → `false`
+
+There are two general comparison functions that, when comparing two `DateTime` instances, return a negative number if the first is less than the second, 0 if the two are equal at the given resolution, or a positive number if the first instance is greater than the second. This is the style of comparison function that works with JavaScript `sort`.
+
+`ttime().compare('1776-06-04')` → `7721460952408`<br>
+`ttime().compare(ttime(), 'minute')` → `0`<br>
+`ttime().compare('3776-06-04')` → `-55392442920503`<br>
+`DateTime.compare(ttime('1776-06-04'), ttime('1809-02-12'))` → `-1031616000000`
+
+
 
 ## The `DateTime` constructor
