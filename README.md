@@ -66,7 +66,7 @@ While there are a wide range of functions and classes available from **@tubular/
 | `ttime('1969‑07‑12T20:17')`<br>`ttime('1969‑07‑12T20:17Z')`<br>`ttime('20210704T0945-03')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>The trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<1969‑07‑12T20:17:00.000 ‑04:00§>`<br>`DateTime<1969-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-07-04T09:45:00.000 -03:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>`
 | `ttime('2021-w05-5')` | DateTime from an ISO-8601-like date/time variant for locale-based week numbering | `DateTime<2021-01-28T00:00:00.000 -05:00>` |
 | `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
-| `ttime('20:17:15')` | Dateless time from an ISO-8601 time string | `'DateTime<20:17:15.000>` |
+| `ttime('20:17:15')` | Dateless time from an ISO-8601 time string | `DateTime<20:17:15.000>` |
 | `ttime(1200848400000)` | From millisecond timestamp | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })` | From `DateAndTime` object, short-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })` | From `DateAndTime` object, long-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
@@ -231,7 +231,7 @@ ttime.MONTH                  = 'YYYY-MM';
 | `ttime('02/03/32', 'DD-MM-YY')` | `Mar 2, 2032, 12:00:00 AM` |
 | `ttime('02/03/32 4:30 pm', 'DD-MM-YY hh:mm a', 'fr')` | `2 mars 2032 à 16:30:00` |
 | `ttime('02/03/32', 'DD-MM-YYYY')` | `2 mars 2032 à 16:30:00` |
-| `ttime('2032-03-02T16:30', null, 'ru')` | `2 мар. 2032 г., 16:30:00'` |
+| `ttime('2032-03-02T16:30', null, 'ru')` | `2 мар. 2032 г., 16:30:00` |
 | `ttime('2032-03-02T16:30', null, 'ar-sa')` | `٠٢‏/٠٣‏/٢٠٣٢ ٤:٣٠:٠٠ م` |
 | `ttime('2032-03-02T16:30', null, 'zh-cn')` | `2032年3月2日 下午4:30:00` |
 
@@ -349,7 +349,7 @@ An example of using `add()`:
 
 The above produces a date one year later than the current time. In most cases, this means that the resulting date has the same month and date, but in the case of a leap day:
 
-`ttime('2024-02-29').add('year', 1)..toIsoString(10)` → `2025-02-28'`
+`ttime('2024-02-29').add('year', 1)..toIsoString(10)` → `2025-02-28`
 
 ...the date is pinned to 28 so that an invalid date is not created. Similarly, when adding months, invalid dates are prevented:
 
@@ -367,12 +367,12 @@ DST can alter the duration of days, typically adding or subtracting an hour, but
 `2021-06-08T08:00:00.000+01:00` (note shift from 7:00 to 8:00)
 
 `ttime('2021-02-28T07:00 Australia/Lord_Howe, false').add('days', 100).toIsoString()` →<br>
-`'2021-06-08T06:30:00.000+10:30` (note shift from 7:00 to 6:30)
+`2021-06-08T06:30:00.000+10:30` (note shift from 7:00 to 6:30)
 
 By default, however, hour and minute fields remain unchanged.
 
 `ttime('2021-02-28T07:00 Australia/Lord_Howe').add('days', 100).toIsoString()` →<br>
-`'2021-06-08T07:00:00.000+10:30`
+`2021-06-08T07:00:00.000+10:30`
 
 Even with the default behavior, however, it is still possible hours and minutes my change, in just the same way adding one month to January 31 does not yield February 31. When clocks are turned forward, some times of day simply do not exist, so a result might have to be adjusted to a valid hour and minute in some cases.
 
