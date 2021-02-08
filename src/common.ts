@@ -46,6 +46,8 @@ export interface YMDDate {
   /** Locale day or week. */
   dwl?: number;
   dayOfWeekLocale?: number;
+  /** Error */
+  error?: string;
 }
 
 export interface DateAndTime extends YMDDate {
@@ -78,7 +80,8 @@ const fieldOrder = [
   'hrs', 'min', 'sec',
   'hour', 'minute', 'second',
   'millis',
-  'utcOffset', 'dstOffset', 'occurrence'
+  'utcOffset', 'dstOffset', 'occurrence',
+  'error'
 ];
 
 export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {

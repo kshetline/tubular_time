@@ -338,6 +338,9 @@ export class DateTime extends Calendar {
   set utcTimeSeconds(newTime: number) { this.utcTimeMillis = newTime * 1000; }
 
   get wallTime(): DateAndTime {
+    if (!this.valid)
+      return { error: this.error };
+
     const w = clone(this._wallTime);
 
     if (this._timezone === DATELESS)
@@ -354,6 +357,7 @@ export class DateTime extends Calendar {
       throw lockError;
 
     newTime = syncDateAndTime(clone(newTime));
+    delete newTime.error;
     validateDateAndTime(newTime);
 
     if (!isEqual(this._wallTime, newTime)) {
@@ -1145,7 +1149,7 @@ export class DateTime extends Calendar {
     }
     else {
       let field: string = '';
-      let badValue: number;
+      let badValue = 0;
 
       forEach<any>(this._wallTime, (key, value) => {
         if (isNumber(value) && (isNaN(value) || !isFinite(value)) && key.length > field.length) {

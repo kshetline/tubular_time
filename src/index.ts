@@ -189,5 +189,6 @@ function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | str
 ttime.isDateTime = isDateTime;
 ttime.isDate = isDate;
 ttime.unix = unix;
+ttime.parse = parse;
 
 export default ttime;

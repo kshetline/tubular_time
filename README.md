@@ -273,7 +273,9 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 
   utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
   dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative
-  occurrence: 1 // usual 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
+  occurrence: 1, // usual 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
+
+  error: 'Error description if applicable, otherwise undefined'
 }
 ```
 
@@ -385,7 +387,23 @@ Examples of using `set()`:
 `ttime('1690-09-15').set('month', 5).toIsoString(10)` → `1690-02-15`<br>
 `ttime('1690-09-15').set('month', 13, true).toIsoString(10)` → `1691-01-15`
 
+## Validation
 
+When an invalid `DateTime` instance is created, the `valid` property returns `false`, and the `error` property (which is otherwise `undefined`) returns a description of the error.
 
+`ttime('1234-56-78').valid` → `false`<br>
+`ttime('1234-56-78').error` → `'Invalid month: 56'`
+
+Parsing of date and times specified as strings is somewhat loose. When no format string is provided, dates are parsed according to ISO-8601, with leniency about leading zeros when delimiters are used. Pseudo-months 0 and 13 are accepted, as are days of the month from 0 to 32, regardless of the length of a given month. Years can be in the range -271820 to 275759.
+
+When parsing using a format string, especially formats where months are numeric, not textual, strict matching of delimiters is not required. For example, even though proper output formatting is done with dots, for input dashes as well as dots are acceptable:
+
+`ttime('2021-02-08', null, 'de').format('IS')` → `08.02.21`<br>
+`ttime('08.02.21', 'IS', 'de').format('IS')` → `08.02.21`<br>
+`ttime('008-2-21', 'IS', 'de').format('IS')` → `08.02.21`
+
+Except in compact, delimiter-free ISO formats like `20210208`, leading zeros are never required. Extra, unexpected leading zeros are generally ignored, although when a two-digit year is expected, a 3-digit year such as 021 will be treated as 21 AD, not 2021.
+
+Future releases may offer options for stricter parsing.
 
 ## The `DateTime` constructor
