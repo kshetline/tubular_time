@@ -1,7 +1,7 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, forEach, isArray, isEqual, isNumber, isObject, isString, toNumber } from '@tubular/util';
 import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate } from './calendar';
-import { DateAndTime, DAY_MSEC, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
+import { DateAndTime, DAY_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime } from './locale-data';
@@ -83,6 +83,7 @@ export class DateTime extends Calendar {
   private static defaultTimezone = Timezone.OS_ZONE;
   private static defaultTimezoneExplicit = false;
 
+  private _error: string;
   private _locale = DateTime.defaultLocale;
   private _timezone = DateTime.defaultTimezone;
   private _utcTimeMillis = 0;
@@ -175,7 +176,7 @@ export class DateTime extends Calendar {
     let occurrence = 0;
 
     if (isString(initialTime)) {
-      if (initialTime.includes('₂'))
+      if (initialTime!.includes('₂'))
         occurrence = 2;
 
       initialTime = initialTime!.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
@@ -245,8 +246,14 @@ export class DateTime extends Calendar {
               currentUtcOffset: initialTime.utcOffset });
           }
         }
-        catch {
+        catch (e) {
           initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
+
+          if (isNaN(initialTime)) {
+            this._error = e.message;
+            this._utcTimeMillis = null;
+            return;
+          }
         }
       }
       else
@@ -314,6 +321,7 @@ export class DateTime extends Calendar {
   }
 
   get valid(): boolean { return this._utcTimeMillis != null && !isNaN(this._utcTimeMillis); }
+  get error(): string { return this._error || ((!this.valid && 'general error') || undefined); }
 
   get utcTimeMillis(): number { return this._utcTimeMillis; }
   set utcTimeMillis(newTime: number) {
@@ -459,7 +467,9 @@ export class DateTime extends Calendar {
   add(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): DateTime {
     const result = this.locked ? this.clone(false) : this;
 
-    if (amount === 0)
+    if (!this.valid)
+      throw new Error('Cannot perform add()/subtract() on invalid DateTime');
+    else if (amount === 0)
       return result._lock(this.locked);
     else if (amount !== floor(amount))
       throw nonIntError;
@@ -553,7 +563,9 @@ export class DateTime extends Calendar {
   roll(field: DateTimeField | DateTimeFieldName, amount: number, minYear = 1900, maxYear = 2099): DateTime {
     const result = this.locked ? this.clone(false) : this;
 
-    if (amount === 0)
+    if (!this.valid)
+      throw new Error('Cannot perform roll() on invalid DateTime');
+    else if (amount === 0)
       return result._lock(this.locked);
     else if (amount !== floor(amount))
       throw nonIntError;
@@ -742,7 +754,9 @@ export class DateTime extends Calendar {
   set(field: DateTimeField | DateTimeFieldName, value: number, loose = false): DateTime {
     const result = this.locked ? this.clone(false) : this;
 
-    if (value !== floor(value))
+    if (!this.valid)
+      throw new Error('Cannot perform set() on invalid DateTime');
+    else if (value !== floor(value))
       throw nonIntError;
 
     let normalized: YMDDate;
@@ -866,8 +880,8 @@ export class DateTime extends Calendar {
 
       case DateTimeField.YEAR:
         this.checkDateless(fieldN);
-        min = -271820;
-        max = 275759;
+        min = MIN_YEAR;
+        max = MAX_YEAR;
         wallTime.y = value;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
@@ -877,8 +891,8 @@ export class DateTime extends Calendar {
 
       case DateTimeField.YEAR_WEEK:
         this.checkDateless(fieldN);
-        min = -271820;
-        max = 275759;
+        min = MIN_YEAR;
+        max = MAX_YEAR;
         wallTime.yw = value;
         delete wallTime.y;
         delete wallTime.ywl;
@@ -887,8 +901,8 @@ export class DateTime extends Calendar {
 
       case DateTimeField.YEAR_WEEK_LOCALE:
         this.checkDateless(fieldN);
-        min = -271820;
-        max = 275759;
+        min = MIN_YEAR;
+        max = MAX_YEAR;
         wallTime.ywl = value;
         delete wallTime.y;
         delete wallTime.yw;
@@ -1115,7 +1129,36 @@ export class DateTime extends Calendar {
   }
 
   private updateWallTimeFromCurrentMillis(): void {
+    if (isNaN(this._utcTimeMillis) || this._utcTimeMillis < Number.MIN_SAFE_INTEGER || this._utcTimeMillis > Number.MAX_SAFE_INTEGER) {
+      this._error = `Invalid core millisecond time value: ${this._utcTimeMillis}`;
+      this._utcTimeMillis = null;
+
+      return;
+    }
+
     this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis));
+    this._error = undefined;
+
+    if (this._wallTime.y < MIN_YEAR || this._wallTime.y > MAX_YEAR) {
+      this._error = `Invalid year: ${this._wallTime.y}`;
+      this._utcTimeMillis = null;
+    }
+    else {
+      let field: string = '';
+      let badValue: number;
+
+      forEach<any>(this._wallTime, (key, value) => {
+        if (isNumber(value) && (isNaN(value) || !isFinite(value)) && key.length > field.length) {
+          field = key;
+          badValue = value;
+        }
+      });
+
+      if (field) {
+        this._error = `Invalid ${field}: ${badValue}`;
+        this._utcTimeMillis = null;
+      }
+    }
   }
 
   getTimeOfDayFieldsFromMillis(millis: number): DateAndTime {

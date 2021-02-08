@@ -1,8 +1,8 @@
-## @tubular/time
+# @tubular/time
 
 Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is date/time library that handles both the day-to-day situations (so to speak) and the weird ones too.
 
-### Key features
+## Key features
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
 * IANA timezone support, with features beyond simply parsing and formatting using timezones, including an accessible listing of all available timezones and live updates of timezone definitions.
@@ -26,9 +26,9 @@ Unlike Moment.js, IANA timezone handling is built in, not a separate module, wit
 
 Two alternate large timezone definition sets, of approximately 280K each, are available, each serving slightly different purposes. These definitions can be bundled at compile time, or loaded dynamically at run time. You can also download live updates when the IANA Time Zone Database is updated.
 
-### Installation
+## Installation
 
-#### Via npm
+### Via npm
 
 `npm install @tubular/time`
 
@@ -40,7 +40,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 Documentation examples will assume **@tubular/time** has been imported as above.
 
-#### Via `<script>` tag.
+### Via `<script>` tag.
 ```html
 <script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
 <script src="https://unpkg.com/@tubular/time/dist/web/index.js"></script>
@@ -50,13 +50,13 @@ The first script element is an example of optionally loading extended timezone d
 
 The package will be available via the global variable `tbTime`. `tbTime.default` is the default function, and other functions and classes will be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, etc.
 
-### Basic usage
+## Basic usage
 
 While there are a wide range of functions and classes available from **@tubular/time**, the workhorse is the `ttime()` function, which produces immutable instances of the `DateTime` class.
 
 `function ttime(initialTime?: number | string | DateAndTime | Date | number[] | null, format?: string, locale?: string | string[]): DateTime`
 
-#### Creating immutable `DateTime` instances with `ttime()`
+### Creating immutable `DateTime` instances with `ttime()`
 
 `DateTime` instances can be created in many ways. The simplest way is to create a current-time instance, done by passing no arguments at all. Dates and times can also be expressed as strings, objects, and arrays of numbers.
 
@@ -87,7 +87,7 @@ By default, any ambiguous time is treated as the earlier time, the first occurre
 `ttime('2021-11-07 01:25 -07:00 America/Denver').toString()` →<br>
 `DateTime<2021-11-07T01:25:00.000₂-07:00>`
 
-### Formatting output
+## Formatting output
 
 Dates and times can be formatted in a many ways, using a broad selection of format tokens, described in the table below.
 
@@ -103,7 +103,7 @@ For example:
 `ttime().toLocale('de').format('ddd MMM D, y N [at] h:mm A z')` →<br>
 `Mi 02 3, 2021 n. Chr. at 9:43 PM GMT-5`
 
-### Format string tokens
+## Format string tokens
 
 | | Token | Output |
 |-------|------:|-------|
@@ -176,7 +176,7 @@ For example:
 
 **@tubular/time formats not supported by Moment.js:** KK, K, kk, k, ZZZ, V, v, R, r, n, I*XX*
 
-### Moment.js-style localized formats
+## Moment.js-style localized formats
 
 | | Token | Output |
 | -------|------:|------- |
@@ -191,13 +191,13 @@ For example:
 | Time with seconds | LTS | 8:30:25 PM |
 | Time | LT | 8:30 PM |
 
-### @tubular/time `Intl.DateTimeFormat` shorthand string formats
+## @tubular/time `Intl.DateTimeFormat` shorthand string formats
 
 These start with a capital letter `I`, followed by one letter for the date format, which corresponds to the `dateStyle` option of `Intl.DateTimeFormat`, and one letter for the time format, corresponding to the `timeStyle` option.
 
 The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'full'`, `'long'`, `'medium'`, and `'short'`. `ILS` thus specifies a long style date and a short style time. `IL` is a long style date alone, without time. `IxS` a short style time without a date.
 
-#### Examples
+### Examples
 
 | Format | Output |
 |---|---|
@@ -206,7 +206,7 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 | IS | `9/4/86` |
 | IxL | `8:30:00 PM EDT` |
 
-### Parsing with a format string, optional locale, with formatted output.
+## Parsing with a format string, optional locale, with formatted output.
 
 | | .format('IMM') |
 |---|---|
@@ -218,7 +218,20 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 | `ttime('2032-03-02T16:30', null, 'ar-sa')` | `٠٢‏/٠٣‏/٢٠٣٢ ٤:٣٠:٠٠ م` |
 | `ttime('2032-03-02T16:30', null, 'zh-cn')` | `2032年3月2日 下午4:30:00` |
 
-### The `DateAndTime` object
+## Converting timezones
+
+`ttime('2005-10-10 16:30 America/Los_Angeles').tz('Europe/Warsaw').toString()` →<br>
+`DateTime<2005-10-11T01:30:00.000 +02:00>`
+
+`ttime('2005-10-10 16:30 America/Los_Angeles').utc().toString()` →<br>
+`DateTime<2005-10-10T23:30:00.000 +00:00>`
+
+## Converting locales
+
+`ttime('7. helmikuuta 2021', 'IL', 'fi').toLocale('de').format('IL')` →<br>
+`7. Februar 2021`
+
+## The `DateAndTime` object
 
 ```json5
 {
@@ -288,11 +301,11 @@ In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All
 
 As discussed earlier when parsing strings, ambiguous times due to Daylight Saving Time can default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish disambiguation.
 
-### Reading individual `DateTime` fields
+## Reading individual `DateTime` fields
 
 As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all `DateAndTime` fields will be filled in with synchronized values. `ttime().wallTime.hour` provides the hour value, `ttime().wallTime.utcOffset` provides the UTC offset in seconds for the given time, etc.
 
-### Modifying `DateTime` values
+## Modifying `DateTime` values
 
 There are four main methods for modifying a `DateTime` value:
 
@@ -305,7 +318,7 @@ There are four main methods for modifying a `DateTime` value:
 
 When you use the add/subtract/roll/set methods on a locked instance, a new modified and locked instance is returned. When used on an unlocked instance, these methods modify the instance itself is modified, and a reference to that same instance is returned.
 
-#### `add` (and `subtract`)
+### Using `add` (and `subtract`)
 
 The `add()` method is the main method here. `subtract()` is nothing more than a convenience method that negates the amount being added, and then calls `add()`, so I will speak of this going forward in terms of the `add()` method.
 
@@ -345,8 +358,34 @@ Even with the default behavior, however, it is still possible hours and minutes 
 `ttime('2000-04-27T00:30 Africa/Cairo').add('day', 1).toString()` →<br>
 `DateTime<2000-04-28T01:30:00.000 +03:00§>` (clock turned forward at midnight to 1:00)
 
+### Using `roll()`
+
+You can use the `roll()` method to "spin" through values for each date/time field. This can be used for a user interface where you select a field and use up/down arrows to change the value, and the value changes in a wrap-around fashion, like ...58 → 59 → 00 → 01..., etc.
+
+While seconds and minutes wrap at 59, and dates wrap at the length of the current month, there’s no natural wrapping boundaries for years. The wrap-range defaults to 1900-2099, but you can pass optional arguments to change this range (this only effects years, not other units).
+
+You can `roll` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `AM_PM`, `DAY`, `DAY_OF_WEEK`, `DAY_OF_WEEK_LOCALE`, `DAY_OF_YEAR`, `WEEK`, `WEEK_LOCALE`, `MONTH`, `YEAR`, `YEAR_WEEK`, `YEAR_WEEK_LOCALE`, `ERA`.
+
+For the purpose of the `roll()` method, `AM_PM` and `ERA` are treated as numeric values. AM and BC are 0, PM and AD are 1. If you roll by an odd number, the value is changed. If you roll by an even value, the value will be unchanged.
+
+Examples of using `role()`:
+
+`ttime('1690-09-15').roll('month', 5).toIsoString(10)` → `1690-05-15`<br>
+`ttime('1690-09-15').roll('era', 1).format('MMM D, y N')` → `Sep 15, 1690 BC`<br>
+`ttime('10:15').roll('ampm', 1).format('h:mm A')` → `10:15 PM`
+
+### Using `set()`
+
+This method sets date/time fields to explicit values. In the default mode, you can only use valid values for each particular field. In the `loose` mode, some leeway is given, such as allowing the date to be set to 31 when the month is September (resulting in October 1), or allowing the month to be set to 0 (meaning December of the previous year) or 13 (January of the next year). Using these loose values means, of course, that other fields besides the one field being set might change.
+
+You can `set` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `AM_PM`, `DAY`, `DAY_OF_WEEK`, `DAY_OF_WEEK_LOCALE`, `DAY_OF_YEAR`, `WEEK`, `WEEK_LOCALE`, `MONTH`, `YEAR`, `YEAR_WEEK`, `YEAR_WEEK_LOCALE`, `ERA`.
+
+Examples of using `set()`:
+
+`ttime('1690-09-15').set('month', 5).toIsoString(10)` → `1690-02-15`<br>
+`ttime('1690-09-15').set('month', 13, true).toIsoString(10)` → `1691-01-15`
 
 
 
 
-### The `DateTime` constructor
+## The `DateTime` constructor

@@ -2,6 +2,9 @@ import { div_rd, floor, mod } from '@tubular/math';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 import { isNumber, toNumber } from '@tubular/util';
 
+export const MIN_YEAR = -271820;
+export const MAX_YEAR = 275759;
+
 /**
  * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
  * or Gregorian.
@@ -164,7 +167,7 @@ export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
 
 const invalidDateTime = new Error('Invalid ISO date/time');
 
-export function parseISODateTime(date: string): DateAndTime {
+export function parseISODateTime(date: string, allowLeapSecond = false): DateAndTime {
   date = date.trim();
 
   let time: DateAndTime;
@@ -208,6 +211,28 @@ export function parseISODateTime(date: string): DateAndTime {
     time.utcOffset = parseTimeOffset($[1]);
   else if (date)
     throw invalidDateTime;
+
+  const y = time.y ?? time.yw ?? time.ywl ?? 0;
+  const m = time.m ?? 1;
+  const w = time.w ?? time.wl ?? 1;
+  const d = time.d ?? 1;
+
+  if (y < MIN_YEAR || y > MAX_YEAR)
+    throw new Error(`Invalid year: ${y}`);
+  else if (m > 13)
+    throw new Error(`Invalid month: ${m}`);
+  else if (w > 53)
+    throw new Error(`Invalid week: ${w}`);
+  else if (d > 32)
+    throw new Error(`Invalid day of month: ${d}`);
+  else if (time.hrs > 23)
+    throw new Error(`Invalid hour: ${time.hrs}`);
+  else if (time.min > 59)
+    throw new Error(`Invalid minute: ${time.min}`);
+  else if (time.sec > 59 + +allowLeapSecond)
+    throw new Error(`Invalid second: ${time.sec}`);
+  else if (time.utcOffset && (time.utcOffset < -57600 || time.utcOffset > 57600))
+    throw new Error(`Invalid UTC offset: ${$[1]}`);
 
   return syncDateAndTime(time);
 }
