@@ -215,9 +215,9 @@ describe('DateTime', () => {
     expect(new DateTime('1582-10-20').roll(DateTimeField.DAY, -7).toIsoString(10)).to.equal('1582-10-04');
     expect(new DateTime('1582-10-04').roll(DateTimeField.DAY, 1).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('1582-10-04').roll(DateTimeField.DAY, 2).toIsoString(10)).to.equal('1582-10-15');
-    expect(new DateTime('2021-02-28').roll(DateTimeField.DAY_OF_WEEK, 3).toIsoString(10)).to.equal('2021-02-24');
-    expect(new DateTime('2021-03-03').roll(DateTimeField.DAY_OF_WEEK, 5).toIsoString(10)).to.equal('2021-03-01');
-    expect(new DateTime('2020-08-20').roll(DateTimeField.DAY_OF_WEEK_LOCALE, -4).toIsoString(10)).to.equal('2020-08-16');
+    expect(new DateTime('2021-02-28').roll(DateTimeField.DAY_BY_WEEK, 3).toIsoString(10)).to.equal('2021-02-24');
+    expect(new DateTime('2021-03-03').roll(DateTimeField.DAY_BY_WEEK, 5).toIsoString(10)).to.equal('2021-03-01');
+    expect(new DateTime('2020-08-20').roll(DateTimeField.DAY_BY_WEEK_LOCALE, -4).toIsoString(10)).to.equal('2020-08-16');
     expect(new DateTime('2021-01-01').roll(DateTimeField.DAY_OF_YEAR, -5).toIsoString(10)).to.equal('2021-12-27');
     expect(new DateTime('2021-02-28').roll(DateTimeField.WEEK, -13).toIsoString(10)).to.equal('2021-11-28');
     expect(new DateTime('2021-02-28').roll(DateTimeField.WEEK, 2).toIsoString(10)).to.equal('2021-03-14');
@@ -253,17 +253,17 @@ describe('DateTime', () => {
     expect(() => new DateTime('7070-02-01').set(DateTimeField.DAY, 29)).to.throw('DAY (29) must be in the range [1, 28]');
     expect(() => new DateTime('1582-10-20').set(DateTimeField.DAY, 7)).to.throw('7 is an invalid date in the month 10/1582');
     expect(new DateTime('1582-10-20').set(DateTimeField.DAY, 7, true).toIsoString(10)).to.equal('1582-10-15');
-    expect(new DateTime('2021-01-04').set('dayOfWeek', 0, true).toIsoString(10)).to.equal('2021-01-03');
+    expect(new DateTime('2021-01-04').set('dayByWeek', 0, true).toIsoString(10)).to.equal('2021-01-03');
     expect(new DateTime('1930-07-04').set('dayOfYear', 32).toIsoString(10)).to.equal('1930-02-01');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK, 1)
-      .set(DateTimeField.DAY_OF_WEEK, 1).format('GGGG-[W]WW-E')).to.equal('2021-W01-1');
+      .set(DateTimeField.DAY_BY_WEEK, 1).format('GGGG-[W]WW-E')).to.equal('2021-W01-1');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK, 0, true)
-      .set(DateTimeField.DAY_OF_WEEK, 1).format('GGGG-[W]WW-E')).to.equal('2020-W53-1');
+      .set(DateTimeField.DAY_BY_WEEK, 1).format('GGGG-[W]WW-E')).to.equal('2020-W53-1');
     expect(() => new DateTime('2021-02-01').set(DateTimeField.WEEK, 0)).to.throw('WEEK (0) must be in the range [1, 52]');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK_LOCALE, 1)
-      .set(DateTimeField.DAY_OF_WEEK, 1).toIsoString(10)).to.equal('2020-12-28');
+      .set(DateTimeField.DAY_BY_WEEK, 1).toIsoString(10)).to.equal('2020-12-28');
     expect(new DateTime('2021-02-01').set(DateTimeField.WEEK_LOCALE, 0, true)
-      .set(DateTimeField.DAY_OF_WEEK, 3).toIsoString(10)).to.equal('2020-12-23');
+      .set(DateTimeField.DAY_BY_WEEK, 3).toIsoString(10)).to.equal('2020-12-23');
     expect(new DateTime('1433-11-11').set(DateTimeField.MONTH, 2).toIsoString(10)).to.equal('1433-02-11');
     expect(new DateTime('1433-11-30').set(DateTimeField.MONTH, 2).toIsoString(10)).to.equal('1433-02-28');
     expect(new DateTime('1433-11-30').set(DateTimeField.MONTH, 0, true).toIsoString(10)).to.equal('1432-12-30');

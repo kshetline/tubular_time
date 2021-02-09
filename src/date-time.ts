@@ -12,13 +12,13 @@ export enum DateTimeField {
   BAD_FIELD = Number.NEGATIVE_INFINITY,
   FULL = -1,
   MILLI, SECOND, MINUTE, HOUR_12, HOUR, AM_PM, DAY,
-  DAY_OF_WEEK, DAY_OF_WEEK_LOCALE, DAY_OF_YEAR, WEEK, WEEK_LOCALE,
+  DAY_BY_WEEK, DAY_BY_WEEK_LOCALE, DAY_OF_YEAR, WEEK, WEEK_LOCALE,
   MONTH, QUARTER, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
 }
 
 export type DateTimeFieldName = 'milli' | 'millis' | 'millisecond' | 'milliseconds' | 'second' | 'seconds' |
   'minute' | 'minutes' | 'hour12' | 'hours12' | 'hour' | 'hours' | 'ampm' | 'am_pm' | 'day' | 'days' | 'date' |
-  'dayOfWeek' | 'dayOfWeekLocale' | 'dayOfYear' | 'week' | 'weeks' | 'weekLocale' | 'month' | 'months' |
+  'dayByWeek' | 'dayByWeekLocale' | 'dayOfYear' | 'week' | 'weeks' | 'weekLocale' | 'month' | 'months' |
   'quarter' | 'quarters' | 'year' | 'years' | 'yearWeek' | 'yearWeekLocale' | 'era';
 
 const fieldNames = {
@@ -39,8 +39,8 @@ const fieldNames = {
   day: DateTimeField.DAY,
   days: DateTimeField.DAY,
   date: DateTimeField.DAY,
-  dayOfWeek: DateTimeField.DAY_OF_WEEK,
-  dayOfWeekLocale: DateTimeField.DAY_OF_WEEK_LOCALE,
+  dayByWeek: DateTimeField.DAY_BY_WEEK,
+  dayByWeekLocale: DateTimeField.DAY_BY_WEEK_LOCALE,
   dayOfYear: DateTimeField.DAY_OF_YEAR,
   week: DateTimeField.WEEK,
   weeks: DateTimeField.WEEK,
@@ -349,9 +349,9 @@ export class DateTime extends Calendar {
     const w = clone(this._wallTime);
 
     if (this._timezone === DATELESS)
-      ['y', 'year', 'm', 'month', 'd', 'day', 'dy', 'dayOfYear',
-       'n', 'epochDay', 'j', 'isJulian', 'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayOfWeek',
-       'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayOfWeekLocale',
+      ['y', 'year', 'q', 'quarter', 'm', 'month', 'd', 'day', 'dy', 'dayOfYear',
+       'n', 'epochDay', 'j', 'isJulian', 'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayByWeek',
+       'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayByWeekLocale',
        'utcOffset', 'dstOffset', 'occurrence'].forEach(key => delete w[key]);
 
     return w;
@@ -427,6 +427,10 @@ export class DateTime extends Calendar {
 
   utc(keepLocalTime = false) {
     return this.tz(Timezone.UT_ZONE, keepLocalTime);
+  }
+
+  local(keepLocalTime = false) {
+    return this.tz(Timezone.guess(), keepLocalTime);
   }
 
   toLocale(newLocale: string | string[]): DateTime {
@@ -649,7 +653,7 @@ export class DateTime extends Calendar {
         }
         break;
 
-      case DateTimeField.DAY_OF_WEEK:
+      case DateTimeField.DAY_BY_WEEK:
         this.checkDateless(fieldN);
         wallTime.dw = mod(wallTime.dw + amount - 1, 7) + 1;
         delete wallTime.y;
@@ -657,7 +661,7 @@ export class DateTime extends Calendar {
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeField.DAY_OF_WEEK_LOCALE:
+      case DateTimeField.DAY_BY_WEEK_LOCALE:
         this.checkDateless(fieldN);
         wallTime.dwl = mod(wallTime.dwl + amount - 1, 7) + 1;
         delete wallTime.y;
@@ -834,7 +838,7 @@ export class DateTime extends Calendar {
         }
         break;
 
-      case DateTimeField.DAY_OF_WEEK:
+      case DateTimeField.DAY_BY_WEEK:
         this.checkDateless(fieldN);
         min = loose ? 0 : 1;
         max = loose ? 8 : 7;
@@ -844,7 +848,7 @@ export class DateTime extends Calendar {
         delete wallTime.utcOffset;
         break;
 
-      case DateTimeField.DAY_OF_WEEK_LOCALE:
+      case DateTimeField.DAY_BY_WEEK_LOCALE:
         this.checkDateless(fieldN);
         min = loose ? 0 : 1;
         max = loose ? 8 : 7;

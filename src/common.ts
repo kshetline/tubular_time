@@ -39,7 +39,7 @@ export interface YMDDate {
   week?: number;
   /** ISO day or week. */
   dw?: number;
-  dayOfWeek?: number;
+  dayByWeek?: number;
   /** Locale year for week of year. */
   ywl?: number;
   yearByWeekLocale?: number;
@@ -48,7 +48,7 @@ export interface YMDDate {
   weekLocale?: number;
   /** Locale day or week. */
   dwl?: number;
-  dayOfWeekLocale?: number;
+  dayByWeekLocale?: number;
   /** Error */
   error?: string;
 }
@@ -68,8 +68,8 @@ export interface DateAndTime extends YMDDate {
 
 const altFields = [
   ['y', 'year'], ['q', 'quarter'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
-  ['j', 'isJulian'], ['yw', 'yearByWeek'], ['w', 'week'], ['dw', 'dayOfWeek'],
-  ['ywl', 'yearByWeekLocale'], ['wl', 'weekLocale'], ['dwl', 'dayOfWeekLocale'],
+  ['j', 'isJulian'], ['yw', 'yearByWeek'], ['w', 'week'], ['dw', 'dayByWeek'],
+  ['ywl', 'yearByWeekLocale'], ['wl', 'weekLocale'], ['dwl', 'dayByWeekLocale'],
   ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
 ];
 
@@ -77,9 +77,9 @@ const fieldOrder = [
   'y', 'q', 'm', 'd', 'dy', 'n', 'j',
   'year', 'quarter', 'month', 'day', 'dayOfYear', 'epochDay', 'isJulian',
   'yw', 'w', 'dw',
-  'yearByWeek', 'week', 'dayOfWeek',
+  'yearByWeek', 'week', 'dayByWeek',
   'ywl', 'wl', 'dwl',
-  'yearByWeekLocale', 'weekLocale', 'dayOfWeekLocale',
+  'yearByWeekLocale', 'weekLocale', 'dayByWeekLocale',
   'hrs', 'min', 'sec',
   'hour', 'minute', 'second',
   'millis',

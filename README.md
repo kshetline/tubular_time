@@ -245,6 +245,9 @@ ttime.MONTH                  = 'YYYY-MM';
 `ttime('2005-10-10 16:30 America/Los_Angeles').utc().toString()` →<br>
 `DateTime<2005-10-10T23:30:00.000 +00:00>`
 
+`ttime('2005-10-10 16:30 America/Los_Angeles').local().toString()` →<br>
+`DateTime<2005-10-10T19:30:00.000 +04:00>`
+
 ## Converting locales
 
 `ttime('7. helmikuuta 2021', 'IL', 'fi').toLocale('de').format('IL')` →<br>
@@ -272,17 +275,17 @@ ttime.MONTH                  = 'YYYY-MM';
 
   yw: 2021, // short for yearByWeek
   w: 5, // short for week
-  dw: 4, // short for dayOfWeek
+  dw: 4, // short for dayByWeek
   yearByWeek: 2021, // year that accompanies an ISO year/week/day-of-week style date
   week: 5, // week that accompanies an ISO year/week/day-of-week style date
-  dayOfWeek: 4, // day that accompanies an ISO year/week/day-of-week style date
+  dayByWeek: 4, // day that accompanies an ISO year/week/day-of-week style date
 
   ywl: 2021, // short for yearByWeekLocale
   wl: 6, // short for weekLocale
-  dwl: 5, // short for dayOfWeekLocale
+  dwl: 5, // short for dayByWeekLocale
   yearByWeekLocale: 2021, // year that accompanies an locale-specific year/week/day-of-week style date
   weekLocale: 6, // week that accompanies an locale-specific year/week/day-of-week style date
-  dayOfWeekLocale: 5, // day that accompanies an locale-specific year/week/day-of-week style date
+  dayByWeekLocale: 5, // day that accompanies an locale-specific year/week/day-of-week style date
 
   hrs: 0, // short for hour
   min: 18, // short for minute
@@ -317,7 +320,7 @@ In specifying a date, the date fields have the following priority:
     * Nothing more, in which case the date is treated as the first day of the first week of the year.
     * `w` / `week`: The 1-based week number.
       * If nothing more, the date is treated as the first day of the given week.
-      * `dw` / `dayOfWeek`: The 1-based day of the given week.
+      * `dw` / `dayByWeek`: The 1-based day of the given week.
 * `ywl` / `yearByWeekLocale`, etc: These fields work the same as `yw` / `yearByWeek`, etc., except that they apply to locale-specific rules for the day of the week on which each week starts, and for the definition of the first week of the year.
 
 In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
@@ -330,12 +333,14 @@ As an output from a `DateTime` instance, such as what you get from `ttime().wall
 
 ## Modifying `DateTime` values
 
-There are four main methods for modifying a `DateTime` value:
+There are six main methods for modifying a `DateTime` value:
 
 * `add(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = true): DateTime`
 * `subtract(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = true): DateTime`
 * `roll(field: DateTimeField | DateTimeFieldName, amount: number, minYear = 1900, maxYear = 2099)`
 * `set(field: DateTimeField | DateTimeFieldName, value: number, loose = false): DateTime`
+* `startOf(field: DateTimeField | DateTimeFieldName): DateTime`
+* `endOf(field: DateTimeField | DateTimeFieldName): DateTime`
 
 > Before going further, it needs to be mentioned that `DateTime` instances can be either locked, and thus immutable, or unlocked. Instances generated using `ttime(`...`)` are locked. Instances created using [the `DateTime` constructor](#the-datetime-constructor) (covered later in this document) are created unlocked, but can be locked after creation.
 
@@ -407,6 +412,8 @@ Examples of using `set()`:
 
 `ttime('1690-09-15').set('month', 5).toIsoString(10)` → `1690-02-15`<br>
 `ttime('1690-09-15').set('month', 13, true).toIsoString(10)` → `1691-01-15`
+
+### Using `startOf()` and `endOf()`
 
 ## Validation
 
