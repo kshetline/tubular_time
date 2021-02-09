@@ -342,21 +342,26 @@ export class DateTime extends Calendar {
   get utcTimeSeconds(): number { return floor(this._utcTimeMillis / 1000); }
   set utcTimeSeconds(newTime: number) { this.utcTimeMillis = newTime * 1000; }
 
-  get wallTime(): DateAndTime {
+  private getWallTime(purge?: boolean): DateAndTime {
     if (!this.valid)
       return { error: this.error };
 
     const w = clone(this._wallTime);
 
     if (this._timezone === DATELESS)
-      ['y', 'year', 'q', 'quarter', 'm', 'month', 'd', 'day', 'dy', 'dayOfYear',
-       'n', 'epochDay', 'j', 'isJulian', 'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayByWeek',
+      ['y', 'year', 'q', 'quarter', 'm', 'month', 'd', 'day', 'dy', 'dayOfYear', 'dow', 'dayOfWeek',
+       'dowmi', 'dayOfWeekMonthIndex', 'n', 'epochDay', 'j', 'isJulian',
+       'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayByWeek',
        'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayByWeekLocale',
        'utcOffset', 'dstOffset', 'occurrence'].forEach(key => delete w[key]);
+
+    if (purge != null)
+      purgeAliasFields(w, purge);
 
     return w;
   }
 
+  get wallTime(): DateAndTime { return this.getWallTime(); }
   set wallTime(newTime: DateAndTime) {
     if (this.locked)
       throw lockError;
@@ -380,6 +385,9 @@ export class DateTime extends Calendar {
       this.updateWallTimeFromCurrentMillis();
     }
   }
+
+  get wallTimeShort(): DateAndTime { return this.getWallTime(false); }
+  get wallTimeLong(): DateAndTime { return this.getWallTime(true); }
 
   get timezone(): Timezone { return this._timezone; }
   set timezone(newZone: Timezone) {
@@ -1429,6 +1437,8 @@ export class DateTime extends Calendar {
     wallTime.n = this.getDayNumber(wallTime);
     const date = this.getDateFromDayNumber(wallTime.n);
     [wallTime.y, wallTime.m, wallTime.d] = [date.y, date.m, date.d];
+    wallTime.dow = this.getDayOfWeek(wallTime);
+    wallTime.dowmi = this.getDayOfWeekInMonthIndex(wallTime.y, wallTime.m, wallTime.d);
     wallTime.q = floor((wallTime.m - 1) / 3) + 1;
     [wallTime.yw, wallTime.w, wallTime.dw] = this.getYearWeekAndWeekday(wallTime, 1, 4);
     [wallTime.ywl, wallTime.wl, wallTime.dwl] =
@@ -1496,6 +1506,16 @@ export class DateTime extends Calendar {
       return super.getDayOfWeekInMonthCount(args[0], args[1], args[2]);
     else
       return super.getDayOfWeekInMonthCount(this._wallTime.y, this._wallTime.m, args[0]);
+  }
+
+  getDayOfWeekInMonthIndex(year: number, month: number, day: number): number;
+  getDayOfWeekInMonthIndex(date: YMDDate | number[]): number;
+  getDayOfWeekInMonthIndex(): number;
+  getDayOfWeekInMonthIndex(...args: any): number {
+    if (args.length > 0)
+      return super.getDayOfWeekInMonthIndex(args[0], args[1], args[2]);
+    else
+      return super.getDayOfWeekInMonthIndex(this._wallTime.y, this._wallTime.m, this._wallTime.d);
   }
 
   getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number;

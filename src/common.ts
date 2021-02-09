@@ -13,7 +13,7 @@ export interface YMDDate {
   /** Year as signed integer (0 = 1 BCE, -1 = 2 BCE, etc.). */
   y?: number;
   year?: number;
-  /** Quarter as 1-4 */
+  /** Quarter as 1-4. */
   q?: number;
   quarter?: number;
   /** Month as 1-12. */
@@ -22,7 +22,13 @@ export interface YMDDate {
   /** Day of month. */
   d?: number;
   day?: number;
-  /** Day of month. */
+  /** Day of week as 0-6 for Sunday-Saturday. */
+  dow?: number;
+  dayOfWeek?: number;
+  /** Day of week month index, 1-5, e.g. 2 for 2nd Tuesday of the month. */
+  dowmi?: number;
+  dayOfWeekMonthIndex?: number;
+  /** Day of year. */
   dy?: number;
   dayOfYear?: number;
   /** Day number where 1970-01-01 = 0. */
@@ -49,7 +55,7 @@ export interface YMDDate {
   /** Locale day or week. */
   dwl?: number;
   dayByWeekLocale?: number;
-  /** Error */
+  /** Error, if any. */
   error?: string;
 }
 
@@ -67,15 +73,16 @@ export interface DateAndTime extends YMDDate {
 }
 
 const altFields = [
-  ['y', 'year'], ['q', 'quarter'], ['m', 'month'], ['d', 'day'], ['dy', 'dayOfYear'], ['n', 'epochDay'],
+  ['y', 'year'], ['q', 'quarter'], ['m', 'month'], ['d', 'day'], ['dow', 'dayOfWeek'], ['dowmi', 'dayOfWeekMonthIndex'],
+  ['dy', 'dayOfYear'], ['n', 'epochDay'],
   ['j', 'isJulian'], ['yw', 'yearByWeek'], ['w', 'week'], ['dw', 'dayByWeek'],
   ['ywl', 'yearByWeekLocale'], ['wl', 'weekLocale'], ['dwl', 'dayByWeekLocale'],
   ['hrs', 'hour'], ['min', 'minute'], ['sec', 'second']
 ];
 
 const fieldOrder = [
-  'y', 'q', 'm', 'd', 'dy', 'n', 'j',
-  'year', 'quarter', 'month', 'day', 'dayOfYear', 'epochDay', 'isJulian',
+  'y', 'q', 'm', 'd', 'dow', 'dowmi', 'dy', 'n', 'j',
+  'year', 'quarter', 'month', 'day', 'dayOfWeek', 'dayOfWeekMonthIndex', 'dayOfYear', 'epochDay', 'isJulian',
   'yw', 'w', 'dw',
   'yearByWeek', 'week', 'dayByWeek',
   'ywl', 'wl', 'dwl',
@@ -100,10 +107,9 @@ export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {
   return obj;
 }
 
-export function purgeAliasFields<T extends YMDDate | DateAndTime>(obj: T): T {
-  // noinspection JSUnusedLocalSymbols
-  for (const [_, alias] of altFields) // eslint-disable-line @typescript-eslint/no-unused-vars
-    delete obj[alias];
+export function purgeAliasFields<T extends YMDDate | DateAndTime>(obj: T, keepLongForm = false): T {
+  for (const [short, long] of altFields)
+    delete obj[keepLongForm ? short : long];
 
   return obj;
 }

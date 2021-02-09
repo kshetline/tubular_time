@@ -65,6 +65,11 @@ describe('DateTime', () => {
     const time = new DateTime({ y: 2018, m: 11, d: 4, hrs: 1, min: 59, sec: 59, occurrence: 1 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
+    expect(time.wallTime).to.include({ q: 4, dow: 0, dowmi: 1 });
+    expect(time.wallTimeShort).to.include({ y: 2018 });
+    expect(time.wallTimeShort).to.not.include({ year: 2018 });
+    expect(time.wallTimeLong).to.include({ year: 2018 });
+    expect(time.wallTimeLong).to.not.include({ y: 2018 });
     expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
     time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);

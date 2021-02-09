@@ -261,6 +261,8 @@ ttime.MONTH                  = 'YYYY-MM';
   q: 1, // short for quarter
   m: 2, // short for month
   d: 4, // short for day
+  dow: 4, // short for dayOfWeek
+  dowmi: 1, // dayOfWeekMonthIndex
   dy: 35, // short for dayOfYear
   n: 18662, // short for epochDay
   j: false, // short for isJulian
@@ -269,6 +271,8 @@ ttime.MONTH                  = 'YYYY-MM';
   quarter: 1, // quarter of the year 1-4
   month: 2,
   day: 4,
+  dayOfWeek: 4, // Day of week as 0-6 for Sunday-Saturday
+  dayOfWeekMonthIndex: 1, // Day of week month index, 1-5, e.g. 2 for 2nd Tuesday of the month
   dayOfYear: 35,
   epochDay: 18662, // days since January, 1 1970
   isJulian: false, // true if a Julian calendar date instead of a Gregorian date
@@ -330,6 +334,8 @@ As discussed earlier when parsing strings, ambiguous times due to Daylight Savin
 ## Reading individual `DateTime` fields
 
 As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all `DateAndTime` fields will be filled in with synchronized values. `ttime().wallTime.hour` provides the hour value, `ttime().wallTime.utcOffset` provides the UTC offset in seconds for the given time, etc.
+
+`ttime().wallTimeShort` returns a `DateAndTime` object with all available short-form field names, and `ttime().wallTimeLong` only long-form field names.
 
 ## Modifying `DateTime` values
 

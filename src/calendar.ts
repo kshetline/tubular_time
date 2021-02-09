@@ -814,6 +814,14 @@ export class Calendar {
     return div_tt0(nextMonth - firstDay - 1, 7) + 1;
   }
 
+  getDayOfWeekInMonthIndex(yearOrDate: YearOrDate, month?: number, day?: number): number {
+    let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this);
+    const firstDay = this.getDayNumber(year, month, 1);
+    const dayNumber = this.getDayNumber(year, month, day);
+
+    return div_rd(dayNumber - firstDay, 7) + 1;
+  }
+
   getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number {
     const dayNum = this.getDayNumber(year, month, minDate);
     const dayOfWeek = getDayOfWeek(dayNum);
