@@ -13,13 +13,13 @@ export enum DateTimeField {
   FULL = -1,
   MILLI, SECOND, MINUTE, HOUR_12, HOUR, AM_PM, DAY,
   DAY_OF_WEEK, DAY_OF_WEEK_LOCALE, DAY_OF_YEAR, WEEK, WEEK_LOCALE,
-  MONTH, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
+  MONTH, QUARTER, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
 }
 
 export type DateTimeFieldName = 'milli' | 'millis' | 'millisecond' | 'milliseconds' | 'second' | 'seconds' |
   'minute' | 'minutes' | 'hour12' | 'hours12' | 'hour' | 'hours' | 'ampm' | 'am_pm' | 'day' | 'days' | 'date' |
   'dayOfWeek' | 'dayOfWeekLocale' | 'dayOfYear' | 'week' | 'weeks' | 'weekLocale' | 'month' | 'months' |
-  'year' | 'years' | 'yearWeek' | 'yearWeekLocale' | 'era';
+  'quarter' | 'quarters' | 'year' | 'years' | 'yearWeek' | 'yearWeekLocale' | 'era';
 
 const fieldNames = {
   milli: DateTimeField.MILLI,
@@ -47,6 +47,8 @@ const fieldNames = {
   weekLocale: DateTimeField.WEEK_LOCALE,
   month: DateTimeField.MONTH,
   months: DateTimeField.MONTH,
+  quarter: DateTimeField.QUARTER,
+  quarters: DateTimeField.QUARTER,
   year: DateTimeField.YEAR,
   years: DateTimeField.YEAR,
   yearWeek: DateTimeField.YEAR_WEEK,
@@ -522,6 +524,10 @@ export class DateTime extends Calendar {
         result._utcTimeMillis += amount * 604_800_000;
         break;
 
+      case DateTimeField.QUARTER:
+        amount *= 3;
+
+      // eslint-disable-next-line no-fallthrough
       case DateTimeField.MONTH:
         this.checkDateless(fieldN);
         // eslint-disable-next-line no-case-declarations
@@ -692,6 +698,10 @@ export class DateTime extends Calendar {
         }
         break;
 
+      case DateTimeField.QUARTER:
+        amount *= 3;
+
+      // eslint-disable-next-line no-fallthrough
       case DateTimeField.MONTH:
         this.checkDateless(fieldN);
         wallTime.m = mod(wallTime.m + amount - 1, 12) + 1;
@@ -938,6 +948,219 @@ export class DateTime extends Calendar {
 
     delete wallTime.n;
     delete wallTime.j;
+    delete wallTime.occurrence;
+    result.updateUtcMillisFromWallTime();
+
+    if (this._timezone === DATELESS)
+      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+
+    result.updateWallTimeFromCurrentMillis();
+
+    return result._lock(this.locked);
+  }
+
+  startOf(field: DateTimeField | DateTimeFieldName): DateTime {
+    const result = this.locked ? this.clone(false) : this;
+
+    if (!this.valid)
+      throw new Error('Cannot perform startOf() on invalid DateTime');
+
+    const wallTime = result._wallTime;
+    const fieldN = fieldNameToField(field);
+
+    switch (fieldN) {
+      case DateTimeField.SECOND:
+        wallTime.millis = 0;
+        break;
+
+      case DateTimeField.MINUTE:
+        wallTime.millis = wallTime.sec = 0;
+        break;
+
+      case DateTimeField.HOUR:
+        wallTime.millis = wallTime.sec = wallTime.min = 0;
+        break;
+
+      case DateTimeField.DAY:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        break;
+
+      case DateTimeField.WEEK:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        wallTime.dw = 1;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        break;
+
+      case DateTimeField.WEEK_LOCALE:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        wallTime.dwl = 1;
+        delete wallTime.y;
+        delete wallTime.yw;
+        break;
+
+      case DateTimeField.MONTH:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        wallTime.d = 1;
+        break;
+
+      case DateTimeField.QUARTER:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        wallTime.d = 1;
+        wallTime.m = floor((wallTime.m - 1) / 3) * 3 + 1;
+        break;
+
+      case DateTimeField.YEAR:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        wallTime.d = wallTime.m = 1;
+        break;
+
+      case DateTimeField.YEAR_WEEK:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        wallTime.dw = wallTime.w = 1;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        break;
+
+      case DateTimeField.YEAR_WEEK_LOCALE:
+        this.checkDateless(fieldN);
+        wallTime.millis = wallTime.sec = wallTime.min = wallTime.hrs = 0;
+        wallTime.dwl = wallTime.wl = 1;
+        delete wallTime.y;
+        delete wallTime.yw;
+        break;
+
+      default:
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid startOf() field`);
+    }
+
+    delete wallTime.n;
+    delete wallTime.j;
+    delete wallTime.utcOffset;
+    delete wallTime.occurrence;
+    result.updateUtcMillisFromWallTime();
+
+    if (this._timezone === DATELESS)
+      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+
+    result.updateWallTimeFromCurrentMillis();
+
+    return result._lock(this.locked);
+  }
+
+  endOf(field: DateTimeField | DateTimeFieldName): DateTime {
+    const result = this.locked ? this.clone(false) : this;
+
+    if (!this.valid)
+      throw new Error('Cannot perform startOf() on invalid DateTime');
+
+    const wallTime = result._wallTime;
+    const fieldN = fieldNameToField(field);
+
+    switch (fieldN) {
+      case DateTimeField.SECOND:
+        wallTime.millis = 999;
+        break;
+
+      case DateTimeField.MINUTE:
+        wallTime.millis = 999;
+        wallTime.sec = 59;
+        break;
+
+      case DateTimeField.HOUR:
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        break;
+
+      case DateTimeField.DAY:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        break;
+
+      case DateTimeField.WEEK:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        wallTime.dw = 7;
+        delete wallTime.y;
+        delete wallTime.ywl;
+        break;
+
+      case DateTimeField.WEEK_LOCALE:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        wallTime.dwl = 7;
+        delete wallTime.y;
+        delete wallTime.yw;
+        break;
+
+      case DateTimeField.MONTH:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        wallTime.d = this.getLastDateInMonth(wallTime.y, wallTime.m);
+        break;
+
+      case DateTimeField.QUARTER:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        wallTime.m = floor((wallTime.m - 1) / 3) * 3 + 3;
+        wallTime.d = this.getLastDateInMonth(wallTime.y, wallTime.m);
+        break;
+
+      case DateTimeField.YEAR:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        wallTime.d = 31;
+        wallTime.m = 12;
+        break;
+
+      case DateTimeField.YEAR_WEEK:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        wallTime.dw = 7;
+        wallTime.w = this.getWeeksInYear(wallTime.yw);
+        delete wallTime.y;
+        delete wallTime.ywl;
+        break;
+
+      case DateTimeField.YEAR_WEEK_LOCALE:
+        this.checkDateless(fieldN);
+        wallTime.millis = 999;
+        wallTime.sec = wallTime.min = 59;
+        wallTime.hrs = 23;
+        wallTime.dwl = 7;
+        wallTime.wl = this.getWeeksInYear(wallTime.ywl, null, null);
+        delete wallTime.y;
+        delete wallTime.yw;
+        break;
+
+      default:
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid startOf() field`);
+    }
+
+    delete wallTime.n;
+    delete wallTime.j;
+    delete wallTime.utcOffset;
     delete wallTime.occurrence;
     result.updateUtcMillisFromWallTime();
 

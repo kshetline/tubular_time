@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { SUNDAY } from './calendar';
 import { DateTime, DateTimeField } from './date-time';
 import { Timezone } from './timezone';
-import { initTimezoneLarge, initTimezoneLargeAlt, initTimezoneSmall } from './index';
+import { ttime, initTimezoneLarge, initTimezoneLargeAlt, initTimezoneSmall } from './index';
 
 describe('DateTime', () => {
   initTimezoneSmall();
@@ -173,6 +173,7 @@ describe('DateTime', () => {
     expect(new DateTime('1582-10-20').subtract('date', 7).toIsoString(10)).to.equal('1582-10-03');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAY, 1).toIsoString(10)).to.equal('1582-10-15');
     expect(new DateTime('1582-10-04').add(DateTimeField.DAY, 2).toIsoString(10)).to.equal('1582-10-16');
+    expect(new DateTime('1777-10-15').add('quarter', 2).toIsoString(10)).to.equal('1778-04-15');
     expect(new DateTime('2021-02-28T07:00 Australia/Lord_Howe').add('days', 100, false).toIsoString())
       .to.equal('2021-06-08T06:30:00.000+10:30');
     expect(new DateTime('2021-02-28T07:00 Australia/Lord_Howe').add('days', 100, true).toIsoString())
@@ -273,6 +274,56 @@ describe('DateTime', () => {
     expect(new DateTime('1970-w03-3').set(DateTimeField.YEAR_WEEK_LOCALE, 2).format('gggg-[w]ww-e')).to.equal('0002-w03-3');
     expect(new DateTime('1970-03-31').set(DateTimeField.ERA, 0).toIsoString(11)).to.equal('-1969-03-31');
     expect(() => new DateTime('04:05').set(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
+  });
+
+  it('should correctly perform DateTime.startOf()', () => {
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf(DateTimeField.SECOND).toIsoString(23))
+      .to.equal('2300-05-05T04:08:10.000');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf(DateTimeField.MINUTE).toIsoString(23))
+      .to.equal('2300-05-05T04:08:00.000');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf('hour').toIsoString(23))
+      .to.equal('2300-05-05T04:00:00.000');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf('day').toIsoString(23))
+      .to.equal('2300-05-05T00:00:00.000');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf(DateTimeField.WEEK).format(ttime.WEEK_AND_DAY))
+      .to.equal('2300-W18-1');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf(DateTimeField.WEEK_LOCALE).format(ttime.WEEK_AND_DAY_LOCALE))
+      .to.equal('2300-w18-1');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf(DateTimeField.MONTH).toIsoString(23))
+      .to.equal('2300-05-01T00:00:00.000');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf(DateTimeField.QUARTER).toIsoString(23))
+      .to.equal('2300-04-01T00:00:00.000');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf('year').toIsoString(23))
+      .to.equal('2300-01-01T00:00:00.000');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf('yearWeek').format(ttime.WEEK_AND_DAY))
+      .to.equal('2300-W01-1');
+    expect(new DateTime('2300-05-05T04:08:10.909').startOf('yearWeekLocale').format(ttime.WEEK_AND_DAY_LOCALE))
+      .to.equal('2300-w01-1');
+  });
+
+  it('should correctly perform DateTime.endOf()', () => {
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.SECOND).toIsoString(23))
+      .to.equal('2300-05-05T04:08:10.999');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.MINUTE).toIsoString(23))
+      .to.equal('2300-05-05T04:08:59.999');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf('hour').toIsoString(23))
+      .to.equal('2300-05-05T04:59:59.999');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf('day').toIsoString(23))
+      .to.equal('2300-05-05T23:59:59.999');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.WEEK).format(ttime.WEEK_AND_DAY))
+      .to.equal('2300-W18-7');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.WEEK_LOCALE).format(ttime.WEEK_AND_DAY_LOCALE))
+      .to.equal('2300-w18-7');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.MONTH).toIsoString(23))
+      .to.equal('2300-05-31T23:59:59.999');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.QUARTER).toIsoString(23))
+      .to.equal('2300-06-30T23:59:59.999');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf('year').toIsoString(23))
+      .to.equal('2300-12-31T23:59:59.999');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf('yearWeek').format(ttime.WEEK_AND_DAY))
+      .to.equal('2300-W52-7');
+    expect(new DateTime('2300-05-05T04:08:10.909').endOf('yearWeekLocale').format(ttime.WEEK_AND_DAY_LOCALE))
+      .to.equal('2300-w52-7');
   });
 
   it('should correctly report week numbers', () => {

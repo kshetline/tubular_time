@@ -201,6 +201,13 @@ export function min(...dates: DateTime[]): DateTime {
   return result;
 }
 
+export function sort(dates: DateTime[], descending = false): DateTime[] {
+  if (dates)
+    dates.sort((a, b) => DateTime.compare(a, b) * (descending ? -1 : 1));
+
+  return dates;
+}
+
 export function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | string[]): DateTime {
   if (!format || !isString(initialTime))
     return new DateTime(initialTime, null, locale).lock();
@@ -214,6 +221,7 @@ ttime.max = max;
 ttime.min = min;
 ttime.unix = unix;
 ttime.parse = parse;
+ttime.sort = sort;
 
 ttime.DATETIME_LOCAL         = 'YYYY-MM-DD[T]HH:mm';
 ttime.DATETIME_LOCAL_SECONDS = 'YYYY-MM-DD[T]HH:mm:ss';
@@ -224,6 +232,8 @@ ttime.TIME_SECONDS           = 'HH:mm:ss';
 ttime.TIME_MS                = 'HH:mm:ss.SSS';
 ttime.WEEK                   = 'GGGG-[W]WW';
 ttime.WEEK_AND_DAY           = 'GGGG-[W]WW-E';
+ttime.WEEK_LOCALE            = 'gggg-[w]ww';
+ttime.WEEK_AND_DAY_LOCALE    = 'gggg-[w]ww-e';
 ttime.MONTH                  = 'YYYY-MM';
 
 Object.freeze(ttime);

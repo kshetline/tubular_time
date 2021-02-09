@@ -997,7 +997,7 @@ export class Calendar {
       w = this.getStartDateOfFirstWeekOfYear(year - 1, startingDayOfWeek, minDaysInCalendarYear);
       --resultYear;
     }
-    else if (w2.n + 6 < dayNum) {
+    else if (w2.n <= dayNum) {
       w = w2;
       ++resultYear;
     }

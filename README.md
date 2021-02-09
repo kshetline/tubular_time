@@ -174,9 +174,9 @@ For example:
 | Occurrence indicator | R | 1:00 , 1:01 ... 1:58 , 1:59 , 1:00₂, 1:01₂ ... 1:58₂, 1:59₂, 2:00 , 2:01<br><br>A subscript 2 (₂) that denotes the second occurrence of the same clock time during a day when clocks are turned back for Daylight Saving Time. |
 | | r | Same as above, but no blank space when subscript isn't needed. |
 
-**Moment.js formats not supported by @tubular/time:** DDDo, Wo, wo
+**Moment.js formats not supported by @tubular/time:** DDDo, Wo, wo, yo
 
-**@tubular/time formats not supported by Moment.js:** KK, K, kk, k, ZZZ, V, v, R, r, n, I*XX*
+**@tubular/time formats not supported by Moment.js:** KK, K, kk, k, ZZZ, V, v, R, r, n, I*XX* (IFF, IFL, IFM... IxM, IxS)
 
 ## Moment.js-style localized formats
 
@@ -211,6 +211,8 @@ ttime.TIME_SECONDS           = 'HH:mm:ss';
 ttime.TIME_MS                = 'HH:mm:ss.SSS';
 ttime.WEEK                   = 'GGGG-[W]WW';
 ttime.WEEK_AND_DAY           = 'GGGG-[W]WW-E';
+ttime.WEEK_LOCALE            = 'gggg-[w]ww';
+ttime.WEEK_AND_DAY_LOCALE    = 'gggg-[w]ww-e';
 ttime.MONTH                  = 'YYYY-MM';
 ```
 
@@ -355,13 +357,13 @@ The above produces a date one year later than the current time. In most cases, t
 
 `ttime('2021-01-31').add(DateTimeField.MONTH, 1).toIsoString(10)` → `2021-02-28`
 
-You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `YEAR`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.)
+You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.)
 
-For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amount` you pass, are applied. When dealing with months and years, the variable lengths of months and years apply.
+For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amount` you pass, are applied. When dealing with months, quarters, and years, the variable lengths of months, quarters, and years apply.
 
 `DAY` amounts can be handled either way, as variable in length (due to possible effects of Daylight Saving Time), or fixed units of 24 hours. The default for `variableDays` is `true`.
 
-DST can alter the duration of days, typically adding or subtracting an hour, but other changes are possible (like the half-hour shift used by Australia's Lord Howe Island!), so adding days can possibly cause hour (and even minute) fields to change:
+DST can alter the duration of days, typically adding or subtracting an hour, but other amounts of change are possible (like the half-hour shift used by Australia's Lord Howe Island), so adding days can possibly cause the hour (and even minute) fields to change:
 
 `ttime('2021-02-28T07:00 Europe/London', false).add('days', 100).toIsoString()` →<br>
 `2021-06-08T08:00:00.000+01:00` (note shift from 7:00 to 8:00)
@@ -423,7 +425,7 @@ When parsing using a format string, especially formats where months are numeric,
 
 Except in compact, delimiter-free ISO formats like `20210208`, leading zeros are never required. Extra, unexpected leading zeros are generally ignored, although when a two-digit year is expected, a 3-digit year such as 021 will be treated as 21 AD, not 2021.
 
-Future releases may offer options for stricter parsing.
+_Future releases may offer options for stricter parsing._
 
 ## Comparison and sorting
 
@@ -448,6 +450,19 @@ There are two general comparison functions that, when comparing two `DateTime` i
 `ttime().compare(ttime(), 'minute')` → `0`<br>
 `ttime().compare('3776-06-04')` → `-55392442920503`<br>
 `DateTime.compare(ttime('1776-06-04'), ttime('1809-02-12'))` → `-1031616000000`
+
+### Sorting an array of dates
+
+`ttime.sort(dates: DateTime[], descending = false): DateTime[]`
+
+This sort modifies the array which is passed in, and returns that same array.
+
+### min/max functions
+
+`ttime.min(...dates: DateTime[]): DateTime`<br>
+`ttime.max(...dates: DateTime[]): DateTime`
+
+
 
 
 
