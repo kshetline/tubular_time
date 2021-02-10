@@ -1189,7 +1189,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
             trimmed = true;
           }
         }
-        else if (($ = /^(UTC|UT|GMT)?([-+](?:\d\d\d\d|\d\d:\d\d))/i.exec(input))) {
+        else if (($ = /^(UTC|UT|GMT)?([-+]\d\d(?:\d{4}|:\d\d(:\d\d)?)?)/i.exec(input))) {
           w.utcOffset = parseTimeOffset($[2]) * ($[1] === 'GMT' ? -1 : 1);
           input = input.substr($[0].length).trimStart();
           trimmed = true;

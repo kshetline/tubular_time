@@ -217,7 +217,7 @@ export function parseISODateTime(date: string, allowLeapSecond = false): DateAnd
     date = date.substr($[0].length).trim();
   }
 
-  $ = /^([-+](\d\d|\d\d\d\d|\d\d:\d\d))$/i.exec(date);
+  $ = /^([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?)?)$/i.exec(date);
 
   if ($)
     time.utcOffset = parseTimeOffset($[1]);

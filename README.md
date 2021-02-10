@@ -20,7 +20,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47.
 
 **@tubular/time** is a collection of date and time classes and functions, providing extensive internationalized date/time parsing and formatting capabilities, date/time manipulations such as field-specific add/subtract, set, and roll; calendar computations; support for live-updatable IANA time zones; and a settable Julian/Gregorian calendar switchover date.
 
-This library was originally developed for an astronomy website, https://skyviewcafe.com, and has some features of particular interest for astronomy and historical events, but has been expanded to provide many features similar to the now-legacy-status Moment.js.
+This library was originally developed for an astronomy website, <https://skyviewcafe.com>, and has some features of particular interest for astronomy and historical events, but has been expanded to provide many features similar to the now-legacy-status Moment.js.
 
 Unlike Moment.js, IANA timezone handling is built in, not a separate module, with a compact set of timezone data that reaches roughly five years into the past and five years into the future, expanded into the past and future using Daylight Saving Time rules and/or values extracted from `Intl.DateTimeFormat`. Unlike the `Intl` API, the full list of available timezones is exposed, allowing the creation of timezone selection interfaces.
 
@@ -40,7 +40,8 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 Documentation examples will assume **@tubular/time** has been imported as above.
 
-### Via `<script>` tag.
+### Via `<script>` tag
+
 ```html
 <script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
 <script src="https://unpkg.com/@tubular/time/dist/web/index.js"></script>
@@ -225,7 +226,7 @@ ttime.MONTH                  = 'YYYY-MM';
 | IS | `9/4/86` |
 | IxL | `8:30:00 PM EDT` |
 
-## Parsing with a format string, optional locale, with formatted output.
+## Parsing with a format string, optional locale, with formatted output
 
 | | .format('IMM') |
 |---|---|
@@ -420,6 +421,48 @@ Examples of using `set()`:
 `ttime('1690-09-15').set('month', 13, true).toIsoString(10)` → `1691-01-15`
 
 ### Using `startOf()` and `endOf()`
+
+These functions transform a `DateTime` to the beginning or end of a given unit of time.
+
+`ttime('2300-05-05T04:08:10.909').startOf(DateTimeField.MINUTE).toIsoString(23)` →<br>
+`2300-05-05T04:08:00.000`
+
+`ttime('2300-05-05T04:08:10.909').startOf('hour').toIsoString(23)` →<br>
+`2300-05-05T04:00:00.000`
+
+`ttime('2300-05-05T04:08:10.909').startOf(DateTimeField.WEEK).format(ttime.WEEK_AND_DAY)` →<br>
+`2300-W18-1`
+
+`ttime('2300-05-05T04:08:10.909').startOf('year').toIsoString(23)` →<br>
+`2300-01-01T00:00:00.000`
+
+`ttime('2300-05-05T04:08:10.909').endOf('day').toIsoString(23)` →<br>
+`2300-05-05T23:59:59.999`
+
+`ttime('2300-05-05T04:08:10.909').endOf(DateTimeField.MONTH).toIsoString(23)` →<br>
+`2300-05-31T23:59:59.999`
+
+## Timezone offsets from UTC
+
+Offset from UTC for a given `DateTime` in seconds, negative for timezones west of the Prime Meridian, including any change due to Daylight Saving Time when applicable:
+
+`ttime().utcOffsetSeconds`
+
+Offset from UTC for a given `DateTime` in minutes:
+
+`ttime().utcOffsetMinutes`
+
+Change in seconds from a timezone's standard UTC offset due to Daylight Saving Time. This will be 0 when DST is not in effect, or always 0 if DST is never in effect. While usually a positive number, some timezones (like Europe/Dublin) employ negative DST during the winter:
+
+`ttime().dstOffsetSeconds`
+
+Change in minutes from a timezone's standard UTC offset due to Daylight Saving Time:
+
+`ttime().dstOffsetMinutes`
+
+Returns `true` when a moment in time is during DST, `false` otherwise:
+
+`ttime().isDST()`
 
 ## Validation
 
