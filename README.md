@@ -504,7 +504,7 @@ When parsing using a format string, especially formats where months are numeric,
 `ttime('08.02.21', 'IS', 'de').format('IS')` → `08.02.21`<br>
 `ttime('008-2-21', 'IS', 'de').format('IS')` → `08.02.21`
 
-Except in compact, delimiter-free ISO formats like `20210208`, leading zeros are never required. Extra, unexpected leading zeros are generally ignored, although when a two-digit year is expected, a 3-digit year such as 021 will be treated as 21 AD, not 2021.
+Except in compact, delimiter-free ISO formats like `20210208`, leading zeros are never required. Extra, unexpected leading zeros are generally ignored, although an ISO date month should have no more than two digits, and when a two-digit year is expected, a 3-digit year such as 021 will be treated as 21 AD, not 2021.
 
 _Future releases may offer options for stricter parsing._
 

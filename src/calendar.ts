@@ -495,15 +495,18 @@ export function parseISODate(date: string): YMDDate {
     date = date.substring(1).trim();
   }
 
-  let match = /(\d+)-(\d+)-(\d+)/.exec(date);
+  let $ = /^(\d+)-(\d+\{1,2}(?=\D))(?:-(\d+))?$/.exec(date);
 
-  if (!match)
-    match = /(\d{4,})(\d\d)(\d\d)/.exec(date);
+  if (!$)
+    $ = /(\d{1,5})$/.exec(date);
 
-  if (!match)
+  if (!$)
+    $ = /^(\d{4,})(\d\d)(\d\d)$/.exec(date);
+
+  if (!$)
     throw new Error('Invalid ISO date');
 
-  return syncDateAndTime({ y: Number(match[1]) * sign, m: Number(match[2]), d: Number(match[3]) });
+  return syncDateAndTime({ y: Number($[1]) * sign, m: Number($[2] ?? 1), d: Number($[3] ?? 1) });
 }
 
 export class Calendar {

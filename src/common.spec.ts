@@ -3,6 +3,9 @@ import { parseISODateTime } from './common';
 
 describe('Common', () => {
   it('should parse ISO date/time strings.', () => {
+    expect(parseISODateTime('1962')).to.include({ y: 1962, q: 1, m: 1, d: 1, hrs: 0, min: 0, sec: 0 });
+    expect(parseISODateTime('1962-10')).to.include({ y: 1962, q: 4, m: 10, d: 1, hrs: 0, min: 0, sec: 0 });
+    expect(parseISODateTime('19621013')).to.include({ y: 1962, q: 4, m: 10, d: 13, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('19621013')).to.include({ y: 1962, q: 4, m: 10, d: 13, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('19620313')).to.include({ y: 1962, q: 1, m: 3, d: 13, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('19620413')).to.include({ y: 1962, q: 2, m: 4, d: 13, hrs: 0, min: 0, sec: 0 });

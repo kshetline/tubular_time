@@ -183,11 +183,11 @@ export function parseISODateTime(date: string, allowLeapSecond = false): DateAnd
   date = date.trim();
 
   let time: DateAndTime;
-  let $ = /^([-+]?\d+)-(\d{1,2})-(\d{1,2})/.exec(date);
+  let $ = /^([-+]?\d+)-(\d{1,2}(?=\D|$))(?:-(\d{1,2}))?/.exec(date);
 
-  if ($ || ($ = /^([-+]?\d{4,})(\d\d)(\d\d)/.exec(date)))
-    time = { y: toNumber($[1]), m: Number($[2]), d: Number($[3]) };
-  else if (($ = /^([-+]?\d+)-(W)(\d+)-(\d)/i.exec(date)) || ($ = /^([-+]?\d{4,})(W)(\d\d)(\d)/i.exec(date))) {
+  if ($ || ($ = /^([-+]?\d{1,5}(?=[^-+:.Ww\d]|$))/.exec(date)) || ($ = /^([-+]?\d{4,})(\d\d)(\d\d)/.exec(date)))
+    time = { y: toNumber($[1]), m: Number($[2] ?? 1), d: Number($[3] ?? 1) };
+  else if (($ = /^([-+]?\d+)-(W)(\d+)(?:-(\d))?/i.exec(date)) || ($ = /^([-+]?\d{4,})(W)(\d\d)(\d)/i.exec(date))) {
     if ($[2] === 'W')
       time = { yw: toNumber($[1]), w: Number($[3]), dw: Number($[4]) };
     else
