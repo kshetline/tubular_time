@@ -50,7 +50,7 @@ Documentation examples will assume **@tubular/time** has been imported as above.
 
 The first script element is an example of optionally loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
-The package will be available via the global variable `tbTime`. `tbTime.ttime` is the default function, and other functions, classes, and constants will be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, `tbTime.TIME_MS`, etc.
+The package will be available via the global variable `tbTime`. `tbTime.ttime` is the default function, and other functions, classes, and constants will also be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, `tbTime.TIME_MS`, etc.
 
 ## Basic usage
 
@@ -95,7 +95,7 @@ By default, any ambiguous time is treated as the earlier time, the first occurre
 
 Dates and times can be formatted in a many ways, using a broad selection of format tokens, described in the table below.
 
-For the greatest adherence to localized formats for dates and times, you can use the I*XX* format strings, which directly call upon `Intl.DateTimeFormat` (if available) to created localized dates, times, and combined dates/times.
+For the greatest adherence to localized formats for dates and times, you can use the I*XX* format strings, which call directly upon `Intl.DateTimeFormat` (if available) to create localized dates, times, and combined dates/times.
 
 You can also produce more customized, flexible formatting, specifying the order, positioning, and style (text vs. number, fully spelled out or abbreviated, with or without leading zeros) of each date/time field, with embedded punctuation and text as desired.
 
@@ -236,7 +236,7 @@ ttime.MONTH                  = 'Y-MM';
 | `ttime('02/03/32', 'MM-DD-YY')` | `Feb 3, 2032, 12:00:00 AM` |
 | `ttime('02/03/32', 'DD-MM-YY')` | `Mar 2, 2032, 12:00:00 AM` |
 | `ttime('02/03/32 4:30 pm', 'DD-MM-YY hh:mm a', 'fr')` | `2 mars 2032 à 16:30:00` |
-| `ttime('02/03/32', 'DD-MM-YYYY')` | `2 mars 2032 à 16:30:00` |
+| `ttime('02/03/32', 'DD-MM-YYYY')` | `Mar 2, 0032, 12:00:00 AM` |
 | `ttime('2032-03-02T16:30', null, 'ru')` | `2 мар. 2032 г., 16:30:00` |
 | `ttime('2032-03-02T16:30', null, 'ar-sa')` | `٠٢‏/٠٣‏/٢٠٣٢ ٤:٣٠:٠٠ م` |
 | `ttime('2032-03-02T16:30', null, 'zh-cn')` | `2032年3月2日 下午4:30:00` |
@@ -315,7 +315,7 @@ ttime.MONTH                  = 'Y-MM';
 
   utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
   dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative
-  occurrence: 1, // usual 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
+  occurrence: 1, // usually 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
 }
 ```
 
@@ -592,7 +592,7 @@ All arguments to the constructor are optional. When passed no arguments, `new Da
 * `initialTime`: This can be a single number (for milliseconds since 1970-01-01T00:00 UTC), an ISO-8601 date as a string, and ECMA-262 date as string, an ASP.​NET JSON date string, a JavaScript `Date` object, [a `DateAndTime` object](the-dateandtime-object), an array of numbers (in the order year, month, day, hour, etc.), or a `null`, which causes the current time to be used.
 * `timezone`: a `Timezone` instance, a string specifying an IANA timezone (e.g. 'Pacific/Honolulu') or a UTC offset (e.g. 'UTC+04:00'), or `null` to use the default timezone.
 * `locale`: a locale string (e.g. 'fr-FR'), an array of locales strings in order of preference (e.g. ['fr-FR', 'fr-CA', 'en-US']), or `null` to use the default locale.
-* `gregorianChange`: The first date when the Gregorian calendar is active, the string `'J'` for a pure Julian calendar, the string 'G' for a pure Gregorian calendar, the constant `ttime.PURE_JULIAN`, the constant `ttime.PURE_GREGORIAN`, or `null` for the default of 1582-10-15. A date can take the form of an ISO-8601 date string (e.g. '1752-09-14'), a year-month-day numeric array (e.g. [1918, 2, 14]), or a date as a `DateAndTime` object.
+* `gregorianChange`: The first date when the Gregorian calendar is active, the string `'J'` for a pure Julian calendar, the string 'G' for a pure Gregorian calendar, the constant `ttime.PURE_JULIAN`, the constant `ttime.PURE_GREGORIAN`, or `null` for the default of 1582-10-15. A date can take the form of a year-month-day ISO-8601 date string (e.g. '1752-09-14'), a year-month-day numeric array (e.g. [1918, 2, 14]), or a date as a `DateAndTime` object.
 
 As a string, `initialTime` can also include a trailing timezone or UTC offset, using the letter `Z` to indicate UTC (e.g. '1969‑07‑12T20:17Z'), or a specific timezone (e.g. '1969‑07‑12T20:17Z', '1969‑07‑12T16:17 EDT', '1969‑07‑12T16:17 America/New_York', or '1969‑07‑12T16:17-0400').
 

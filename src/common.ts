@@ -187,13 +187,13 @@ export function parseISODateTime(date: string, allowLeapSecond = false): DateAnd
 
   if ($ || ($ = /^([-+]?\d{1,5}(?=[^-+:.Ww\d]|$))/.exec(date)) || ($ = /^([-+]?\d{4,})(\d\d)(\d\d)/.exec(date)))
     time = { y: toNumber($[1]), m: Number($[2] ?? 1), d: Number($[3] ?? 1) };
-  else if (($ = /^([-+]?\d+)-(W)(\d+)(?:-(\d))?/i.exec(date)) || ($ = /^([-+]?\d{4,})(W)(\d\d)(\d)/i.exec(date))) {
+  else if (($ = /^([-+]?\d+)-(W)(\d+)(?:-(\d))?/i.exec(date)) || ($ = /^([-+]?\d{4,})(W)(\d\d)(\d)?/i.exec(date))) {
     if ($[2] === 'W')
-      time = { yw: toNumber($[1]), w: Number($[3]), dw: Number($[4]) };
+      time = { yw: toNumber($[1]), w: Number($[3]), dw: Number($[4] ?? 1) };
     else
-      time = { ywl: toNumber($[1]), wl: Number($[3]), dwl: Number($[4]) };
+      time = { ywl: toNumber($[1]), wl: Number($[3]), dwl: Number($[4] ?? 1) };
   }
-  else if (($ = /^(\d+)-(\d+)/.exec(date)) || ($ = /^(\d{4})(\d){3}/.exec(date))) {
+  else if (($ = /^(\d+)-(\d+)/.exec(date)) || ($ = /^(\d{4})(\d{3})/.exec(date))) {
     time = { y: toNumber($[1]), dy: Number($[2]) };
   }
   else {

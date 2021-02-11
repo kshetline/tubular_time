@@ -43,6 +43,11 @@ describe('DateTime', () => {
     expect(new DateTime('/Date(1198908717056-0700)/').toString()).to.equal('DateTime<2007-12-28T23:11:57.056 -07:00>');
     expect(new DateTime('2021-11-07T01:23-04:12:34').utcOffsetSeconds).to.equal(-15154);
     expect(new DateTime('20211107T0123-041234').utcOffsetSeconds).to.equal(-15154);
+    expect(new DateTime('2021-056').format(ttime.DATE)).to.equal('2021-02-25');
+    expect(new DateTime('2021056').format(ttime.DATE)).to.equal('2021-02-25');
+    expect(new DateTime('2245W343').format(ttime.DATE)).to.equal('2245-08-20');
+    expect(new DateTime('2245W34').format(ttime.DATE)).to.equal('2245-08-18');
+    expect(new DateTime('2245').format(ttime.DATE)).to.equal('2245-01-01');
 
     const dt = new DateTime();
 
