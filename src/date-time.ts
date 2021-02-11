@@ -107,13 +107,13 @@ export class DateTime extends Calendar {
   }
 
   static getDefaultCenturyBase(): number { return DateTime.defaultCenturyBase; }
-  static setDefaultCenturyBase(newBase: number) { DateTime.defaultCenturyBase = newBase; }
+  static setDefaultCenturyBase(newBase: number): void { DateTime.defaultCenturyBase = newBase; }
 
   static getDefaultLocale(): string | string[] { return DateTime.defaultLocale; }
-  static setDefaultLocale(newLocale: string | string[]) { DateTime.defaultLocale = newLocale; }
+  static setDefaultLocale(newLocale: string | string[]): void { DateTime.defaultLocale = newLocale; }
 
   static getDefaultTimezone(): Timezone { return DateTime.defaultTimezone; }
-  static setDefaultTimezone(newZone: Timezone | string) {
+  static setDefaultTimezone(newZone: Timezone | string): void {
     if (isString(newZone))
       newZone = Timezone.from(newZone);
 

@@ -240,6 +240,13 @@ ttime.MONTH                  = 'Y-MM';
 ttime.PURE_JULIAN    = CalendarType.PURE_JULIAN;
 ttime.PURE_GREGORIAN = CalendarType.PURE_GREGORIAN;
 
+ttime.getDefaultCenturyBase = DateTime.getDefaultCenturyBase;
+ttime.setDefaultCenturyBase = DateTime.setDefaultCenturyBase;
+ttime.getDefaultLocale      = DateTime.getDefaultLocale;
+ttime.setDefaultLocale      = DateTime.setDefaultLocale;
+ttime.getDefaultTimezone    = DateTime.getDefaultTimezone;
+ttime.setDefaultTimezone    = DateTime.setDefaultTimezone;
+
 Object.freeze(ttime);
 
 export default ttime;

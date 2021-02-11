@@ -1,6 +1,6 @@
 # @tubular/time
 
-Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is date/time library that handles both the day-to-day situations (so to speak) and the weird ones too.
+Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library that handles both the day-to-day situations (so to speak) and the weird ones too.
 
 ## Key features
 
@@ -360,7 +360,7 @@ There are six main methods for modifying a `DateTime` value:
 * `startOf(field: DateTimeField | DateTimeFieldName): DateTime`
 * `endOf(field: DateTimeField | DateTimeFieldName): DateTime`
 
-> Before going further, it needs to be mentioned that `DateTime` instances can be either locked, and thus immutable, or unlocked. Instances generated using `ttime(`...`)` are locked. Instances created using [the `DateTime` constructor](#the-datetime-constructor) (covered later in this document) are created unlocked, but can be locked after creation.
+> Before going further, it needs to be mentioned that `DateTime` instances can be either locked, and thus immutable, or unlocked. Instances generated using `ttime(`...`)` are locked. Instances created using [the `DateTime` constructor](#the-datetime-class) (covered later in this document) are created unlocked, but can be locked after creation.
 
 When you use the add/subtract/roll/set methods on a locked instance, a new modified and locked instance is returned. When used on an unlocked instance, these methods modify the instance itself is modified, and a reference to that same instance is returned.
 
@@ -575,13 +575,28 @@ The utility of this method is more evident with when viewing the calendar genera
 
 By using the locale `'fr'`, the calendar generated above starts on Monday instead of Sunday. Notice how the 4th of the month is immediately followed by the 15th.
 
+## Global default settings
+
+Get/set the first year of the one hundred-year range that will be using to interpret two-digit year numbers. Defaults to 1970.
+
+`ttime.getDefaultCenturyBase(): number;`<br>
+`ttime.setDefaultCenturyBase(newBase: number): void;`
+
+Get/set the default locale (or prioritized array of locales). The defaults to the value provide either by a web browser or the Node.js environment.
+
+`ttime.getDefaultLocale(): string | string[];`<br>
+`ttime.setDefaultLocale(newLocale: string | string[]): void;`
+
+`ttime.getDefaultTimezone(): Timezone;`<br>
+`ttime.setDefaultTimezone(newZone: Timezone | string): void;`
+
 ## The `DateTime` class
 
 The main `ttime()` function works by creating instances of the `DateTime` class. You can use `new DateTime(`...`)` to create instances of `DateTime` directly. This is necessary for taking advantage of support for variable switch-over from the Julian to the Gregorian calendar, which by default is set at October 15, 1582.
 
 ### Constructor
 
-```
+```text
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
 
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
@@ -589,12 +604,15 @@ The main `ttime()` function works by creating instances of the `DateTime` class.
 
 All arguments to the constructor are optional. When passed no arguments, `new DateTime()` will return an instance for the current moment, in the default timezone, default locale, and with the default October 15, 1582 Gregorian calendar switch-over.
 
-* `initialTime`: This can be a single number (for milliseconds since 1970-01-01T00:00 UTC), an ISO-8601 date as a string, and ECMA-262 date as string, an ASP.​NET JSON date string, a JavaScript `Date` object, [a `DateAndTime` object](the-dateandtime-object), an array of numbers (in the order year, month, day, hour, etc.), or a `null`, which causes the current time to be used.
+* `initialTime`: This can be a single number (for milliseconds since 1970-01-01T00:00 UTC), an ISO-8601 date as a string, and ECMA-262 date as string, an ASP.​NET JSON date string, a JavaScript `Date` object, [a `DateAndTime` object](#the-ymddate-and-dateandtime-objects), an array of numbers (in the order year, month, day, hour, etc.), or a `null`, which causes the current time to be used.
 * `timezone`: a `Timezone` instance, a string specifying an IANA timezone (e.g. 'Pacific/Honolulu') or a UTC offset (e.g. 'UTC+04:00'), or `null` to use the default timezone.
 * `locale`: a locale string (e.g. 'fr-FR'), an array of locales strings in order of preference (e.g. ['fr-FR', 'fr-CA', 'en-US']), or `null` to use the default locale.
 * `gregorianChange`: The first date when the Gregorian calendar is active, the string `'J'` for a pure Julian calendar, the string 'G' for a pure Gregorian calendar, the constant `ttime.PURE_JULIAN`, the constant `ttime.PURE_GREGORIAN`, or `null` for the default of 1582-10-15. A date can take the form of a year-month-day ISO-8601 date string (e.g. '1752-09-14'), a year-month-day numeric array (e.g. [1918, 2, 14]), or a date as a `DateAndTime` object.
 
-As a string, `initialTime` can also include a trailing timezone or UTC offset, using the letter `Z` to indicate UTC (e.g. '1969‑07‑12T20:17Z'), or a specific timezone (e.g. '1969‑07‑12T20:17Z', '1969‑07‑12T16:17 EDT', '1969‑07‑12T16:17 America/New_York', or '1969‑07‑12T16:17-0400').
+As a string, `initialTime` can also include a trailing timezone or UTC offset, using the letter `Z` to indicate UTC (e.g. '1969‑07‑12T20:17Z'), or a specific timezone (e.g. '1969‑07‑20T16:17 EDT', '1969‑07‑20T16:17 America/New_York', or '1969‑07‑20T16:17-0400').
 
 If the `timezone` argument is itself `null` or unspecified, this embedded timezone will become the timezone for the `DateTime` instance. If the `timezone` argument is also provided, the time will be parsed according to the first timezone, then it will be transformed to the second timezone.
+
+`new DateTime('2022-06-01 14:30 America/Chicago', 'Europe/Paris', 'fr_FR').format('IMM ZZZ')` →<br>
+`1 juin 2022 à 21:30:00 Europe/Paris`
 
