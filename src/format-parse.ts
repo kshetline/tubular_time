@@ -196,12 +196,14 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'GGGG': // ISO-week year
       case 'GG':
-        result.push((wt.yw < 0 ? '-' : '') + toNum(field.length === 2 ? abs(wt.yw) % 100 : abs(wt.yw), field.length));
+        result.push((wt.yw < 0 ? '-' : year <= 9999 ? '' : field === 'GGGG' ? '+' : '') +
+          toNum(field.length === 2 ? abs(wt.yw) % 100 : abs(wt.yw), field.length));
         break;
 
       case 'gggg': // Locale-week year
       case 'gg':
-        result.push((wt.ywl < 0 ? '-' : '') + toNum(field.length === 2 ? abs(wt.ywl) % 100 : abs(wt.ywl), field.length));
+        result.push((wt.ywl < 0 ? '-' : year <= 9999 ? '' : field === 'gggg' ? '+' : '') +
+          toNum(field.length === 2 ? abs(wt.ywl) % 100 : abs(wt.ywl), field.length));
         break;
 
       case 'Qo': // Quarter ordinal
@@ -438,9 +440,10 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
             if (!intlFormat) {
               const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
               const zone = convertDigits(dt.timezone.zoneName);
+              let $: RegExpExecArray;
 
-              if (/^UT[-+]\d\d(?::?\d\d)/.test(zone)) {
-                options.timeZone = 'Etc/GMT' + (zone.charAt(2) === '-' ? '+' : '-') + toNumber(zone.substr(3));
+              if (($ = /^(?:GMT|UTC?)([-+])(\d\d(?::?\d\d))/.exec(zone))) {
+                options.timeZone = 'Etc/GMT' + ($[1] === '-' ? '+' : '-') + $[2].replace(/^0+(?=\d)|:|00$/g, '');
 
                 if (!Timezone.has(options.timeZone))
                   delete options.timeZone;
@@ -511,13 +514,14 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
 function quickFormat(localeNames: string | string[], timezone: string, opts: any) {
   const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
+  let $: RegExpExecArray;
 
   localeNames = normalizeLocale(localeNames);
 
   if (timezone === 'DATELESS' || timezone === 'ZONELESS')
     options.timeZone = 'UTC';
-  else if (/^UT[-+]\d\d(?::?\d\d)/.test(timezone)) {
-    options.timeZone = 'Etc/GMT' + (timezone.charAt(2) === '-' ? '+' : '-') + toNumber(timezone.substr(3));
+  else if (($ = /^(?:GMT|UTC?)([-+])(\d\d(?::?\d\d))/.exec(timezone))) {
+    options.timeZone = 'Etc/GMT' + ($[1] === '-' ? '+' : '-') + $[2].replace(/^0+(?=\d)|:|00$/g, '');
 
     if (!Timezone.has(options.timeZone))
       delete options.timeZone;
@@ -642,7 +646,8 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   }
   else {
     locale.eras = ['BC', 'AD', 'Before Christ', 'Anno Domini'];
-    locale.months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    locale.months = ['January', 'February', 'March', 'April', 'May', 'June',
+                     'July', 'August', 'September', 'October', 'November', 'December'];
     locale.monthsMin = shortenItems(locale.months);
     locale.monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     locale.monthsShortMin = shortenItems(locale.monthsShort);

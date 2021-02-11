@@ -1,7 +1,7 @@
 import { div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
 import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
-import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC } from './common';
+import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset } from './common';
 import { hasIntlDateTime } from './locale-data';
 
 export interface RegionAndSubzones {
@@ -357,27 +357,26 @@ export class Timezone {
       return cached;
 
     let zone: Timezone;
-    const matches: string[] = /LMT|OS|(?:(UT)?(?:([-+])(\d\d):(\d\d))?)|(?:.+\/.+)|\w+/.exec(name);
+    const $: string[] = /LMT|OS|(?:(GMT|UTC?)?([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?))?)|(?:.+\/.+)|\w+/.exec(name);
 
-    if (matches === null || matches.length === 0)
+    if ($ === null || $.length === 0)
       throw new Error('Unrecognized format for timezone name "' + name + '"');
-    else  if (matches[0] === 'LMT') {
+    else  if ($[0] === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
       zone = new Timezone({ zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
                              usesDst: false, dstOffset: 0, transitions: null });
     }
-    else if (matches[0] === 'OS') {
+    else if ($[0] === 'OS')
       zone = this.OS_ZONE;
-    }
-    else if (matches.length > 1 && (matches[1] === 'UT' || matches[2])) {
+    else if ($.length > 1 && (/GMT|UTC?/.test($[1]) || $[2])) {
       let offset = 0;
 
-      if (!matches[1])
+      if (!$[1])
         name = 'UT' + name;
 
-      if (matches.length === 5 && matches[3] && matches[4])
-        offset = (parseInt(matches[3], 10) * 60 + parseInt(matches[4], 10)) * 60 * (matches[2] === '-' ? -1 : 1);
+      if ($[2])
+        offset = parseTimeOffset($[2]);
 
       zone = new Timezone({ zoneName: name, currentUtcOffset: offset,
                             usesDst: false, dstOffset: 0, transitions: null });

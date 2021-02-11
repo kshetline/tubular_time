@@ -44,7 +44,7 @@ function hasYearField(obj: any): boolean {
 export function isGregorianType(obj: any): obj is GregorianChange {
   return isNumber(obj) ||
          (isArray(obj) && obj.length === 3 && obj.findIndex(n => !isNumber(n)) < 0) ||
-         (isString(obj) && /^(g|j|(\d+)-(\d+)-(\d+))$/i.test(obj)) ||
+         (isString(obj) && /^(g|j|(\d+)-(\d+)-(\d+)|\d{8})$/i.test(obj)) ||
          (isObject(obj) && hasYearField(obj));
 }
 

@@ -25,10 +25,14 @@ describe('DateTime', () => {
 
   it('should properly create Datetime instances', () => {
     expect(new DateTime('2021-11-07T01:23-04:00').timezone.zoneName).to.equal('UT-04:00');
-    expect(() => new DateTime({ y: 1900.7 })).to.throw('y must be an integer value');
-    expect(new DateTime('2021-07-04T12:34 Europe/Dublin', 'America/Chicago').toString()).to.equal('DateTime<2021-07-04T06:34:00.000 -05:00§>');
+    expect(new DateTime({ y: 1900.7 }).error).to.equal('y must be an integer value (1900.7)');
+    expect(new DateTime('2021-07-04T12:34 Europe/Dublin', 'America/Chicago').toString())
+      .to.equal('DateTime<2021-07-04T06:34:00.000 -05:00§>');
     expect(new DateTime().locale).to.equal('en-us');
+    expect(new DateTime(null, null, 'fr').locale).to.equal('fr');
+    expect(new DateTime(null, null, ['fr-FR', 'de_CH']).locale).to.eql(['fr-fr', 'de-ch']);
     expect(new DateTime('20210704Z').toString()).to.equal('DateTime<2021-07-04T00:00:00.000 +00:00>');
+    expect(new DateTime('10210704Z').toString()).to.equal('DateTime<1021-07-04T00:00:00.000 +00:00J>');
     expect(new DateTime('20210704T09Z').toString()).to.equal('DateTime<2021-07-04T09:00:00.000 +00:00>');
     expect(new DateTime('20210704T0945Z').toString()).to.equal('DateTime<2021-07-04T09:45:00.000 +00:00>');
     expect(new DateTime('20210704T094533Z').toString()).to.equal('DateTime<2021-07-04T09:45:33.000 +00:00>');
@@ -44,6 +48,14 @@ describe('DateTime', () => {
 
     dt.locale = 'fr';
     expect(dt.locale).to.equal('fr');
+  });
+
+  it('should properly determine locale-specific starting days of the week', () => {
+    expect(new DateTime('2021-w01-1', null, 'en-us').wallTime.dow).to.equal(0);
+    expect(new DateTime('2021-w01-1', null, 'en-gb').wallTime.dow).to.equal(1);
+    expect(new DateTime('2021-w01-1', null, 'fr').wallTime.dow).to.equal(1);
+    expect(new DateTime('2021-w01-1', null, 'fr_CA').wallTime.dow).to.equal(0);
+    expect(new DateTime('2021-w01-1', null, 'ar_EG').wallTime.dow).to.equal(6);
   });
 
   it('should skip an hour starting Daylight Saving Time', () => {
@@ -372,7 +384,7 @@ describe('DateTime', () => {
 
   it('should correctly perform DateTime comparisons', () => {
     const dt = new DateTime('2021-03-04T05:06:07.888');
-    const dt2 = new DateTime('1969-07-12T20:17');
+    const dt2 = new DateTime('1969-07-20T20:17Z');
 
     expect(dt.isAfter('2021-03-04T05:06:07.887')).to.be.true;
     expect(dt.isAfter('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.false;
@@ -382,10 +394,10 @@ describe('DateTime', () => {
     expect(dt.isBefore('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.false;
     expect(dt.isSameOrBefore('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
     expect(dt.isSame('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
-    expect(dt2.isAfter('1969-07-12', DateTimeField.MINUTE)).to.be.true;
-    expect(dt2.isAfter('1969-07-12', DateTimeField.HOUR)).to.be.true;
-    expect(dt2.isAfter('1969-07-12', DateTimeField.DAY)).to.be.false;
-    expect(dt2.isAfter('1969-07-11', DateTimeField.DAY)).to.be.true;
+    expect(dt2.isAfter('1969-07-20', DateTimeField.MINUTE)).to.be.true;
+    expect(dt2.isAfter('1969-07-20', DateTimeField.HOUR)).to.be.true;
+    expect(dt2.isAfter('1969-07-20', DateTimeField.DAY)).to.be.false;
+    expect(dt2.isAfter('1969-07-19', DateTimeField.DAY)).to.be.true;
     expect(dt2.isSame('1969-07-01', DateTimeField.MONTH)).to.be.true;
     expect(dt2.isBefore('1969-07-01', DateTimeField.MONTH)).to.be.false;
     expect(dt2.isBefore('1969-08-01', DateTimeField.MONTH)).to.be.true;
@@ -403,8 +415,8 @@ describe('DateTime', () => {
     expect(new DateTime('2021-07-04 UTC').utcOffsetSeconds).to.equal(0);
     expect(new DateTime('2021-01-04 America/New_York').utcOffsetMinutes).to.equal(-300);
     expect(new DateTime('2021-07-04 America/New_York').utcOffsetSeconds).to.equal(-14400);
-    expect(() => new DateTime('2021-01-04 Atlantis/Xanadu')).to.throw('Bad timezone: Atlantis/Xanadu');
-    expect(() => new DateTime('2021-01-04', 'Atlantis/Xanadu')).to.throw('Bad timezone: Atlantis/Xanadu');
+    expect(new DateTime('2021-01-04 Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
+    expect(new DateTime('2021-01-04', 'Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
     expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetSeconds).to.equal(0);
     expect(new DateTime('2021-07-04 Europe/Dublin').utcOffsetSeconds).to.equal(3600);
     expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetMinutes).to.equal(0);
@@ -425,6 +437,7 @@ describe('DateTime', () => {
     expect(new DateTime('2021-07-04 05:06 America/New_York').toYMDhmString()).to.equal('2021-07-04 05:06§');
     expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(0);
     expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
+    expect(ttime({ y: 1994, m: 2, d: 2, utcOffset: 0 }).toDate().toISOString()).to.equal('1994-02-02T00:00:00.000Z');
     expect(new DateTime().isLeapYear(1900)).to.be.false;
     expect(new DateTime().isLeapYear(1904)).to.be.true;
     expect(new DateTime().isLeapYear(2000)).to.be.true;

@@ -4,7 +4,7 @@ import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianT
 import { DateAndTime, DAY_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
-import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime } from './locale-data';
+import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
 
 export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
@@ -86,7 +86,7 @@ export class DateTime extends Calendar {
   private static defaultTimezoneExplicit = false;
 
   private _error: string;
-  private _locale = DateTime.defaultLocale;
+  private _locale: string | string[] = DateTime.defaultLocale;
   private _timezone = DateTime.defaultTimezone;
   private _utcTimeMillis = 0;
   private _wallTime: DateAndTime;
@@ -152,8 +152,8 @@ export class DateTime extends Calendar {
     throw new Error(`Resolution ${DateTimeField[resolution]} not valid`);
   }
 
-  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null,
               gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
@@ -222,8 +222,12 @@ export class DateTime extends Calendar {
             initialTime = saveTime;
             parseZone = null;
           }
-          else
-            throw new Error(`Bad timezone: ${zone}`);
+          else {
+            this._error = `Bad timezone: ${zone}`;
+            this._utcTimeMillis = null;
+
+            return;
+          }
         }
       }
 
@@ -257,6 +261,7 @@ export class DateTime extends Calendar {
           if (isNaN(initialTime)) {
             this._error = e.message;
             this._utcTimeMillis = null;
+
             return;
           }
         }
@@ -268,16 +273,22 @@ export class DateTime extends Calendar {
     if (isString(timezone))
       timezone = Timezone.from(timezone);
 
-    if (timezone?.error)
-      throw new Error(`Bad timezone: ${timezone!.zoneName}`);
+    if (timezone?.error) {
+      this._error = `Bad timezone: ${timezone!.zoneName}`;
+      this._utcTimeMillis = null;
+
+      return;
+    }
 
     if (parseZone)
       this._timezone = parseZone;
     else if (timezone)
       this._timezone = timezone;
 
-    if (!isNumber(gregorianOrLocale) && isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale))
-      this._locale = gregorianOrLocale;
+    if (!isNumber(gregorianOrLocale) &&
+        ((isString(gregorianOrLocale) && localeTest.test(gregorianOrLocale)) ||
+         (isArray(gregorianOrLocale) && isString(gregorianOrLocale[0]))))
+      this._locale = normalizeLocale(gregorianOrLocale as string | string[]);
 
     if (initialTime instanceof Date)
       this.utcTimeMillis = +initialTime;
@@ -285,7 +296,15 @@ export class DateTime extends Calendar {
       if (!parseZone && !timezone && (initialTime as any).utcOffset != null && (initialTime as any).utcOffset !== 0)
         this._timezone = Timezone.from(Timezone.formatUtcOffset((initialTime as any).utcOffset));
 
-      this.wallTime = initialTime as DateAndTime;
+      try {
+        this.wallTime = initialTime as DateAndTime;
+      }
+      catch (e) {
+        this._error = e.message;
+        this._utcTimeMillis = null;
+
+        return;
+      }
     }
     else
       this.utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
@@ -341,6 +360,10 @@ export class DateTime extends Calendar {
 
   get utcTimeSeconds(): number { return floor(this._utcTimeMillis / 1000); }
   set utcTimeSeconds(newTime: number) { this.utcTimeMillis = newTime * 1000; }
+
+  toDate(): Date {
+    return new Date(this._utcTimeMillis);
+  }
 
   private getWallTime(purge?: boolean): DateAndTime {
     if (!this.valid)
@@ -1302,7 +1325,7 @@ export class DateTime extends Calendar {
   }
 
   toString(): string {
-    return 'DateTime<' + this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat) + '>';
+    return `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
   }
 
   toYMDhmString(): string {

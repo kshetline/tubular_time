@@ -24,13 +24,19 @@ Object.freeze(localeList);
 
 export function normalizeLocale(locale: string | string[]): string | string[] {
   if (!hasIntlDateTime)
-    return 'en';
+    return 'en-us';
 
   if (isString(locale) && locale.includes(','))
     locale = locale.split(',').map(lcl => lcl.trim());
 
-  if (isArray(locale))
-    return locale.map(lcl => normalizeLocale(lcl) as string);
+  if (isArray(locale)) {
+    if (locale.length === 0)
+      return 'en';
+    if (locale.length === 1)
+      return normalizeLocale(locale[0]);
+    else
+      return locale.map(lcl => normalizeLocale(lcl) as string);
+  }
 
   return locale.replace(/_/g, '-').toLowerCase();
 }
@@ -119,19 +125,39 @@ export function getMeridiems(locale: string | string[]): string[][] {
   return result;
 }
 
+const weekStartByCountry: Record<string, number> = {};
+
+`ag as au bd br bs bt bw bz ca cn co dm do et gt
+ gu hk hn id il in jm jp ke kh kr la mh mm mo mt
+ mx mz ni np pa pe ph pk pr pt py sa sg sv th tt
+ tw um us ve vi ws ye za zw`
+  .split(/s+/).forEach(country => weekStartByCountry[country] = 0);
+
+`ad ai al am an ar at ax az ba be bg bm bn by ch
+ cl cm cr cy cz de dk ec ee es fi fj fo fr gb ge
+ gf gp gr hr hu ie is it kg kz lb li lk lt lu lv
+ mc md me mk mn mq my nl no nz pl re ro rs ru se
+ si sk sm tj tm tr ua uy uz va vn xk`
+  .split(/s+/).forEach(country => weekStartByCountry[country] = 1);
+
+weekStartByCountry.mv = 5;
+
+`ae af bh dj dz eg iq ir jo kw ly om qa sd sy`
+  .split(/s+/).forEach(country => weekStartByCountry[country] = 6);
+
 const weekInfo = {
   'af': [1, 4, 5], 'ar': [6, 1, 5, 6], 'ar-dz': [0, 3, 5, 6], 'ar-sa': [0, 1, 4, 5], 'az': [1, 1, 6, 0],
   'be': [1, 1, 6, 0], 'bg': [1, 1, 6, 0], 'bn': [0, 1, 6, 0], 'bn-bd': [0, 1, 6, 0], 'bo': [0, 1, 6, 0],
-  'bs': [1, 1, 6, 0], 'en': [0, 1, 6, 0], 'en-au': [0, 3, 6, 0], 'en-ca': [0, 1, 6, 0], 'en-il': [0, 1, 5, 6],
-  'eo': [1, 1, 6, 0], 'es-mx': [0, 3, 6, 0], 'es-us': [0, 1, 6, 0], 'eu': [1, 1, 6, 0], 'fa': [6, 1, 6, 0],
-  'fr-ca': [0, 1, 6, 0], 'gu': [0, 1, 6, 0], 'hi': [0, 1, 6, 0], 'hr': [1, 1, 6, 0], 'hy-am': [1, 1, 6, 0],
-  'ja': [0, 1, 6, 0], 'jv': [1, 1, 6, 0], 'ka': [1, 1, 6, 0], 'kk': [1, 1, 6, 0], 'kn': [0, 1, 6, 0],
-  'ko': [0, 1, 6, 0], 'ku': [6, 1, 6, 0], 'ky': [1, 1, 6, 0], 'lo': [0, 1, 6, 0], 'mk': [1, 1, 6, 0],
-  'ml': [0, 1, 6, 0], 'mn': [0, 1, 6, 0], 'mr': [0, 1, 5, 6], 'ms': [1, 1, 6, 0], 'ne': [0, 1, 6, 0],
-  'pt-br': [0, 1, 6, 0], 'ro': [1, 1, 6, 0], 'sd': [1, 4, 5], 'si': [0, 1, 6, 0], 'sl': [1, 1, 6, 0],
-  'sr': [1, 1, 6, 0], 'sw': [1, 1, 6, 0], 'ta': [0, 1, 6, 0], 'te': [0, 1, 6, 0], 'tg': [1, 1, 6, 0],
-  'th': [0, 1, 6, 0], 'tk': [1, 1, 6, 0], 'tr': [1, 1, 6, 0], 'tzm': [6, 1, 6, 0], 'ug-cn': [1, 1, 6, 0],
-  'uk': [1, 1, 6, 0], 'uz': [1, 1, 6, 0], 'zh': [0, 1, 6, 0]
+  'bs': [1, 1, 6, 0], 'en': [1, 1, 6, 0], 'en-au': [0, 3, 6, 0], 'en-ca': [0, 1, 6, 0], 'en-il': [0, 1, 5, 6],
+  'en-us': [0, 1, 6, 0], 'eo': [1, 1, 6, 0], 'es-mx': [0, 3, 6, 0], 'es-us': [0, 1, 6, 0], 'eu': [1, 1, 6, 0],
+  'fa': [6, 1, 6, 0], 'fr': [1, 1, 6, 0], 'fr-ca': [0, 1, 6, 0], 'gu': [0, 1, 6, 0], 'hi': [0, 1, 6, 0],
+  'hr': [1, 1, 6, 0], 'hy-am': [1, 1, 6, 0], 'ja': [0, 1, 6, 0], 'jv': [1, 1, 6, 0], 'ka': [1, 1, 6, 0],
+  'kk': [1, 1, 6, 0], 'kn': [0, 1, 6, 0], 'ko': [0, 1, 6, 0], 'ku': [6, 1, 6, 0], 'ky': [1, 1, 6, 0],
+  'lo': [0, 1, 6, 0], 'mk': [1, 1, 6, 0], 'ml': [0, 1, 6, 0], 'mn': [0, 1, 6, 0], 'mr': [0, 1, 5, 6],
+  'ms': [1, 1, 6, 0], 'ne': [0, 1, 6, 0], 'pt': [1, 1, 6, 0], 'pt-br': [0, 1, 6, 0], 'ro': [1, 1, 6, 0],
+  'sd': [1, 4, 5], 'si': [0, 1, 6, 0], 'sl': [1, 1, 6, 0], 'sr': [1, 1, 6, 0], 'sw': [1, 1, 6, 0], 'ta': [0, 1, 6, 0],
+  'te': [0, 1, 6, 0], 'tg': [1, 1, 6, 0], 'th': [0, 1, 6, 0], 'tk': [1, 1, 6, 0], 'tr': [1, 1, 6, 0],
+  'tzm': [6, 1, 6, 0], 'ug-cn': [1, 1, 6, 0], 'uk': [1, 1, 6, 0], 'uz': [1, 1, 6, 0], 'zh': [0, 1, 6, 0]
 };
 
 function getWeekInfo(locale: string | string[]): number[] {
@@ -139,6 +165,30 @@ function getWeekInfo(locale: string | string[]): number[] {
 
   if (result == null)
     result = weekInfo.en;
+
+  locale = normalizeLocale(locale);
+
+  if (!isArray(locale))
+    locale = [locale];
+
+  let day: number;
+
+  for (const lcl of locale) {
+    const country = lcl.split('-')[1];
+
+    if (country) {
+      if (weekInfo[lcl] != null)
+        break;
+
+      day = weekStartByCountry[country];
+
+      if (day != null)
+        break;
+    }
+  }
+
+  if (day != null)
+    result[0] = day;
 
   return result;
 }

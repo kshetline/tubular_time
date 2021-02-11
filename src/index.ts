@@ -25,6 +25,7 @@ import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
 import { parse } from './format-parse';
 import { isString } from '@tubular/util';
+import { CalendarType } from './calendar';
 
 let win: any = null;
 
@@ -223,10 +224,10 @@ ttime.unix = unix;
 ttime.parse = parse;
 ttime.sort = sort;
 
-ttime.DATETIME_LOCAL         = 'YYYY-MM-DD[T]HH:mm';
-ttime.DATETIME_LOCAL_SECONDS = 'YYYY-MM-DD[T]HH:mm:ss';
-ttime.DATETIME_LOCAL_MS      = 'YYYY-MM-DD[T]HH:mm:ss.SSS';
-ttime.DATE                   = 'YYYY-MM-DD';
+ttime.DATETIME_LOCAL         = 'Y-MM-DD[T]HH:mm';
+ttime.DATETIME_LOCAL_SECONDS = 'Y-MM-DD[T]HH:mm:ss';
+ttime.DATETIME_LOCAL_MS      = 'Y-MM-DD[T]HH:mm:ss.SSS';
+ttime.DATE                   = 'Y-MM-DD';
 ttime.TIME                   = 'HH:mm';
 ttime.TIME_SECONDS           = 'HH:mm:ss';
 ttime.TIME_MS                = 'HH:mm:ss.SSS';
@@ -234,7 +235,10 @@ ttime.WEEK                   = 'GGGG-[W]WW';
 ttime.WEEK_AND_DAY           = 'GGGG-[W]WW-E';
 ttime.WEEK_LOCALE            = 'gggg-[w]ww';
 ttime.WEEK_AND_DAY_LOCALE    = 'gggg-[w]ww-e';
-ttime.MONTH                  = 'YYYY-MM';
+ttime.MONTH                  = 'Y-MM';
+
+ttime.PURE_JULIAN    = CalendarType.PURE_JULIAN;
+ttime.PURE_GREGORIAN = CalendarType.PURE_GREGORIAN;
 
 Object.freeze(ttime);
 

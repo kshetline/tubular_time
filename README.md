@@ -6,11 +6,12 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47.
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
 * IANA timezone support, with features beyond simply parsing and formatting using timezones, including an accessible listing of all available timezones and live updates of timezone definitions.
+* Handles Local Mean Time, derived from longitude, to a resolution of one (time) minute.
 * Supports and recognizes negative Daylight Saving Time.
 * Many features available using a familiar Moment.js-style API.
 * Extensive date/time manipulation and calculation capabilities.
 * Astronomical time functions.
-* Internationalization via JavaScript's `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
+* Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
 
@@ -106,6 +107,8 @@ For example:
 `ttime().toLocale('de').format('ddd MMM D, y N [at] h:mm A z')` →<br>
 `Mi 02 3, 2021 n. Chr. at 9:43 PM GMT-5`
 
+Please note that, as most unaccented Latin letters are interpreted as special formatting characters, when using those characters as literal text they should be surrounded with square brackets, as with the word “at” above.
+
 ## Format string tokens
 
 | | Token | Output |
@@ -118,9 +121,9 @@ For example:
 | | YY | 70 71 ... 29 30 |
 | | Y | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. |
 | | y | 1 2 ... 2020 ...<br>Era year, for use with BC/AD, never 0 or negative. |
-| Week year (ISO) | GGGG | 1970 1971 ... 2029 2030 |
+| Week year (ISO) | GGGG | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
 | | GG | 70 71 ... 29 30 |
-| Week year (locale) | gggg | 1970 1971 ... 2029 2030 |
+| Week year (locale) | gggg | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
 | | gg | 70 71 ... 29 30 |
 | Quarter | Qo | 1st 2nd 3rd 4th |
 | | Q | 1 2 3 4 |
@@ -170,10 +173,10 @@ For example:
 | | Z | -07:00 -06:00 ... +06:00 +07:00
 | Unix timestamp | X | 1360013296 |
 | Unix millisecond timestamp | x | 1360013296123 |
-| Daylight Saving Time indicator | V | § # ^ ~ ❄<br><br>Symbol indicating DST is in effect.<br>This is typically §, meaning the clock has been turned forward one hour.<br># means two hours forward, ^ means half an hour, ~ is any other forward amount.<br>❄ is negative DST, i.e. "Winter Time".<br>Renders one blank space when DST is not in effect. |
+| Daylight Saving Time indicator | V | § # ^ ~ ❄<br><br>Symbol indicating DST is in effect.<br>This is typically §, meaning the clock has been turned forward one hour.<br># means two hours forward, ^ means half an hour, ~ is any other forward amount.<br>❄ is negative DST, i.e. “Winter Time”.<br>Renders one blank space when DST is not in effect. |
 | | v | Same as above, but no blank space when DST is not in effect. |
 | Occurrence indicator | R | 1:00 , 1:01 ... 1:58 , 1:59 , 1:00₂, 1:01₂ ... 1:58₂, 1:59₂, 2:00 , 2:01<br><br>A subscript 2 (₂) that denotes the second occurrence of the same clock time during a day when clocks are turned back for Daylight Saving Time. |
-| | r | Same as above, but no blank space when subscript isn't needed. |
+| | r | Same as above, but no blank space when subscript isn’t needed. |
 
 **Moment.js formats not supported by @tubular/time:** DDDo, Wo, wo, yo
 
@@ -203,10 +206,10 @@ The capital letters `F`, `L`, `M`, and `S` correspond to the option values `'ful
 ## Pre-defined formats
 
 ```javascript
-ttime.DATETIME_LOCAL         = 'YYYY-MM-DD[T]HH:mm';
-ttime.DATETIME_LOCAL_SECONDS = 'YYYY-MM-DD[T]HH:mm:ss';
-ttime.DATETIME_LOCAL_MS      = 'YYYY-MM-DD[T]HH:mm:ss.SSS';
-ttime.DATE                   = 'YYYY-MM-DD';
+ttime.DATETIME_LOCAL         = 'Y-MM-DD[T]HH:mm';
+ttime.DATETIME_LOCAL_SECONDS = 'Y-MM-DD[T]HH:mm:ss';
+ttime.DATETIME_LOCAL_MS      = 'Y-MM-DD[T]HH:mm:ss.SSS';
+ttime.DATE                   = 'Y-MM-DD';
 ttime.TIME                   = 'HH:mm';
 ttime.TIME_SECONDS           = 'HH:mm:ss';
 ttime.TIME_MS                = 'HH:mm:ss.SSS';
@@ -214,7 +217,7 @@ ttime.WEEK                   = 'GGGG-[W]WW';
 ttime.WEEK_AND_DAY           = 'GGGG-[W]WW-E';
 ttime.WEEK_LOCALE            = 'gggg-[w]ww';
 ttime.WEEK_AND_DAY_LOCALE    = 'gggg-[w]ww-e';
-ttime.MONTH                  = 'YYYY-MM';
+ttime.MONTH                  = 'Y-MM';
 ```
 
 ### Examples
@@ -254,7 +257,9 @@ ttime.MONTH                  = 'YYYY-MM';
 `ttime('7. helmikuuta 2021', 'IL', 'fi').toLocale('de').format('IL')` →<br>
 `7. Februar 2021`
 
-## The `DateAndTime` object
+## The `YMDDate` and `DateAndTime` objects
+
+`YMDate`:
 
 ```json5
 {
@@ -292,6 +297,14 @@ ttime.MONTH                  = 'YYYY-MM';
   weekLocale: 6, // week that accompanies an locale-specific year/week/day-of-week style date
   dayByWeekLocale: 5, // day that accompanies an locale-specific year/week/day-of-week style date
 
+  error: 'Error description if applicable, otherwise undefined'
+}
+```
+
+`DateAndTime`, which extends the `YMDDate` interface:
+
+```json5
+{
   hrs: 0, // short for hour
   min: 18, // short for minute
   sec: 32, // short for second
@@ -303,12 +316,10 @@ ttime.MONTH                  = 'YYYY-MM';
   utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
   dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative
   occurrence: 1, // usual 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
-
-  error: 'Error description if applicable, otherwise undefined'
 }
 ```
 
-When using a `DateAndTime` object to create a `DateTime` instance, you need only set a minimal number of fields to specify the date and/or time you are trying to specify. You can use either short or long names for fields (if you use both, the short form takes priority).
+When using a `YMDDate` or `DateAndTime` object to create a `DateTime` instance, you need only set a minimal number of fields to specify the date and/or time you are trying to specify. You can use either short or long names for fields (if you use both, the short form takes priority).
 
 At minimum, you must specify a date or a time. If you only specify a date, the time will be treated as midnight at the start of that date. If you only specify a time, you can create a special dateless time instance. You can also, of course, specify both date and time together.
 
@@ -375,7 +386,7 @@ For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amoun
 
 `DAY` amounts can be handled either way, as variable in length (due to possible effects of Daylight Saving Time), or fixed units of 24 hours. The default for `variableDays` is `true`.
 
-DST can alter the duration of days, typically adding or subtracting an hour, but other amounts of change are possible (like the half-hour shift used by Australia's Lord Howe Island), so adding days can possibly cause the hour (and even minute) fields to change:
+DST can alter the duration of days, typically adding or subtracting an hour, but other amounts of change are possible (like the half-hour shift used by Australia’s Lord Howe Island), so adding days can possibly cause the hour (and even minute) fields to change:
 
 `ttime('2021-02-28T07:00 Europe/London', false).add('days', 100).toIsoString()` →<br>
 `2021-06-08T08:00:00.000+01:00` (note shift from 7:00 to 8:00)
@@ -395,7 +406,7 @@ Even with the default behavior, however, it is still possible hours and minutes 
 
 ### Using `roll()`
 
-You can use the `roll()` method to "spin" through values for each date/time field. This can be used for a user interface where you select a field and use up/down arrows to change the value, and the value changes in a wrap-around fashion, like ...58 → 59 → 00 → 01..., etc.
+You can use the `roll()` method to “spin” through values for each date/time field. This can be used for a user interface where you select a field and use up/down arrows to change the value, and the value changes in a wrap-around fashion, like ...58 → 59 → 00 → 01..., etc.
 
 While seconds and minutes wrap at 59, and dates wrap at the length of the current month, there’s no natural wrapping boundaries for years. The wrap-range defaults to 1900-2099, but you can pass optional arguments to change this range (this only effects years, not other units).
 
@@ -442,6 +453,20 @@ These functions transform a `DateTime` to the beginning or end of a given unit o
 `ttime('2300-05-05T04:08:10.909').endOf(DateTimeField.MONTH).toIsoString(23)` →<br>
 `2300-05-31T23:59:59.999`
 
+## Time value
+
+In milliseconds:
+
+`ttime().utcTimeMillis`
+
+In seconds:
+
+`ttime().utcTimeSeconds`
+
+As native JavaScript `Date` object:
+
+`ttime().toDate()`
+
 ## Timezone offsets from UTC
 
 Offset from UTC for a given `DateTime` in seconds, negative for timezones west of the Prime Meridian, including any change due to Daylight Saving Time when applicable:
@@ -452,11 +477,11 @@ Offset from UTC for a given `DateTime` in minutes:
 
 `ttime().utcOffsetMinutes`
 
-Change in seconds from a timezone's standard UTC offset due to Daylight Saving Time. This will be 0 when DST is not in effect, or always 0 if DST is never in effect. While usually a positive number, some timezones (like Europe/Dublin) employ negative DST during the winter:
+Change in seconds from a timezone’s standard UTC offset due to Daylight Saving Time. This will be 0 when DST is not in effect, or always 0 if DST is never in effect. While usually a positive number, some timezones (like Europe/Dublin) employ negative DST during the winter:
 
 `ttime().dstOffsetSeconds`
 
-Change in minutes from a timezone's standard UTC offset due to Daylight Saving Time:
+Change in minutes from a timezone’s standard UTC offset due to Daylight Saving Time:
 
 `ttime().dstOffsetMinutes`
 
@@ -518,8 +543,58 @@ This sort modifies the array which is passed in, and returns that same array.
 `ttime.min(...dates: DateTime[]): DateTime`<br>
 `ttime.max(...dates: DateTime[]): DateTime`
 
+## Monthly calendar generation
 
+The `DateTime` method `getCalendarMonth()` returns an array of `YMDDate` objects, the zeroth date object being on the locale-specific first day of the week (possible from the preceding month), with multiple-of-7 length of dates to represent a full month. As an example, filtered down to just the day-of-month for visual clarity:
 
+`ttime().getCalendarMonth().map(date => date.m === 2 ? date.d : '-')` →
 
+```json5
+[
+  '-', 1,   2,   3,   4,   5,   6,
+  7,   8,   9,   10,  11,  12,  13,
+  14,  15,  16,  17,  18,  19,  20,
+  21,  22,  23,  24,  25,  26,  27,
+  28, '-',  '-', '-', '-', '-', '-'
+]
+```
 
-## The `DateTime` constructor
+For the above example, the current date was February 11, 2021, so the calendar was generated for that month. The locale was `'en-us'`, so each week starts on Sunday.
+
+The utility of this method is more evident with when viewing the calendar generated for October 1582, when (by default) the Julian calendar ends, and the Gregorian calendar begins:
+
+`ttime('1582-10-01', null, 'fr').getCalendarMonth().map(date => date.d)` →
+
+```json5
+[
+   1,  2,  3,  4, 15, 16, 17,
+  18, 19, 20, 21, 22, 23, 24,
+  25, 26, 27, 28, 29, 30, 31
+]
+```
+
+By using the locale `'fr'`, the calendar generated above starts on Monday instead of Sunday. Notice how the 4th of the month is immediately followed by the 15th.
+
+## The `DateTime` class
+
+The main `ttime()` function works by creating instances of the `DateTime` class. You can use `new DateTime(`...`)` to create instances of `DateTime` directly. This is necessary for taking advantage of support for variable switch-over from the Julian to the Gregorian calendar, which by default is set at October 15, 1582.
+
+### Constructor
+
+```
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
+
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
+```
+
+All arguments to the constructor are optional. When passed no arguments, `new DateTime()` will return an instance for the current moment, in the default timezone, default locale, and with the default October 15, 1582 Gregorian calendar switch-over.
+
+* `initialTime`: This can be a single number (for milliseconds since 1970-01-01T00:00 UTC), an ISO-8601 date as a string, and ECMA-262 date as string, an ASP.​NET JSON date string, a JavaScript `Date` object, [a `DateAndTime` object](the-dateandtime-object), an array of numbers (in the order year, month, day, hour, etc.), or a `null`, which causes the current time to be used.
+* `timezone`: a `Timezone` instance, a string specifying an IANA timezone (e.g. 'Pacific/Honolulu') or a UTC offset (e.g. 'UTC+04:00'), or `null` to use the default timezone.
+* `locale`: a locale string (e.g. 'fr-FR'), an array of locales strings in order of preference (e.g. ['fr-FR', 'fr-CA', 'en-US']), or `null` to use the default locale.
+* `gregorianChange`: The first date when the Gregorian calendar is active, the string `'J'` for a pure Julian calendar, the string 'G' for a pure Gregorian calendar, the constant `ttime.PURE_JULIAN`, the constant `ttime.PURE_GREGORIAN`, or `null` for the default of 1582-10-15. A date can take the form of an ISO-8601 date string (e.g. '1752-09-14'), a year-month-day numeric array (e.g. [1918, 2, 14]), or a date as a `DateAndTime` object.
+
+As a string, `initialTime` can also include a trailing timezone or UTC offset, using the letter `Z` to indicate UTC (e.g. '1969‑07‑12T20:17Z'), or a specific timezone (e.g. '1969‑07‑12T20:17Z', '1969‑07‑12T16:17 EDT', '1969‑07‑12T16:17 America/New_York', or '1969‑07‑12T16:17-0400').
+
+If the `timezone` argument is itself `null` or unspecified, this embedded timezone will become the timezone for the `DateTime` instance. If the `timezone` argument is also provided, the time will be parsed according to the first timezone, then it will be transformed to the second timezone.
+
