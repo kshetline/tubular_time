@@ -15,11 +15,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 * Suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
 
-<img src="https://shetline.com/readme/tubular-time/2.4.0/oct_1582.jpg" alt="October 1582">
-&nbsp;&nbsp;
-<img src="https://shetline.com/readme/tubular-time/2.4.0/dst.jpg" align=top alt="October 1582">
-<br><br>
-<img src="https://shetline.com/readme/tubular-time/2.4.0/sep_1752.jpg" alt="September 1752">
+<img src="https://shetline.com/readme/tubular-time/2.4.0/montage.jpg" alt="October 1582">
 
 **@tubular/time** is a collection of date and time classes and functions, providing extensive internationalized date/time parsing and formatting capabilities, date/time manipulations such as field-specific add/subtract, set, and roll; calendar computations; support for live-updatable IANA time zones; and a settable Julian/Gregorian calendar switchover date.
 
