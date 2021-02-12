@@ -1,6 +1,6 @@
 # @tubular/time
 
-Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library that handles both the day-to-day situations (so to speak) and the weird ones too.
+Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library that handles both the day-to-day situations (so to speak) and the weird ones too.
 
 ## Key features
 
@@ -16,7 +16,9 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47.
 * Full TypeScript typing support.
 
 <img src="https://shetline.com/readme/tubular-time/2.4.0/oct_1582.jpg" alt="October 1582">
-<br>
+&nbsp;&nbsp;
+<img src="https://shetline.com/readme/tubular-time/2.4.0/dst.jpg" align=top alt="October 1582">
+<br><br>
 <img src="https://shetline.com/readme/tubular-time/2.4.0/sep_1752.jpg" alt="September 1752">
 
 **@tubular/time** is a collection of date and time classes and functions, providing extensive internationalized date/time parsing and formatting capabilities, date/time manipulations such as field-specific add/subtract, set, and roll; calendar computations; support for live-updatable IANA time zones; and a settable Julian/Gregorian calendar switchover date.
