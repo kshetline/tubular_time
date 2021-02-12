@@ -495,10 +495,10 @@ export function parseISODate(date: string): YMDDate {
     date = date.substring(1).trim();
   }
 
-  let $ = /^(\d+)-(\d+\{1,2}(?=\D))(?:-(\d+))?$/.exec(date);
+  let $ = /^(\d+)-(\d{1,2}(?=\D))(?:-(\d+))?$/.exec(date);
 
   if (!$)
-    $ = /(\d{1,5})$/.exec(date);
+    $ = /^(\d{1,5})$/.exec(date);
 
   if (!$)
     $ = /^(\d{4,})(\d\d)(\d\d)$/.exec(date);

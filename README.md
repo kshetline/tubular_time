@@ -2,7 +2,7 @@
 
 Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library that handles both the day-to-day situations (so to speak) and the weird ones too.
 
-## Key features
+## Key features<!-- omit in toc -->
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
 * IANA timezone support, with features beyond simply parsing and formatting using timezones, including an accessible listing of all available timezones and live updates of timezone definitions.
@@ -24,6 +24,38 @@ This library was originally developed for an astronomy website, <https://skyview
 Unlike Moment.js, IANA timezone handling is built in, not a separate module, with a compact set of timezone data that reaches roughly five years into the past and five years into the future, expanded into the past and future using Daylight Saving Time rules and/or values extracted from `Intl.DateTimeFormat`. Unlike the `Intl` API, the full list of available timezones is exposed, allowing the creation of timezone selection interfaces.
 
 Two alternate large timezone definition sets, of approximately 280K each, are available, each serving slightly different purposes. These definitions can be bundled at compile time, or loaded dynamically at run time. You can also download live updates when the IANA Time Zone Database is updated.
+
+- [Installation](#installation)
+  - [Via npm](#via-npm)
+  - [Via `<script>` tag](#via-script-tag)
+- [Basic usage](#basic-usage)
+  - [Creating immutable `DateTime` instances with `ttime()`](#creating-immutable-datetime-instances-with-ttime)
+- [Formatting output](#formatting-output)
+- [Format string tokens](#format-string-tokens)
+- [Moment.js-style localized formats](#momentjs-style-localized-formats)
+- [@tubular/time `Intl.DateTimeFormat` shorthand string formats](#tubulartime-intldatetimeformat-shorthand-string-formats)
+- [Pre-defined formats](#pre-defined-formats)
+  - [Examples](#examples)
+- [Parsing with a format string, optional locale, with formatted output](#parsing-with-a-format-string-optional-locale-with-formatted-output)
+- [Converting timezones](#converting-timezones)
+- [Converting locales](#converting-locales)
+- [The `YMDDate` and `DateAndTime` objects](#the-ymddate-and-dateandtime-objects)
+- [Reading individual `DateTime` fields](#reading-individual-datetime-fields)
+- [Modifying `DateTime` values](#modifying-datetime-values)
+  - [Using `add` (and `subtract`)](#using-add-and-subtract)
+  - [Using `roll()`](#using-roll)
+  - [Using `set()`](#using-set)
+  - [Using `startOf()` and `endOf()`](#using-startof-and-endof)
+- [Time value](#time-value)
+- [Timezone offsets from UTC](#timezone-offsets-from-utc)
+- [Validation](#validation)
+- [Comparison and sorting](#comparison-and-sorting)
+  - [Sorting an array of dates](#sorting-an-array-of-dates)
+  - [min/max functions](#minmax-functions)
+- [Monthly calendar generation](#monthly-calendar-generation)
+- [Global default settings](#global-default-settings)
+- [The `DateTime` class](#the-datetime-class)
+  - [Constructor](#constructor)
 
 ## Installation
 
@@ -575,15 +607,21 @@ By using the locale `'fr'`, the calendar generated above starts on Monday instea
 
 ## Global default settings
 
-Get/set the first year of the one hundred-year range that will be using to interpret two-digit year numbers. Defaults to 1970.
+Get/set the first year of the one hundred-year range that will be using to interpret two-digit year numbers. Defaults to 1970, meaning that 00-69 will be treated as 2000-2069, and 70-99 will be treated as 1970-1999.
 
 `ttime.getDefaultCenturyBase(): number;`<br>
 `ttime.setDefaultCenturyBase(newBase: number): void;`
 
-Get/set the default locale (or prioritized array of locales). The defaults to the value provide either by a web browser or the Node.js environment.
+Get/set the default locale (or prioritized array of locales). This defaults to the value provide either by a web browser or the Node.js environment.
 
 `ttime.getDefaultLocale(): string | string[];`<br>
 `ttime.setDefaultLocale(newLocale: string | string[]): void;`
+
+Get/set the default timezone. This defaults to:
+
+1. The default timezone provided by the `Intl` package, if available.
+2. The timezone determined by the `Timezone.guess()` function.
+3. The `OS` timezone, a special **@tubular/time** timezone created by probing the JavaScript `Date` class to determine the rules of the JavaScript-supported local timezone.
 
 `ttime.getDefaultTimezone(): Timezone;`<br>
 `ttime.setDefaultTimezone(newZone: Timezone | string): void;`
@@ -614,3 +652,28 @@ If the `timezone` argument is itself `null` or unspecified, this embedded timezo
 `new DateTime('2022-06-01 14:30 America/Chicago', 'Europe/Paris', 'fr_FR').format('IMM ZZZ')` →<br>
 `1 juin 2022 à 21:30:00 Europe/Paris`
 
+The following is an example of using the `gregorianChange` parameter to apply the change from the Julian to Gregorian calendar that was used by Great Britain, including what were the American colonies at the time:
+
+`new DateTime('1752-09', null, '1752-09-14').getCalendarMonth(1).map(date => date.m === 9 ? date.d : '-')`
+
+```json5
+[
+  '-', 1,  2,  14, 15, 16, 17,
+  18,  19, 20, 21, 22, 23, 24,
+  25,  26, 27, 28, 29, 30, '-'
+]
+```
+
+One of the latest switches to the Gregorian calendar was enacted by Russia in 1918. The month of February didn't even start with the 1st, but started on the 14th:
+
+`new DateTime('1918-02', null, '1918-02-14').getCalendarMonth(1).map(date => date.m === 2 ? date.d : '-')`
+
+```json5
+[
+  '-', '-', '-', 14, 15,  16,  17,
+  18,  19,  20,  21, 22,  23,  24,
+  25,  26,  27,  28, '-', '-', '-'
+]
+```
+
+There is a function `getFirstDateInMonth()` which exists specifically to handle cases like this, because for historical dates you can’t assumed that months always start with the 1st.
