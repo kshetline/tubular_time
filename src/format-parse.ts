@@ -139,7 +139,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const localeNames = !hasIntlDateTime ? 'en' : currentLocale;
   const locale = getLocaleInfo(localeNames);
   const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
-  const toNum = (n: number | string, pad = 1) => {
+  const toNum = (n: number | string, pad = 1): string => {
     if (n == null || (isNumber(n) && isNaN(n)))
       return '?'.repeat(pad);
     else
@@ -512,7 +512,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   return result.join('');
 }
 
-function quickFormat(localeNames: string | string[], timezone: string, opts: any) {
+function quickFormat(localeNames: string | string[], timezone: string, opts: any): Intl.DateTimeFormat {
   const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
   let $: RegExpExecArray;
 
@@ -568,7 +568,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   if (locale && Object.keys(locale).length > 0)
     return locale;
 
-  const fmt = (opts: any) => quickFormat(localeNames, 'UTC', opts);
+  const fmt = (opts: any): Intl.DateTimeFormat => quickFormat(localeNames, 'UTC', opts);
 
   locale.name = isArray(localeNames) ? localeNames.join(',') : localeNames;
 
@@ -671,7 +671,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 }
 
 function generatePredefinedFormats(locale: ILocale, timezone: string): void {
-  const fmt = (opts: any) => quickFormat(locale.name, timezone, opts);
+  const fmt = (opts: any): Intl.DateTimeFormat => quickFormat(locale.name, timezone, opts);
 
   locale.cachedTimezone = timezone;
   locale.dateTimeFormats = {};

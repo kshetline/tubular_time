@@ -1,6 +1,6 @@
 import { div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
-import { getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
+import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset } from './common';
 import { hasIntlDateTime } from './locale-data';
 
@@ -18,6 +18,7 @@ export interface Transition {
   dstFlipped?: boolean;
   baseOffsetChanged?: boolean;
   wallTime?: number; // in milliseconds
+  wallTimeDay?: number;
 }
 
 export interface ZoneInfo {
@@ -700,17 +701,21 @@ export class Timezone {
 
           const firstExplicitTransitionYear = dateAndTimeFromMillis_SGC(firstTTime * 1000).y;
 
-          // Backfill transitions table with rules-based Daylight Saving Time changes.
-          if (firstExplicitTransitionYear > 2000 && currentUtcOffset === baseUtcOffset && transitions.length > 1) {
+          // Backfill transitions table with Intl-extracted transitions or rules-based Daylight Saving Time changes.
+          if (firstExplicitTransitionYear > 2000 && transitions.length > 1) {
             const insertTransitions: Transition[] = this.extractTimezoneTransitionsFromIntl(name, firstExplicitTransitionYear);
+            let fromRules = false;
 
-            if (insertTransitions.length === 0)
+            if (insertTransitions.length === 0 && currentUtcOffset === baseUtcOffset) {
+              fromRules = true;
               this.applyTransitionRules(insertTransitions, 1925, firstExplicitTransitionYear + 1, currentUtcOffset,
                 stdRule, dstRule, Number.MIN_SAFE_INTEGER + 1, dstOffset, lastDstName, lastStdName, true);
+            }
 
             if (insertTransitions.length > 0) {
               // Make sure first added transition isn't to standard time.
-              if (insertTransitions[0].dstOffset === 0)
+              if (fromRules && insertTransitions.length > 1 && insertTransitions[0].dstOffset === 0 &&
+                  insertTransitions[0].dstOffset !== 0)
                 insertTransitions.splice(0, 1);
 
               // Make sure first added transition IS to standard time, and doesn't overlap already-created transitions.
@@ -758,7 +763,7 @@ export class Timezone {
       'America/Denver', 'America/Los_Angeles', 'America/Anchorage', 'Pacific/Honolulu', 'America/Adak',
       'Pacific/Apia'
     ]);
-    const sortKey = (key: string) => preferredZones.has(key) ? '!' + key : key;
+    const sortKey = (key: string): string => preferredZones.has(key) ? '!' + key : key;
     const keys = Object.keys(this.encodedTimezones).sort((a, b) =>
       compareStrings(sortKey(a), sortKey(b)));
 
@@ -900,6 +905,7 @@ export class Timezone {
         transition.dstFlipped = (isDst !== lastDst);
         transition.baseOffsetChanged = (baseOffset !== lastBaseOffset);
         transition.wallTime = transition.transitionTime + transition.utcOffset * 1000;
+        transition.wallTimeDay = getDateFromDayNumber_SGC(floor(transition.wallTime / 86400000)).d;
 
         lastOffset = transition.utcOffset;
         lastDst = isDst;
@@ -917,11 +923,14 @@ export class Timezone {
   get countries(): Set<string> { return new Set(this._countries); }
   get population(): number { return this._population; }
 
-  getOffset(utcTime: number): number {
+  getOffset(utcTime: number, day = 0): number {
     if (!this.transitions || this.transitions.length === 0)
       return this._utcOffset;
     else {
-      const transition = this.findTransitionByUtc(utcTime);
+      let transition = this.findTransitionByUtc(utcTime);
+
+      if (day !== 0 && transition.wallTimeDay !== day)
+        transition = this.findTransitionByUtc(utcTime - 1);
 
       return transition.utcOffset;
     }

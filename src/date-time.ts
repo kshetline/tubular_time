@@ -1,6 +1,6 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, forEach, isArray, isEqual, isNumber, isObject, isString, toNumber } from '@tubular/util';
-import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate } from './calendar';
+import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate, getDateFromDayNumberGregorian } from './calendar';
 import { DateAndTime, DAY_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
@@ -101,7 +101,7 @@ export class DateTime extends Calendar {
     return round(DAY_MSEC * (jd - UNIX_TIME_ZERO_AS_JULIAN_DAY));
   }
 
-  static julianDay_SGC(year: number, month: number, day: number, hour: number, minute: number, second: number): number {
+  static julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number {
     return getDayNumber_SGC(year, month, day) + UNIX_TIME_ZERO_AS_JULIAN_DAY +
              (hour + (minute + second / 60.0) / 60.0) / 24.0;
   }
@@ -313,7 +313,7 @@ export class DateTime extends Calendar {
       this.timezone = timezone;
   }
 
-  lock = () => this._lock();
+  lock = (): DateTime => this._lock();
   protected _lock(doLock = true): DateTime {
     super._lock(doLock);
     return this;
@@ -405,7 +405,7 @@ export class DateTime extends Calendar {
 
       this._wallTime = newTime;
       this.updateUtcMillisFromWallTime();
-      this.updateWallTimeFromCurrentMillis();
+      this.updateWallTimeFromCurrentMillis(this._wallTime.d);
     }
   }
 
@@ -456,11 +456,11 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  utc(keepLocalTime = false) {
+  utc(keepLocalTime = false): DateTime {
     return this.tz(Timezone.UT_ZONE, keepLocalTime);
   }
 
-  local(keepLocalTime = false) {
+  local(keepLocalTime = false): DateTime {
     return this.tz(Timezone.guess(), keepLocalTime);
   }
 
@@ -503,7 +503,7 @@ export class DateTime extends Calendar {
     return this._timezone.getDisplayName(this._utcTimeMillis);
   }
 
-  private checkDateless(field: DateTimeField) {
+  private checkDateless(field: DateTimeField): void {
     if (this._timezone === DATELESS)
       throw new Error(`${DateTimeField[field]} cannot be used with a dateless time value`);
   }
@@ -1335,8 +1335,12 @@ export class DateTime extends Calendar {
   toIsoString(maxLength?: number): string {
     let s = this.format(undefined, 'en-US');
 
-    if (maxLength != null)
+    if (maxLength != null) {
+      if (/^[-+]/.test(s))
+        ++maxLength;
+
       s = s.substr(0, maxLength);
+    }
 
     return s;
   }
@@ -1351,7 +1355,7 @@ export class DateTime extends Calendar {
     this._utcTimeMillis = this.computeUtcMillisFromWallTimeAux(wallTime);
   }
 
-  public computeUtcMillisFromWallTime(wallTime: DateAndTime): number {
+  computeUtcMillisFromWallTime(wallTime: DateAndTime): number {
     return this.computeUtcMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
   }
 
@@ -1378,11 +1382,12 @@ export class DateTime extends Calendar {
       wallTime.dwl = wallTime.dwl ?? 1;
     }
 
+    const dayNum = wallTime.n ?? this.getDayNumber(wallTime);
     let millis = (wallTime.millis ?? 0) +
                  (wallTime.sec ?? 0) * 1000 +
                  (wallTime.min ?? 0) * 60000 +
                  (wallTime.hrs ?? 0) * 3600000 +
-                 (wallTime.n ?? this.getDayNumber(wallTime)) * 86400000;
+                 dayNum * 86400000;
 
     if (wallTime.utcOffset != null)
       millis -= wallTime.utcOffset * 1000;
@@ -1391,15 +1396,20 @@ export class DateTime extends Calendar {
 
     if ((wallTime.occurrence ?? 1) < 2) {
       const transition = this.timezone.findTransitionByUtc(millis);
+      let day = wallTime.d;
 
-      if (transition !== null && transition.deltaOffset < 0 && millis < transition.transitionTime - transition.deltaOffset * 1000)
+      if (wallTime.j)
+        day = getDateFromDayNumberGregorian(dayNum).d;
+
+      if (transition !== null && transition.deltaOffset < 0 && transition.wallTimeDay === day &&
+          millis < transition.transitionTime - transition.deltaOffset * 1000)
         millis += transition.deltaOffset * 1000;
     }
 
     return millis;
   }
 
-  private updateWallTimeFromCurrentMillis(): void {
+  private updateWallTimeFromCurrentMillis(day = 0): void {
     if (isNaN(this._utcTimeMillis) || this._utcTimeMillis < Number.MIN_SAFE_INTEGER || this._utcTimeMillis > Number.MAX_SAFE_INTEGER) {
       this._error = `Invalid core millisecond time value: ${this._utcTimeMillis}`;
       this._utcTimeMillis = null;
@@ -1407,7 +1417,7 @@ export class DateTime extends Calendar {
       return;
     }
 
-    this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis));
+    this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis, day));
     this._error = undefined;
 
     if (this._wallTime.y < MIN_YEAR || this._wallTime.y > MAX_YEAR) {
@@ -1432,11 +1442,11 @@ export class DateTime extends Calendar {
     }
   }
 
-  getTimeOfDayFieldsFromMillis(millis: number): DateAndTime {
+  getTimeOfDayFieldsFromMillis(millis: number, day = 0): DateAndTime {
     if (millis == null || isNaN(millis))
       return syncDateAndTime({ y: NaN, m: NaN, d: NaN, n: NaN });
 
-    let ticks = millis + this._timezone.getOffset(millis) * 1000;
+    let ticks = millis + this._timezone.getOffset(millis, day) * 1000;
     const wallTimeMillis = ticks;
     const wallTime = this.getDateFromDayNumber(div_rd(ticks, 86400000), 1, 4) as DateAndTime;
 
@@ -1505,7 +1515,7 @@ export class DateTime extends Calendar {
     return super.getDaysInYear(year ?? this._wallTime.y);
   }
 
-  isLeapYear(year?: number) {
+  isLeapYear(year?: number): boolean {
     return this.isValidDate(year ?? this._wallTime.y, 2, 29);
   }
 

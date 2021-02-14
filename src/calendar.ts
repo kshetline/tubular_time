@@ -533,7 +533,7 @@ export class Calendar {
       this.setGregorianChange(gcYearOrDateOrType as YearOrDate | string, gcMonth, gcDate);
   }
 
-  lock = () => this._lock();
+  lock = (): Calendar => this._lock();
   protected _lock(doLock = true): Calendar {
     this._locked = this._locked || doLock;
     return this;

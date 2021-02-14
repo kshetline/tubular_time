@@ -54,7 +54,7 @@ export {
   DateAndTime, MINUTE_MSEC, dateAndTimeFromMillis_SGC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, millisFromDateTime_SGC,
   parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
-export { DateTime, DateTimeField, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './date-time';
+export { DateTime, DateTimeField, DateTimeFieldName, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './date-time';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
@@ -112,7 +112,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
 
   if (zonePoller && name && intervalDays >= 0) {
     const url = zonesUrl.replace('{name}', name);
-    const poll = () => {
+    const poll = (): void => {
       zonePoller.getTimezones(url).then(zones => {
         dispatchUpdateNotification(Timezone.defineTimezones(zones));
       })

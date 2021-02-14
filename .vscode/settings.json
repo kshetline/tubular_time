@@ -6,10 +6,16 @@
     "ampm",
     "dateandtime",
     "dowmi",
+    "endof",
     "helmikuuta",
+    "intldatetimeformat",
     "juin",
+    "momentjs",
+    "startof",
     "timezone's",
-    "ttime"
+    "ttime",
+    "tubulartime",
+    "ymddate"
   ],
   "markdown.extension.tableFormatter.enabled": false,
   "markdown.extension.toc.levels": "2..6"

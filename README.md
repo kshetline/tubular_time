@@ -297,8 +297,8 @@ ttime.MONTH                  = 'Y-MM';
   q: 1, // short for quarter
   m: 2, // short for month
   d: 4, // short for day
-  dow: 4, // short for dayOfWeek
-  dowmi: 1, // dayOfWeekMonthIndex
+  dow: 4, // short for dayOfWeek (output only)
+  dowmi: 1, // dayOfWeekMonthIndex (output only)
   dy: 35, // short for dayOfYear
   n: 18662, // short for epochDay
   j: false, // short for isJulian
@@ -307,8 +307,8 @@ ttime.MONTH                  = 'Y-MM';
   quarter: 1, // quarter of the year 1-4
   month: 2,
   day: 4,
-  dayOfWeek: 4, // Day of week as 0-6 for Sunday-Saturday
-  dayOfWeekMonthIndex: 1, // Day of week month index, 1-5, e.g. 2 for 2nd Tuesday of the month
+  dayOfWeek: 4, // Day of week as 0-6 for Sunday-Saturday (output only)
+  dayOfWeekMonthIndex: 1, // Day of week month index, 1-5, e.g. 2 for 2nd Tuesday of the month (output only)
   dayOfYear: 35,
   epochDay: 18662, // days since January, 1 1970
   isJulian: false, // true if a Julian calendar date instead of a Gregorian date
@@ -344,7 +344,7 @@ ttime.MONTH                  = 'Y-MM';
   millis: 125, // 0-999 milliseconds part of time
 
   utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
-  dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative
+  dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative (output only)
   occurrence: 1, // usually 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
 }
 ```
@@ -371,7 +371,7 @@ In specifying a date, the date fields have the following priority:
 
 In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
 
-As discussed earlier when parsing strings, ambiguous times due to Daylight Saving Time can default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish disambiguation.
+As discussed earlier when parsing strings, ambiguous times due to Daylight Saving Time default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish this disambiguation.
 
 ## Reading individual `DateTime` fields
 
@@ -605,6 +605,24 @@ The utility of this method is more evident with when viewing the calendar genera
 
 By using the locale `'fr'`, the calendar generated above starts on Monday instead of Sunday. Notice how the 4th of the month is immediately followed by the 15th.
 
+### Another way to drop a day
+
+In December 2011, Western Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Western Samoa). The timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 31, 2011 did not exist for Western Samoans. Thursday was followed by Saturday, a type of discontinuity that doesn't happen with days dropped by switching from the Julian to the Gregorian calendar.
+
+**@tubular/time** handles this by treating that Friday as a day that exists, but is 0 seconds long. The `getCalendarMonth()` method makes this apparent by rendering the day-of-the-month for that day as a negative number.
+
+`new DateTime('2011-12', 'Pacific/Apia').getCalendarMonth().map(date => date.m ===12 ? date.d : '-')` →
+
+```json5
+[
+  '-', '-', '-', '-', 1,  2,  3, 
+  4,   5,   6,   7,   8,  9,  10,
+  11,  12,  13,  14,  15, 16, 17,
+  18,  19,  20,  21,  22, 23, 24,
+  25,  26,  27,  28,  29, -30, 31
+]
+```
+
 ## Global default settings
 
 Get/set the first year of the one hundred-year range that will be using to interpret two-digit year numbers. Defaults to 1970, meaning that 00-69 will be treated as 2000-2069, and 70-99 will be treated as 1970-1999.
@@ -632,10 +650,12 @@ The main `ttime()` function works by creating instances of the `DateTime` class.
 
 ### Constructor
 
-```text
-  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
+```typescript
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null,
+              gregorianChange?: GregorianChange);
 
-  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
+  constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[],
+              gregorianChange?: GregorianChange);
 ```
 
 All arguments to the constructor are optional. When passed no arguments, `new DateTime()` will return an instance for the current moment, in the default timezone, default locale, and with the default October 15, 1582 Gregorian calendar switch-over.
@@ -676,4 +696,26 @@ One of the latest switches to the Gregorian calendar was enacted by Russia in 19
 ]
 ```
 
-There is a function `getFirstDateInMonth()` which exists specifically to handle cases like this, because for historical dates you can’t assumed that months always start with the 1st.
+There is a function `getFirstDateInMonth()` which exists specifically to handle cases like this, because for historical dates you can assume that months always start with the 1st.
+
+### `DateTime` astronomical time functions
+
+Converts Julian days into milliseconds from the 1970-01-01T00:00 UTC epoch:
+
+```typescript
+DateTime.julianDay(millis: number): number;
+```
+
+Converts milliseconds from the 1970-01-01T00:00 UTC epoch into Julian days:
+
+```typescript
+DateTime.millisFromJulianDay(jd: number): number;
+```
+
+Given a year, month, day according to the standard Gregorian calendar (SGC) switch of 1582-10-15, and optional hour, minute, and second UTC, returns a Julian day number.
+
+```typescript
+DateTime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number;
+```
+
+### Other `DateTime` constants, methods, getters/setters

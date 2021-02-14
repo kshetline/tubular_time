@@ -155,10 +155,10 @@ describe('FormatParse', () => {
     expect(new DateTime('-2021-07-07').format('MMM D, y NNNN')).to.equal('Jul 7, 2022 Before Christ');
     expect(parse('Jul 7, 2022', 'MMM D, y n').toIsoString(10)).to.equal('2022-07-07');
     expect(parse('Jul 7, 2022 ad', 'MMM D, y n').toIsoString(10)).to.equal('2022-07-07');
-    expect(parse('Jul 7, 2022 bc', 'MMM D, y n').toIsoString(11)).to.equal('-2021-07-07');
-    expect(parse('Jul 7, 2022 bc, 3:00', 'MMM D, Y, H:mm').toIsoString(11)).to.equal('-2021-07-07');
-    expect(parse('Jul 7, 2022 bce', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
-    expect(parse('Jul 7, 2022 Before Common Era', 'MMM D, Y').toIsoString(11)).to.equal('-2021-07-07');
+    expect(parse('Jul 7, 2022 bc', 'MMM D, y n').toIsoString(10)).to.equal('-2021-07-07');
+    expect(parse('Jul 7, 2022 bc, 3:00', 'MMM D, Y, H:mm').toIsoString(10)).to.equal('-2021-07-07');
+    expect(parse('Jul 7, 2022 bce', 'MMM D, Y').toIsoString(10)).to.equal('-2021-07-07');
+    expect(parse('Jul 7, 2022 Before Common Era', 'MMM D, Y').toIsoString(10)).to.equal('-2021-07-07');
   });
 
   it('should be able to parse times with timezones', () => {

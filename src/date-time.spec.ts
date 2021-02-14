@@ -252,7 +252,7 @@ describe('DateTime', () => {
     expect(new DateTime('2099-01-01').roll(DateTimeField.YEAR, 1).toIsoString(10)).to.equal('1900-01-01');
     expect(new DateTime('1970-03-31').roll(DateTimeField.YEAR_WEEK, -1).toIsoString(10)).to.equal('1969-04-01');
     expect(new DateTime('1970-03-31').roll(DateTimeField.YEAR_WEEK_LOCALE, -1).toIsoString(10)).to.equal('1969-04-01');
-    expect(new DateTime('1970-03-31').roll(DateTimeField.ERA, 1).toIsoString(11)).to.equal('-1969-03-31');
+    expect(new DateTime('1970-03-31').roll(DateTimeField.ERA, 1).toIsoString(10)).to.equal('-1969-03-31');
     expect(() => new DateTime('04:05').roll(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
   });
 
@@ -292,11 +292,11 @@ describe('DateTime', () => {
     expect(new DateTime('1433-11-30').set(DateTimeField.MONTH, 2).toIsoString(10)).to.equal('1433-02-28');
     expect(new DateTime('1433-11-30').set(DateTimeField.MONTH, 0, true).toIsoString(10)).to.equal('1432-12-30');
     expect(() => new DateTime('1433-11-30').set(DateTimeField.MONTH, 0)).to.throw('MONTH (0) must be in the range [1, 12]');
-    expect(new DateTime('-9999-01-01').set(DateTimeField.YEAR, -1).toIsoString(11)).to.equal('-0001-01-01');
+    expect(new DateTime('-9999-01-01').set(DateTimeField.YEAR, -1).toIsoString(10)).to.equal('-0001-01-01');
     expect(new DateTime('2099-01-01').set(DateTimeField.YEAR, 1).toIsoString(10)).to.equal('0001-01-01');
     expect(new DateTime('1970-W20-5').set(DateTimeField.YEAR_WEEK, 1850).format('GGGG-[W]WW-E')).to.equal('1850-W20-5');
     expect(new DateTime('1970-w03-3').set(DateTimeField.YEAR_WEEK_LOCALE, 2).format('gggg-[w]ww-e')).to.equal('0002-w03-3');
-    expect(new DateTime('1970-03-31').set(DateTimeField.ERA, 0).toIsoString(11)).to.equal('-1969-03-31');
+    expect(new DateTime('1970-03-31').set(DateTimeField.ERA, 0).toIsoString(10)).to.equal('-1969-03-31');
     expect(() => new DateTime('04:05').set(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
   });
 
@@ -452,5 +452,18 @@ describe('DateTime', () => {
     expect(() => new DateTime().tz('foo')).to.throw('Bad timezone: foo');
     expect(new DateTime().tz('EST').timezone.zoneName).to.equal('America/New_York');
     expect(new DateTime().utc().timezone.zoneName).to.equal('UT');
+  });
+
+  it('should correctly determine length of day', () => {
+    expect(new DateTime('2011-12-29', 'Pacific/Apia').getSecondsInDay()).to.equal(86400);
+    expect(new DateTime('2011-12-30', 'Pacific/Apia').getSecondsInDay()).to.equal(0);
+    expect(new DateTime('2011-12-31', 'Pacific/Apia').getSecondsInDay()).to.equal(86400);
+    expect(new DateTime('2011-12', 'Pacific/Apia').getCalendarMonth(0)[33].d).to.equal(-30);
+    expect(new DateTime('2021-04-04', 'Australia/Lord_Howe').getSecondsInDay()).to.equal(88200);
+    expect(new DateTime('2021-07-01', 'Australia/Lord_Howe').getSecondsInDay()).to.equal(86400);
+    expect(new DateTime('2021-10-03', 'Australia/Lord_Howe').getSecondsInDay()).to.equal(84600);
+    expect(new DateTime('2021-03-14', 'America/New_York').getSecondsInDay()).to.equal(82800);
+    expect(new DateTime('2021-07-01', 'America/New_York').getSecondsInDay()).to.equal(86400);
+    expect(new DateTime('2021-11-07', 'America/New_York').getSecondsInDay()).to.equal(90000);
   });
 });
