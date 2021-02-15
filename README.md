@@ -53,9 +53,16 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Sorting an array of dates](#sorting-an-array-of-dates)
   - [min/max functions](#minmax-functions)
 - [Monthly calendar generation](#monthly-calendar-generation)
+- [Dealing with weird months](#dealing-with-weird-months)
+  - [Another way to drop a day](#another-way-to-drop-a-day)
+- [Dealing with weird days](#dealing-with-weird-days)
+  - [Typical Daylight Saving Time examples](#typical-daylight-saving-time-examples)
+  - [Examples of big UTC shifts due to moving the International Dateline](#examples-of-big-utc-shifts-due-to-moving-the-international-dateline)
 - [Global default settings](#global-default-settings)
 - [The `DateTime` class](#the-datetime-class)
   - [Constructor](#constructor)
+  - [`DateTime` astronomical time functions](#datetime-astronomical-time-functions)
+  - [Other `DateTime` constants, methods, getters/setters](#other-datetime-constants-methods-getterssetters)
 
 ## Installation
 
@@ -591,7 +598,9 @@ The `DateTime` method `getCalendarMonth()` returns an array of `YMDDate` objects
 
 For the above example, the current date was February 11, 2021, so the calendar was generated for that month. The locale was `'en-us'`, so each week starts on Sunday.
 
-The utility of this method is more evident with when viewing the calendar generated for October 1582, when (by default) the Julian calendar ends, and the Gregorian calendar begins:
+## Dealing with weird months
+
+The utility of the `getCalendarMonth()` method is more evident with when viewing the calendar generated for October 1582, when (by default) the Julian calendar ends, and the Gregorian calendar begins:
 
 `ttime('1582-10-01', null, 'fr').getCalendarMonth().map(date => date.d)` →
 
@@ -605,9 +614,55 @@ The utility of this method is more evident with when viewing the calendar genera
 
 By using the locale `'fr'`, the calendar generated above starts on Monday instead of Sunday. Notice how the 4th of the month is immediately followed by the 15th.
 
+One of the latest switches to the Gregorian calendar was enacted by Russia in 1918. The month of February didn’t even start with the 1st, but started on the 14th:
+
+`new DateTime('1918-02', null, '1918-02-14').getCalendarMonth(1).map(date => date.m === 2 ? date.d : '-')`
+
+```json5
+[
+  '-', '-', '-', 14, 15,  16,  17,
+  18,  19,  20,  21, 22,  23,  24,
+  25,  26,  27,  28, '-', '-', '-'
+]
+```
+
+Here are some things, then, to consider that might defy ordinary expectations about how calendar months work:
+
+* A month does not necessary start on the 1st.
+* A month might be missing days in the middle.
+* Because of the previous possibilities, the last numeric date of the month (in the above example, 28) is not necessary the same thing as the number of days in the month (in the example above, only 15 days).
+* There are timezone changes that eliminate both a day number *and* a day of the week.
+
+The `getCalendarMonth()` method shows all of the effects together, but there are separate functions to examine each separate issue. These methods are available on both the `DateTime` class, and the `Calendar` class. Arguments which are optional when using the `DateTime` class are required when using the `Calendar` class, because instances of the `Calendar` class have no internal year, month, or day values available as defaults.
+
+Total numbers of days in month, as affected by leap years and Julian/Gregorian switch-over. If a day is missing due to a timezone issue, that day is still counted as a day in the month, albeit a special 0-length day.
+
+```typescript
+getDaysInMonth(year?: number, month?: number): number;
+```
+
+The range of dates excluded due to Julian/Gregorian switch-over only. If no days are exclude, the result is `null`. If days are excluded, a two-element array is returned. `result[0]` is the first day dropped, `result[1]` is the last day dropped.
+
+```typescript
+getMissingDateRange(year?: number, month?: number): number[] | null;
+```
+
+The first date in a month. Usually 1, of course, but possible different, as in the previous example for Russia, February 1918.
+
+```typescript
+getFirstDateInMonth(year?: number, month?: number): number;
+```
+
+The last date in a month. Usually 28, 29, 30, or 31. This method is provided mainly because this number can be different from 
+the `getDaysInMonth()` value.
+
+```typescript
+getLastDateInMonth(year?: number, month?: number): number;
+```
+
 ### Another way to drop a day
 
-In December 2011, Western Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Western Samoa). The timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 31, 2011 did not exist for Western Samoans. Thursday was followed by Saturday, a type of discontinuity that doesn't happen with days dropped by switching from the Julian to the Gregorian calendar.
+In December 2011, the nation of Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Samoa). The timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 31, 2011 did not exist for Samoans. Thursday was followed by Saturday, a type of discontinuity that doesn’t happen with days dropped by switching from the Julian to the Gregorian calendar.
 
 **@tubular/time** handles this by treating that Friday as a day that exists, but is 0 seconds long. The `getCalendarMonth()` method makes this apparent by rendering the day-of-the-month for that day as a negative number.
 
@@ -623,9 +678,54 @@ In December 2011, Western Samoa jumped over the International Dateline (or, sinc
 ]
 ```
 
+The following section about weird days provides another method for detecting days like the missing Friday above.
+
+## Dealing with weird days
+
+A day is, of course, *usually* 24 hours long, which is also 1440 minutes, or 86400 seconds. Two things can change the length of a day, however:
+
+* Daylight Saving Time rules, which typically subtract or add one hour, but DST changes are not always one hour.
+* Changes in a timezone’s base offset from UTC, such as the Samoa example above. The biggest of these changes have been timezones which have gone back and forth over the International Dateline, resulting in days as short as 0 hours, and days as long as 47 hours (1969-09-30, Pacific/Kwajalein).
+
+These two methods tell you how long a particular day is, in either seconds or minutes:
+
+```typescript
+getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
+
+getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
+```
+
+It is possible, but highly unlikely (no timezone is currently defined this way, or is ever likely to be), for `getSecondsInDay()` to return a non-integer value. `getMinutesInDay()` is always rounded to the nearest integer minute. That will nearly always be a precisely correct value, with the exception of some very early timezone changes away from local mean time.
+
+This next method provides a description of any discontinuity in time during a day caused by Daylight Saving Time or other changes in UTC offset. It provides the wall-clock time when a clock change starts, the number of milliseconds applied to that time to turn the clock either forward or backward, and the ending wall-clock time. The notation “24:00:00” refers to midnight of the next day. If there is no discontinuity, as with most days, the method returns `null`.
+
+```typescript
+getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number): Discontinuity | null;
+```
+
+### Typical Daylight Saving Time examples
+
+`new DateTime('2021-03-14', 'America/New_York').getDiscontinuityDuringDay()` →<br>
+`{ start: '02:00:00', end: '03:00:00', delta: 3600000 } // spring forward!`
+
+`new DateTime('2021-07-01', 'America/New_York').getDiscontinuityDuringDay()`) → `null`
+
+`new DateTime('2021-11-07', 'America/New_York').getDiscontinuityDuringDay()` →<br>
+`{ start: '02:00:00', end: '01:00:00', delta: -3600000 } // fall back!`
+
+### Examples of big UTC shifts due to moving the International Dateline
+
+`// As soon as it’s midnight on the 30th, it’s instantly midnight on the 31st, erasing 24 hours:`<br>
+`new DateTime('2011-12-30', 'Pacific/Apia').getDiscontinuityDuringDay()`) →<br>
+`{ start: '00:00:00', end: '24:00:00', delta: 86400000 }`
+
+`// As soon as it’s midnight on the 31th, turn back to 1AM on the 30th, adding 23 hours to the day:`<br>
+`new DateTime('1969-09-30', 'Pacific/Kwajalein').getDiscontinuityDuringDay()` →<br>
+`{ start: '24:00:00', end: '01:00:00', delta: -82800000 }`
+
 ## Global default settings
 
-Get/set the first year of the one hundred-year range that will be using to interpret two-digit year numbers. Defaults to 1970, meaning that 00-69 will be treated as 2000-2069, and 70-99 will be treated as 1970-1999.
+These methods get or set the first year of the one hundred-year range that will be using to interpret two-digit year numbers. Defaults to 1970, meaning that 00-69 will be treated as 2000-2069, and 70-99 will be treated as 1970-1999.
 
 `ttime.getDefaultCenturyBase(): number;`<br>
 `ttime.setDefaultCenturyBase(newBase: number): void;`
@@ -635,11 +735,11 @@ Get/set the default locale (or prioritized array of locales). This defaults to t
 `ttime.getDefaultLocale(): string | string[];`<br>
 `ttime.setDefaultLocale(newLocale: string | string[]): void;`
 
-Get/set the default timezone. This defaults to:
+Get/set the default timezone. The “default default” (if you don’t use `setDefaultTimezone()`) is:
 
 1. The default timezone provided by the `Intl` package, if available.
 2. The timezone determined by the `Timezone.guess()` function.
-3. The `OS` timezone, a special **@tubular/time** timezone created by probing the JavaScript `Date` class to determine the rules of the JavaScript-supported local timezone.
+3. The `OS` timezone, a special **@tubular/time** timezone created by probing the JavaScript `Date` class to determine the rules of the unnamed JavaScript-supported local timezone.
 
 `ttime.getDefaultTimezone(): Timezone;`<br>
 `ttime.setDefaultTimezone(newZone: Timezone | string): void;`
@@ -681,18 +781,6 @@ The following is an example of using the `gregorianChange` parameter to apply th
   '-', 1,  2,  14, 15, 16, 17,
   18,  19, 20, 21, 22, 23, 24,
   25,  26, 27, 28, 29, 30, '-'
-]
-```
-
-One of the latest switches to the Gregorian calendar was enacted by Russia in 1918. The month of February didn't even start with the 1st, but started on the 14th:
-
-`new DateTime('1918-02', null, '1918-02-14').getCalendarMonth(1).map(date => date.m === 2 ? date.d : '-')`
-
-```json5
-[
-  '-', '-', '-', 14, 15,  16,  17,
-  18,  19,  20,  21, 22,  23,  24,
-  25,  26,  27,  28, '-', '-', '-'
 ]
 ```
 

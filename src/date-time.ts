@@ -1,7 +1,13 @@
 import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, forEach, isArray, isEqual, isNumber, isObject, isString, toNumber } from '@tubular/util';
-import { getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate, getDateFromDayNumberGregorian } from './calendar';
-import { DateAndTime, DAY_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields, syncDateAndTime, validateDateAndTime, YMDDate } from './common';
+import {
+  getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate,
+  getDateFromDayNumberGregorian
+} from './calendar';
+import {
+  DateAndTime, DAY_MSEC, MAX_YEAR, MIN_YEAR, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
+  syncDateAndTime, validateDateAndTime, YMDDate
+} from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
@@ -63,6 +69,12 @@ function fieldNameToField(field: DateTimeField | DateTimeFieldName): DateTimeFie
     return fieldNames[field.toLowerCase()] ?? DateTimeField.BAD_FIELD;
   else
     return field;
+}
+
+export interface Discontinuity {
+  start: string;
+  end: string;
+  delta: number;
 }
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
@@ -1277,9 +1289,8 @@ export class DateTime extends Calendar {
   getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
     let year: number;
 
-    if (yearOrDate == null) {
+    if (yearOrDate == null)
       [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
-    }
     else
       [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this);
 
@@ -1287,15 +1298,37 @@ export class DateTime extends Calendar {
   }
 
   getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number {
+    return round(this.getSecondsInDay(yearOrDate, month, day) / 60);
+  }
+
+  getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number): Discontinuity | null {
     let year: number;
 
-    if (yearOrDate == null) {
-      [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
-    }
-    else
+    if (yearOrDate != null)
       [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this);
+    else if (!this.valid)
+      return null;
+    else
+      [year, month, day] = [this._wallTime.y, this._wallTime.m, this._wallTime.d];
 
-    return round((this.getStartOfDayMillis(year, month, day + 1) - this.getStartOfDayMillis(year, month, day)) / MINUTE_MSEC);
+    const startOfDay = this.getStartOfDayMillis(year, month, day);
+    const endOfDay = this.getStartOfDayMillis(year, month, day + 1);
+    const delta = startOfDay - endOfDay + 86400000;
+
+    if (delta === 0)
+      return null;
+
+    const t = this._timezone.findTransitionByUtc(endOfDay);
+    let start = new Date(t.wallTime - delta).toISOString().substr(11).replace(/(\.000)?Z/, '');
+    let end = new Date(t.wallTime).toISOString().substr(11).replace(/(\.000)?Z/, '');
+
+    if (start === '00:00:00' && end > start && delta < 0)
+      start = '24:00:00';
+
+    if (end === '00:00:00' && t.wallTimeDay !== day)
+      end = '24:00:00';
+
+    return { start, end, delta };
   }
 
   getCalendarMonth(year: number, month: number, startingDayOfWeek?: number): YMDDate[];
@@ -1578,13 +1611,8 @@ export class DateTime extends Calendar {
       return super.addDaysToDate(deltaDays, yearOrDate, month, day);
   }
 
-  getMissingDateRange(year: number, month: number): number[] | null;
-  getMissingDateRange(): number[] | null;
-  getMissingDateRange(...args: number[]): number[] | null {
-    if (args.length >= 2)
-      return super.getMissingDateRange(args[0], args[1]);
-    else
-      return super.getMissingDateRange(this._wallTime.y, this._wallTime.m);
+  getMissingDateRange(year?: number, month?: number): number[] | null {
+    return super.getMissingDateRange(year ?? this._wallTime.y, month ?? this._wallTime.m);
   }
 
   getStartDateOfFirstWeekOfYear(year: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate {
