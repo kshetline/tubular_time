@@ -39,6 +39,8 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [Parsing with a format string, optional locale, with formatted output](#parsing-with-a-format-string-optional-locale-with-formatted-output)
 - [Converting timezones](#converting-timezones)
 - [Converting locales](#converting-locales)
+- [Defining and updating timezones](#defining-and-updating-timezones)
+  - [Live timezone updates](#live-timezone-updates)
 - [The `YMDDate` and `DateAndTime` objects](#the-ymddate-and-dateandtime-objects)
 - [Reading individual `DateTime` fields](#reading-individual-datetime-fields)
 - [Modifying `DateTime` values](#modifying-datetime-values)
@@ -61,8 +63,14 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [Global default settings](#global-default-settings)
 - [The `DateTime` class](#the-datetime-class)
   - [Constructor](#constructor)
+  - [Locking and cloning](#locking-and-cloning)
   - [`DateTime` astronomical time functions](#datetime-astronomical-time-functions)
   - [Other `DateTime` constants, methods, getters/setters](#other-datetime-constants-methods-getterssetters)
+    - [Static constant](#static-constant)
+    - [Static methods](#static-methods)
+    - [Getters](#getters)
+    - [Getter/setters](#gettersetters)
+  - [Other `DateTime` methods](#other-datetime-methods)
 
 ## Installation
 
@@ -283,6 +291,11 @@ ttime.MONTH                  = 'Y-MM';
 `ttime('2005-10-10 16:30 America/Los_Angeles').tz('Europe/Warsaw').toString()` →<br>
 `DateTime<2005-10-11T01:30:00.000 +02:00>`
 
+Please note that if you pass a second argument of `true`, the timezone is changed, _but the wall time stays the same._ This same option to preserve wall time is available for the `utc()` and `local()` methods, where the option boolean value will be the one and only argument.
+
+`ttime('2005-10-10 16:30 America/Los_Angeles').tz('Europe/Warsaw', true).toString()` →<br>
+`DateTime<2005-10-10T16:30:00.000 +02:00>`
+
 `ttime('2005-10-10 16:30 America/Los_Angeles').utc().toString()` →<br>
 `DateTime<2005-10-10T23:30:00.000 +00:00>`
 
@@ -293,6 +306,84 @@ ttime.MONTH                  = 'Y-MM';
 
 `ttime('7. helmikuuta 2021', 'IL', 'fi').toLocale('de').format('IL')` →<br>
 `7. Februar 2021`
+
+## Defining and updating timezones
+
+These functions define the size and behavior of the IANA timezone definitions used by **@tubular/time**:
+
+```typescript
+ttime.initTimezoneSmall();
+ttime.initTimezoneLarge();
+ttime.initTimezoneLargeAlt();
+```
+
+By default, **@tubular/time** is set up using `initTimezoneSmall()`. This covers explicitly-defined timezone information for roughly the release date of the version of **@tubular/time** you’re using, +/- five years, supplemented by rules-based extensions (i.e. knowing that for a particular timezone, say, “DST starts on the last Sunday of March and ends on the last Sunday of October”), and further supplemented by information extracted from `Intl`, when available.
+
+With proper tree-shaking, the code footprint of **@tubular/time** should be less than 150K when using the small timezone definitions.
+
+Using `initTimezoneLarge()` provides the full IANA timezone database. Using this will increase code size by about 280K, presuming that your build process is smart enough to have otherwise excluded unused code in the first place.
+
+`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This rounds all timezone offsets to full minutes, and move a few very-old historical changes by a few hours so that only time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day. `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone in October of 1867.
+
+For browser-based inclusion of timezone definitions, if not relying on a tool like **webpack** to handle such issues for you, you can also include full timezone definitions this way:
+
+```html
+<script src="https://unpkg.com/@tubular/time/dist/data/timezone-large.js"></script>
+```
+
+...or...
+
+```html
+<script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
+```
+
+Either of these should appear _before_ the script tag that loads **@tubular/time** itself.
+
+### Live timezone updates
+
+Timezone definitions can be updated live as well. Different polling methods are needed for Node.js code or browser-hosted code, since both environments access web resources in very different ways (and browsers have CORS issues, which Node.js does not).
+
+To be informed when a live timezone update takes place, add and remove update listeners using these functions:
+
+```typescript
+function addZonesUpdateListener(listener: (result: boolean | Error) => void): void;
+function removeZonesUpdateListener(listener: (result: boolean | Error) => void): void;
+function clearZonesUpdateListeners(): void
+```
+
+The result is `true` if an update was successful, and caused a change in timezone definitions, `false` if successful, but no changes occurred, or an instance of `Error`, indicating a error (probably an HTTP failure) occurred.
+
+For example:
+
+```typescript
+  const listener = result => console.log(result); // Keep in a variable if removal is needed later
+
+  ttime.addZonesUpdateListener(listener);
+
+  // Later on in the code...
+
+  ttime.removeZonesUpdateListener(listener);
+```
+
+Why use a listener? Because might want to recalculate previously calculated times which have possibly have changed due to timezone definition changes. For example, you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is cancelled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 your time instead.
+
+To poll for regular updates, use:
+
+```typescript
+function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: ZoneOptions = 'small', intervalDays = 1): void;
+```
+
+* `zonePoller`: Either `zonePollerBrowser` (from `tbTime.zonePollerBrowser`) or  `zonePollerNode` (via `import` or `require`, from `'@tubular/time'`). If you use the boolean value `false`, polling ceases.
+* `name`: One of `'small'`, `'large'`, or `'large-alt'`. Defaults to `'small'`.
+* `intervalDays`: Frequency of polling, in days. Defaults to 1 day. Fastest allowed rate is once per hour (~0.04167 days).
+
+You can also do a one-off request:
+
+```typescript
+function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'small'): Promise<boolean>;
+```
+
+`zonePoller` and `name` are the same as above. Any periodic polling done by `pollForTimezoneUpdates()` is canceled. You can get a response via registered listeners, but this function also returns a `Promise`. The promise either resolves to a boolean value, or is rejected with an `Error`.
 
 ## The `YMDDate` and `DateAndTime` objects
 
@@ -653,8 +744,7 @@ The first date in a month. Usually 1, of course, but possible different, as in t
 getFirstDateInMonth(year?: number, month?: number): number;
 ```
 
-The last date in a month. Usually 28, 29, 30, or 31. This method is provided mainly because this number can be different from 
-the `getDaysInMonth()` value.
+The last date in a month. Usually 28, 29, 30, or 31. This method is provided mainly because this number can be different from the `getDaysInMonth()` value.
 
 ```typescript
 getLastDateInMonth(year?: number, month?: number): number;
@@ -678,6 +768,10 @@ In December 2011, the nation of Samoa jumped over the International Dateline (or
 ]
 ```
 
+Here’s what that month looks like, as rendered by the drop-time date picker at skyviewcafe.com:
+
+<img src="https://shetline.com/readme/tubular-time/2.4.0/apia_dec_2011_cal.jpg" width=185 height=150 alt="Apia Dec 2011">
+
 The following section about weird days provides another method for detecting days like the missing Friday above.
 
 ## Dealing with weird days
@@ -695,7 +789,7 @@ getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
 getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
 ```
 
-It is possible, but highly unlikely (no timezone is currently defined this way, or is ever likely to be), for `getSecondsInDay()` to return a non-integer value. `getMinutesInDay()` is always rounded to the nearest integer minute. That will nearly always be a precisely correct value, with the exception of some very early timezone changes away from local mean time.
+It is possible, but highly unlikely (no timezone is currently defined this way, or is ever likely to be), for `getSecondsInDay()` to return a non-integer value. `getMinutesInDay()` is always rounded to the nearest integer minute. This will nearly always be a precisely correct value, with the exception of some very early timezone changes away from local mean time.
 
 This next method provides a description of any discontinuity in time during a day caused by Daylight Saving Time or other changes in UTC offset. It provides the wall-clock time when a clock change starts, the number of milliseconds applied to that time to turn the clock either forward or backward, and the ending wall-clock time. The notation “24:00:00” refers to midnight of the next day. If there is no discontinuity, as with most days, the method returns `null`.
 
@@ -722,6 +816,10 @@ getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number)
 `// As soon as it’s midnight on the 31th, turn back to 1AM on the 30th, adding 23 hours to the day:`<br>
 `new DateTime('1969-09-30', 'Pacific/Kwajalein').getDiscontinuityDuringDay()` →<br>
 `{ start: '24:00:00', end: '01:00:00', delta: -82800000 }`
+
+Here's a skyviewcafe.com image for that extra-long day in the Marshall Islands, with two sunrises, two sunsets, and 24 hours, 6 minutes worth of daylight packed into a 47-hour day:
+
+<img src="https://shetline.com/readme/tubular-time/2.4.0/mhl_sep_30_1969.jpg" width=215 height=195 alt="Marshall Islands, September 30, 1969">
 
 ## Global default settings
 
@@ -786,6 +884,12 @@ The following is an example of using the `gregorianChange` parameter to apply th
 
 There is a function `getFirstDateInMonth()` which exists specifically to handle cases like this, because for historical dates you can assume that months always start with the 1st.
 
+### Locking and cloning
+
+The `lock()` method takes a mutable `DateTime` instance and makes it immutable, returning that same instance. _This is a one-way trip._ Once locked, an instance cannot be unlocked.
+
+The `clone()` method creates a copy of a `DateTime` instance. By default, the copy is either locked or unlocked, the same as the original. You can, however, use `clone(false)` to create an unlocked, mutable copy of a locked original.
+
 ### `DateTime` astronomical time functions
 
 Converts Julian days into milliseconds from the 1970-01-01T00:00 UTC epoch:
@@ -807,3 +911,113 @@ DateTime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minut
 ```
 
 ### Other `DateTime` constants, methods, getters/setters
+
+#### Static constant
+
+```typescript
+static INVALID_DATE;
+```
+
+#### Static methods
+
+Compares two `DateTime` instances, or a `DateTime` instance and another date form, return a negative value when the first date is less than the second, 0 when the two are equal (for the given `resolution`), or positive when the first date is greater than the second.
+
+```typescript
+static compare(d1: DateTime, d2: DateTime | string | number | Date,
+               resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): number;
+```
+
+Determine if a value is an instance of the `DateTime` class:
+
+```typescript
+static isDateTime(obj: any): obj is DateTime; // boolean
+```
+
+#### Getters
+
+```typescript
+dstOffsetMinutes: number;
+dstOffsetSeconds: number;
+error: string; // Explanation of why a DateTime is considered invalid
+// 'DATETIME` is the usual type, but a DateTime instance can be DATELESS (time-only)
+//   or an abstract date/time with no real-world timezone.
+type: 'ZONELESS' | 'DATELESS' | 'DATETIME'; 
+utcOffsetMinutes: number;
+utcOffsetSeconds: number;
+valid: boolean;
+wallTimeLong: DateAndTime;
+wallTimeShort: DateAndTime;
+```
+
+#### Getter/setters
+
+```typescript
+locale: string | string[];
+timezone: Timezone;
+utcTimeMillis: number;
+utcTimeSeconds: number;
+wallTime: DateAndTime;
+```
+
+### Other `DateTime` methods
+
+```typescript
+computeUtcMillisFromWallTime(wallTime: DateAndTime): number;
+
+format(fmt = fullIsoFormat, localeOverride?: string): string;
+
+// For questions like “What date is the second Tuesday of this month?”
+// `dayOfTheWeek` 0-6 for Sun-Sat, index is 1-based.
+getDateOfNthWeekdayOfMonth(year: number, month: number, dayOfTheWeek: number, index: number): number;
+getDateOfNthWeekdayOfMonth(dayOfTheWeek: number, index: number): number;
+
+getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number);
+
+getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number;
+
+getDayOfWeekInMonthCount(year: number, month: number, dayOfTheWeek: number): number;
+getDayOfWeekInMonthCount(dayOfTheWeek: number): number;
+
+getDayOfWeekInMonthIndex(year: number, month: number, day: number): number;
+getDayOfWeekInMonthIndex(date: YMDDate | number[]): number;
+getDayOfWeekInMonthIndex(): number;
+
+getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number;
+getDayOnOrAfter(dayOfTheWeek: number, minDate: number): number;
+
+getDayOnOrBefore(year: number, month: number, dayOfTheWeek: number, maxDate: number): number;
+getDayOnOrBefore(dayOfTheWeek: number, minDate: number): number;
+
+getDaysInYear(year?: number): number;
+
+getStartDateOfFirstWeekOfYear(year: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate;
+
+getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number;
+
+getTimeOfDayFieldsFromMillis(millis: number): DateAndTime;
+
+getTimezoneDisplayName(): string;
+
+getWeeksInYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): number;
+
+getYearWeekAndWeekday(year: number, month: number, day: number,
+  startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+getYearWeekAndWeekday(date: YearOrDate | number,
+  startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
+
+isLeapYear(year?: number): boolean;
+
+setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): DateTime;
+
+toDate(): Date;
+
+toHoursAndMinutesString(includeDst = false): string;
+
+toIsoString(maxLength?: number): string;
+
+toLocale(newLocale: string | string[]): DateTime;
+
+toString(): string;
+
+toYMDhmString(): string;
+```

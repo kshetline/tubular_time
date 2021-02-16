@@ -122,7 +122,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
     poll();
 
     if (intervalDays > 0) {
-      pollingInterval = setInterval(poll, intervalDays * 86400000);
+      pollingInterval = setInterval(poll, Math.max(intervalDays * 86400000, 3600000));
 
       // Using unref prevents the interval alone from keeping a process alive
       if (pollingInterval.unref)
@@ -216,12 +216,20 @@ export function ttime(initialTime?: DateTimeArg, format?: string, locale?: strin
     return parse(initialTime, format, null, locale)?.lock();
 }
 
+ttime.addZonesUpdateListener = addZonesUpdateListener;
+ttime.clearZonesUpdateListeners = clearZonesUpdateListeners;
+ttime.getTimezones = getTimezones;
+ttime.initTimezoneSmall = initTimezoneSmall;
+ttime.initTimezoneLarge = initTimezoneLarge;
+ttime.initTimezoneLargeAlt = initTimezoneLargeAlt;
 ttime.isDateTime = isDateTime;
 ttime.isDate = isDate;
 ttime.max = max;
 ttime.min = min;
 ttime.unix = unix;
 ttime.parse = parse;
+ttime.pollForTimezoneUpdates = pollForTimezoneUpdates;
+ttime.removeZonesUpdateListener = removeZonesUpdateListener;
 ttime.sort = sort;
 
 ttime.DATETIME_LOCAL         = 'Y-MM-DD[T]HH:mm';

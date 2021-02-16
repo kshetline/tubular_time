@@ -1516,11 +1516,13 @@ export class DateTime extends Calendar {
     return wallTime;
   }
 
-  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
+  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): DateTime {
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 
     if (this._timezone)
       this.updateWallTimeFromCurrentMillis();
+
+    return this;
   }
 
   getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number): number {

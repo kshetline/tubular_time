@@ -569,19 +569,19 @@ export class Calendar {
     return (this.gcYear >= DISTANT_YEAR_FUTURE);
   }
 
-  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): void {
+  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): Calendar {
     if (this.locked)
       throw lockError;
 
     if (gcYearOrDate === 'g' || gcYearOrDate === 'G') {
       this.setPureGregorian(true);
 
-      return;
+      return this;
     }
     else if (gcYearOrDate === 'j' || gcYearOrDate === 'J') {
       this.setPureJulian(true);
 
-      return;
+      return this;
     }
     else if (isString(gcYearOrDate))
       gcYearOrDate = parseISODate(gcYearOrDate as string);
@@ -630,6 +630,8 @@ export class Calendar {
       this.firstDateInGCChangeMonth = gcDate;
       this.lengthOfGCChangeMonth -= gcDate - 1;
     }
+
+    return this;
   }
 
   getGregorianChange(): YMDDate {
