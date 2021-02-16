@@ -330,7 +330,7 @@ With proper tree-shaking, the code footprint of **@tubular/time** should be less
 
 Using `initTimezoneLarge()` provides the full IANA timezone database. Using this will increase code size by about 280K, presuming that your build process is smart enough to have otherwise excluded unused code in the first place.
 
-`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and moves a small number of very-old historical changes by a few hours so that only time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October of 1867.
+`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and adjusts a small number of fairly old historical changes by a few hours so that only time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October of 1867.
 
 For browser-based inclusion of timezone definitions, if not relying on a tool like **webpack** to handle such issues for you, you can also include full timezone definitions this way:
 
@@ -358,7 +358,7 @@ function removeZonesUpdateListener(listener: (result: boolean | Error) => void):
 function clearZonesUpdateListeners(): void
 ```
 
-The result received by a callback is `true` if an update was successful, and caused changes in timezone definitions, `false` if successful, but no changes occurred, or an instance of `Error`, indicating a error (probably an HTTP failure) has occurred.
+The result received by a callback is `true` if an update was successful, and caused changes in timezone definitions, `false` if successful, but no changes occurred, or an instance of `Error`, indicating an error (probably an HTTP failure) has occurred.
 
 For example:
 
@@ -372,7 +372,7 @@ For example:
   ttime.removeZonesUpdateListener(listener);
 ```
 
-Why use a listener? Because might want to recalculate previously calculated times which possibly have changed due to timezone definition changes. For example, imagine you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is cancelled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 in your time instead.
+Why use a listener? Because you might want to recalculate previously calculated times, which possibly have changed due to timezone definition changes. For example, imagine you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is cancelled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 in your time instead.
 
 To poll for for timezone updates at a regular interval, use:
 
@@ -382,7 +382,7 @@ function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: ZoneOptio
 
 * `zonePoller`: Either `zonePollerBrowser` (from `tbTime.zonePollerBrowser`) or  `zonePollerNode` (using `import` or `require`, from `'@tubular/time'`). If you pass the boolean value `false`, polling ceases.
 * `name`: One of `'small'`, `'large'`, or `'large-alt'`. Defaults to `'small'`.
-* `intervalDays`: Frequency of polling, in days. Defaults to 1 day. Fastest allowed rate is once per hour (~0.04167 days).
+* `intervalDays`: Frequency of polling, in days. Defaults to 1 day. The fastest allowed rate is once per hour (~0.04167 days).
 
 You can also do a one-off request:
 
@@ -653,9 +653,9 @@ function isValidDateGregorian(yearOrDate: YearOrDate, month?: number, day?: numb
 function isValidDateJulian(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
 ```
 
-The `yearOrDate` argument can be just a number for the year (in which case `month` and `day` should also be provided, a `YMDDate` object, or a `[year, month, day]` numeric array.
+The `yearOrDate` argument can be just a number for the year (in which case `month` and `day` should also be provided), a `YMDDate` object, or a `[year, month, day]` numeric array.
 
-There is also this method, available on instances of `Calendar` or `DateTime`, which determines the validity of a date accorder to that instance’s Julian/Gregorian switch-over:
+There is also this method, available on instances of `Calendar` or `DateTime`, which determines the validity of a date according to that instance’s Julian/Gregorian switch-over:
 
 ```typescript
 isValidDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
@@ -765,7 +765,7 @@ Total number of days in a month, as affected by leap years and Julian/Gregorian 
 getDaysInMonth(year?: number, month?: number): number;
 ```
 
-The range of dates excluded due to Julian/Gregorian switch-over only. If no days are exclude, the result is `null`. If days are excluded, a two-element array is returned. `result[0]` is the first day dropped, `result[1]` is the last day dropped:
+The range of dates excluded due to Julian/Gregorian switch-over only. If no days are excluded, the result is `null`. If days are excluded, a two-element array is returned. `result[0]` is the first day dropped, `result[1]` is the last day dropped:
 
 ```typescript
 getMissingDateRange(year?: number, month?: number): number[] | null;
@@ -785,7 +785,7 @@ getLastDateInMonth(year?: number, month?: number): number;
 
 ### Another way to drop a day
 
-In December 2011, the nation of Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Samoa). The timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 31, 2011 did not exist for Samoans. Thursday was followed by Saturday, a type of discontinuity that doesn’t happen with days dropped by switching from the Julian to the Gregorian calendar.
+In December 2011, the nation of Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Samoa). The timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 30, 2011 did not exist for Samoans. Thursday was followed by Saturday, a type of discontinuity that doesn’t happen with days dropped by switching from the Julian to the Gregorian calendar.
 
 **@tubular/time** handles this by treating that Friday as a day that exists, but is 0 seconds long. The `getCalendarMonth()` method makes this apparent by rendering the day-of-the-month for that day as a negative number.
 
@@ -822,7 +822,7 @@ getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
 getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
 ```
 
-It is possible, but highly unlikely (no timezone is currently defined this way, or is ever likely to be), for `getSecondsInDay()` to return a non-integer value. `getMinutesInDay()` is always rounded to the nearest integer minute. Despite this rounding, the value will nearly always be precisely correct anyway. With the exception of a few late 19th century/early 20th century timezone changes away from local mean time, UTC offset changes are otherwise in whole minutes, typically whole hours, with most fractional hour changes being in multiples of 15 minutes.
+It is possible, but highly unlikely (no timezone is currently defined this way, or is ever likely to be), for `getSecondsInDay()` to return a non-integer value. `getMinutesInDay()` is always rounded to the nearest integer minute. Despite this rounding, the value will nearly always be precisely correct anyway. Except for a few late 19th century/early 20th century timezone changes away from local mean time, UTC offset changes are otherwise in whole minutes, typically whole hours, with most fractional hour changes being in multiples of 15 minutes.
 
 This next method provides a description of any discontinuity in time during a day caused by Daylight Saving Time or other changes in UTC offset. It provides the wall-clock time when a clock change starts, the number of milliseconds applied to that time to turn the clock either forward or backward, and the ending wall-clock time. The notation “24:00:00” refers to midnight of the next day. If there is no discontinuity, as with most days, the method returns `null`:
 
