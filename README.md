@@ -115,14 +115,14 @@ While there are a wide range of functions and classes available from **@tubular/
 | `ttime('2021-w05-5')` | DateTime from an ISO-8601-like date/time variant for locale-based week numbering | `DateTime<2021-01-28T00:00:00.000 -05:00>` |
 | `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
 | `ttime('20:17:15')` | Dateless time from an ISO-8601 time string | `DateTime<20:17:15.000>` |
-| `ttime(1200848400000)` | From millisecond timestamp | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
+| `ttime(1200848400000)` | From a millisecond timestamp | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })` | From a `DateAndTime` object, short-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })` | From a `DateAndTime` object, long-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime([2013, 12, 11, 10, 9, 8, 765])` | From numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order. | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
-| `ttime(new Date(2008, 0, 20, 12, 0))` | From JavaScript `Date` object | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`) | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
-| `ttime.unix(1318781876.721)` | From Unix timestamp | `DateTime<2011-10-16T12:17:56.721 -04:00§>` |
-| `ttime.unix(1318781876.721, 'UTC')` | From Unix timestamp, with timezone | `DateTime<2011-10-16T16:17:56.721 +00:00>` |
+| `ttime([2013, 12, 11, 10, 9, 8, 765])` | From a numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order. | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
+| `ttime(new Date(2008, 0, 20, 12, 0))` | From a JavaScript `Date` object | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
+| `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | From an ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`) | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
+| `ttime.unix(1318781876.721)` | From a Unix timestamp | `DateTime<2011-10-16T12:17:56.721 -04:00§>` |
+| `ttime.unix(1318781876.721, 'UTC')` | From a Unix timestamp, with timezone | `DateTime<2011-10-16T16:17:56.721 +00:00>` |
 
 When dealing Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
 
@@ -141,7 +141,7 @@ By default, any ambiguous time is treated as the earlier time, the first occurre
 
 Dates and times can be formatted in many ways, using a broad selection of format tokens, described in the table below.
 
-For the greatest adherence to localized formats for dates and times, you can use the I*XX* format strings, which call directly upon `Intl.DateTimeFormat` (if available) to create localized dates, times, and combined dates/times.
+For the greatest adherence to localized formats for dates and times, you can use the I*XX* format strings, which call directly upon `Intl.DateTimeFormat` (if available) to create localized dates, times, and combined date/times.
 
 You can also produce more customized, flexible formatting, specifying the order, positioning, and style (text vs. number, fully spelled out or abbreviated, with or without leading zeros) of each date/time field, with embedded punctuation and text as desired.
 
@@ -159,18 +159,18 @@ Please note that, as most unaccented Latin letters are interpreted as special fo
 
 | | Token | Output |
 |-------|------:|-------|
-| Era | NNNNN<br>NNN,&nbsp;NN,&nbsp;N | BC AD<br><br>Abbreviated era (no distinction between narrow and abbreviated). |
+| Era | NNNNN<br>NNN,&nbsp;NN,&nbsp;N | BC AD<br><br>Abbreviated era (no distinction between narrow and abbreviated, as in Moment.js). |
 | | NNNN | Before Christ, Anno Domini<br><br>Long-form era.
 | | n | BC<br><br>Abbreviated era, only shows for BC, not AD. When year is AD, leading space before `n` token is removed. |
-| Year | YYYYYY | -001970 -001971 ... +001907 +001971<br><br>Always-signed years, padded to six digits |
+| Year | YYYYYY | -001970 -001971 ... +001907 +001971<br><br>Always-signed years, padded to six digits. |
 | | YYYY | 1970 1971 ... 2029 2030<br><br>Padded to at least four digits. |
-| | YY | 70 71 ... 29 30 |
+| | YY | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
 | | Y | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. |
 | | y | 1 2 ... 2020 ...<br>Era year, for use with BC/AD, never 0 or negative. |
 | Week year (ISO) | GGGG | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
-| | GG | 70 71 ... 29 30 |
+| | GG | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
 | Week year (locale) | gggg | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
-| | gg | 70 71 ... 29 30 |
+| | gg | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
 | Quarter | Qo | 1st 2nd 3rd 4th |
 | | Q | 1 2 3 4 |
 | Month | MMMM | January February ... November December |
@@ -330,7 +330,7 @@ With proper tree-shaking, the code footprint of **@tubular/time** should be less
 
 Using `initTimezoneLarge()` provides the full IANA timezone database. Using this will increase code size by about 280K, presuming that your build process is smart enough to have otherwise excluded unused code in the first place.
 
-`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and adjusts a small number of fairly old historical changes by a few hours so that only time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October of 1867.
+`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and adjusts a small number of fairly old historical changes by a few hours so that only the time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October of 1867.
 
 For browser-based inclusion of timezone definitions, if not relying on a tool like **webpack** to handle such issues for you, you can also include full timezone definitions this way:
 
@@ -372,7 +372,7 @@ For example:
   ttime.removeZonesUpdateListener(listener);
 ```
 
-Why use a listener? Because you might want to recalculate previously calculated times, which possibly have changed due to timezone definition changes. For example, imagine you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is cancelled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 in your time instead.
+Why use a listener? Because you might want to recalculate previously calculated times, which possibly have changed due to timezone definition changes. For example, imagine you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was going to be 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is cancelled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 in your timezone instead.
 
 To poll for for timezone updates at a regular interval, use:
 
@@ -476,7 +476,7 @@ In specifying a date, the date fields have the following priority:
 
 In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
 
-As discussed earlier when parsing strings, ambiguous times due to Daylight Saving Time default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish this disambiguation.
+As discussed earlier, concerning parsing time strings, ambiguous times due to Daylight Saving Time default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish this disambiguation.
 
 ## Reading individual `DateTime` fields
 
@@ -534,7 +534,7 @@ By default, however, hour and minute fields remain unchanged.
 `ttime('2021-02-28T07:00 Australia/Lord_Howe').add('days', 100).toIsoString()` →<br>
 `2021-06-08T07:00:00.000+10:30`
 
-Even with the default behavior, however, it is still possible hours and minutes my change, in just the same way adding one month to January 31 does not yield February 31. When clocks are turned forward, some times of day simply do not exist, so a result might have to be adjusted to a valid hour and minute in some cases.
+Even with the default behavior, however, it is still possible for hours and minutes to change, in just the same way adding one month to January 31 does not yield February 31. When clocks are turned forward, some times of day simply do not exist, so a result might have to be adjusted to a valid hour and minute in some cases.
 
 `ttime('2000-04-27T00:30 Africa/Cairo').add('day', 1).toString()` →<br>
 `DateTime<2000-04-28T01:30:00.000 +03:00§>` (clock turned forward at midnight to 1:00)
@@ -543,7 +543,7 @@ Even with the default behavior, however, it is still possible hours and minutes 
 
 You can use the `roll()` method to “spin” through values for each date/time field. This can be used, for example, in a user interface where you select a field and use up/down arrows to change the value, and the value changes in a wrap-around fashion, e.g. ...58 → 59 → 00 → 01..., etc.
 
-While seconds and minutes wrap at 59, and dates wrap at the length of the current month, there’s no natural wrapping boundaries for years. The wrap-range defaults to 1900-2099, but you can pass optional arguments to change this range (this only effects years, not other units).
+While seconds and minutes wrap at 59, hours at 23, and dates wrap at the length of the current month, there are no natural wrapping boundaries for years. The wrap-range defaults to 1900-2099, but you can pass optional arguments to change this range (this only effects rolling of years, not other time units).
 
 You can `roll` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `AM_PM`, `DAY`, `DAY_OF_WEEK`, `DAY_OF_WEEK_LOCALE`, `DAY_OF_YEAR`, `WEEK`, `WEEK_LOCALE`, `MONTH`, `YEAR`, `YEAR_WEEK`, `YEAR_WEEK_LOCALE`, `ERA`.
 
@@ -633,7 +633,7 @@ When an invalid `DateTime` instance is created, the `valid` property returns `fa
 
 Parsing of dates and times specified as strings is somewhat loose. When no format string is provided, dates are parsed according to ISO-8601, with leniency about leading zeros when delimiters are used. Pseudo-months 0 and 13 are accepted, as are days of the month from 0 to 32, regardless of the length of a given month. Years can be in the range -271820 to 275759.
 
-When parsing using a format string, especially formats where months are numeric, not textual, strict matching of delimiters is not required. For example, even where proper localized output formatting is done with dots, for input dashes as well as dots are acceptable:
+When parsing using a format string, especially formats where months are numeric, not textual, strict matching of delimiters is not required. For example, even where proper localized output formatting is done with dots, input using dashes instead of dots is acceptable:
 
 `ttime('2021-02-08', null, 'de').format('IS')` → `08.02.21`<br>
 `ttime('08.02.21', 'IS', 'de').format('IS')` → `08.02.21`<br>
@@ -643,7 +643,7 @@ Except in compact, delimiter-free ISO formats like `20210208`, leading zeros are
 
 _Future releases may offer options for stricter parsing._
 
-There are also functions for checking if year, month, and day-of-month together constitute a valid date.
+There are also functions for checking if a year, month, and day-of-month together constitute a valid date.
 
 The following functions can be imported/required from `'@tubular/time'`, or, in a browser script, found on the `tbTime` global:
 
@@ -669,7 +669,7 @@ normalizeDate(yearOrDate: YearOrDate, month?: number, day?: number): YMDDate;
 
 ## Comparison and sorting
 
-You can test whether moments in time expressed as `DateTime` instances are before, after, or the same as each other. By default, this comparison is exact to the milliseconds. You can, however, pass an optional unit of time for the resolution of the comparison.
+You can test whether moments in time expressed as `DateTime` instances are before, after, or the same as each other. By default, this comparison is exact to the millisecond. You can, however, pass an optional unit of time for the resolution of the comparison.
 
 `ttime('2020-08-31').isBefore('2020-09-01')` → `true`<br>
 `ttime('2020-08-31').isBefore('2020-09-01', 'year')` → `false`<br>
@@ -684,7 +684,7 @@ You can also check if a `DateTime` instance is chronologically, non-inclusively 
 
 `ttime().isBetween('1776-06-04', '1809-02-12')` → `false`
 
-There are two general comparison functions that, when comparing two `DateTime` instances, return a negative number if the first is less than the second, 0 if the two are equal at the given resolution, or a positive number if the first instance is greater than the second. This is the style of comparison function that works with JavaScript `sort`.
+There are two general comparison methods which, when comparing two `DateTime` instances, return a negative number if the first is less than the second, 0 if the two are equal at the given resolution, or a positive number if the first instance is greater than the second. This is the style of comparison function that works with JavaScript `sort`.
 
 `ttime().compare('1776-06-04')` → `7721460952408`<br>
 `ttime().compare(ttime(), 'minute')` → `0`<br>
@@ -704,7 +704,7 @@ This sort modifies the array which is passed in, and returns that same array.
 
 ## Monthly calendar generation
 
-The `DateTime` method `getCalendarMonth()` returns an array of `YMDDate` objects, the zeroth date object being on the locale-specific first day of the week (possible from the preceding month), with a multiple-of-7 length of dates to represent a full month. As an example (filtered down to just the day-of-month for visual clarity):
+The `DateTime` method `getCalendarMonth()` returns an array of `YMDDate` objects, the zeroth date object being on the locale-specific first day of the week (possibly from the preceding month), with a multiple-of-7 length of dates to represent a full month. As an example (filtered down to just the day-of-month for visual clarity):
 
 `ttime().getCalendarMonth().map(date => date.m === 2 ? date.d : '-')` →
 
@@ -736,7 +736,7 @@ The utility of the `getCalendarMonth()` method is more evident with when viewing
 
 By using the locale `'fr'`, the calendar generated above starts on Monday instead of Sunday. Notice how the 4th of the month is immediately followed by the 15th.
 
-One of the latest switches to the Gregorian calendar was enacted by Russia in 1918. The month of February didn’t even start with the 1st, but started on the 14th:
+One of the last switches to the Gregorian calendar was enacted by Russia in 1918. The month of February didn’t even start with the 1st, but started on the 14th:
 
 `new DateTime('1918-02', null, '1918-02-14').getCalendarMonth(1).map(date => date.m === 2 ? date.d : '-')`
 
@@ -753,9 +753,9 @@ Given such examples, here are some things to consider which might defy ordinary 
 * A month does not necessary start on the 1st.
 * A month might be missing days in the middle.
 * Because of the previous possibilities, the last numeric date of the month (in the above example, 28) is not necessary the same thing as the number of days in the month (in the example above, only 15 days).
-* There are timezone changes that eliminate both a day number *and* a day of the week.
+* There are timezone changes which eliminate both a day-of-the-month number *and* a day of the week.
 
-The `getCalendarMonth()` method shows all of these effects together, but there are additional functions to examine each separate issue. These methods are available on both the `DateTime` class, and the `Calendar` class. Arguments which are optional when using the `DateTime` class are required when using the `Calendar` class, because instances of the `Calendar` class have no internal year, month, or day values available as defaults.
+The `getCalendarMonth()` method shows all of these effects together, but there are additional functions to examine each issue separately. These methods are available on both the `DateTime` class, and the `Calendar` class. Arguments which are optional when using the `DateTime` class are required when using the `Calendar` class, because instances of the `Calendar` class have no internal year, month, or day values available as defaults.
 
 ### Methods
 
@@ -785,9 +785,9 @@ getLastDateInMonth(year?: number, month?: number): number;
 
 ### Another way to drop a day
 
-In December 2011, the nation of Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Samoa). The timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 30, 2011 did not exist for Samoans. Thursday was followed by Saturday, a type of discontinuity that doesn’t happen with days dropped by switching from the Julian to the Gregorian calendar.
+In December 2011, the nation of Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Samoa). The Pacific/Apia timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 30, 2011 did not exist for Samoans. Thursday was followed immediately by Saturday, a type of discontinuity that doesn’t happen with days dropped by switching from the Julian to the Gregorian calendar.
 
-**@tubular/time** handles this by treating that Friday as a day that exists, but is 0 seconds long. The `getCalendarMonth()` method makes this apparent by rendering the day-of-the-month for that day as a negative number.
+**@tubular/time** handles this situation by treating that skipped-over Friday as a day that exists, but one that is 0 seconds long. The `getCalendarMonth()` method makes this 0-length status apparent by rendering the day-of-the-month for that day as a negative number.
 
 `new DateTime('2011-12', 'Pacific/Apia').getCalendarMonth().map(date => date.m ===12 ? date.d : '-')` →
 
@@ -951,7 +951,7 @@ static INVALID_DATE;
 
 #### Static methods
 
-Compares two `DateTime` instances, or a `DateTime` instance and another date form, return a negative value when the first date is less than the second, 0 when the two are equal (for the given `resolution`), or positive when the first date is greater than the second:
+Compares two `DateTime` instances, or a `DateTime` instance and another date form, returns a negative value when the first date is less than the second, 0 when the two are equal (for the given `resolution`), or positive value when the first date is greater than the second:
 
 ```typescript
 static compare(d1: DateTime, d2: DateTime | string | number | Date,
