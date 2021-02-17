@@ -66,7 +66,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Constructor](#constructor)
   - [Locking and cloning](#locking-and-cloning)
   - [`DateTime` astronomical time functions](#datetime-astronomical-time-functions)
-  - [Other `DateTime` constants, methods, getters/setters](#other-datetime-constants-methods-getterssetters)
+  - [`DateTime` constants, static methods, getters/setters](#datetime-constants-static-methods-getterssetters)
     - [Static constant](#static-constant)
     - [Static methods](#static-methods)
     - [Getters](#getters)
@@ -941,7 +941,7 @@ Given a year, month, day according to the standard Gregorian calendar change (SG
 DateTime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number;
 ```
 
-### Other `DateTime` constants, methods, getters/setters
+### `DateTime` constants, static methods, getters/setters
 
 #### Static constant
 
@@ -998,44 +998,71 @@ computeUtcMillisFromWallTime(wallTime: DateAndTime): number;
 format(fmt = fullIsoFormat, localeOverride?: string): string;
 
 // For questions like “What date is the second Tuesday of this month?”
-// `dayOfTheWeek` 0-6 for Sun-Sat, index is 1-based.
+//   `dayOfTheWeek` 0-6 for Sun-Sat, index is 1-based.
 getDateOfNthWeekdayOfMonth(year: number, month: number, dayOfTheWeek: number, index: number): number;
 getDateOfNthWeekdayOfMonth(dayOfTheWeek: number, index: number): number;
 
+// Number of days from 1970-01-01
 getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number);
 
+// Day of the week for date, 0-6 for Sun-Sat
 getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number;
 
+// How many times does a given day of the week (0-6 for Sun-Sat) occur during this month?
 getDayOfWeekInMonthCount(year: number, month: number, dayOfTheWeek: number): number;
 getDayOfWeekInMonthCount(dayOfTheWeek: number): number;
 
+// Is the date the 1st, 2nd, 3rd, 4th, or 5th occurrence of its day of the week
+//   during the given month?
 getDayOfWeekInMonthIndex(year: number, month: number, day: number): number;
 getDayOfWeekInMonthIndex(date: YMDDate | number[]): number;
 getDayOfWeekInMonthIndex(): number;
 
+// Returns the date (day-of-the-month only) of the first occurrence of a given day
+//   of the week on or after a given date. For example, election day in the
+//   United States is the first Tuesday on or after November 2, so election day
+//   in 2025 is getDayOnOrAfter(2025, 11, 2, 2).
 getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number;
 getDayOnOrAfter(dayOfTheWeek: number, minDate: number): number;
 
+// Returns the date (day-of-the-month only) of the first occurrence of a given day
+//   of the week on or before a given date.
 getDayOnOrBefore(year: number, month: number, dayOfTheWeek: number, maxDate: number): number;
 getDayOnOrBefore(dayOfTheWeek: number, minDate: number): number;
 
+// Number of days in a given year. Typically 365 or 366, but it can be smaller values
+//   for years when days have been dropped when transitioning from the Julian to the
+//   Gregorian calendar.
 getDaysInYear(year?: number): number;
 
+// This method is for finding the date of the first day of the first week of a week-based
+//   calendar, which can be a few days before or after January 1, depending on how weeks
+//   are defined. For ISO weeks, this date is the Monday at the beginning of a week which
+//   contains January 4, e.g. getStartDateOfFirstWeekOfYear(year, 1, 4).
 getStartDateOfFirstWeekOfYear(year: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate;
 
+// UTC millisecond value at the start of a given day, per the `DateTime` instance’s
+//   timezone and calendar rules.
 getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): number;
 
+// Convert a UTC millisecond value into a `DateAndTime` object, per the `DateTime` instance’s
+//   timezone and calendar rules.
 getTimeOfDayFieldsFromMillis(millis: number): DateAndTime;
 
+// Display name for `DateTime` instance’s timezone, such as "EDT" or "PST".
 getTimezoneDisplayName(): string;
 
+// Typically 52 or 53, the number of weeks in a week-based year.
 getWeeksInYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): number;
 
+// For a given standard calendar date, return the week-based year, week number, and day
+//   number, according to startingDayOfWeek and minDaysInCalendarYear.
 getYearWeekAndWeekday(year: number, month: number, day: number,
   startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 getYearWeekAndWeekday(date: YearOrDate | number,
   startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
+// `true` if the given year is a leap year.
 isLeapYear(year?: number): boolean;
 
 setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): DateTime;
