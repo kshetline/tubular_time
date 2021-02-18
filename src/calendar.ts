@@ -533,15 +533,15 @@ export class Calendar {
       this.setGregorianChange(gcYearOrDateOrType as YearOrDate | string, gcMonth, gcDate);
   }
 
-  lock = (): Calendar => this._lock();
-  protected _lock(doLock = true): Calendar {
+  lock = (): this => this._lock();
+  protected _lock(doLock = true): this {
     this._locked = this._locked || doLock;
     return this;
   }
 
   get locked(): boolean { return this._locked; }
 
-  setPureGregorian(pureGregorian: boolean): void {
+  setPureGregorian(pureGregorian: boolean): this {
     if (this.locked)
       throw lockError;
 
@@ -549,13 +549,15 @@ export class Calendar {
       this.setGregorianChange(DISTANT_YEAR_PAST, 0, 0);
     else
       this.setGregorianChange(1582, 10, 15);
+
+    return this;
   }
 
   isPureGregorian(): boolean {
     return (this.gcYear <= DISTANT_YEAR_PAST);
   }
 
-  setPureJulian(pureJulian: boolean): void {
+  setPureJulian(pureJulian: boolean): this {
     if (this.locked)
       throw lockError;
 
@@ -563,13 +565,15 @@ export class Calendar {
       this.setGregorianChange(DISTANT_YEAR_FUTURE, 0, 0);
     else
       this.setGregorianChange(1582, 10, 15);
+
+    return this;
   }
 
   isPureJulian(): boolean {
     return (this.gcYear >= DISTANT_YEAR_FUTURE);
   }
 
-  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): Calendar {
+  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): this {
     if (this.locked)
       throw lockError;
 

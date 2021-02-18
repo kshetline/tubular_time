@@ -330,7 +330,7 @@ With proper tree-shaking, the code footprint of **@tubular/time** should be less
 
 Using `initTimezoneLarge()` provides the full IANA timezone database. Using this will increase code size by about 280K, presuming that your build process is smart enough to have otherwise excluded unused code in the first place.
 
-`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and adjusts a small number of fairly old historical changes by a few hours so that only the time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October of 1867.
+`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and adjusts a small number of fairly old historical changes by a few hours so that only the time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October 1867.
 
 For browser-based inclusion of timezone definitions, if not relying on a tool like **webpack** to handle such issues for you, you can also include full timezone definitions this way:
 
@@ -1065,17 +1065,31 @@ getYearWeekAndWeekday(date: YearOrDate | number,
 // `true` if the given year is a leap year.
 isLeapYear(year?: number): boolean;
 
+// Sets the first date when the Gregorian calendar starts. Pass 'j' as the first argument to get
+//   a perpetual Julian calendar, or 'g' for always-Gregorian (extending even before the Gregorian
+//   calendar existed - a fancy word for that being a "proleptic" Gregorian calendar). You can
+//   also pass a string date (e.g. '1752-09-14'), a numeric array (e.g. [1752, 9, 14], or a YMDDate
+//   object. If you pass a numeric year alone for the first argument, include two more arguments
+//   for the month and date as well.
 setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): DateTime;
 
+// Convert DateTime to a JavaScript Date.
 toDate(): Date;
 
+// Format as hour and minute, using the format 'HH:mm', or 'HH:mmv' if includeDst is true.
 toHoursAndMinutesString(includeDst = false): string;
 
+// Format as 'Y-MM-DDTHH:mm:ss.SSSZ', trimming to an optional maxLength that *does not* count
+//   any leading + or - sign.
 toIsoString(maxLength?: number): string;
 
+// Create a clone of a DateTime instance with a different locale.
 toLocale(newLocale: string | string[]): DateTime;
 
+// Convert to a string, such as 'DateTime<2017-03-02T14:45:00.000 +01:00> or, when dateless,
+//   'DateTime<20:17:15.000>'.
 toString(): string;
 
+// Format as 'Y-MM-DD HH:mmv'.
 toYMDhmString(): string;
 ```

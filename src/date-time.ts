@@ -325,13 +325,7 @@ export class DateTime extends Calendar {
       this.timezone = timezone;
   }
 
-  lock = (): DateTime => this._lock();
-  protected _lock(doLock = true): DateTime {
-    super._lock(doLock);
-    return this;
-  }
-
-  clone(cloneLock = true): DateTime {
+  clone(cloneLock = true): this {
     const copy = new DateTime(this._utcTimeMillis, this._timezone, this._locale);
 
     if (this.isPureJulian())
@@ -344,7 +338,7 @@ export class DateTime extends Calendar {
     if (cloneLock && this.locked)
       copy.lock();
 
-    return copy;
+    return copy as this;
   }
 
   get type(): 'ZONELESS' | 'DATELESS' | 'DATETIME' {
@@ -438,7 +432,7 @@ export class DateTime extends Calendar {
     }
   }
 
-  tz(newZone: Timezone | string, keepLocalTime = false): DateTime {
+  tz(newZone: Timezone | string, keepLocalTime = false): this {
     if (isString(newZone)) {
       const zone = Timezone.from(newZone);
 
@@ -468,15 +462,15 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  utc(keepLocalTime = false): DateTime {
+  utc(keepLocalTime = false): this {
     return this.tz(Timezone.UT_ZONE, keepLocalTime);
   }
 
-  local(keepLocalTime = false): DateTime {
+  local(keepLocalTime = false): this {
     return this.tz(Timezone.guess(), keepLocalTime);
   }
 
-  toLocale(newLocale: string | string[]): DateTime {
+  toLocale(newLocale: string | string[]): this {
     const result = this.clone();
     result._locale = newLocale;
     return result;
@@ -520,7 +514,7 @@ export class DateTime extends Calendar {
       throw new Error(`${DateTimeField[field]} cannot be used with a dateless time value`);
   }
 
-  add(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): DateTime {
+  add(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): this {
     const result = this.locked ? this.clone(false) : this;
 
     if (!this.valid)
@@ -616,11 +610,11 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  subtract(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): DateTime {
+  subtract(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): this {
     return this.add(field, -amount, variableDays);
   }
 
-  roll(field: DateTimeField | DateTimeFieldName, amount: number, minYear = 1900, maxYear = 2099): DateTime {
+  roll(field: DateTimeField | DateTimeFieldName, amount: number, minYear = 1900, maxYear = 2099): this {
     const result = this.locked ? this.clone(false) : this;
 
     if (!this.valid)
@@ -815,7 +809,7 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  set(field: DateTimeField | DateTimeFieldName, value: number, loose = false): DateTime {
+  set(field: DateTimeField | DateTimeFieldName, value: number, loose = false): this {
     const result = this.locked ? this.clone(false) : this;
 
     if (!this.valid)
@@ -1006,7 +1000,7 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  startOf(field: DateTimeField | DateTimeFieldName): DateTime {
+  startOf(field: DateTimeField | DateTimeFieldName): this {
     const result = this.locked ? this.clone(false) : this;
 
     if (!this.valid)
@@ -1102,7 +1096,7 @@ export class DateTime extends Calendar {
     return result._lock(this.locked);
   }
 
-  endOf(field: DateTimeField | DateTimeFieldName): DateTime {
+  endOf(field: DateTimeField | DateTimeFieldName): this {
     const result = this.locked ? this.clone(false) : this;
 
     if (!this.valid)
@@ -1516,7 +1510,7 @@ export class DateTime extends Calendar {
     return wallTime;
   }
 
-  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): DateTime {
+  setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): this {
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 
     if (this._timezone)
