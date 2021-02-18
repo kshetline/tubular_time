@@ -66,12 +66,15 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Constructor](#constructor)
   - [Locking and cloning](#locking-and-cloning)
   - [`DateTime` astronomical time functions](#datetime-astronomical-time-functions)
-  - [`DateTime` constants, static methods, getters/setters](#datetime-constants-static-methods-getterssetters)
-    - [Static constant](#static-constant)
-    - [Static methods](#static-methods)
-    - [Getters](#getters)
-    - [Getter/setters](#gettersetters)
+  - [`DateTime` static constant](#datetime-static-constant)
+  - [`DateTime` static methods](#datetime-static-methods)
+  - [`DateTime` getters](#datetime-getters)
+  - [`DateTime` getter/setters](#datetime-gettersetters)
   - [Other `DateTime` methods](#other-datetime-methods)
+- [The `Calendar` class](#the-calendar-class)
+- [The `Timezone` class](#the-timezone-class)
+  - [Static `Timezone` constants](#static-timezone-constants)
+  - [Static `Timezone` methods](#static-timezone-methods)
 
 ## Installation
 
@@ -941,15 +944,13 @@ Given a year, month, day according to the standard Gregorian calendar change (SG
 DateTime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number;
 ```
 
-### `DateTime` constants, static methods, getters/setters
-
-#### Static constant
+### `DateTime` static constant
 
 ```typescript
 static INVALID_DATE;
 ```
 
-#### Static methods
+### `DateTime` static methods
 
 Compares two `DateTime` instances, or a `DateTime` instance and another date form, returns a negative value when the first date is less than the second, 0 when the two are equal (for the given `resolution`), or positive value when the first date is greater than the second:
 
@@ -964,7 +965,7 @@ Determine if a value is an instance of the `DateTime` class:
 static isDateTime(obj: any): obj is DateTime; // boolean
 ```
 
-#### Getters
+### `DateTime` getters
 
 ```typescript
 dstOffsetMinutes: number;
@@ -980,7 +981,7 @@ wallTimeLong: DateAndTime;
 wallTimeShort: DateAndTime;
 ```
 
-#### Getter/setters
+### `DateTime` getter/setters
 
 ```typescript
 locale: string | string[];
@@ -1035,6 +1036,9 @@ getDayOnOrBefore(dayOfTheWeek: number, minDate: number): number;
 //   Gregorian calendar.
 getDaysInYear(year?: number): number;
 
+// Returned date is arbitrary distant future for pure Julian calendar, distant past for pure Gregorian.
+getGregorianChange(): YMDDate;
+
 // This method is for finding the date of the first day of the first week of a week-based
 //   calendar, which can be a few days before or after January 1, depending on how weeks
 //   are defined. For ISO weeks, this date is the Monday at the beginning of a week which
@@ -1062,8 +1066,15 @@ getYearWeekAndWeekday(year: number, month: number, day: number,
 getYearWeekAndWeekday(date: YearOrDate | number,
   startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
+// Check if a given date is before this DateTime's switch to the Gregorian calendar.
+isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
+
 // `true` if the given year is a leap year.
 isLeapYear(year?: number): boolean;
+
+isPureGregorian(): boolean;
+
+isPureJulian(): boolean;
 
 // Sets the first date when the Gregorian calendar starts. Pass 'j' as the first argument to get
 //   a perpetual Julian calendar, or 'g' for always-Gregorian (extending even before the Gregorian
@@ -1072,6 +1083,12 @@ isLeapYear(year?: number): boolean;
 //   object. If you pass a numeric year alone for the first argument, include two more arguments
 //   for the month and date as well.
 setGregorianChange(gcYearOrDate: YearOrDate | string, gcMonth?: number, gcDate?: number): DateTime;
+
+// If pureGregorian is true, calendar becomes pure, proleptic Gregorian. If false, standard change date of 1582-10-15 is applied.
+setPureGregorian(pureGregorian: boolean): DateTime;
+
+// If pureJulian is true, calendar becomes pure Julian. If false, standard change date of 1582-10-15 is applied.
+setPureJulian(pureJulian: boolean): DateTime;
 
 // Convert DateTime to a JavaScript Date.
 toDate(): Date;
@@ -1092,4 +1109,58 @@ toString(): string;
 
 // Format as 'Y-MM-DD HH:mmv'.
 toYMDhmString(): string;
+```
+
+## The `Calendar` class
+
+This is the superclass of the `DateTime` class. It stores no internal date value, however. It merely implements calendar calculations, and holds the Julian/Gregorian change date to be used for the calendar.
+
+Most of the purely date-related methods of `DateTime` exist on `Calendar`. `Calendar` does not have any methods that refer to an internal date value (such as `add`, `roll`, etc.), formatting, locale, or timezone.
+
+The constructor takes the same arguments as the `setGregorianChange()` method:
+
+```typescript
+constructor(gcYearOrDateOrType?: YearOrDate | CalendarType | string, gcMonth?: number, gcDate?: number);
+```
+
+This `Calendar` method adds a given number of days to a date:
+
+```typescript
+addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: number): YMDDate
+```
+
+## The `Timezone` class
+
+### Static `Timezone` constants
+
+```typescript
+  static OS_ZONE: Timezone; // Local timezone as derived from analyzing values returned by JavaScript `Date`.
+  static UT_ZONE: Timezone; // Universal Coordinated Time (AKA UTC, UCT, GMT, Zulu Time, etc.)
+  static ZONELESS: Timezone; // A pseudo timezone for abstract date/time instances.
+  static DATELESS: Timezone; // A pseudo timezone for abstract dateless, time-only `DateTime` instances.
+```
+
+### Static `Timezone` methods
+
+This method returns a full list of available IANA timezone names. Does **not** include names for the above static constants:
+
+```typescript
+static getAvailableTimezones(): string[];
+```
+
+This method returns a full list of available IANA timezone names in a structured form, grouped by regions (e.g. "Africa", "America", "Etc", "Europe", etc.). The large "America" region is broken down into three regions, "America", "America/Argentina", and "America/Indiana". There is also a "MISC" region that contains a number of redundant, deprecated, or legacy timezones, such as many single-name-no-slash timezones and SystemV timezones:
+
+```typescript
+export interface RegionAndSubzones {
+  region: string;
+  subzones: string[];
+}
+
+static getRegionsAndSubzones(): RegionAndSubzones[];
+```
+
+This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not really a guess at all, but a proper system-reported value. Otherwise the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`.
+
+```typescript
+static guess(recheck = false): string;
 ```

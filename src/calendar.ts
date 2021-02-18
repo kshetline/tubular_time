@@ -697,6 +697,7 @@ export class Calendar {
 
   protected computeWeekValues = 0; // To prevent infinite recursion, compute week values only when this is 0.
 
+  /** @hidden */
   getDateFromDayNumber(dayNum: number, startingDayOfWeek?: number, minDaysInCalendarYear?: number): YMDDate {
     let result: YMDDate;
 
