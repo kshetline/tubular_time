@@ -2,7 +2,7 @@ import { IZonePoller } from './i-zone-poller';
 
 export const zonePollerBrowser: IZonePoller = {
   getTimezones(url: string): Promise<{ [p: string]: string }> {
-    return new Promise<{[p: string]: string}>((resolve, reject) => {
+    return new Promise<Record<string, string>>((resolve, reject) => {
       const head = document.querySelector('head');
       const script = document.createElement('script');
       const w = window as any;

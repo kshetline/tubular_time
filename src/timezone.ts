@@ -4,6 +4,13 @@ import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAft
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset } from './common';
 import { hasIntlDateTime } from './locale-data';
 
+export interface OffsetsAndZones {
+  offset: string;
+  offsetSeconds: number;
+  dstOffset: number;
+  zones: string[];
+}
+
 export interface RegionAndSubzones {
   region: string;
   subzones: string[];
@@ -179,12 +186,12 @@ let osDstOffset: number;
 })();
 
 export class Timezone {
-  private static encodedTimezones: {[id: string]: string} = {};
-  private static shortZoneNames: {[id: string]: ShortZoneNameInfo} = {};
-  private static zonesByOffsetAndDst: {[key: string]: Set<string>} = {};
-  private static countriesForZone: {[key: string]: Set<string>} = {};
-  private static zonesForCountry: {[key: string]: Set<string>} = {};
-  private static populationForZone: {[key: string]: number} = {};
+  private static encodedTimezones: Record<string, string> = {};
+  private static shortZoneNames: Record<string, ShortZoneNameInfo> = {};
+  private static zonesByOffsetAndDst: Record<string, Set<string>> = {};
+  private static countriesForZone: Record<string, Set<string>> = {};
+  private static zonesForCountry: Record<string, Set<string>> = {};
+  private static populationForZone: Record<string, number> = {};
 
   static OS_ZONE = new Timezone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                             dstOffset: osDstOffset, transitions: osTransitions });
@@ -198,6 +205,8 @@ export class Timezone {
   static DATELESS = new Timezone({ zoneName: 'DATELESS', currentUtcOffset: 0, usesDst: false,
                             dstOffset: 0, transitions: null });
 
+  private static offsetsAndZones: OffsetsAndZones[];
+  private static regionAndSubzones: RegionAndSubzones[];
   private static zoneLookup: { [id: string]: Timezone } = {};
 
   private readonly _zoneName: string;
@@ -213,17 +222,20 @@ export class Timezone {
 
   private _error: string;
 
-  private static extendedRegions = /(America\/Argentina|America\/Indiana)\/(.+)/;
-  private static miscUnique = /"CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET/;
+  private static extendedRegions = /^(America\/Argentina|America\/Indiana)\/(.+)$/;
+  private static miscUnique = /^(CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET)$/;
 
-  static defineTimezones(encodedTimezones: {[id: string]: string}): boolean {
+  static defineTimezones(encodedTimezones: Record<string, string>): boolean {
     const changed = !isEqual(this.encodedTimezones, encodedTimezones);
 
     this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
     this.extractZoneInfo();
 
-    if (changed)
+    if (changed) {
+      this.offsetsAndZones = undefined;
+      this.regionAndSubzones = undefined;
       this.zoneLookup = {};
+    }
 
     return changed;
   }
@@ -239,25 +251,89 @@ export class Timezone {
     return zones;
   }
 
+  static getOffsetsAndZones(): OffsetsAndZones[] {
+    if (this.offsetsAndZones)
+      return this.offsetsAndZones;
+
+    const zoneHash: Record<string, string[]> = {};
+
+    for (const zone of Object.keys(this.encodedTimezones)) {
+      if (!zone.includes('/') || zone.startsWith('Etc/') || this.miscUnique.test(zone))
+        continue;
+
+      let etz = this.encodedTimezones[zone];
+
+      if (!etz.includes(';')) {
+        const $ = /^!([^,]*)$/.exec(etz) || /^(?:.*,)?(.*)$/.exec(etz);
+
+        etz = this.encodedTimezones[$[1]] ?? '';
+      }
+
+      const sections = etz.split(/[ ;]/);
+
+      if (sections.length < 3)
+        continue;
+
+      const offset = sections[1].split(/([-+]?\d\d)/g).filter(s => !!s).join(':') +
+        this.getDstSymbol(toNumber(sections[2]) * 60);
+
+      let zones = zoneHash[offset];
+
+      if (!zones) {
+        zones = [];
+        zoneHash[offset] = zones;
+      }
+
+      zones.push(zone.replace(/_/g, ' '));
+    }
+
+    const offsets: string[] = [];
+    const toNum = (s: string): number => toNumber(s.replace(/[^-+\d]/g, ''));
+
+    for (const offset of Object.keys(zoneHash))
+      offsets.push(offset);
+
+    offsets.sort((a, b) => toNum(a) - toNum(b));
+
+    this.offsetsAndZones = [];
+
+    for (const offset of offsets) {
+      const zones = zoneHash[offset];
+
+      zones.sort();
+      // noinspection NonAsciiCharacters
+      this.offsetsAndZones.push({
+        offset,
+        offsetSeconds: parseTimeOffset(offset.replace(/[^-+\d]/g, '')),
+        dstOffset: { '^': 1800, '§': 3600, '#': 7200, '\u2744': -3600, '~': 999 }[offset.substr(offset.length - 1)] || 0,
+        zones });
+    }
+
+    return this.offsetsAndZones;
+  }
+
   static getRegionsAndSubzones(): RegionAndSubzones[] {
+    if (this.regionAndSubzones)
+      return this.regionAndSubzones;
+
     let hasMisc = false;
-    const zoneHash: { [id: string]: string[] } = {};
+    const zoneHash: Record<string, string[]> = {};
 
     for (const zone of Object.keys(this.encodedTimezones)) {
       let region: string;
       let locale: string;
-      let matches = this.extendedRegions.exec(zone);
+      let $ = this.extendedRegions.exec(zone);
 
-      if (!matches)
-        matches = /(.+?)\/(.+)/.exec(zone);
+      if (!$)
+        $ = /^(.+?)\/(.+)$/.exec(zone);
 
-      if (!matches) {
+      if (!$) {
         region = zone;
         locale = null;
       }
       else {
-        region = matches[1];
-        locale = matches[2].replace(/_/g, ' ');
+        region = $[1];
+        locale = $[2].replace(/_/g, ' ');
       }
 
       if (locale == null || this.miscUnique.test(zone)) {
@@ -289,16 +365,16 @@ export class Timezone {
       delete zoneHash['~'];
     }
 
-    const regionAndSubzones: RegionAndSubzones[] = [];
+    this.regionAndSubzones = [];
 
     for (const region of regions) {
       const locales = zoneHash[region];
 
       locales.sort();
-      regionAndSubzones.push({ region: region, subzones: locales });
+      this.regionAndSubzones.push({ region, subzones: locales });
     }
 
-    return regionAndSubzones;
+    return this.regionAndSubzones;
   }
 
   private static _guess: string;

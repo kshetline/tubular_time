@@ -43,5 +43,11 @@ describe('Timezone', () => {
 
     expect(!!regions.find(r => r.region === 'Asia')).to.be.true;
     expect(!!regions.find(r => r.region === 'Valhalla')).to.be.false;
+
+    const offsets = Timezone.getOffsetsAndZones();
+
+    expect((offsets.find(o => o.offset === '-05:00§')?.zones ?? []).includes('America/New York')).to.be.true;
+    expect((offsets.find(o => o.offset === '-10:00')?.zones ?? []).includes('Pacific/Honolulu')).to.be.true;
+    expect(!!offsets.find(o => o.offset === '-99:99')).to.be.false;
   });
 });

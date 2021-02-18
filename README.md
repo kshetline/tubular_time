@@ -5,12 +5,11 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 ## Key features<!-- omit in toc -->
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
-* IANA timezone support, with features beyond simply parsing and formatting using timezones, including an accessible listing of all available timezones and live updates of timezone definitions.
-* Handles Local Mean Time, derived from longitude, to a resolution of one (time) minute.
+* IANA timezone support, with features beyond formatting using timezones, including parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region) and live updates of timezone definitions.
 * Supports and recognizes negative Daylight Saving Time.
 * Many features available using a familiar Moment.js-style API.
 * Extensive date/time manipulation and calculation capabilities.
-* Astronomical time functions.
+* Astronomical time functions, and local mean time from longitude to one (time) minute resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
@@ -1148,6 +1147,19 @@ This method returns a full list of available IANA timezone names. Does **not** i
 static getAvailableTimezones(): string[];
 ```
 
+This method returns a list of available IANA timezone names in a structured form, grouped by standard UTC offset and Daylight Saving Time offset (if any), e.g. '+02:00', '-05:00§', etc. The "MISC" timezones, and the various IANA "Etc" timezones, are filtered out:
+
+```typescript
+export interface OffsetsAndZones {
+  offset: string;
+  offsetSeconds: number;
+  dstOffset: number;
+  zones: string[];
+}
+
+static getOffsetsAndZones(): OffsetsAndZones[]
+```
+
 This method returns a full list of available IANA timezone names in a structured form, grouped by regions (e.g. "Africa", "America", "Etc", "Europe", etc.). The large "America" region is broken down into three regions, "America", "America/Argentina", and "America/Indiana". There is also a "MISC" region that contains a number of redundant, deprecated, or legacy timezones, such as many single-name-no-slash timezones and SystemV timezones:
 
 ```typescript
@@ -1159,8 +1171,40 @@ export interface RegionAndSubzones {
 static getRegionsAndSubzones(): RegionAndSubzones[];
 ```
 
-This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not really a guess at all, but a proper system-reported value. Otherwise the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`.
+This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not a guess at all, but a proper system-reported value. Otherwise, the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`. If `recheck` is `true`, a fresh check is forced instead of using a cached result:
 
 ```typescript
 static guess(recheck = false): string;
+```
+
+```typescript
+static has(name: string): boolean;
+```
+
+```typescript
+static from(name: string): Timezone;
+```
+
+```typescript
+static getTimezone(name: string, longitude?: number): Timezone
+```
+
+```typescript
+static hasShortName(name: string): boolean;
+```
+
+```typescript
+static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo;
+```
+
+```typescript
+static getPopulation(zoneName: string): number;
+```
+
+```typescript
+static getCountries(zoneName: string): Set<string>;
+```
+
+```typescript
+static doesZoneMatchCountry(zoneName: string, country: string): boolean;
 ```
