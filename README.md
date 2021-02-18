@@ -1177,33 +1177,55 @@ This method returns the name of the IANA timezone that best matches your local t
 static guess(recheck = false): string;
 ```
 
+Check if there is a timezone matching `name`:
+
 ```typescript
 static has(name: string): boolean;
 ```
+
+Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message:
 
 ```typescript
 static from(name: string): Timezone;
 ```
 
+Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but using the given `name`, and with `result.error` containing an error message. If the name `'LMT'` (for Local Mean Time) is used, then include the optional `longitude`, in degrees (negative west of the Prime Meridian), and a timezone matching Local Mean Time for that longitude will be returned, with a UTC offset at a resolution of one (time) minute (as opposed to angular minutes):
+
 ```typescript
 static getTimezone(name: string, longitude?: number): Timezone
 ```
+
+Check if a `shortName` for a timezone, such as 'PST' or 'EET', is available:
 
 ```typescript
 static hasShortName(name: string): boolean;
 ```
 
+If a `shortName` such as 'PST' or 'EET' is available, return information about that timezone, or `undefined` if not available. Please keep in mind that some short timezone names are ambiguous, so you might not get the desired result:
+
 ```typescript
+export interface ShortZoneNameInfo {
+  utcOffset: number;
+  dstOffset: number;
+  ianaName: string;
+}
+
 static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo;
 ```
+
+Get a rough estimate, if applicable and available, for the population of an IANA `zoneName`, otherwise 0:
 
 ```typescript
 static getPopulation(zoneName: string): number;
 ```
 
+Get a `Set` of ISO Alpha-2 (two-letter) country codes associated with a given IANA `zoneName`:
+
 ```typescript
 static getCountries(zoneName: string): Set<string>;
 ```
+
+Check if a given IANA `zoneName` is associated with ISO Alpha-2 `country`:
 
 ```typescript
 static doesZoneMatchCountry(zoneName: string, country: string): boolean;

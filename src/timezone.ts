@@ -322,10 +322,7 @@ export class Timezone {
     for (const zone of Object.keys(this.encodedTimezones)) {
       let region: string;
       let locale: string;
-      let $ = this.extendedRegions.exec(zone);
-
-      if (!$)
-        $ = /^(.+?)\/(.+)$/.exec(zone);
+      const $ = this.extendedRegions.exec(zone) ?? /^(.+?)\/(.+)$/.exec(zone);
 
       if (!$) {
         region = zone;
