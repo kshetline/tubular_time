@@ -21,8 +21,8 @@ export interface Transition {
   utcOffset: number; // in seconds
   dstOffset: number; // in seconds
   name?: string;
-  deltaOffset?: number; // in seconds
-  dstFlipped?: boolean;
+  deltaOffset?: number; // in seconds, compared to previous transition utcOffset
+  dstFlipped?: boolean; // true if dstOffset has changed 0 to non-0, or non-0 to 0, from previous transition
   baseOffsetChanged?: boolean;
   wallTime?: number; // in milliseconds
   wallTimeDay?: number;
@@ -958,7 +958,7 @@ export class Timezone {
     this._usesDst    = zoneInfo.usesDst;
     this._dstOffset  = zoneInfo.dstOffset;
     this.displayName = zoneInfo.displayName;
-    this.transitions = zoneInfo.transitions;
+    this.transitions = clone(zoneInfo.transitions);
     this._aliasFor = zoneInfo.aliasFor;
     this._population = zoneInfo.population ?? 0;
     this._countries = zoneInfo.countries ?? new Set();
@@ -979,6 +979,7 @@ export class Timezone {
         transition.baseOffsetChanged = (baseOffset !== lastBaseOffset);
         transition.wallTime = transition.transitionTime + transition.utcOffset * 1000;
         transition.wallTimeDay = getDateFromDayNumber_SGC(floor(transition.wallTime / 86400000)).d;
+        Object.freeze(transition);
 
         lastOffset = transition.utcOffset;
         lastDst = isDst;
@@ -991,8 +992,8 @@ export class Timezone {
   get utcOffset(): number { return this._utcOffset; }
   get usesDst(): boolean { return this._usesDst; }
   get dstOffset(): number { return this._dstOffset; }
-  get error(): string { return this._error; }
-  get aliasFor(): string { return this._aliasFor; }
+  get error(): string | undefined { return this._error; }
+  get aliasFor(): string | undefined { return this._aliasFor; }
   get countries(): Set<string> { return new Set(this._countries); }
   get population(): number { return this._population; }
 
@@ -1047,8 +1048,8 @@ export class Timezone {
     return name;
   }
 
-  supportsCountry(twoCharCode: string): boolean {
-    return this._countries.has(twoCharCode.toUpperCase());
+  supportsCountry(country: string): boolean {
+    return this._countries.has(country.toUpperCase());
   }
 
   getOffsetForWallTime(wallTime: number): number {
@@ -1109,7 +1110,7 @@ export class Timezone {
     return last(this.transitions);
   }
 
-  matchRating(other: Timezone): number {
+  private matchRating(other: Timezone): number {
     if (other === this)
       return Number.MAX_SAFE_INTEGER;
     else if (other.utcOffset !== this.utcOffset || other.dstOffset !== this.dstOffset)

@@ -1,17 +1,17 @@
 # @tubular/time
 
-Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library that handles both the day-to-day situations (so to speak) and the weird ones too.
+Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library for handling both day-to-day situations (so to speak) and some weird ones too.
 
 ## Key features<!-- omit in toc -->
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
-* IANA timezone support, with features beyond formatting using timezones, including parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region) and live updates of timezone definitions.
+* IANA timezone support, with features beyond formatting using timezones, such as parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region), and live updates of timezone definitions.
 * Supports and recognizes negative Daylight Saving Time.
-* Many features available using a familiar Moment.js-style API.
 * Extensive date/time manipulation and calculation capabilities.
+* Many features available using a familiar Moment.js-style API.
 * Astronomical time functions, and local mean time from longitude to one (time) minute resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
-* Suitable for tree shaking and Angular optimization.
+* Package suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
 
 <img src="https://shetline.com/readme/tubular-time/2.4.0/montage.jpg" alt="October 1582">
@@ -20,7 +20,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 
 This library was originally developed for an astronomy website, <https://skyviewcafe.com>, and has some features of particular interest for astronomy and historical events, but has been expanded to provide many features similar to the now-legacy-status Moment.js.
 
-Unlike Moment.js, IANA timezone handling is built in, not a separate module, with a compact set of timezone data that reaches roughly five years into the past and five years into the future, expanded into the past and future using Daylight Saving Time rules and/or values extracted from `Intl.DateTimeFormat`. Unlike the `Intl` API, the full list of available timezones is exposed, allowing the creation of timezone selection interfaces.
+Unlike Moment.js, IANA timezone handling is built in, not a separate module, with a compact set of timezone data that reaches roughly five years into the past and five years into the future, expanded into the past and future using Daylight Saving Time rules and/or values extracted from `Intl.DateTimeFormat`. Unlike the `Intl` API, the full list of available timezones is exposed, facilitating the creation of timezone selection interfaces.
 
 Two alternate large timezone definition sets, of approximately 280K each, are available, each serving slightly different purposes. These definitions can be bundled at compile time, or loaded dynamically at run time. You can also download live updates when the IANA Time Zone Database is updated.
 
@@ -74,6 +74,8 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [The `Timezone` class](#the-timezone-class)
   - [Static `Timezone` constants](#static-timezone-constants)
   - [Static `Timezone` methods](#static-timezone-methods)
+  - [`Timezone` getters](#timezone-getters)
+  - [`Timezone` methods](#timezone-methods)
 
 ## Installation
 
@@ -789,7 +791,7 @@ getLastDateInMonth(year?: number, month?: number): number;
 
 In December 2011, the nation of Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Samoa). The Pacific/Apia timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 30, 2011 did not exist for Samoans. Thursday was followed immediately by Saturday, a type of discontinuity that doesn’t happen with days dropped by switching from the Julian to the Gregorian calendar.
 
-**@tubular/time** handles this situation by treating that skipped-over Friday as a day that exists, but one that is 0 seconds long. The `getCalendarMonth()` method makes this 0-length status apparent by rendering the day-of-the-month for that day as a negative number.
+<a id="apia" name="apia"></a>**@tubular/time** handles this situation by treating that skipped-over Friday as a day that exists, but one that is 0 seconds long. The `getCalendarMonth()` method makes this 0-length status apparent by rendering the day-of-the-month for that day as a negative number.
 
 `new DateTime('2011-12', 'Pacific/Apia').getCalendarMonth().map(date => date.m ===12 ? date.d : '-')` →
 
@@ -969,7 +971,7 @@ static isDateTime(obj: any): obj is DateTime; // boolean
 ```typescript
 dstOffsetMinutes: number;
 dstOffsetSeconds: number;
-error: string; // Explanation of why a DateTime is considered invalid
+error: string | undefined; // Explanation of why a DateTime is considered invalid, undefined if valid.
 // 'DATETIME` is the usual type, but a DateTime instance can be DATELESS (time-only)
 //   or an abstract date/time with no real-world timezone.
 type: 'ZONELESS' | 'DATELESS' | 'DATETIME';
@@ -1141,10 +1143,40 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 
 ### Static `Timezone` methods
 
+Check if a given IANA `zoneName` is associated with ISO Alpha-2 (two-letter) `country` code:
+
+```typescript
+static doesZoneMatchCountry(zoneName: string, country: string): boolean;
+```
+
+<a id="format-utc-offset" name="format-utc-offset"></a>Take a duration, `offsetSeconds`, and turn it into a formatted UTC offset, e.g. `-18000` → `'-05:00'`. If `noColons` is set to `false` (it defaults to `true` if not specified), colons will be omitted from the output, e.g. `'-0500'`. If the duration is not in whole minutes, seconds will be added to the output, e.g. `'+15:02:19'`:
+
+```typescript
+static formatUtcOffset(offsetSeconds: number, noColons = false): string;
+```
+
+Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message:
+
+```typescript
+static from(name: string): Timezone;
+```
+
 This method returns a full list of available IANA timezone names. Does **not** include names for the above static constants:
 
 ```typescript
 static getAvailableTimezones(): string[];
+```
+
+Get a `Set` of ISO Alpha-2 (two-letter) country codes associated with a given IANA `zoneName`:
+
+```typescript
+static getCountries(zoneName: string): Set<string>;
+```
+
+Get the symbol (`^`, `§`, `#`, `❄`, or `~`) **@tubular/time** associates with various Daylight Saving Time offsets, or an empty string for `dstOffsetSeconds` of 0:
+
+```typescript
+static getDstSymbol(dstOffsetSeconds: number): string;
 ```
 
 This method returns a list of available IANA timezone names in a structured form, grouped by standard UTC offset and Daylight Saving Time offset (if any), e.g. '+02:00', '-05:00§', etc. The "MISC" timezones, and the various IANA "Etc" timezones, are filtered out:
@@ -1160,6 +1192,12 @@ export interface OffsetsAndZones {
 static getOffsetsAndZones(): OffsetsAndZones[]
 ```
 
+Get a rough estimate, if applicable and available, for the population of an IANA `zoneName`, otherwise 0:
+
+```typescript
+static getPopulation(zoneName: string): number;
+```
+
 This method returns a full list of available IANA timezone names in a structured form, grouped by regions (e.g. "Africa", "America", "Etc", "Europe", etc.). The large "America" region is broken down into three regions, "America", "America/Argentina", and "America/Indiana". There is also a "MISC" region that contains a number of redundant, deprecated, or legacy timezones, such as many single-name-no-slash timezones and SystemV timezones:
 
 ```typescript
@@ -1169,36 +1207,6 @@ export interface RegionAndSubzones {
 }
 
 static getRegionsAndSubzones(): RegionAndSubzones[];
-```
-
-This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not a guess at all, but a proper system-reported value. Otherwise, the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`. If `recheck` is `true`, a fresh check is forced instead of using a cached result:
-
-```typescript
-static guess(recheck = false): string;
-```
-
-Check if there is a timezone matching `name`:
-
-```typescript
-static has(name: string): boolean;
-```
-
-Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message:
-
-```typescript
-static from(name: string): Timezone;
-```
-
-Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but using the given `name`, and with `result.error` containing an error message. If the name `'LMT'` (for Local Mean Time) is used, then include the optional `longitude`, in degrees (negative west of the Prime Meridian), and a timezone matching Local Mean Time for that longitude will be returned, with a UTC offset at a resolution of one (time) minute (as opposed to angular minutes):
-
-```typescript
-static getTimezone(name: string, longitude?: number): Timezone
-```
-
-Check if a `shortName` for a timezone, such as 'PST' or 'EET', is available:
-
-```typescript
-static hasShortName(name: string): boolean;
 ```
 
 If a `shortName` such as 'PST' or 'EET' is available, return information about that timezone, or `undefined` if not available. Please keep in mind that some short timezone names are ambiguous, so you might not get the desired result:
@@ -1213,20 +1221,107 @@ export interface ShortZoneNameInfo {
 static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo;
 ```
 
-Get a rough estimate, if applicable and available, for the population of an IANA `zoneName`, otherwise 0:
+Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but using the given `name`, and with `result.error` containing an error message. If the name `'LMT'` (for Local Mean Time) is used, then include the optional `longitude`, in degrees (negative west of the Prime Meridian), and a timezone matching Local Mean Time for that longitude will be returned, with a UTC offset at a resolution of one (time) minute (as opposed to angular minutes):
 
 ```typescript
-static getPopulation(zoneName: string): number;
+static getTimezone(name: string, longitude?: number): Timezone
 ```
 
-Get a `Set` of ISO Alpha-2 (two-letter) country codes associated with a given IANA `zoneName`:
+This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not a guess at all, but a proper system-reported value. Otherwise, the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`. If `recheck` is `true`, a fresh check is forced instead of using a cached result:
 
 ```typescript
-static getCountries(zoneName: string): Set<string>;
+static guess(recheck = false): string;
 ```
 
-Check if a given IANA `zoneName` is associated with ISO Alpha-2 `country`:
+Check if there is a timezone matching `name`:
 
 ```typescript
-static doesZoneMatchCountry(zoneName: string, country: string): boolean;
+static has(name: string): boolean;
+```
+
+Check if a `shortName` for a timezone, such as 'PST' or 'EET', is available:
+
+```typescript
+static hasShortName(name: string): boolean;
+```
+
+### `Timezone` getters
+
+```typescript
+aliasFor: string | undefined; // undefined for a primary timezone name
+countries: Set<string>; // ISO Alpha-2 country codes, empty set if no associated countries
+dstOffset: number; // in seconds
+error: string | undefined; // undefined if no error
+population: number; // 0 if inapplicable or unknown
+usesDst: boolean;
+utcOffset: number; // in seconds
+zoneName: string;
+```
+
+### `Timezone` methods
+
+For a given `utcTime`, find the most recent change in the timezone, on or before `utcTime`. The change can be a DST “spring forward” or “fall back” change, a change in the standard UTC offset, or even just a change in the short-form name of the timezone:
+
+```typescript
+export interface Transition {
+  transitionTime: number; // in milliseconds
+  utcOffset: number; // in seconds
+  dstOffset: number; // in seconds
+  name?: string;
+  deltaOffset?: number; // in seconds, compared to previous transition utcOffset
+  dstFlipped?: boolean; // true if dstOffset has changed 0 to non-0, or non-0 to 0, from previous transition
+  baseOffsetChanged?: boolean;
+  wallTime?: number; // in milliseconds
+  wallTimeDay?: number;
+}
+
+findTransitionByUtc(utcTime: number): Transition | null;
+```
+
+For a given `wallTime`, expressed in milliseconds, find the most recent change in the timezone, on or before `wallTime`. For an ambiguous wall time, the _later_ time applies:
+
+```typescript
+findTransitionByWallTime(wallTime: number): Transition | null
+```
+
+Get the short-form name for the timezone, dependent upon `utcTime` in milliseconds, such as the America/New_York timezone returning `'EST'` during the winter, but `'EDT'` during the summer.
+
+```typescript
+getDisplayName(utcTime: number);
+```
+
+Return the formatted UTC offset for a given moment in time, specified in milliseconds, [formatted as per `Timezone.formatUtcOffset`](#format-utc-offset):
+
+```typescript
+getFormattedOffset(utcTime: number, noColons = false): string;
+```
+
+Return the UTC offset in seconds (with effect of DST, if applicable, included) for the timezone at `utcTime` in milliseconds. The `day` parameter is usually not needed, but for the [edge case of a 0-length day](#apia), passing the wall-time day value helps distinguish between the two overlapping midnights of one day and the instantaneous next day:
+
+```typescript
+getOffset(utcTime: number, day = 0): number;
+```
+
+For a given `wallTime`, in milliseconds for this timezone, return the UTC offset in seconds at that time. Where wall time is ambiguous, `wallTime` refers to the _later_ time:
+
+```typescript
+getOffsetForWallTime(wallTime: number): number;
+```
+
+For a given `utcTime`, in milliseconds, return the UTC offset in seconds, and DST offset in seconds, at that time for this timezone. The UTC offset includes the effect of the DST offset, if any. The result is a two-element numeric array, `[utcOffset, dstOffset]`:
+
+```typescript
+getOffsets(utcTime: number): number[];
+```
+
+Check if the given `utcTime`, in milliseconds, is during Daylight Saving Time for this timezone:
+
+```typescript
+isDuringDst(utcTime: number): boolean;
+```
+
+Check if this timezone explicitly supports the given `country`, specified as a two-letter ISO Alpha-2 code:
+
+```typescript
+supportsCountry(country: string): boolean;
 ```

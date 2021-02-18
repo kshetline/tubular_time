@@ -41,6 +41,7 @@ function hasYearField(obj: any): boolean {
          obj.year != null || obj.yearByWeek != null || obj.yearByWeekLocale != null;
 }
 
+/** @hidden */
 export function isGregorianType(obj: any): obj is GregorianChange {
   return isNumber(obj) ||
          (isArray(obj) && obj.length === 3 && obj.findIndex(n => !isNumber(n)) < 0) ||

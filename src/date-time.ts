@@ -351,7 +351,7 @@ export class DateTime extends Calendar {
   }
 
   get valid(): boolean { return this._utcTimeMillis != null && !isNaN(this._utcTimeMillis); }
-  get error(): string { return this._error || ((!this.valid && 'general error') || undefined); }
+  get error(): string | undefined { return this._error || ((!this.valid && 'general error') || undefined); }
 
   get utcTimeMillis(): number { return this._utcTimeMillis; }
   set utcTimeMillis(newTime: number) {
