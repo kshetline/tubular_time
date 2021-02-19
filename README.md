@@ -9,7 +9,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 * Supports and recognizes negative Daylight Saving Time.
 * Extensive date/time manipulation and calculation capabilities.
 * Many features available using a familiar Moment.js-style API.
-* Astronomical time functions, and local mean time from longitude to one (time) minute resolution.
+* Astronomical time functions, and local mean time from longitude to one minute (of time) resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Package suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
@@ -83,13 +83,13 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 `npm install @tubular/time`
 
-`import { ttime, DateTime, Timezone`...`} from '@tubular/time';`
+`import { ttime, DateTime, Timezone`...`} from '@tubular/time'; // ESM`
 
 ...or...
 
-`const { ttime, DateTime, Timezone`...`} = require('@tubular/time');`
+`const { ttime, DateTime, Timezone`...`} = require('@tubular/time/es6'); // CommonJS`
 
-Documentation examples will assume **@tubular/time** has been imported as above.
+Documentation examples will assume **@tubular/time** has been imported as above. You can also require `'@tubular/time/es5'` for ES5-compatible code.
 
 ### Via `<script>` tag
 
@@ -97,6 +97,8 @@ Documentation examples will assume **@tubular/time** has been imported as above.
 <script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
 <script src="https://unpkg.com/@tubular/time/dist/web/index.js"></script>
 ```
+
+_(For ES5-compatible code, use `https://unpkg.com/@tubular/time/dist/web5/index.js"`_
 
 The first script element is an example of optionally loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
@@ -114,21 +116,21 @@ While there are a wide range of functions and classes available from **@tubular/
 
 |  |  | .toString() |
 |---|---|---|
-| `ttime()` | Current time | `DateTime<2021‑01‑28T03:29:12.040 ‑05:00>` |
+| `ttime()` | Current time. | `DateTime<2021‑01‑28T03:29:12.040 ‑05:00>` |
 | `ttime('1969‑07‑12T20:17')`<br>`ttime('1969‑07‑12T20:17Z')`<br>`ttime('20210704T0945-03')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>A trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<1969‑07‑12T20:17:00.000 ‑04:00§>`<br>`DateTime<1969-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-07-04T09:45:00.000 -03:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>`
-| `ttime('2021-w05-5')` | DateTime from an ISO-8601-like date/time variant for locale-based week numbering | `DateTime<2021-01-28T00:00:00.000 -05:00>` |
-| `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
-| `ttime('20:17:15')` | Dateless time from an ISO-8601 time string | `DateTime<20:17:15.000>` |
-| `ttime(1200848400000)` | From a millisecond timestamp | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })` | From a `DateAndTime` object, short-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })` | From a `DateAndTime` object, long-style field names | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
+| `ttime('2021-w05-5')` | DateTime from an ISO-8601-like date/time variant (lowercase `w` instead of uppercase `W`) for locale-based week numbering. | `DateTime<2021-01-28T00:00:00.000 -05:00>` |
+| `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone. | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
+| `ttime('20:17:15')` | Dateless time from an ISO-8601 time string. | `DateTime<20:17:15.000>` |
+| `ttime(1200848400000)` | From a millisecond timestamp. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
+| `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })` | From a `DateAndTime` object, short-style field names. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
+| `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })` | From a `DateAndTime` object, long-style field names. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime([2013, 12, 11, 10, 9, 8, 765])` | From a numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order. | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
-| `ttime(new Date(2008, 0, 20, 12, 0))` | From a JavaScript `Date` object | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | From an ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`) | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
-| `ttime.unix(1318781876.721)` | From a Unix timestamp | `DateTime<2011-10-16T12:17:56.721 -04:00§>` |
-| `ttime.unix(1318781876.721, 'UTC')` | From a Unix timestamp, with timezone | `DateTime<2011-10-16T16:17:56.721 +00:00>` |
+| `ttime(new Date(2008, 0, 20, 12, 0))` | From a JavaScript `Date` object. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
+| `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | From an ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`). | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
+| `ttime.unix(1318781876.721)` | From a Unix timestamp. | `DateTime<2011-10-16T12:17:56.721 -04:00§>` |
+| `ttime.unix(1318781876.721, 'UTC')` | From a Unix timestamp, with timezone. | `DateTime<2011-10-16T16:17:56.721 +00:00>` |
 
-When dealing Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
+When dealing with Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
 
 By default, any ambiguous time is treated as the earlier time, the first occurrence of that time during a day. You can, however, use either an explicit UTC offset, or a subscript 2 (₂), to indicate the later time.
 
@@ -197,7 +199,7 @@ Please note that, as most unaccented Latin letters are interpreted as special fo
 | | d | 0 1 ... 5 6 |
 | | do | 0th 1st ... 5th 6th |
 | Day of Week (ISO) | E | 1 2 ... 6 7 |
-| Day of Week (locale) | e | 1 2 ... 6 7<br><br>Note: this is 1-based, not 0-based, as in Moment.js |
+| Day of Week (locale) | e | 1 2 ... 6 7<br><br>Note: this is 1-based, not 0-based, as in Moment.js. |
 | Hour | HH | 00-23 |
 | | H | 0-23 |
 | | hh | 01-12, for use with AM/PM |
@@ -334,7 +336,7 @@ With proper tree-shaking, the code footprint of **@tubular/time** should be less
 
 Using `initTimezoneLarge()` provides the full IANA timezone database. Using this will increase code size by about 280K, presuming that your build process is smart enough to have otherwise excluded unused code in the first place.
 
-`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and adjusts a small number of fairly old historical changes by a few hours so that only the time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can't be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October 1867.
+`initTimezoneLargeAlt()` provides a slight variant of the full IANA timezone database, and is also roughly 280K. This variant rounds all timezone offsets to full minutes, and adjusts a small number of fairly old historical changes by a few hours so that only the time-of-day ever goes backward, never the calendar date. It’s generally more than enough trouble for software to cope with missing and/or repeated hours during a day; `initTimezoneLargeAlt()` makes sure the date/time can’t be, say, the 19th of the month, then the 18th, and then the 19th again, as happens with the unmodified America/Juneau timezone during October 1867.
 
 For browser-based inclusion of timezone definitions, if not relying on a tool like **webpack** to handle such issues for you, you can also include full timezone definitions this way:
 
@@ -471,7 +473,7 @@ In specifying a date, the date fields have the following priority:
     * If nothing more is given, the date is treated as the first of the month.
     * `d` / `day`: The date of the month.
   * `dy` / `dayOfYear`: The 1-based number of days into the year, such that 32 means February 1.
-* `yw` / `yearByWeek`: An ISO week-based calendar year, where each week starts on Monday. This year is the same as the normal calendar year for most of the calendar year, except for, possibly, a few days at the beginning and end of the year. Week 1 is the first week that contains January 4. Along with this style of year, you can specify:
+* `yw` / `yearByWeek`: An ISO week-based calendar year, where each week starts on Monday. This year is the same as the normal calendar year for most of the calendar year, except for, possibly, a few days at the beginning and end of the year. Week 1 is the first week which contains January 4. Along with this style of year, you can specify:
     * Nothing more, in which case the date is treated as the first day of the first week of the year.
     * `w` / `week`: The 1-based week number.
       * If nothing more, the date is treated as the first day of the given week.
@@ -519,7 +521,7 @@ The above produces a date one year later than the current time. In most cases, t
 
 `ttime('2021-01-31').add(DateTimeField.MONTH, 1).toIsoString(10)` → `2021-02-28`
 
-You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.)
+You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, `YEAR_WEEK`, and `YEAR_WEEK_LOCALE`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.)
 
 For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amount` you pass, are applied. When dealing with months, quarters, and years, the variable lengths of months, quarters, and years apply.
 
@@ -551,7 +553,7 @@ While seconds and minutes wrap at 59, hours at 23, and dates wrap at the length 
 
 You can `roll` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `AM_PM`, `DAY`, `DAY_OF_WEEK`, `DAY_OF_WEEK_LOCALE`, `DAY_OF_YEAR`, `WEEK`, `WEEK_LOCALE`, `MONTH`, `YEAR`, `YEAR_WEEK`, `YEAR_WEEK_LOCALE`, `ERA`.
 
-For the purpose of the `roll()` method, `AM_PM` and `ERA` are treated as numeric values. AM and BC are 0, PM and AD are 1. If you roll by an odd number, the value is changed. If you roll by an even value, the value will be unchanged.
+For the purpose of the `roll()` method, `AM_PM` and `ERA` are treated as numeric values. AM and BC are 0, PM and AD are 1. If you roll by an odd number, the value will be changed. If you roll by an even value, the value will be unchanged.
 
 Examples of using `roll()`:
 
@@ -634,6 +636,12 @@ When an invalid `DateTime` instance is created, the `valid` property returns `fa
 
 `ttime('1234-56-78').valid` → `false`<br>
 `ttime('1234-56-78').error` → `'Invalid month: 56'`
+
+If you prefer that an exception be thrown, you can do this:
+
+`ttime('1234-56-78').throwIfInvalid()`
+
+If a `DateTime` is valid, `throwIfInvalid()` returns that instance, so you can use the result as the `DateTime` itself.
 
 Parsing of dates and times specified as strings is somewhat loose. When no format string is provided, dates are parsed according to ISO-8601, with leniency about leading zeros when delimiters are used. Pseudo-months 0 and 13 are accepted, as are days of the month from 0 to 32, regardless of the length of a given month. Years can be in the range -271820 to 275759.
 
@@ -854,7 +862,7 @@ getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number)
 `new DateTime('1969-09-30', 'Pacific/Kwajalein').getDiscontinuityDuringDay()` →<br>
 `{ start: '24:00:00', end: '01:00:00', delta: -82800000 }`
 
-Here's a skyviewcafe.com image for that extra-long day in the Marshall Islands, with two sunrises, two sunsets, and 24 hours, 6 minutes worth of daylight packed into a 47-hour day:
+Here’s a skyviewcafe.com image for that extra-long day in the Marshall Islands, with two sunrises, two sunsets, and 24 hours, 6 minutes worth of daylight packed into a 47-hour day:
 
 <img src="https://shetline.com/readme/tubular-time/2.4.0/mhl_sep_30_1969.jpg" width=215 height=195 alt="Marshall Islands, September 30, 1969">
 
@@ -1023,7 +1031,7 @@ getDayOfWeekInMonthIndex(): number;
 // Returns the date (day-of-the-month only) of the first occurrence of a given day
 //   of the week on or after a given date. For example, election day in the
 //   United States is the first Tuesday on or after November 2, so election day
-//   in 2025 is getDayOnOrAfter(2025, 11, 2, 2).
+//   in 2024 is getDayOnOrAfter(2024, 11, ttime.TUESDAY, 2).
 getDayOnOrAfter(year: number, month: number, dayOfTheWeek: number, minDate: number): number;
 getDayOnOrAfter(dayOfTheWeek: number, minDate: number): number;
 
@@ -1037,7 +1045,8 @@ getDayOnOrBefore(dayOfTheWeek: number, minDate: number): number;
 //   Gregorian calendar.
 getDaysInYear(year?: number): number;
 
-// Returned date is arbitrary distant future for pure Julian calendar, distant past for pure Gregorian.
+// Returned date is an arbitrary distant future for a pure Julian calendar, distant past
+// for pure Gregorian, otherwise the first-used Gregorian date.
 getGregorianChange(): YMDDate;
 
 // This method is for finding the date of the first day of the first week of a week-based
@@ -1054,31 +1063,43 @@ getStartOfDayMillis(yearOrDate?: YearOrDate, month?: number, day?: number): numb
 //   timezone and calendar rules.
 getTimeOfDayFieldsFromMillis(millis: number): DateAndTime;
 
-// Display name for `DateTime` instance’s timezone, such as "EDT" or "PST".
+// Display short name for `DateTime` instance’s timezone, such as "EDT" or "PST".
 getTimezoneDisplayName(): string;
 
-// Typically 52 or 53, the number of weeks in a week-based year.
+// Typically 52 or 53, the number of weeks in a week-based year, ISO by default.
 getWeeksInYear(year: number, startingDayOfWeek = 1, minDaysInCalendarYear = 4): number;
 
+// Typically 52 or 53, the number of weeks in a locale-specific week-based year.
+getWeeksInYearLocale(year: number): number;
+
 // For a given standard calendar date, return the week-based year, week number, and day
-//   number, according to startingDayOfWeek and minDaysInCalendarYear.
+//   number, according to startingDayOfWeek and minDaysInCalendarYear, defaulting to ISO.
 getYearWeekAndWeekday(year: number, month: number, day: number,
   startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 getYearWeekAndWeekday(date: YearOrDate | number,
   startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
-// Check if a given date is before this DateTime's switch to the Gregorian calendar.
+// For a given standard calendar date, return the locale-specific week-based year,
+// week number, and day.
+getYearWeekAndWeekdayLocale(year: number, month: number, day: number): number[];
+getYearWeekAndWeekdayLocale(date: YearOrDate | number): number[];
+
+// Check if a given date is before this DateTime’s switch to the Gregorian calendar.
 isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
 
-// `true` if the given year is a leap year.
+// `true` if the given year is a leap year, according to this `DateTime` instance's
+// calendar rules. For example:
+//
+// new (null, null, 'G').isLeapYear(1900) → false
+// new (null, null, 'J').isLeapYear(1900) → true
 isLeapYear(year?: number): boolean;
 
 isPureGregorian(): boolean;
 
 isPureJulian(): boolean;
 
-// Sets the first date when the Gregorian calendar starts. Pass 'j' as the first argument to get
-//   a perpetual Julian calendar, or 'g' for always-Gregorian (extending even before the Gregorian
+// Sets the first date when the Gregorian calendar starts. Pass 'J' as the first argument to get
+//   a perpetual Julian calendar, or 'G' for always-Gregorian (extending even before the Gregorian
 //   calendar existed - a fancy word for that being a "proleptic" Gregorian calendar). You can
 //   also pass a string date (e.g. '1752-09-14'), a numeric array (e.g. [1752, 9, 14], or a YMDDate
 //   object. If you pass a numeric year alone for the first argument, include two more arguments
@@ -1090,6 +1111,9 @@ setPureGregorian(pureGregorian: boolean): DateTime;
 
 // If pureJulian is true, calendar becomes pure Julian. If false, standard change date of 1582-10-15 is applied.
 setPureJulian(pureJulian: boolean): DateTime;
+
+// Throws an exception if the `DateTime` is invalid, otherwise returns the instance itself.
+throwIfInvalid(): DateTime;
 
 // Convert DateTime to a JavaScript Date.
 toDate(): Date;
@@ -1143,7 +1167,7 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 
 ### Static `Timezone` methods
 
-Check if a given IANA `zoneName` is associated with ISO Alpha-2 (two-letter) `country` code:
+Check if a given IANA `zoneName` is associated with an ISO Alpha-2 (two-letter) `country` code:
 
 ```typescript
 static doesZoneMatchCountry(zoneName: string, country: string): boolean;
@@ -1179,7 +1203,7 @@ Get the symbol (`^`, `§`, `#`, `❄`, or `~`) **@tubular/time** associates with
 static getDstSymbol(dstOffsetSeconds: number): string;
 ```
 
-This method returns a list of available IANA timezone names in a structured form, grouped by standard UTC offset and Daylight Saving Time offset (if any), e.g. '+02:00', '-05:00§', etc. The "MISC" timezones, and the various IANA "Etc" timezones, are filtered out:
+This method returns a list of available IANA timezone names in a structured form, grouped by standard UTC offset and Daylight Saving Time offset (if any), e.g. `+02:00`, `-05:00§`, etc. The “MISC” timezones, and the various IANA “Etc” timezones, are filtered out:
 
 ```typescript
 export interface OffsetsAndZones {
@@ -1198,7 +1222,7 @@ Get a rough estimate, if applicable and available, for the population of an IANA
 static getPopulation(zoneName: string): number;
 ```
 
-This method returns a full list of available IANA timezone names in a structured form, grouped by regions (e.g. "Africa", "America", "Etc", "Europe", etc.). The large "America" region is broken down into three regions, "America", "America/Argentina", and "America/Indiana". There is also a "MISC" region that contains a number of redundant, deprecated, or legacy timezones, such as many single-name-no-slash timezones and SystemV timezones:
+This method returns a full list of available IANA timezone names in a structured form, grouped by regions (e.g. “Africa”, “America”, “Etc”, “Europe”, etc.). The large “America” region is broken down into three regions, “America”, “America/Argentina”, and “America/Indiana”. There is also a “MISC” region that contains a number of redundant, deprecated, or legacy timezones, such as many single-name-no-slash timezones and SystemV timezones:
 
 ```typescript
 export interface RegionAndSubzones {
@@ -1221,7 +1245,7 @@ export interface ShortZoneNameInfo {
 static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo;
 ```
 
-Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but using the given `name`, and with `result.error` containing an error message. If the name `'LMT'` (for Local Mean Time) is used, then include the optional `longitude`, in degrees (negative west of the Prime Meridian), and a timezone matching Local Mean Time for that longitude will be returned, with a UTC offset at a resolution of one (time) minute (as opposed to angular minutes):
+Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but using the given `name`, and with `result.error` containing an error message. If the name `'LMT'` (for Local Mean Time) is used, then include the optional `longitude` in degrees (negative west of the Prime Meridian), and a timezone matching Local Mean Time for that longitude will be returned, with a UTC offset at a resolution of one (time) minute (as opposed to angular minutes):
 
 ```typescript
 static getTimezone(name: string, longitude?: number): Timezone

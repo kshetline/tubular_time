@@ -14,6 +14,10 @@ export const THURSDAY  = 4;
 export const FRIDAY    = 5;
 export const SATURDAY  = 6;
 
+export enum DayOfWeek { SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY };
+export enum Month { JANUARY = 1, FEBRUARY, MARCH, APRIL, MAY, JUNE,
+                    JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER };
+
 /**
  * Constant for indicating the last occurrence of a particular day of the week (e.g. the last Tuesday) of a given month.
  */

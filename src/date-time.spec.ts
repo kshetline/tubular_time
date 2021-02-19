@@ -50,6 +50,8 @@ describe('DateTime', () => {
     expect(new DateTime('2245W343').format(ttime.DATE)).to.equal('2245-08-20');
     expect(new DateTime('2245W34').format(ttime.DATE)).to.equal('2245-08-18');
     expect(new DateTime('2245').format(ttime.DATE)).to.equal('2245-01-01');
+    expect(() => new DateTime(NaN).throwIfInvalid()).to.throw('Invalid core millisecond time value: NaN');
+    expect(() => new DateTime().throwIfInvalid()).to.not.throw();
 
     const dt = new DateTime();
 
@@ -63,6 +65,20 @@ describe('DateTime', () => {
     expect(new DateTime('2021-w01-1', null, 'fr').wallTime.dow).to.equal(1);
     expect(new DateTime('2021-w01-1', null, 'fr_CA').wallTime.dow).to.equal(0);
     expect(new DateTime('2021-w01-1', null, 'ar_EG').wallTime.dow).to.equal(6);
+  });
+
+  it('should properly compute locale-specific number of weeks in year.', () => {
+    const dt = new DateTime(null, null, 'en-us');
+
+    expect(dt.getWeeksInYearLocale(2020)).to.equal(52);
+    expect(dt.getWeeksInYearLocale(2021)).to.equal(52);
+    expect(dt.getWeeksInYearLocale(2022)).to.equal(53);
+    expect(dt.getWeeksInYearLocale(2023)).to.equal(52);
+    expect(dt.getWeeksInYearLocale(2024)).to.equal(52);
+    expect(dt.getWeeksInYearLocale(2025)).to.equal(52);
+    expect(dt.getWeeksInYearLocale(2026)).to.equal(52);
+
+    expect(dt.getYearWeekAndWeekdayLocale(2023, 10, 13)).to.eql([2022, 48, 4]);
   });
 
   it('should skip an hour starting Daylight Saving Time', () => {
@@ -208,7 +224,12 @@ describe('DateTime', () => {
     expect(new DateTime('1970-08-01').add('months', 5).toIsoString(10)).to.equal('1971-01-01');
     expect(new DateTime('1970-03-31').add(DateTimeField.MONTH, -1).toIsoString(10)).to.equal('1970-02-28');
     expect(new DateTime('1972-02-29').add(DateTimeField.YEAR, 50).toIsoString(10)).to.equal('2022-02-28');
-    expect(() => new DateTime('04:05').add(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
+    expect(new DateTime('2020-W53-3').add(DateTimeField.YEAR_WEEK, 1).format(ttime.WEEK_AND_DAY))
+      .to.equal('2021-W52-3');
+    expect(new DateTime('2022-w53-5').subtract(DateTimeField.YEAR_WEEK_LOCALE, 1).format(ttime.WEEK_AND_DAY_LOCALE))
+      .to.equal('2021-w52-5');
+    expect(() => new DateTime('04:05').add(DateTimeField.WEEK, 1))
+      .to.throw('WEEK cannot be used with a dateless time value');
     expect(() => new DateTime().add('era', 1)).to.throw('"era" is not a valid add()/subtract() field');
   });
 

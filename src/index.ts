@@ -24,8 +24,8 @@ import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
 import { parse } from './format-parse';
-import { isString } from '@tubular/util';
-import { CalendarType } from './calendar';
+import { forEach, isString } from '@tubular/util';
+import { CalendarType, DayOfWeek, Month } from './calendar';
 
 let win: any = null;
 
@@ -59,10 +59,6 @@ export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
 export { zonePollerNode } from './zone-poller-node';
-
-export const julianDay = DateTime.julianDay;
-export const millisFromJulianDay = DateTime.millisFromJulianDay;
-export const julianDay_SGC = DateTime.julianDay_SGC;
 
 export function initTimezoneSmall(): void {
   Timezone.defineTimezones(timezoneSmall);
@@ -254,6 +250,12 @@ ttime.getDefaultLocale      = DateTime.getDefaultLocale;
 ttime.setDefaultLocale      = DateTime.setDefaultLocale;
 ttime.getDefaultTimezone    = DateTime.getDefaultTimezone;
 ttime.setDefaultTimezone    = DateTime.setDefaultTimezone;
+ttime.julianDay             = DateTime.julianDay;
+ttime.millisFromJulianDay   = DateTime.millisFromJulianDay;
+ttime.julianDay_SGC         = DateTime.julianDay_SGC;
+
+forEach(DayOfWeek, (key, value) => ttime[key] = value);
+forEach(Month, (key, value) => ttime[key] = value);
 
 Object.freeze(ttime);
 

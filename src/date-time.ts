@@ -353,6 +353,13 @@ export class DateTime extends Calendar {
   get valid(): boolean { return this._utcTimeMillis != null && !isNaN(this._utcTimeMillis); }
   get error(): string | undefined { return this._error || ((!this.valid && 'general error') || undefined); }
 
+  throwIfInvalid(): this {
+    if (!this.valid)
+      throw new Error(this.error);
+
+    return this;
+  }
+
   get utcTimeMillis(): number { return this._utcTimeMillis; }
   set utcTimeMillis(newTime: number) {
     if (this.locked)
@@ -526,6 +533,7 @@ export class DateTime extends Calendar {
 
     let updateFromWall = false;
     let normalized: YMDDate;
+    let weekCount: number;
     const wallTime = result._wallTime;
     const fieldN = fieldNameToField(field);
 
@@ -587,6 +595,32 @@ export class DateTime extends Calendar {
         wallTime.y += amount;
         normalized = result.normalizeDate(wallTime);
         [wallTime.y, wallTime.m, wallTime.d] = [normalized.y, normalized.m, normalized.d];
+        delete wallTime.n;
+        break;
+
+      case DateTimeField.YEAR_WEEK:
+        this.checkDateless(fieldN);
+        updateFromWall = true;
+        wallTime.yw += amount;
+
+        if (wallTime.w > (weekCount = this.getWeeksInYear(wallTime.yw)))
+          wallTime.w = weekCount;
+
+        delete wallTime.y;
+        delete wallTime.ywl;
+        delete wallTime.n;
+        break;
+
+      case DateTimeField.YEAR_WEEK_LOCALE:
+        this.checkDateless(fieldN);
+        updateFromWall = true;
+        wallTime.ywl += amount;
+
+        if (wallTime.wl > (weekCount = this.getWeeksInYearLocale(wallTime.ywl)))
+          wallTime.wl = weekCount;
+
+        delete wallTime.y;
+        delete wallTime.yw;
         delete wallTime.n;
         break;
 
@@ -717,7 +751,7 @@ export class DateTime extends Calendar {
       case DateTimeField.WEEK:
         this.checkDateless(fieldN);
         {
-          const weeksInYear = result.getWeeksInYear(wallTime.yw, 1, 4);
+          const weeksInYear = result.getWeeksInYear(wallTime.yw);
 
           wallTime.w = mod(wallTime.w + amount - 1, weeksInYear) + 1;
           delete wallTime.y;
@@ -908,7 +942,7 @@ export class DateTime extends Calendar {
       case DateTimeField.WEEK:
         this.checkDateless(fieldN);
         min = loose ? 0 : 1;
-        max = loose ? 54 : this.getWeeksInYear(wallTime.yw, 1, 4);
+        max = loose ? 54 : this.getWeeksInYear(wallTime.yw);
         wallTime.w = value;
         delete wallTime.y;
         delete wallTime.ywl;
@@ -918,7 +952,7 @@ export class DateTime extends Calendar {
       case DateTimeField.WEEK_LOCALE:
         this.checkDateless(fieldN);
         min = loose ? 0 : 1;
-        max = loose ? 54 : result.getWeeksInYear(wallTime.ywl, getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
+        max = loose ? 54 : result.getWeeksInYearLocale(wallTime.ywl);
         wallTime.wl = value;
         delete wallTime.y;
         delete wallTime.yw;
@@ -1500,9 +1534,9 @@ export class DateTime extends Calendar {
     wallTime.dow = this.getDayOfWeek(wallTime);
     wallTime.dowmi = this.getDayOfWeekInMonthIndex(wallTime.y, wallTime.m, wallTime.d);
     wallTime.q = floor((wallTime.m - 1) / 3) + 1;
-    [wallTime.yw, wallTime.w, wallTime.dw] = this.getYearWeekAndWeekday(wallTime, 1, 4);
+    [wallTime.yw, wallTime.w, wallTime.dw] = this.getYearWeekAndWeekday(wallTime);
     [wallTime.ywl, wallTime.wl, wallTime.dwl] =
-      this.getYearWeekAndWeekday(wallTime, getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
+      this.getYearWeekAndWeekdayLocale(wallTime);
     wallTime.dy = wallTime.n - this.getDayNumber(wallTime.y, 1, 1) + 1;
     wallTime.j = this.isJulianCalendarDate(wallTime);
     syncDateAndTime(wallTime);
@@ -1625,6 +1659,10 @@ export class DateTime extends Calendar {
     return super.getWeeksInYear(year, startingDayOfWeek, minDaysInCalendarYear);
   }
 
+  getWeeksInYearLocale(year: number): number {
+    return this.getWeeksInYear(year, null, null);
+  }
+
   getYearWeekAndWeekday(year: number, month: number, day: number,
     startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
@@ -1633,18 +1671,23 @@ export class DateTime extends Calendar {
 
   getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
                       startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
-    const sow = getStartOfWeek(this.locale) ?? 1;
-    const min = getMinDaysInWeek(this.locale) ?? 4;
-
     if (isObject(yearOrDate)) {
-      monthOrSDW = monthOrSDW ?? sow;
-      dayOrMDiCY = dayOrMDiCY ?? min;
+      monthOrSDW = monthOrSDW ?? 1;
+      dayOrMDiCY = dayOrMDiCY ?? 4;
     }
     else {
-      startingDayOfWeek = startingDayOfWeek ?? sow;
-      minDaysInCalendarYear = minDaysInCalendarYear ?? min;
+      startingDayOfWeek = startingDayOfWeek ?? 1;
+      minDaysInCalendarYear = minDaysInCalendarYear ?? 4;
     }
 
     return super.getYearWeekAndWeekday(yearOrDate as any, monthOrSDW, dayOrMDiCY, startingDayOfWeek, minDaysInCalendarYear);
+  }
+
+  getYearWeekAndWeekdayLocale(year: number, month: number, day: number): number[];
+
+  getYearWeekAndWeekdayLocale(date: YearOrDate | number): number[];
+
+  getYearWeekAndWeekdayLocale(yearOrDate: YearOrDate): number[] {
+    return this.getYearWeekAndWeekday(yearOrDate, getStartOfWeek(this.locale), getMinDaysInWeek(this.locale));
   }
 }
