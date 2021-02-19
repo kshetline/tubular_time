@@ -25,7 +25,7 @@ import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
 import { parse } from './format-parse';
 import { forEach, isString } from '@tubular/util';
-import { CalendarType, DayOfWeek, Month } from './calendar';
+import { CalendarType, DayOfWeek, Month, LAST } from './calendar';
 
 let win: any = null;
 
@@ -42,8 +42,9 @@ if (win) {
 }
 
 export {
-  Calendar, CalendarType, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR, SUNDAY, MONDAY, TUESDAY, WEDNESDAY,
-  THURSDAY, FRIDAY, SATURDAY, LAST, YearOrDate, GregorianChange, getISOFormatDate, addDaysToDate_SGC,
+  Calendar, CalendarType, DayOfWeek, Month, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR,
+  SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, LAST,
+  YearOrDate, GregorianChange, getISOFormatDate, addDaysToDate_SGC,
   getDateFromDayNumber_SGC, getDateFromDayNumberGregorian, getDateFromDayNumberJulian, getDateOfNthWeekdayOfMonth_SGC,
   getDayNumber_SGC, getDayNumberGregorian, getDayNumberJulian, getDayOfWeek, getDayOfWeek_SGC,
   getDayOfWeekInMonthCount_SGC, getDayOnOrAfter_SGC, getDayOnOrBefore_SGC, getDaysInMonth_SGC, getDaysInYear_SGC,
@@ -256,6 +257,7 @@ ttime.julianDay_SGC         = DateTime.julianDay_SGC;
 
 forEach(DayOfWeek, (key, value) => ttime[key] = value);
 forEach(Month, (key, value) => ttime[key] = value);
+ttime.LAST = LAST;
 
 Object.freeze(ttime);
 
