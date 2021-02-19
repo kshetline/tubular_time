@@ -14,9 +14,11 @@ export const THURSDAY  = 4;
 export const FRIDAY    = 5;
 export const SATURDAY  = 6;
 
-export enum DayOfWeek { SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY };
+// noinspection JSUnusedGlobalSymbols
+export enum DayOfWeek { SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY }
+// noinspection JSUnusedGlobalSymbols
 export enum Month { JANUARY = 1, FEBRUARY, MARCH, APRIL, MAY, JUNE,
-                    JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER };
+                    JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER }
 
 /**
  * Constant for indicating the last occurrence of a particular day of the week (e.g. the last Tuesday) of a given month.
@@ -188,7 +190,7 @@ export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?:
 /**
  * Always returns 1. This function exists only to parallel getFirstDateInMonth, which isn't always 1 when the
  * Gregorian change date is not fixed.
- * @returns First date of calender month.
+ * @returns First date of calendar month.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getFirstDateInMonth_SGC(year: number, month: number): number {
