@@ -5,6 +5,7 @@
 /.eslintrc.json
 /.eslintignore
 /docs
+/img
 /.nyc_output
 *.js.map
 *.spec.d.ts

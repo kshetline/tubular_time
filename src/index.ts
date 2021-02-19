@@ -1,8 +1,31 @@
+/*
+  Copyright © 2017-2021 Kerry Shetline, kerry@shetline.com
+
+  MIT license: https://opensource.org/licenses/MIT
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+  documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+  rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+  persons to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+  Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+  COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+import { DateTime, DateTimeArg } from './date-time';
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
 import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
+import { parse } from './format-parse';
+import { forEach, isString } from '@tubular/util';
+import { CalendarType, DayOfWeek, Month, LAST } from './calendar';
 
 let win: any = null;
 
@@ -19,19 +42,20 @@ if (win) {
 }
 
 export {
-  Calendar, CalendarType, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR, SUNDAY, MONDAY, TUESDAY, WEDNESDAY,
-  THURSDAY, FRIDAY, SATURDAY, LAST, YMDDate, YearOrDate, GregorianChange, getISOFormatDate, addDaysToDate_SGC,
+  Calendar, CalendarType, DayOfWeek, Month, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR,
+  SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, LAST,
+  YearOrDate, GregorianChange, getISOFormatDate, addDaysToDate_SGC,
   getDateFromDayNumber_SGC, getDateFromDayNumberGregorian, getDateFromDayNumberJulian, getDateOfNthWeekdayOfMonth_SGC,
   getDayNumber_SGC, getDayNumberGregorian, getDayNumberJulian, getDayOfWeek, getDayOfWeek_SGC,
   getDayOfWeekInMonthCount_SGC, getDayOnOrAfter_SGC, getDayOnOrBefore_SGC, getDaysInMonth_SGC, getDaysInYear_SGC,
   getFirstDateInMonth_SGC, getLastDateInMonth_SGC, getLastDateInMonthGregorian, getLastDateInMonthJulian,
   isJulianCalendarDate_SGC, isValidDate_SGC, isValidDateGregorian, isValidDateJulian, parseISODate
 } from './calendar';
-export { DateTime, DateTimeField, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './date-time';
 export {
   DateAndTime, MINUTE_MSEC, dateAndTimeFromMillis_SGC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, millisFromDateTime_SGC,
-  parseISODateTime, parseTimeOffset
+  parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
+export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './date-time';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
@@ -85,7 +109,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
 
   if (zonePoller && name && intervalDays >= 0) {
     const url = zonesUrl.replace('{name}', name);
-    const poll = () => {
+    const poll = (): void => {
       zonePoller.getTimezones(url).then(zones => {
         dispatchUpdateNotification(Timezone.defineTimezones(zones));
       })
@@ -95,7 +119,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
     poll();
 
     if (intervalDays > 0) {
-      pollingInterval = setInterval(poll, intervalDays * 86400000);
+      pollingInterval = setInterval(poll, Math.max(intervalDays * 86400000, 3600000));
 
       // Using unref prevents the interval alone from keeping a process alive
       if (pollingInterval.unref)
@@ -144,3 +168,97 @@ export function removeZonesUpdateListener(listener: (result: boolean | Error) =>
 export function clearZonesUpdateListeners(): void {
   listeners.clear();
 }
+
+export function isDateTime(obj: any): obj is DateTime { return obj instanceof DateTime; }
+
+export function isDate(obj: any): obj is Date { return obj instanceof Date; }
+
+export function unix(seconds: number, zone?:  Timezone | string | null): DateTime {
+  return new DateTime(Math.round(seconds * 1000), zone).lock();
+}
+
+export function max(...dates: DateTime[]): DateTime {
+  let result = dates[0];
+
+  for (let i = 1; i < dates.length; ++i) {
+    if (dates[i].utcTimeMillis > result.utcTimeMillis)
+      result = dates[i];
+  }
+
+  return result;
+}
+
+export function min(...dates: DateTime[]): DateTime {
+  let result = dates[0];
+
+  for (let i = 1; i < dates.length; ++i) {
+    if (dates[i].utcTimeMillis < result.utcTimeMillis)
+      result = dates[i];
+  }
+
+  return result;
+}
+
+export function sort(dates: DateTime[], descending = false): DateTime[] {
+  if (dates)
+    dates.sort((a, b) => DateTime.compare(a, b) * (descending ? -1 : 1));
+
+  return dates;
+}
+
+export function ttime(initialTime?: DateTimeArg, format?: string, locale?: string | string[]): DateTime {
+  if (!format || !isString(initialTime))
+    return new DateTime(initialTime, null, locale).lock();
+  else
+    return parse(initialTime, format, null, locale)?.lock();
+}
+
+ttime.addZonesUpdateListener = addZonesUpdateListener;
+ttime.clearZonesUpdateListeners = clearZonesUpdateListeners;
+ttime.getTimezones = getTimezones;
+ttime.initTimezoneSmall = initTimezoneSmall;
+ttime.initTimezoneLarge = initTimezoneLarge;
+ttime.initTimezoneLargeAlt = initTimezoneLargeAlt;
+ttime.isDateTime = isDateTime;
+ttime.isDate = isDate;
+ttime.max = max;
+ttime.min = min;
+ttime.unix = unix;
+ttime.parse = parse;
+ttime.pollForTimezoneUpdates = pollForTimezoneUpdates;
+ttime.removeZonesUpdateListener = removeZonesUpdateListener;
+ttime.sort = sort;
+
+ttime.DATETIME_LOCAL         = 'Y-MM-DD[T]HH:mm';
+ttime.DATETIME_LOCAL_SECONDS = 'Y-MM-DD[T]HH:mm:ss';
+ttime.DATETIME_LOCAL_MS      = 'Y-MM-DD[T]HH:mm:ss.SSS';
+ttime.DATE                   = 'Y-MM-DD';
+ttime.TIME                   = 'HH:mm';
+ttime.TIME_SECONDS           = 'HH:mm:ss';
+ttime.TIME_MS                = 'HH:mm:ss.SSS';
+ttime.WEEK                   = 'GGGG-[W]WW';
+ttime.WEEK_AND_DAY           = 'GGGG-[W]WW-E';
+ttime.WEEK_LOCALE            = 'gggg-[w]ww';
+ttime.WEEK_AND_DAY_LOCALE    = 'gggg-[w]ww-e';
+ttime.MONTH                  = 'Y-MM';
+
+ttime.PURE_JULIAN    = CalendarType.PURE_JULIAN;
+ttime.PURE_GREGORIAN = CalendarType.PURE_GREGORIAN;
+
+ttime.getDefaultCenturyBase = DateTime.getDefaultCenturyBase;
+ttime.setDefaultCenturyBase = DateTime.setDefaultCenturyBase;
+ttime.getDefaultLocale      = DateTime.getDefaultLocale;
+ttime.setDefaultLocale      = DateTime.setDefaultLocale;
+ttime.getDefaultTimezone    = DateTime.getDefaultTimezone;
+ttime.setDefaultTimezone    = DateTime.setDefaultTimezone;
+ttime.julianDay             = DateTime.julianDay;
+ttime.millisFromJulianDay   = DateTime.millisFromJulianDay;
+ttime.julianDay_SGC         = DateTime.julianDay_SGC;
+
+forEach(DayOfWeek, (key, value) => ttime[key] = value);
+forEach(Month, (key, value) => ttime[key] = value);
+ttime.LAST = LAST;
+
+Object.freeze(ttime);
+
+export default ttime;

@@ -2,13 +2,13 @@ import { IZonePoller } from './i-zone-poller';
 
 export const zonePollerBrowser: IZonePoller = {
   getTimezones(url: string): Promise<{ [p: string]: string }> {
-    return new Promise<{[p: string]: string}>((resolve, reject) => {
+    return new Promise<Record<string, string>>((resolve, reject) => {
       const head = document.querySelector('head');
       const script = document.createElement('script');
       const w = window as any;
 
       head.appendChild(script);
-      script.onload = () => {
+      script.onload = (): void => {
         const zoneData = w.tbTime_timezone_small || w.tbTime_timezone_large || w.tbTime_timezone_large_alt;
 
         script.remove();
@@ -20,7 +20,7 @@ export const zonePollerBrowser: IZonePoller = {
         delete w.tbTime_timezone_large_alt;
         resolve(zoneData);
       };
-      script.onerror = () => {
+      script.onerror = (): void => {
         script.remove();
         reject(new Error('Failed to load timezone definitions from ' + url));
       };

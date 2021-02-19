@@ -1,0 +1,28 @@
+{
+  "cSpell.words": [
+    "AEST",
+    "DDTHH",
+    "Februar",
+    "MILLI",
+    "SSSZ",
+    "Subzones",
+    "ampm",
+    "dateandtime",
+    "dowmi",
+    "endof",
+    "gettersetters",
+    "getterssetters",
+    "helmikuuta",
+    "intldatetimeformat",
+    "juin",
+    "minmax",
+    "momentjs",
+    "startof",
+    "timezone's",
+    "ttime",
+    "tubulartime",
+    "ymddate"
+  ],
+  "markdown.extension.tableFormatter.enabled": false,
+  "markdown.extension.toc.levels": "2..6"
+}

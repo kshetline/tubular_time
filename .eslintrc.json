@@ -42,6 +42,7 @@
       }
     ],
     "curly": "off",
+    "@typescript-eslint/explicit-function-return-type": "error",
     "indent": "off",
     "@typescript-eslint/indent": [
       "error",
@@ -54,12 +55,14 @@
         "ignoreComments": true,
         "ignoredNodes": [
           "ClassProperty[value]",
-          "NewExpression[arguments] :expression *"
+          "NewExpression[arguments] :expression *",
+          "TSUnionType"
         ],
         "ObjectExpression": "first",
         "SwitchCase": 1
       }
     ],
+    "guard-for-in": "error",
     "key-spacing": "off",
     "multiline-ternary": "off",
     "no-control-regex": "off",
@@ -69,6 +72,7 @@
     "no-multi-spaces": "off",
     "no-new": "off",
     "no-return-assign": "off",
+    "no-unexpected-multiline": "off",
     "no-unused-expressions": "off",
     "no-useless-constructor": "off",
     "@typescript-eslint/no-useless-constructor": "error",
@@ -113,5 +117,13 @@
         "exceptRange": true
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.js", "*.cjs"],
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": "off"
+      }
+    }
+  ]
 }
