@@ -76,6 +76,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Static `Timezone` methods](#static-timezone-methods)
   - [`Timezone` getters](#timezone-getters)
   - [`Timezone` methods](#timezone-methods)
+- [Constants available on `ttime`](#constants-available-on-ttime)
 
 ## Installation
 
@@ -98,7 +99,7 @@ Documentation examples will assume **@tubular/time** has been imported as above.
 <script src="https://unpkg.com/@tubular/time/dist/web/index.js"></script>
 ```
 
-_(For ES5-compatible code, use `https://unpkg.com/@tubular/time/dist/web5/index.js"`_
+_(For ES5-compatible code, use `https://unpkg.com/@tubular/time/dist/web5/index.js"`)_
 
 The first script element is an example of optionally loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
@@ -718,7 +719,7 @@ This sort modifies the array which is passed in, and returns that same array.
 
 The `DateTime` method `getCalendarMonth()` returns an array of `YMDDate` objects, the zeroth date object being on the locale-specific first day of the week (possibly from the preceding month), with a multiple-of-7 length of dates to represent a full month. As an example (filtered down to just the day-of-month for visual clarity):
 
-`ttime().getCalendarMonth().map(date => date.m === 2 ? date.d : '-')` →
+`ttime().getCalendarMonth().map(date => date.m === ttime.FEBRUARY ? date.d : '-')` →
 
 ```json5
 [
@@ -750,7 +751,7 @@ By using the locale `'fr'`, the calendar generated above starts on Monday instea
 
 One of the last switches to the Gregorian calendar was enacted by Russia in 1918. The month of February didn’t even start with the 1st, but started on the 14th:
 
-`new DateTime('1918-02', null, '1918-02-14').getCalendarMonth(1).map(date => date.m === 2 ? date.d : '-')`
+`new DateTime('1918-02', null, '1918-02-14').getCalendarMonth(1).map(date => date.m === ttime.FEBRUARY ? date.d : '-')`
 
 ```json5
 [
@@ -801,7 +802,7 @@ In December 2011, the nation of Samoa jumped over the International Dateline (or
 
 <a id="apia" name="apia"></a>**@tubular/time** handles this situation by treating that skipped-over Friday as a day that exists, but one that is 0 seconds long. The `getCalendarMonth()` method makes this 0-length status apparent by rendering the day-of-the-month for that day as a negative number.
 
-`new DateTime('2011-12', 'Pacific/Apia').getCalendarMonth().map(date => date.m ===12 ? date.d : '-')` →
+`new DateTime('2011-12', 'Pacific/Apia').getCalendarMonth().map(date => date.m === ttime.DECEMBER ? date.d : '-')` →
 
 ```json5
 [
@@ -917,7 +918,7 @@ If the `timezone` argument is itself `null` or unspecified, this embedded timezo
 
 The following is an example of using the `gregorianChange` parameter to apply the change from the Julian to Gregorian calendar that was used by Great Britain, including what were the American colonies at the time:
 
-`new DateTime('1752-09', null, '1752-09-14').getCalendarMonth(1).map(date => date.m === 9 ? date.d : '-')`
+`new DateTime('1752-09', null, '1752-09-14').getCalendarMonth(1).map(date => date.m === ttime.SEPTEMBER ? date.d : '-')`
 
 ```json5
 [
@@ -1008,7 +1009,9 @@ computeUtcMillisFromWallTime(wallTime: DateAndTime): number;
 format(fmt = fullIsoFormat, localeOverride?: string): string;
 
 // For questions like “What date is the second Tuesday of this month?”
-//   `dayOfTheWeek` 0-6 for Sun-Sat, index is 1-based.
+//   `dayOfTheWeek` 0-6 for Sun-Sat, index is 1-based. You can use the constant `ttime.LAST`
+//   for `index` to get the last occurrence of a particular day of the month, be it the 4th or 5th
+//   (or even earlier, as in some unusual Julian-Gregorian transition months).
 getDateOfNthWeekdayOfMonth(year: number, month: number, dayOfTheWeek: number, index: number): number;
 getDateOfNthWeekdayOfMonth(dayOfTheWeek: number, index: number): number;
 
@@ -1348,4 +1351,49 @@ Check if this timezone explicitly supports the given `country`, specified as a t
 
 ```typescript
 supportsCountry(country: string): boolean;
+```
+
+## Constants available on `ttime`
+
+```typescript
+// Formats
+ttime.DATETIME_LOCAL: string;
+ttime.DATETIME_LOCAL_SECONDS: string;
+ttime.DATETIME_LOCAL_MS: string;
+ttime.DATE: string;
+ttime.TIME: string;
+ttime.TIME_SECONDS: string;
+ttime.TIME_MS: string;
+ttime.WEEK: string;
+ttime.WEEK_AND_DAY: string;
+ttime.WEEK_LOCALE: string;
+ttime.WEEK_AND_DAY_LOCALE: string;
+ttime.MONTH: string;
+
+// Calendar
+ttime.PURE_JULIAN: CalendarType;
+ttime.PURE_GREGORIAN: CalendarType;
+
+ttime.SUNDAY: number;
+ttime.MONDAY: number;
+ttime.TUESDAY: number;
+ttime.WEDNESDAY: number;
+ttime.THURSDAY: number;
+ttime.FRIDAY: number;
+ttime.SATURDAY: number;
+
+ttime.JANUARY: number;
+ttime.FEBRUARY: number;
+ttime.MARCH: number;
+ttime.APRIL: number;
+ttime.MAY: number;
+ttime.JUNE: number;
+ttime.JULY: number;
+ttime.AUGUST: number;
+ttime.SEPTEMBER: number;
+ttime.OCTOBER: number;
+ttime.NOVEMBER: number;
+ttime.DECEMBER: number;
+
+ttime.LAST: number; // For use with getDateOfNthWeekdayOfMonth()
 ```
