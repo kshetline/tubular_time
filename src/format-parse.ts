@@ -3,8 +3,12 @@ import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
 import { flatten, isArray, isEqual, isNumber, isString, last, toNumber } from '@tubular/util';
-import { getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend, hasIntlDateTime, normalizeLocale } from './locale-data';
+import {
+  checkDtfOptions, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend,
+  hasIntlDateTime, normalizeLocale
+} from './locale-data';
 import { Timezone } from './timezone';
+import DateTimeFormat = Intl.DateTimeFormat;
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 
 const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m: 'minute', s: 'second', z: 'timeZoneName',
@@ -118,7 +122,7 @@ function isCased(s: string): boolean {
 }
 
 function timeMatch(dt: DateTime, locale: ILocale): boolean {
-  const format = locale.dateTimeFormats.check as Intl.DateTimeFormat;
+  const format = locale.dateTimeFormats.check as DateTimeFormat;
 
   if (!format)
     return false;
@@ -384,13 +388,13 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           break;
         }
         else if (hasIntlDateTime) {
-          result.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
+          result.push(DateTimeFormat().resolvedOptions().timeZone);
           break;
         }
 
       // eslint-disable-next-line no-fallthrough
       case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
-        if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof Intl.DateTimeFormat) {
+        if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof DateTimeFormat) {
           result.push(getDatePart(locale.dateTimeFormats.Z, dt.utcTimeMillis, 'timeZoneName'));
           break;
         }
@@ -398,7 +402,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
-        if (hasIntlDateTime && locale.dateTimeFormats.z instanceof Intl.DateTimeFormat) {
+        if (hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
           result.push(getDatePart(locale.dateTimeFormats.z, dt.utcTimeMillis, 'timeZoneName'));
           break;
         }
@@ -435,10 +439,10 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           result.push(locale.eras[(year < 1 ? 0 : 1) + (field.length === 4 ? 2 : 0)]);
         else if (field.startsWith('I')) {
           if (hasIntlDateTime) {
-            let intlFormat = locale.dateTimeFormats[field] as Intl.DateTimeFormat;
+            let intlFormat = locale.dateTimeFormats[field] as DateTimeFormat;
 
             if (!intlFormat) {
-              const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
+              const options: DateTimeFormatOptions = { calendar: 'gregory' };
               const zone = convertDigits(dt.timezone.zoneName);
               let $: RegExpExecArray;
 
@@ -458,12 +462,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
                 options.timeStyle = styleOptValues[field.charAt(2)];
 
               try {
-                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(localeNames, options);
+                locale.dateTimeFormats[field] = intlFormat = new DateTimeFormat(localeNames, checkDtfOptions(options));
               }
               catch {
                 console.warn('Timezone "%s" not recognized', options.timeZone);
                 delete options.timeZone;
-                locale.dateTimeFormats[field] = intlFormat = new Intl.DateTimeFormat(localeNames, options);
+                locale.dateTimeFormats[field] = intlFormat = new DateTimeFormat(localeNames, options);
               }
             }
 
@@ -512,8 +516,8 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   return result.join('');
 }
 
-function quickFormat(localeNames: string | string[], timezone: string, opts: any): Intl.DateTimeFormat {
-  const options: Intl.DateTimeFormatOptions = { calendar: 'gregory' };
+function quickFormat(localeNames: string | string[], timezone: string, opts: any): DateTimeFormat {
+  const options: DateTimeFormatOptions = { calendar: 'gregory' };
   let $: RegExpExecArray;
 
   localeNames = normalizeLocale(localeNames);
@@ -535,7 +539,7 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
     options[key] = value;
   });
 
-  return new Intl.DateTimeFormat(localeNames, options);
+  return new DateTimeFormat(localeNames, checkDtfOptions(options));
 }
 
 // Find the shortest case-insensitive version of each string in the array that doesn't match
@@ -568,7 +572,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   if (locale && Object.keys(locale).length > 0)
     return locale;
 
-  const fmt = (opts: any): Intl.DateTimeFormat => quickFormat(localeNames, 'UTC', opts);
+  const fmt = (opts: any): DateTimeFormat => quickFormat(localeNames, 'UTC', opts);
 
   locale.name = isArray(localeNames) ? localeNames.join(',') : localeNames;
 
@@ -576,7 +580,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     locale.months = [];
     locale.monthsShort = [];
     const narrow: string[] = [];
-    let format: Intl.DateTimeFormat;
+    let format: DateTimeFormat;
 
     for (let month = 1; month <= 12; ++month) {
       const date = Date.UTC(2021, month - 1, 1);
@@ -671,7 +675,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 }
 
 function generatePredefinedFormats(locale: ILocale, timezone: string): void {
-  const fmt = (opts: any): Intl.DateTimeFormat => quickFormat(locale.name, timezone, opts);
+  const fmt = (opts: any): DateTimeFormat => quickFormat(locale.name, timezone, opts);
 
   locale.cachedTimezone = timezone;
   locale.dateTimeFormats = {};
@@ -694,7 +698,7 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
     Object.keys(locale.dateTimeFormats).forEach(key => {
       if (/^L/i.test(key))
         locale.dateTimeFormats['_' + key] = analyzeFormat(locale.name.split(','),
-          locale.dateTimeFormats[key] as Intl.DateTimeFormat);
+          locale.dateTimeFormats[key] as DateTimeFormat);
     });
   }
   else {
@@ -720,9 +724,9 @@ function isLocale(locale: string | string[], matcher: string): boolean {
     return false;
 }
 
-export function analyzeFormat(locale: string | string[], formatter: Intl.DateTimeFormat): string;
+export function analyzeFormat(locale: string | string[], formatter: DateTimeFormat): string;
 export function analyzeFormat(locale: string | string[], dateStyle: string, timeStyle?: string): string;
-export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: string | Intl.DateTimeFormat,
+export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: string | DateTimeFormat,
                               timeStyle?: string): string {
   const options: DateTimeFormatOptions = { timeZone: 'UTC', calendar: 'gregory' };
   let dateStyle: string;
@@ -745,7 +749,7 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
   }
 
   const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
-  const format = new Intl.DateTimeFormat(locale, options);
+  const format = new DateTimeFormat(locale, checkDtfOptions(options));
   const parts = format.formatToParts(sampleDate);
   const dateLong = (dateStyle === 'full' || dateStyle === 'long');
   const monthLong = (dateLong || (dateStyle === 'medium' && isLocale(locale, 'ne')));
@@ -921,7 +925,8 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
   if (input.includes('₂'))
     occurrence = 2;
 
-  input = convertDigits(input.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').trim()).replace(/[\u200F₂]/g, '');
+  input = convertDigits(input.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-')
+    .replace(/\s+/g, ' ').trim()).replace(/[\u200F₂]/g, '');
   format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
 
@@ -1167,10 +1172,10 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       case 'z':
         trimmed = false;
 
-        if (($ = /^(Z|[_/a-z]+)([^-+_/a-z]|$)/i.exec(input))) {
+        if (!/^UTC?[-+]/.test(input) && ($ = /^(Z|\bEtc\/GMT(?:0|[-+]\d{1,2})|[_/a-z]+)([^-+_/a-z]|$)/i.exec(input))) {
           let embeddedZone: string | Timezone = $[1];
 
-          if (/^(Z|UT|UTC|GMT)$/i.test(embeddedZone))
+          if (/^(Z|UTC?|GMT)$/i.test(embeddedZone))
             embeddedZone = 'UT';
 
           embeddedZone = Timezone.from(embeddedZone);
@@ -1194,8 +1199,8 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
             trimmed = true;
           }
         }
-        else if (($ = /^(UTC|UT|GMT)?([-+]\d\d(?:\d{4}|:\d\d(:\d\d)?)?)/i.exec(input))) {
-          w.utcOffset = parseTimeOffset($[2]) * ($[1] === 'GMT' ? -1 : 1);
+        else if (($ = /^(UTC?|GMT)?([-+]\d\d(?:\d{4}|:\d\d(:\d\d)?)?)/i.exec(input))) {
+          w.utcOffset = parseTimeOffset($[2]);
           input = input.substr($[0].length).trimStart();
           trimmed = true;
         }

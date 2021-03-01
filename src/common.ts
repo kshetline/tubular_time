@@ -252,7 +252,7 @@ export function parseISODateTime(date: string, allowLeapSecond = false): DateAnd
   return syncDateAndTime(time);
 }
 
-export function parseTimeOffset(offset: string): number {
+export function parseTimeOffset(offset: string, roundToMinutes = false): number {
   let sign = 1;
 
   if (offset.startsWith('-')) {
@@ -267,8 +267,14 @@ export function parseTimeOffset(offset: string): number {
     offset.match(/../g);
   let offsetSeconds = 60 * (60 * Number(parts[0]) + Number(parts[1] ?? 0));
 
-  if (parts[2])
-    offsetSeconds += Number(parts[2]);
+  if (parts[2]) {
+    const seconds = Number(parts[2]);
+
+    if (roundToMinutes)
+      offsetSeconds += (seconds < 30 ? 0 : 60);
+    else
+      offsetSeconds += seconds;
+  }
 
   return sign * offsetSeconds;
 }

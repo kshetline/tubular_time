@@ -1,13 +1,56 @@
 import { isArray, isNumber, isString } from '@tubular/util';
+import DateTimeFormat = Intl.DateTimeFormat;
+import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 
 let _hasIntl = false;
+let _hasDateTimeStyle = true;
 
 try {
   _hasIntl = typeof Intl !== 'undefined' && !!Intl?.DateTimeFormat;
+
+  if (_hasIntl) {
+    const full = new DateTimeFormat('en-us', { dateStyle: 'full' }).format(0);
+    const short = new DateTimeFormat('en-us', { dateStyle: 'short' }).format(0);
+
+    _hasDateTimeStyle = full !== short;
+
+    if (!_hasDateTimeStyle)
+      console.warn('Intl.DateTimeFormatOptions dateStyle and timeStyle not available');
+  }
+  else
+    console.warn('Intl.DateTimeFormat not available');
 }
 catch {}
 
 export const hasIntlDateTime = _hasIntl;
+export const hasDateTimeStyle = _hasDateTimeStyle;
+
+const backupDateFormats: Record<string, DateTimeFormatOptions> = {
+  full: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
+  long: { year: 'numeric', month: 'long', day: 'numeric' },
+  medium: { year: 'numeric', month: 'short', day: 'numeric' },
+  short: { year: '2-digit', month: 'numeric', day: 'numeric' }
+};
+const backupTimeFormats: Record<string, DateTimeFormatOptions> = {
+  full: { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'long' },
+  long: { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' },
+  medium: { hour: 'numeric', minute: '2-digit', second: '2-digit' },
+  short: { hour: 'numeric', minute: '2-digit' }
+};
+
+export function checkDtfOptions(options: DateTimeFormatOptions): DateTimeFormatOptions {
+  if (!hasDateTimeStyle && options.dateStyle) {
+    Object.assign(options, backupDateFormats[options.dateStyle]);
+    delete options.dateStyle;
+  }
+
+  if (!hasDateTimeStyle && options.timeStyle) {
+    Object.assign(options, backupTimeFormats[options.timeStyle]);
+    delete options.timeStyle;
+  }
+
+  return options;
+}
 
 export const localeList = [
   'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bn', 'bn-bd',

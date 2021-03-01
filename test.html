@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Browser Check</title>
+  <script src="dist/web/index.js"></script>
+</head>
+<body>
+  <script>
+    const ttime = window.tbTime.ttime;
+    const now = ttime();
+    const styles = ['F', 'L', 'M', 'S', 'x'];
+
+    for (const locale of ['en', 'fr', 'de', 'es', 'it']) {
+      const nowL = now.toLocale(locale);
+
+      for (let i = 0; i < 5; ++i) {
+        for (let j = 0; j < 5 - +(i === 4); ++j) {
+          const format = 'I' + styles[i] + (styles[j] !== 'x' ? styles[j] : '');
+          const matchFormat = format.replace(/^Ix/, 'IS');
+          const formatted = nowL.format(format);
+          const parsed = ttime(i < 4 ? formatted : nowL.format(matchFormat), matchFormat, locale);
+          const matched = now.isSame(parsed, j === 4 ? 'day' : j < 4 ? 'minute' : 'second');
+          if (!matched)
+            console.warn('mismatch');
+
+          document.write('<code>' + format.padEnd(3) + '</code>: ' + formatted +
+              (matched ? ' <span style="color: green">✔</span>' : ' <span style="color: red">✘</span>') + '<br>\n');
+        }
+      }
+
+      document.write('<br><br>\n');
+    }
+  </script>
+</body>
+</html>

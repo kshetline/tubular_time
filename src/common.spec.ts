@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { parseISODateTime } from './common';
+import { parseISODateTime, parseTimeOffset } from './common';
 
 describe('Common', () => {
   it('should parse ISO date/time strings.', () => {
@@ -22,5 +22,12 @@ describe('Common', () => {
     expect(parseISODateTime('2020-W01-1')).to.include({ yw: 2020, w: 1, dw: 1, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('2020001')).to.include({ y: 2020, dy: 1, hrs: 0, min: 0, sec: 0 });
     expect(parseISODateTime('2020-001')).to.include({ y: 2020, dy: 1, hrs: 0, min: 0, sec: 0 });
+
+    expect(parseTimeOffset('+0100')).to.equal(3600);
+    expect(parseTimeOffset('+010023')).to.equal(3623);
+    expect(parseTimeOffset('-02')).to.equal(-7200);
+    expect(parseTimeOffset('-02:00')).to.equal(-7200);
+    expect(parseTimeOffset('-02:00:25', true)).to.equal(-7200);
+    expect(parseTimeOffset('-02:00:35', true)).to.equal(-7260);
   });
 });

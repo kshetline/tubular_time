@@ -174,7 +174,9 @@ describe('FormatParse', () => {
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) - 3 * 3_600_000);
     expect(parse('Jul 7, 2022 04:05 PM UT+0300', 'MMM D, y n hh:mm A z').utcTimeMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) - 3 * 3_600_000);
-    expect(parse('Jul 7, 2022 04:05 PM GMT+0300', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM GMT-0300', 'MMM D, y n hh:mm A z').utcTimeMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 3 * 3_600_000);
+    expect(parse('Jul 7, 2022 04:05 PM Etc/GMT+3', 'MMM D, y n hh:mm A z').utcTimeMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 3 * 3_600_000);
   });
 });

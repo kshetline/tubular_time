@@ -196,7 +196,7 @@ export class DateTime extends Calendar {
       if (initialTime!.includes('₂'))
         occurrence = 2;
 
-      initialTime = initialTime!.replace(/[­‐‑‒–—]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
+      initialTime = initialTime!.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
       let $ = /^\/Date\((\d+)([-+]\d\d\d\d)?\)\/$/i.exec(initialTime);
 
       if ($) {
@@ -208,14 +208,14 @@ export class DateTime extends Calendar {
       const saveTime = initialTime;
       let zone: string;
 
-      $ = /(Z|\b[_/a-z]+)$/i.exec(initialTime);
+      $ = /(Z|\bEtc\/GMT(?:0|[-+]\d{1,2})|\b[_/a-z]+)$/i.exec(initialTime);
 
       if ($) {
         zone = $[1];
 
         initialTime = initialTime.slice(0, -zone.length).trim() || null;
 
-        if (/^(Z|UT|UTC|GMT)$/i.test(zone))
+        if (/^(Z|UTC?|GMT)$/i.test(zone))
           zone = 'UT';
 
         parseZone = Timezone.has(zone) ? Timezone.from(zone) : null;
