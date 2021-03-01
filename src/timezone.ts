@@ -3,6 +3,7 @@ import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubula
 import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset } from './common';
 import { hasIntlDateTime } from './locale-data';
+import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 
 export interface OffsetsAndZones {
   offset: string;
@@ -577,7 +578,7 @@ export class Timezone {
     const transitions: Transition[] = [];
     const timeOptions = { timeZone: zone, hourCycle: 'h23',
                           year: 'numeric', month: 'numeric', day: 'numeric',
-                          hour: 'numeric', minute: 'numeric', second: 'numeric' };
+                          hour: 'numeric', minute: 'numeric', second: 'numeric' } as DateTimeFormatOptions;
     const zoneDTF = new Intl.DateTimeFormat('en', timeOptions);
     let lastSampleTime = millisFromDateTime_SGC(1901, 1, 1, 0, 0, 0, 0);
     let hour: number;

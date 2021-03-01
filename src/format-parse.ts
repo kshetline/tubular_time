@@ -744,7 +744,7 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
     Object.assign(options, formatOptions);
     options.timeZone = 'UTC';
     dateStyle = formatOptions.dateStyle ??
-      (options.month === 'full' || options.month === 'long' ? 'long' : options.month === 'medium' ? 'medium' : null);
+      (options.month === 'long' ? 'long' : options.month === 'short' ? 'short' : null);
     timeStyle = formatOptions.timeStyle;
   }
 
