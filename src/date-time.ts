@@ -1397,7 +1397,9 @@ export class DateTime extends Calendar {
     let s = this.format(undefined, 'en-US');
 
     if (maxLength != null) {
-      if (/^[-+]/.test(s))
+      if (maxLength < 0)
+        maxLength = s.length + maxLength;
+      else if (/^[-+]/.test(s))
         ++maxLength;
 
       s = s.substr(0, maxLength);

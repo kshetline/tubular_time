@@ -193,6 +193,9 @@ export class Timezone {
   private static countriesForZone: Record<string, Set<string>> = {};
   private static zonesForCountry: Record<string, Set<string>> = {};
   private static populationForZone: Record<string, number> = {};
+  private static _version: string = 'unspecified';
+
+  static get version(): string { return this._version; }
 
   static OS_ZONE = new Timezone({ zoneName: 'OS', currentUtcOffset: osProbableStdOffset, usesDst: osUsesDst,
                             dstOffset: osDstOffset, transitions: osTransitions });
@@ -208,7 +211,7 @@ export class Timezone {
 
   private static offsetsAndZones: OffsetsAndZones[];
   private static regionAndSubzones: RegionAndSubzones[];
-  private static zoneLookup: { [id: string]: Timezone } = {};
+  private static zoneLookup: Record<string, Timezone> = {};
 
   private readonly _zoneName: string;
   private readonly _utcOffset: number;
@@ -228,6 +231,11 @@ export class Timezone {
 
   static defineTimezones(encodedTimezones: Record<string, string>): boolean {
     const changed = !isEqual(this.encodedTimezones, encodedTimezones);
+
+    if (encodedTimezones.version)
+      this._version = encodedTimezones.version;
+    else
+      this._version = 'unspecified';
 
     this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
     this.extractZoneInfo();
@@ -796,6 +804,9 @@ export class Timezone {
               while (insertTransitions.length > 0 && last(insertTransitions).dstOffset !== 0 ||
                      last(insertTransitions).transitionTime >= transitions[1].transitionTime)
                 insertTransitions.splice(insertTransitions.length - 1, 1);
+
+              if (insertTransitions[0].transitionTime === transitions[0].transitionTime)
+                insertTransitions.splice(0, 1);
 
               transitions.splice(1, 0, ...insertTransitions);
             }
