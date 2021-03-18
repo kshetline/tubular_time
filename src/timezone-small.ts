@@ -2,6 +2,8 @@
 // noinspection SpellCheckingInspection
 const timezoneSmall = /* trim-file-start */{ // tz database version: 2021a, years 2016-2026
   version: '2021a',
+  years: '2016-2026',
+  leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;;;;48e5;BFCIGMGNMLMRSHSLSNTG',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;;;;26e5;DZ',
   'Africa/Cairo': '+0200 +0200 0;20/0/EET;;;;15e6;EG',
