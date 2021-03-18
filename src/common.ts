@@ -70,6 +70,7 @@ export interface DateAndTime extends YMDDate {
   utcOffset?: number;
   dstOffset?: number;
   occurrence?: number;
+  deltaTai?: number;
 }
 
 const altFields = [
@@ -88,9 +89,8 @@ const fieldOrder = [
   'ywl', 'wl', 'dwl',
   'yearByWeekLocale', 'weekLocale', 'dayByWeekLocale',
   'hrs', 'min', 'sec',
-  'hour', 'minute', 'second',
-  'millis',
-  'utcOffset', 'dstOffset', 'occurrence',
+  'hour', 'minute', 'second', 'millis',
+  'utcOffset', 'dstOffset', 'occurrence', 'deltaTai',
   'error'
 ];
 

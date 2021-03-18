@@ -208,7 +208,7 @@ export class DateTime extends Calendar {
       const saveTime = initialTime;
       let zone: string;
 
-      $ = /(Z|\bEtc\/GMT(?:0|[-+]\d{1,2})|\b[_/a-z]+)$/i.exec(initialTime);
+      $ = /(Z|\bEtc\/GMT(?:0|[-+]\d{1,2})|\bTAI|\b[_/a-z]+)$/i.exec(initialTime);
 
       if ($) {
         zone = $[1];
@@ -217,6 +217,8 @@ export class DateTime extends Calendar {
 
         if (/^(Z|UTC?|GMT)$/i.test(zone))
           zone = 'UT';
+        else if (/^TAI$/i.test(zone))
+          zone = 'TAI';
 
         parseZone = Timezone.has(zone) ? Timezone.from(zone) : null;
 
@@ -378,6 +380,10 @@ export class DateTime extends Calendar {
     return new Date(this._utcTimeMillis);
   }
 
+  isTai(): boolean {
+    return this._timezone === Timezone.TAI_ZONE;
+  }
+
   private getWallTime(purge?: boolean): DateAndTime {
     if (!this.valid)
       return { error: this.error };
@@ -434,8 +440,10 @@ export class DateTime extends Calendar {
       newZone = Timezone.from(newZone);
 
     if (this._timezone !== newZone) {
+      const wasTai = this.isTai();
+
       this._timezone = newZone;
-      this.updateWallTimeFromCurrentMillis();
+      this.updateWallTimeFromCurrentMillis(0, wasTai);
     }
   }
 
@@ -463,6 +471,7 @@ export class DateTime extends Calendar {
     if (keepLocalTime) {
       delete wallTime.utcOffset;
       delete wallTime.occurrence;
+      delete wallTime.deltaTai;
       result.wallTime = wallTime;
     }
 
@@ -631,6 +640,7 @@ export class DateTime extends Calendar {
     if (updateFromWall) {
       delete wallTime.dy;
       delete wallTime.occurrence;
+      delete wallTime.deltaTai;
       delete wallTime.utcOffset;
       delete wallTime.j;
       result.updateUtcMillisFromWallTime();
@@ -829,6 +839,7 @@ export class DateTime extends Calendar {
 
     delete wallTime.n;
     delete wallTime.j;
+    delete wallTime.deltaTai;
 
     if (clearOccurrence)
       delete wallTime.occurrence;
@@ -1024,6 +1035,7 @@ export class DateTime extends Calendar {
     delete wallTime.n;
     delete wallTime.j;
     delete wallTime.occurrence;
+    delete wallTime.deltaTai;
     result.updateUtcMillisFromWallTime();
 
     if (this._timezone === DATELESS)
@@ -1120,6 +1132,7 @@ export class DateTime extends Calendar {
     delete wallTime.j;
     delete wallTime.utcOffset;
     delete wallTime.occurrence;
+    delete wallTime.deltaTai;
     result.updateUtcMillisFromWallTime();
 
     if (this._timezone === DATELESS)
@@ -1237,6 +1250,7 @@ export class DateTime extends Calendar {
     delete wallTime.j;
     delete wallTime.utcOffset;
     delete wallTime.occurrence;
+    delete wallTime.deltaTai;
     result.updateUtcMillisFromWallTime();
 
     if (this._timezone === DATELESS)
@@ -1472,7 +1486,7 @@ export class DateTime extends Calendar {
     return millis;
   }
 
-  private updateWallTimeFromCurrentMillis(day = 0): void {
+  private updateWallTimeFromCurrentMillis(day = 0, wasTai = false): void {
     if (isNaN(this._utcTimeMillis) || this._utcTimeMillis < Number.MIN_SAFE_INTEGER || this._utcTimeMillis > Number.MAX_SAFE_INTEGER) {
       this._error = `Invalid core millisecond time value: ${this._utcTimeMillis}`;
       this._utcTimeMillis = null;
@@ -1480,8 +1494,16 @@ export class DateTime extends Calendar {
       return;
     }
 
+    const lsi = wasTai ? Timezone.findDeltaTaiFromTai(this._utcTimeMillis) : undefined;
+
+    if (lsi)
+      this._utcTimeMillis -= lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0);
+
     this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis, day));
     this._error = undefined;
+
+    if (lsi?.inLeap)
+      this._wallTime.sec = 60;
 
     if (this._wallTime.y < MIN_YEAR || this._wallTime.y > MAX_YEAR) {
       this._error = `Invalid year: ${this._wallTime.y}`;
@@ -1524,6 +1546,11 @@ export class DateTime extends Calendar {
     wallTime.utcOffset = offsets[0];
     wallTime.dstOffset = offsets[1];
     wallTime.occurrence = 1;
+
+    if (this.isTai())
+      wallTime.deltaTai = Timezone.findDeltaTaiFromTai(millis)?.deltaTai;
+    else
+      wallTime.deltaTai = Timezone.findDeltaTaiFromUtc(millis)?.deltaTai;
 
     const transition = this.timezone.findTransitionByWallTime(wallTimeMillis);
 
