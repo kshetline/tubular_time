@@ -88,10 +88,10 @@ describe('DateTime', () => {
     const time = new DateTime({ y: 2018, m: 3, d: 11, hrs: 1, min: 59, sec: 59 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EST');
     time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EDT');
     expect(time.wallTime.hrs).to.equal(3);
     time.add(DateTimeField.SECOND, -1);
     expect(time.wallTime.hrs).to.equal(1);
@@ -109,10 +109,10 @@ describe('DateTime', () => {
     expect(time.wallTimeShort).to.not.include({ year: 2018 });
     expect(time.wallTimeLong).to.include({ year: 2018 });
     expect(time.wallTimeLong).to.not.include({ y: 2018 });
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EDT');
     time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EST');
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(2);
     time.add(DateTimeField.SECOND, -1);
@@ -127,10 +127,10 @@ describe('DateTime', () => {
     const time = new DateTime({ y: 2100, m: 11, d: 7, hrs: 1, min: 59, sec: 59, occurrence: 1 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EDT');
     time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EST');
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(2);
     time.add(DateTimeField.SECOND, -1);
@@ -177,16 +177,16 @@ describe('DateTime', () => {
     const time = new DateTime({ y: 1892, m: 1, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(45184);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('+12:33:04');
+    expect(zone.getFormattedOffset(time.epochMillis)).to.equal('+12:33:04');
     time.add(DateTimeField.YEAR, 1);
     expect(time.wallTime.utcOffset).to.equal(-41216);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('-11:26:56');
+    expect(zone.getFormattedOffset(time.epochMillis)).to.equal('-11:26:56');
     time.add(DateTimeField.YEAR, 20);
     expect(time.wallTime.utcOffset).to.equal(-41400);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('-11:30');
+    expect(zone.getFormattedOffset(time.epochMillis)).to.equal('-11:30');
 
     const time2 = new DateTime({ y: 1900, m: 1, d: 1, hrs: 0, min: 0, sec: 0 }, Timezone.UT_ZONE);
-    const time3 = new DateTime(time2.utcTimeMillis, zone);
+    const time3 = new DateTime(time2.epochMillis, zone);
 
     expect(time3.wallTime.y).to.equal(1899);
     expect(time3.wallTime.m).to.equal(12);
@@ -407,9 +407,9 @@ describe('DateTime', () => {
   it('should lock DateTime instances to make them immutable', () => {
     const d = new DateTime(null, 'UT');
 
-    d.utcTimeSeconds = 0;
+    d.epochSeconds = 0;
     expect(d.wallTime.y).to.equal(1970);
-    expect(() => d.lock().utcTimeSeconds = 1).to.throw('This DateTime instance is locked and immutable');
+    expect(() => d.lock().epochSeconds = 1).to.throw('This DateTime instance is locked and immutable');
   });
 
   it('should correctly perform DateTime comparisons', () => {
@@ -502,14 +502,27 @@ describe('DateTime', () => {
       .to.contain({ start: '24:00:00', end: '01:00:00', delta: -82800000 });
   });
 
-  it('should correctly handle UTC/TAI conversion', () => {
+  it('should correctly handle TAI and leap seconds', () => {
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 16).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:59.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 18).tz('UTC').toString()).to.equal('DateTime<1978-01-01T00:00:00.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('America/New_York').toString()).to.equal('DateTime<1977-12-31T18:59:60.000 -05:00>');
+
     // Test fictitious negative leap second
     expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 35).tz('UTC').toString()).to.equal('DateTime<2022-12-31T23:59:57.000 +00:00>');
     expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 36).tz('UTC').toString()).to.equal('DateTime<2022-12-31T23:59:58.000 +00:00>');
     expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 37).tz('UTC').toString()).to.equal('DateTime<2023-01-01T00:00:00.000 +00:00>');
+
+    expect(new DateTime('1995-12-31 23:59:60Z').toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1995-12-31 23:59:60Z').taiSeconds).to.equal(820454429);
+    expect(new DateTime('1995-12-31 23:59:59Z').utcTimeSeconds).to.equal(820454399);
+    expect(new DateTime('1995-12-31 23:59:59Z').utcTimeMillis).to.equal(820454399000);
+    expect(new DateTime('1995-12-31 23:59:60Z').utcTimeSeconds).to.equal(820454399);
+    expect(new DateTime('1995-12-31 23:59:60Z').utcTimeMillis).to.equal(820454399000);
+    expect(new DateTime('1995-12-31 23:59:60Z').compare(new DateTime('1995-12-31 23:59:59Z'))).to.be.greaterThan(0);
+    expect(new DateTime('1996-12-31 23:59:60Z').toString()).to.equal('DateTime<1997-01-01T00:00:00.000 +00:00>');
+
+    expect(ttime.sort([new DateTime('1995-12-31 23:59:60Z'), new DateTime('1995-12-31 23:59:59Z')])
+      .map(dt => dt.format(ttime.DATETIME_LOCAL_SECONDS)).join()).to.equal('1995-12-31T23:59:59,1995-12-31T23:59:60');
   });
 });

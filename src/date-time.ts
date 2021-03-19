@@ -148,11 +148,13 @@ export class DateTime extends Calendar {
       throw new Error(`Resolution ${DateTimeField[resolution]} not valid for time-only values`);
 
     if (resolution === DateTimeField.FULL || resolution === DateTimeField.MILLI)
-      return d1._epochMillis - d2._epochMillis;
+      return d1.taiMillis - d2.taiMillis;
 
     const divisor = [1, 1000, 60_000, undefined, 3_600_000][resolution];
 
-    if (divisor != null)
+    if (divisor != null && divisor < DateTimeField.MINUTE)
+      return floor(d1.taiMillis / divisor) - floor(d2.taiMillis / divisor);
+    else if (divisor != null) // Use _epochMillis here so minutes and higher round off correctly
       return floor(d1._epochMillis / divisor) - floor(d2._epochMillis / divisor);
     else if (resolution === DateTimeField.DAY)
       return floor(d1._wallTime.n) - floor(d2._wallTime.n);
@@ -247,7 +249,7 @@ export class DateTime extends Calendar {
 
       if (initialTime) {
         try {
-          initialTime = parseISODateTime(initialTime);
+          initialTime = parseISODateTime(initialTime, true);
 
           if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null && initialTime.n == null) {
             parseZone = DATELESS;
@@ -393,7 +395,12 @@ export class DateTime extends Calendar {
   get utcTimeSeconds(): number { return floor(this.utcTimeMillis / 1000); }
   set utcTimeSeconds(newTime: number) { this.utcTimeMillis = newTime * 1000; }
 
-  get taiMillis(): number { return !this.isTai() ? this._epochMillis + this._wallTime.deltaTai * 1000 : this._epochMillis; }
+  get taiMillis(): number {
+    return !this.isTai()
+      ? this._epochMillis + this._wallTime.deltaTai * 1000 + (this._wallTime.sec === 60 ? 1000 : 0)
+      : this._epochMillis;
+  }
+
   set taiMillis(newTime: number) {
     if (this.locked)
       throw lockError;
@@ -458,7 +465,7 @@ export class DateTime extends Calendar {
 
       this._wallTime = newTime;
       this.updateEpochMillisFromWallTime();
-      this.updateWallTimeFromEpochMillis(this._wallTime.d);
+      this.updateWallTimeFromEpochMillis(this._wallTime.d, false, this._wallTime.sec === 60 && !this.isTai());
     }
   }
 
@@ -1483,7 +1490,7 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (!this.isTai())
-      millis += this._wallTime.deltaTai * 1000;
+      millis += this._wallTime.deltaTai * 1000 + (this._wallTime.sec === 60 ? 1000 : 0);
 
     return millis;
   }
@@ -1511,9 +1518,11 @@ export class DateTime extends Calendar {
       wallTime.dwl = wallTime.dwl ?? 1;
     }
 
+    const sec = min(wallTime.sec ?? 0, 59);
+    const secOverflow = max((wallTime.sec ?? 0) - sec, 0);
     const dayNum = wallTime.n ?? this.getDayNumber(wallTime);
     let millis = (wallTime.millis ?? 0) +
-                 (wallTime.sec ?? 0) * 1000 +
+                 sec * 1000 +
                  (wallTime.min ?? 0) * 60000 +
                  (wallTime.hrs ?? 0) * 3600000 +
                  dayNum * 86400000;
@@ -1522,6 +1531,9 @@ export class DateTime extends Calendar {
       millis -= wallTime.utcOffset * 1000;
     else
       millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
+
+    if (this.isTai() || secOverflow !== 1 || !Timezone.findDeltaTaiFromUtc(millis)?.inLeap)
+      millis += secOverflow * 1000;
 
     if ((wallTime.occurrence ?? 1) < 2) {
       const transition = this.timezone.findTransitionByUtc(millis);
@@ -1538,7 +1550,7 @@ export class DateTime extends Calendar {
     return millis;
   }
 
-  private updateWallTimeFromEpochMillis(day = 0, switchFromTai = false): void {
+  private updateWallTimeFromEpochMillis(day = 0, switchFromTai = false, sec60 = false): void {
     if (isNaN(this._epochMillis) || this._epochMillis < Number.MIN_SAFE_INTEGER || this._epochMillis > Number.MAX_SAFE_INTEGER) {
       this._error = `Invalid core millisecond time value: ${this._epochMillis}`;
       this._epochMillis = null;
@@ -1550,12 +1562,14 @@ export class DateTime extends Calendar {
 
     if (lsi)
       this._epochMillis -= lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0);
+    else if (sec60 && !Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap)
+      sec60 = false;
 
     this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._epochMillis, day));
     this._error = undefined;
 
-    if (lsi?.inLeap)
-      this._wallTime.sec = 60;
+    if (lsi?.inLeap || sec60)
+      this._wallTime.sec = this._wallTime.second = 60;
 
     if (this._wallTime.y < MIN_YEAR || this._wallTime.y > MAX_YEAR) {
       this._error = `Invalid year: ${this._wallTime.y}`;
