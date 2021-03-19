@@ -1326,7 +1326,7 @@ export class DateTime extends Calendar {
 
     if (this._timezone === DATELESS)
       this._epochMillis = mod(this._epochMillis, 86400000);
-    else if (!this.isTai() && fieldN >= DateTimeField.HOUR && Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap) {
+    else if (!this.isTai() && Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap) {
       this._wallTime.sec = 60;
       sec60 = true;
     }

@@ -3,6 +3,7 @@
 const timezoneLargeAlt = /* trim-file-start */{ // tz database version: 2021a, years 1800-2088, rounded to nearest minute, filtered, calendar rollbacks eliminated
   version: '2021a',
   years: '1800-2088',
+  deltaTs: '69.36 69.36',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
   'Africa/Abidjan': '-0016 +0000 0;-g/0/LMT 0/0/GMT;1;-2ldXI;;48e5;BFCIGMGNMLMRSHSLSNTG',
   'Africa/Accra': '-0001 +0000 0;-1/0/LMT 0/0/GMT k/k u/0 u/u;1212121212121212121212121212121212121212121212131414141414141;-2bRzX 9RbX fdE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE 1BAk MLE 1Bck MLE 1Bck MLE 1Bck MLE Mok 1BXE M0k 1BXE fak 9vbu bjCu MLu 1Bcu MLu 1BAu MLu 1Bcu MLu 1Bcu MLu 1Bcu MLu;;41e5;GH',

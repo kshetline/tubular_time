@@ -4,6 +4,7 @@ import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAft
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset } from './common';
 import { hasIntlDateTime } from './locale-data';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
+import { updateDeltaTs } from './ut-converter';
 
 export interface OffsetsAndZones {
   offset: string;
@@ -57,7 +58,7 @@ const TIME_GAP_AFTER_LAST_TRANSITION = 172800000; // Two days
 
 const extendedRegions = /^(America\/Argentina|America\/Indiana)\/(.+)$/;
 const miscUnique = /^(CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET)$/;
-const nonZones = new Set(['leapSeconds', 'version', 'years']);
+const nonZones = new Set(['deltaTs', 'leapSeconds', 'version', 'years']);
 
 class Rule {
   startYear: number;
@@ -253,6 +254,7 @@ export class Timezone {
 
     this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
     this.extractZoneInfo();
+    this.extractDeltaTs();
     this.extractLeapSeconds();
 
     if (changed) {
@@ -945,6 +947,15 @@ export class Timezone {
         }
       }
     });
+  }
+
+  private static extractDeltaTs(): void {
+    const deltaTs = this.encodedTimezones?.deltaTs;
+
+    if (deltaTs)
+      updateDeltaTs(deltaTs.split(/\s+/).map(dt => toNumber(dt)));
+    else
+      updateDeltaTs();
   }
 
   private static extractLeapSeconds(): void {
