@@ -378,13 +378,13 @@ export class DateTime extends Calendar {
   get epochSeconds(): number { return floor(this._epochMillis / 1000); }
   set epochSeconds(newTime: number) { this.epochMillis = newTime * 1000; }
 
-  get utcTimeMillis(): number { return this.isTai() ? this._epochMillis - this._wallTime.deltaTai * 1000 : this._epochMillis; }
-  set utcTimeMillis(newTime: number) {
+  get utcMillis(): number { return this.isTai() ? this._epochMillis - this._wallTime.deltaTai * 1000 : this._epochMillis; }
+  set utcMillis(newTime: number) {
     if (this.locked)
       throw lockError;
 
     if (this.isTai())
-      newTime += this._wallTime.deltaTai * 1000;
+      newTime += (Timezone.findDeltaTaiFromUtc(newTime)?.deltaTai ?? 0) * 1000;
 
     if (this._epochMillis !== newTime || !this.wallTime) {
       this._epochMillis = newTime;
@@ -392,8 +392,18 @@ export class DateTime extends Calendar {
     }
   }
 
-  get utcTimeSeconds(): number { return floor(this.utcTimeMillis / 1000); }
-  set utcTimeSeconds(newTime: number) { this.utcTimeMillis = newTime * 1000; }
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  get utcTimeMillis(): number { return this.utcMillis; }
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  set utcTimeMillis(newTime: number) { this.utcMillis = newTime; }
+
+  get utcSeconds(): number { return floor(this.utcMillis / 1000); }
+  set utcSeconds(newTime: number) { this.utcMillis = newTime * 1000; }
+
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  get utcTimeSeconds(): number { return this.utcSeconds; }
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  set utcTimeSeconds(newTime: number) { this.utcSeconds = newTime; }
 
   get taiMillis(): number {
     return !this.isTai()
@@ -406,7 +416,7 @@ export class DateTime extends Calendar {
       throw lockError;
 
     if (!this.isTai())
-      newTime -= this._wallTime.deltaTai * 1000;
+      newTime -= (Timezone.findDeltaTaiFromTai(newTime)?.deltaTai ?? 0) * 1000;
 
     if (this._epochMillis !== newTime || !this.wallTime) {
       this._epochMillis = newTime;
@@ -513,6 +523,10 @@ export class DateTime extends Calendar {
       delete wallTime.utcOffset;
       delete wallTime.occurrence;
       delete wallTime.deltaTai;
+
+      if (wallTime.sec === 60)
+        wallTime.sec = 59;
+
       result.wallTime = wallTime;
     }
 
@@ -684,6 +698,10 @@ export class DateTime extends Calendar {
       delete wallTime.deltaTai;
       delete wallTime.utcOffset;
       delete wallTime.j;
+
+      if (wallTime.sec === 60)
+        wallTime.sec = 59;
+
       result.updateEpochMillisFromWallTime();
     }
 
@@ -720,7 +738,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.SECOND:
-        wallTime.sec = mod(wallTime.sec + amount, 60);
+        wallTime.sec = mod(max(wallTime.sec, 59) + amount, 60);
         break;
 
       case DateTimeField.MINUTE:
@@ -882,6 +900,9 @@ export class DateTime extends Calendar {
     delete wallTime.j;
     delete wallTime.deltaTai;
 
+    if (wallTime.sec === 60)
+      wallTime.sec = 59;
+
     if (clearOccurrence)
       delete wallTime.occurrence;
 
@@ -907,6 +928,7 @@ export class DateTime extends Calendar {
     const wallTime = result._wallTime;
     let min = 0;
     let max = 59;
+    let sec60 = false;
     const fieldN = fieldNameToField(field);
 
     switch (fieldN) {
@@ -917,6 +939,12 @@ export class DateTime extends Calendar {
 
       case DateTimeField.SECOND:
         wallTime.sec = value;
+
+        if ((wallTime.m === 6 && wallTime.d === 30) || (wallTime.m === 12 && wallTime.d === 31)) {
+          max = 60;
+          sec60 = (value === 60);
+        }
+
         break;
 
       case DateTimeField.MINUTE:
@@ -1082,7 +1110,7 @@ export class DateTime extends Calendar {
     if (this._timezone === DATELESS)
       this._epochMillis = mod(this._epochMillis, 86400000);
 
-    result.updateWallTimeFromEpochMillis();
+    result.updateWallTimeFromEpochMillis(0, false, sec60);
 
     return result._lock(this.locked);
   }
@@ -1294,10 +1322,16 @@ export class DateTime extends Calendar {
     delete wallTime.deltaTai;
     result.updateEpochMillisFromWallTime();
 
+    let sec60 = false;
+
     if (this._timezone === DATELESS)
       this._epochMillis = mod(this._epochMillis, 86400000);
+    else if (!this.isTai() && fieldN >= DateTimeField.HOUR && Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap) {
+      this._wallTime.sec = 60;
+      sec60 = true;
+    }
 
-    result.updateWallTimeFromEpochMillis();
+    result.updateWallTimeFromEpochMillis(0, false, sec60);
 
     return result._lock(this.locked);
   }
@@ -1481,7 +1515,7 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (this.isTai())
-      millis -= this._wallTime.deltaTai * 1000;
+      millis -= (Timezone.findDeltaTaiFromTai(millis)?.deltaTai ?? 0) * 1000;
 
     return millis;
   }
@@ -1490,7 +1524,7 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (!this.isTai())
-      millis += this._wallTime.deltaTai * 1000 + (this._wallTime.sec === 60 ? 1000 : 0);
+      millis += (Timezone.findDeltaTaiFromUtc(millis)?.deltaTai ?? 0) * 1000 + (this._wallTime.sec === 60 ? 1000 : 0);
 
     return millis;
   }

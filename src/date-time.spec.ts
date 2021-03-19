@@ -357,8 +357,12 @@ describe('DateTime', () => {
       .to.equal('2300-05-05T04:08:59.999');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf('hour').toIsoString(23))
       .to.equal('2300-05-05T04:59:59.999');
+    expect(new DateTime('1985-06-30T19:08:10.087 EDT').endOf('hour').toIsoString(23))
+      .to.equal('1985-06-30T19:59:60.999');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf('day').toIsoString(23))
       .to.equal('2300-05-05T23:59:59.999');
+    expect(new DateTime('1985-06-30T04:08:10.087Z').endOf('day').toIsoString(23))
+      .to.equal('1985-06-30T23:59:60.999');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.WEEK).format(ttime.WEEK_AND_DAY))
       .to.equal('2300-W18-7');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.WEEK_LOCALE).format(ttime.WEEK_AND_DAY_LOCALE))
@@ -465,8 +469,8 @@ describe('DateTime', () => {
     expect(new DateTime('2021-07-04 05:06 America/New_York').toHoursAndMinutesString()).to.equal('05:06');
     expect(new DateTime('2021-07-04 05:06 America/New_York').toHoursAndMinutesString(true)).to.equal('05:06§');
     expect(new DateTime('2021-07-04 05:06 America/New_York').toYMDhmString()).to.equal('2021-07-04 05:06§');
-    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(0);
-    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
+    expect(new DateTime().computeEpochMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(0);
+    expect(new DateTime().computeEpochMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
     expect(ttime({ y: 1994, m: 2, d: 2, utcOffset: 0 }).toDate().toISOString()).to.equal('1994-02-02T00:00:00.000Z');
     expect(new DateTime().isLeapYear(1900)).to.be.false;
     expect(new DateTime().isLeapYear(1904)).to.be.true;
@@ -477,6 +481,7 @@ describe('DateTime', () => {
     expect(() => new DateTime().tz('foo')).to.throw('Bad timezone: foo');
     expect(new DateTime().tz('EST').timezone.zoneName).to.equal('America/New_York');
     expect(new DateTime().utc().timezone.zoneName).to.equal('UT');
+    expect(new DateTime().local().timezone.zoneName).to.equal(Timezone.guess());
   });
 
   it('should correctly determine length of day', () => {
@@ -515,14 +520,32 @@ describe('DateTime', () => {
 
     expect(new DateTime('1995-12-31 23:59:60Z').toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1995-12-31 23:59:60Z').taiSeconds).to.equal(820454429);
-    expect(new DateTime('1995-12-31 23:59:59Z').utcTimeSeconds).to.equal(820454399);
-    expect(new DateTime('1995-12-31 23:59:59Z').utcTimeMillis).to.equal(820454399000);
-    expect(new DateTime('1995-12-31 23:59:60Z').utcTimeSeconds).to.equal(820454399);
-    expect(new DateTime('1995-12-31 23:59:60Z').utcTimeMillis).to.equal(820454399000);
+    expect(new DateTime('1995-12-31 23:59:59Z').utcSeconds).to.equal(820454399);
+    expect(new DateTime('1995-12-31 23:59:59Z').utcMillis).to.equal(820454399000);
+    expect(new DateTime('1995-12-31 23:59:60Z').utcSeconds).to.equal(820454399);
+    expect(new DateTime('1995-12-31 23:59:60Z').utcMillis).to.equal(820454399000);
     expect(new DateTime('1995-12-31 23:59:60Z').compare(new DateTime('1995-12-31 23:59:59Z'))).to.be.greaterThan(0);
     expect(new DateTime('1996-12-31 23:59:60Z').toString()).to.equal('DateTime<1997-01-01T00:00:00.000 +00:00>');
 
     expect(ttime.sort([new DateTime('1995-12-31 23:59:60Z'), new DateTime('1995-12-31 23:59:59Z')])
       .map(dt => dt.format(ttime.DATETIME_LOCAL_SECONDS)).join()).to.equal('1995-12-31T23:59:59,1995-12-31T23:59:60');
+
+    expect(new DateTime().computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(10000);
+    expect(new DateTime(0, 'TAI').computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 2, utcOffset: 0 })).to.equal(86400000);
+    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
+    expect(new DateTime(0, 'TAI').computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(-10000);
+
+    const dt = new DateTime();
+
+    dt.taiSeconds = 0;
+    expect(dt.utcSeconds).to.equal(-10);
+    expect(dt.taiSeconds).to.equal(0);
+    dt.timezone = Timezone.TAI_ZONE;
+    dt.taiSeconds = 77;
+    expect(dt.utcSeconds).to.equal(67);
+    expect(dt.taiSeconds).to.equal(77);
+    dt.utcSeconds = 1616117915;
+    expect(dt.utcSeconds).to.equal(1616117915);
+    expect(dt.taiSeconds).to.equal(1616117952);
   });
 });

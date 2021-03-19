@@ -369,11 +369,11 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'X': // Epoch 1970-01-01 00:00 UTC seconds
-        result.push(dt.utcTimeSeconds.toString());
+        result.push(dt.utcSeconds.toString());
         break;
 
       case 'x': // Epoch 1970-01-01 00:00 UTC milliseconds
-        result.push(dt.utcTimeMillis.toString());
+        result.push(dt.utcMillis.toString());
         break;
 
       case 'LLLL': // Various Moment.js-style shorthand date/time formats

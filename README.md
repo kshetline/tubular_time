@@ -73,6 +73,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [The `Calendar` class](#the-calendar-class)
 - [The `Timezone` class](#the-timezone-class)
   - [Static `Timezone` constants](#static-timezone-constants)
+  - [Static `Timezone` getter](#static-timezone-getter)
   - [Static `Timezone` methods](#static-timezone-methods)
   - [`Timezone` getters](#timezone-getters)
   - [`Timezone` methods](#timezone-methods)
@@ -599,11 +600,11 @@ These functions transform a `DateTime` to the beginning or end of a given unit o
 
 In milliseconds:
 
-`ttime().utcTimeMillis`
+`ttime().utcMillis`
 
 In seconds:
 
-`ttime().utcTimeSeconds`
+`ttime().utcSeconds`
 
 As a native JavaScript `Date` object:
 
@@ -995,9 +996,13 @@ wallTimeShort: DateAndTime;
 
 ```typescript
 locale: string | string[];
+epochMillis: number;
+epochSeconds: number;
+taiMillis: number;
+taiSeconds: number;
 timezone: Timezone;
-utcTimeMillis: number;
-utcTimeSeconds: number;
+utcMillis: number;
+utcSeconds: number;
 wallTime: DateAndTime;
 ```
 
