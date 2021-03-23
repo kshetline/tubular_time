@@ -102,7 +102,7 @@ export function getDeltaTAtJulianDate(time_JDE: number): number {
   return dt2 + n * (a + b + n * c) / 2.0;
 }
 
-export function UT_to_TDB(time_JDU: number): number {
+export function utToTdb(time_JDU: number): number {
   let time_JDE = time_JDU;
 
   for (let i = 0; i < 5; ++i)
@@ -111,7 +111,7 @@ export function UT_to_TDB(time_JDU: number): number {
   return time_JDE;
 }
 
-export function TDB_to_UT(time_JDE: number): number {
+export function tbdToUt(time_JDE: number): number {
   return time_JDE - getDeltaTAtJulianDate(time_JDE) / 86400.0;
 }
 
@@ -130,19 +130,19 @@ function deltaTAtStartOfYear(year: number): number {
   if (year < -500) {
     u = (year - 1820.0) / 100.0;
 
-    return -20.0 + 32.0 * u*u;
+    return -20.0 + 32.0 * u ** 2;
   }
   else if (year < 500) {
     u = year / 100.0;
 
-    return 10583.6 - 1014.41 * u + 33.78311 * u*u - 5.952053 * u*u*u
-           - 0.1798452 * u*u*u*u + 0.022174192 * u*u*u*u*u + 0.0090316521 * u*u*u*u*u*u;
+    return 10583.6 - 1014.41 * u + 33.78311 * u ** 2 - 5.952053 * u ** 3
+           - 0.1798452 * u ** 4 + 0.022174192 * u ** 5 + 0.0090316521 * u ** 6;
   }
   else if (year < 1600) {
     u = (year - 1000.0) / 100.0;
 
-    return 1574.2 - 556.01 * u + 71.23472 * u*u + 0.319781 * u*u*u
-           - 0.8503463 * u*u*u*u - 0.005050998 * u*u*u*u*u + 0.0083572073 * u*u*u*u*u*u;
+    return 1574.2 - 556.01 * u + 71.23472 * u ** 2 + 0.319781 * u ** 3
+           - 0.8503463 * u ** 4 - 0.005050998 * u ** 5 + 0.0083572073 * u ** 6;
   }
   else if (year <= lastTableYear)
     return historicDeltaT[year - 1600];
@@ -150,7 +150,7 @@ function deltaTAtStartOfYear(year: number): number {
     t = year - 2000.0;
 
     // Had started with 69.62 + ..., modified so that this would agree with real observed delta-T at 2010.
-    return calibration + 0.32217 * t + 0.005589 * t*t;
+    return calibration + 0.32217 * t + 0.005589 * t ** 2;
   }
   else if (year < 2150)
     // Had started with constant 20.0 + ..., modified so that this would agree with previous approximation at 2050
@@ -159,5 +159,5 @@ function deltaTAtStartOfYear(year: number): number {
   u = (year - 1820.0) / 100.0;
 
   // Had started with constant 20.0 + ..., modified so that this would agree with previous approximation at 2150
-  return calibration - 81.76 + 32.0 * u*u;
+  return calibration - 81.76 + 32.0 * u ** 2;
 }
