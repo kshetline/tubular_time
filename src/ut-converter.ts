@@ -1,7 +1,12 @@
 import { floor, squared } from '@tubular/math';
 import { clone } from '@tubular/util';
 
-const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
+export const SECS_IN_DAY = 86_400_000;
+export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
+export const UNIX_TIME_ZERO_AS_JULIAN_MILLIS = UNIX_TIME_ZERO_AS_JULIAN_DAY * SECS_IN_DAY;
+export const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
+export const DELTA_TT = 32.184;
+export const DELTA_TT_DAYS = DELTA_TT / 86400;
 
 /* eslint-disable @typescript-eslint/indent, comma-spacing, space-infix-ops */
 const baseHistoricDeltaT = [
@@ -67,7 +72,7 @@ const baseHistoricDeltaT = [
    66.07,  66.32,  66.60,  66.91,  67.28,  67.64,  68.10,  68.59,  68.97,  69.22,
 
 // Get additional data from https://www.iers.org/IERS/EN/DataProducts/EarthOrientationData/eop.html
-// As ΔT = 32.184 (for TDT - TAI) + 37 (for TAI - UTC) - (UT1-UTC)
+// As ΔT = 32.184 (for TT - TAI) + 37 (for TAI - UTC) - (UT1-UTC)
 ];
 
 let historicDeltaT = clone(baseHistoricDeltaT);
@@ -86,8 +91,8 @@ export function updateDeltaTs(post2019values?: number[]): void {
   lastTableYear = -1;
 }
 
-export function getDeltaTAtJulianDate(time_JDE: number): number {
-  const year = (time_JDE - JD_J2000) / 365.25 + 2000.0;
+export function getDeltaTAtJulianDate(timeJDE: number): number {
+  const year = (timeJDE - JD_J2000) / 365.25 + 2000.0;
 
   // Do a three-point interpolation from either the table or the computed values.
   const tableMidYear = floor(year);
@@ -102,17 +107,39 @@ export function getDeltaTAtJulianDate(time_JDE: number): number {
   return dt2 + n * (a + b + n * c) / 2.0;
 }
 
-export function utToTdb(time_JDU: number): number {
-  let time_JDE = time_JDU;
-
-  for (let i = 0; i < 5; ++i)
-    time_JDE = time_JDU + getDeltaTAtJulianDate(time_JDE) / 86400.0;
-
-  return time_JDE;
+export function getDeltaTAtTaiMillis(millis: number): number {
+  return getDeltaTAtJulianDate(millis / SECS_IN_DAY + UNIX_TIME_ZERO_AS_JULIAN_DAY);
 }
 
-export function tbdToUt(time_JDE: number): number {
-  return time_JDE - getDeltaTAtJulianDate(time_JDE) / 86400.0;
+export function utToTt(timeJDU: number): number {
+  let timeJDE = timeJDU;
+
+  for (let i = 0; i < 5; ++i)
+    timeJDE = timeJDU + getDeltaTAtJulianDate(timeJDE) / 86400.0;
+
+  return timeJDE;
+}
+
+export function utToTai(timeJDU: number): number {
+  return utToTt(timeJDU) - DELTA_TT_DAYS;
+}
+
+export function utToTaiMillis(millis: number): number {
+  return (utToTt(millis / SECS_IN_DAY + UNIX_TIME_ZERO_AS_JULIAN_DAY) - DELTA_TT_DAYS) * SECS_IN_DAY -
+    UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
+}
+
+export function ttToUt(timeJDE: number): number {
+  return timeJDE - getDeltaTAtJulianDate(timeJDE) / 86400.0;
+}
+
+export function taiToUt(timeJDE: number): number {
+  return ttToUt(timeJDE + DELTA_TT_DAYS);
+}
+
+export function taiToUtMillis(millis: number): number {
+  return ttToUt(millis / SECS_IN_DAY + UNIX_TIME_ZERO_AS_JULIAN_DAY + DELTA_TT_DAYS) * SECS_IN_DAY -
+    UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
 }
 
 function deltaTAtStartOfYear(year: number): number {

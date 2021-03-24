@@ -55,7 +55,8 @@ export {
   DateAndTime, MINUTE_MSEC, dateAndTimeFromMillis_SGC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, millisFromDateTime_SGC,
   parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
-export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './date-time';
+export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity } from './date-time';
+export * from './ut-converter';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';

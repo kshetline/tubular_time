@@ -12,7 +12,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "rimraf dist/ && tsc && tsc --build tsconfig.es6.json && tsc --build tsconfig.es5.json && webpack && webpack --env esver=5 && ts-node make-remote-zone-data.ts",
-    "prepublishOnly": "npm run build",
+    "prepack": "npm run build",
     "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
     "test": "TS_NODE_FILES=true nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
     "document": "typedoc --name \"ks-date-time-zone\" --module commonjs --exclude \"**/*+(e2e|spec|index).ts\" --excludePrivate --excludeProtected --readme README.md --target ES5 --out docs src"

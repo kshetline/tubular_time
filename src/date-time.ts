@@ -11,6 +11,7 @@ import {
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
+import { UNIX_TIME_ZERO_AS_JULIAN_DAY } from './ut-converter';
 
 export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
@@ -76,8 +77,6 @@ export interface Discontinuity {
   end: string;
   delta: number;
 }
-
-export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
 const localeTest = /^[a-z][a-z][-_a-z]*$/i;
 const lockError = new Error('This DateTime instance is locked and immutable');
