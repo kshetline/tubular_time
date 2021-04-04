@@ -11,7 +11,7 @@ import {
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
-import { UNIX_TIME_ZERO_AS_JULIAN_DAY } from './ut-converter';
+import { ttToUt, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './ut-converter';
 
 export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
@@ -445,7 +445,7 @@ export class DateTime extends Calendar {
        'dowmi', 'dayOfWeekMonthIndex', 'n', 'epochDay', 'j', 'isJulian',
        'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayByWeek',
        'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayByWeekLocale',
-       'utcOffset', 'dstOffset', 'occurrence', 'deltaTai'].forEach(key => delete w[key]);
+       'utcOffset', 'dstOffset', 'occurrence', 'deltaTai', 'jde', 'jdu', 'tt'].forEach(key => delete w[key]);
 
     if (purge != null)
       purgeAliasFields(w, purge);
@@ -705,7 +705,7 @@ export class DateTime extends Calendar {
     }
 
     if (this._timezone === DATELESS)
-      this._epochMillis = mod(this._epochMillis, 86400000);
+      this._epochMillis = mod(this._epochMillis, DAY_MSEC);
 
     result.updateWallTimeFromEpochMillis();
 
@@ -737,7 +737,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.SECOND:
-        wallTime.sec = mod(max(wallTime.sec, 59) + amount, 60);
+        wallTime.sec = mod(min(wallTime.sec, 59) + amount, 60);
         break;
 
       case DateTimeField.MINUTE:
@@ -1107,7 +1107,7 @@ export class DateTime extends Calendar {
     result.updateEpochMillisFromWallTime();
 
     if (this._timezone === DATELESS)
-      this._epochMillis = mod(this._epochMillis, 86400000);
+      this._epochMillis = mod(this._epochMillis, DAY_MSEC);
 
     result.updateWallTimeFromEpochMillis(0, false, sec60);
 
@@ -1324,7 +1324,7 @@ export class DateTime extends Calendar {
     let sec60 = false;
 
     if (this._timezone === DATELESS)
-      this._epochMillis = mod(this._epochMillis, 86400000);
+      this._epochMillis = mod(this._epochMillis, DAY_MSEC);
     else if (!this.isTai() && Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap) {
       this._wallTime.sec = 60;
       sec60 = true;
@@ -1553,12 +1553,21 @@ export class DateTime extends Calendar {
 
     const sec = min(wallTime.sec ?? 0, 59);
     const secOverflow = max((wallTime.sec ?? 0) - sec, 0);
-    const dayNum = wallTime.n ?? this.getDayNumber(wallTime);
-    let millis = (wallTime.millis ?? 0) +
-                 sec * 1000 +
-                 (wallTime.min ?? 0) * 60000 +
-                 (wallTime.hrs ?? 0) * 3600000 +
-                 dayNum * 86400000;
+    let millis: number;
+    let dayNum: number;
+
+    if (wallTime.jde != null || wallTime.jdu != null || wallTime.tt != null) {
+      if (wallTime.jde)
+        millis = round((ttToUt(wallTime.jde) - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
+    }
+    else {
+      dayNum = wallTime.n ?? this.getDayNumber(wallTime);
+      millis = (wallTime.millis ?? 0) +
+               sec * 1000 +
+               (wallTime.min ?? 0) * 60000 +
+               (wallTime.hrs ?? 0) * 3600000 +
+               dayNum * DAY_MSEC;
+    }
 
     if (wallTime.utcOffset != null)
       millis -= wallTime.utcOffset * 1000;

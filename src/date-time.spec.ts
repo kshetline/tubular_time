@@ -530,19 +530,19 @@ describe('DateTime', () => {
     expect(ttime.sort([new DateTime('1995-12-31 23:59:60Z'), new DateTime('1995-12-31 23:59:59Z')])
       .map(dt => dt.format(ttime.DATETIME_LOCAL_SECONDS)).join()).to.equal('1995-12-31T23:59:59,1995-12-31T23:59:60');
 
-    expect(new DateTime().computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(10000);
+    expect(new DateTime().computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(8000);
     expect(new DateTime(0, 'TAI').computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 2, utcOffset: 0 })).to.equal(86400000);
     expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
-    expect(new DateTime(0, 'TAI').computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(-10000);
+    expect(new DateTime(0, 'TAI').computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(-8000);
 
     const dt = new DateTime();
 
     dt.taiSeconds = 0;
-    expect(dt.utcSeconds).to.equal(-10);
+    expect(dt.utcSeconds).to.equal(-8);
     expect(dt.taiSeconds).to.equal(0);
     dt.timezone = Timezone.TAI_ZONE;
     dt.taiSeconds = 77;
-    expect(dt.utcSeconds).to.equal(67);
+    expect(dt.utcSeconds).to.equal(69);
     expect(dt.taiSeconds).to.equal(77);
     dt.utcSeconds = 1616117915;
     expect(dt.utcSeconds).to.equal(1616117915);

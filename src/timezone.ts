@@ -966,25 +966,30 @@ export class Timezone {
     if (!leaps)
       return;
 
-    let deltaTai = 10;
+    let deltaTai = 0;
 
     this.leapSeconds.push({
       utcMillis: Number.MIN_SAFE_INTEGER,
       taiMillis: Number.MIN_SAFE_INTEGER + 10000,
-      deltaTai: 10,
+      deltaTai: 0,
       isNegative: false
     });
 
-    leaps.split(/\s+/).map(day => toNumber(day)).forEach(day => {
-      deltaTai += (day > 0 ? 1 : -1);
+    // Proleptic extension of leap seconds back to 1958, per Tony Finch, https://fanf.livejournal.com/69586.html.
+    const leapSecondDays = [-3837, -3106, 2376, -1826, -1280, -915, 549, -184, 181, 546];
 
-      const utcMillis = abs(day) * 86400000;
+    leapSecondDays.push(...leaps.split(/\s+/).map(day => toNumber(day)));
+
+    leapSecondDays.forEach((day, index) => {
+      deltaTai += (index > 9 && day < 0 ? -1 : 1);
+
+      const utcMillis = (index < 10 ? day : abs(day)) * DAY_MSEC;
 
       this.leapSeconds.push({
         utcMillis,
         taiMillis: utcMillis + deltaTai * 1000,
         deltaTai,
-        isNegative: day < 0
+        isNegative: index > 9 && day < 0
       });
     });
   }

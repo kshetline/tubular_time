@@ -17,6 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+import { DAY_MSEC } from './common';
 import { DateTime, DateTimeArg } from './date-time';
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
@@ -120,7 +121,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
     poll();
 
     if (intervalDays > 0) {
-      pollingInterval = setInterval(poll, Math.max(intervalDays * 86400000, 3600000));
+      pollingInterval = setInterval(poll, Math.max(intervalDays * DAY_MSEC, 3600000));
 
       // Using unref prevents the interval alone from keeping a process alive
       if (pollingInterval.unref)

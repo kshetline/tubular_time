@@ -3,6 +3,7 @@ import {
   DELTA_TT, getDeltaTAtTaiMillis, taiToUt, taiToUtMillis, UNIX_TIME_ZERO_AS_JULIAN_DAY, utToTai, utToTaiMillis
 } from './ut-converter';
 import { DateTime } from './date-time';
+import { DAY_MSEC } from './common';
 
 const SIX_MONTHS_DAYS = 180;
 const TEST_DTS = [
@@ -21,7 +22,7 @@ const TEST_DTS = [
 describe('UT/TT Converter', () => {
   it('should convert properly between time systems', () => {
     for (let t = UNIX_TIME_ZERO_AS_JULIAN_DAY - 75 * SIX_MONTHS_DAYS; t < UNIX_TIME_ZERO_AS_JULIAN_DAY + 75 * SIX_MONTHS_DAYS; t += SIX_MONTHS_DAYS) {
-      const millis = (t - UNIX_TIME_ZERO_AS_JULIAN_DAY) / 86400000;
+      const millis = (t - UNIX_TIME_ZERO_AS_JULIAN_DAY) / DAY_MSEC;
 
       expect(utToTai(taiToUt(t))).to.be.approximately(t, 1E-15);
       expect(utToTaiMillis(taiToUtMillis(millis))).to.be.approximately(millis, 0.001);

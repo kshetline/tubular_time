@@ -1,12 +1,12 @@
 import { floor, squared } from '@tubular/math';
 import { clone } from '@tubular/util';
+import { DAY_MSEC, DAY_SEC } from './common';
 
-export const SECS_IN_DAY = 86_400_000;
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
-export const UNIX_TIME_ZERO_AS_JULIAN_MILLIS = UNIX_TIME_ZERO_AS_JULIAN_DAY * SECS_IN_DAY;
+export const UNIX_TIME_ZERO_AS_JULIAN_MILLIS = UNIX_TIME_ZERO_AS_JULIAN_DAY * DAY_MSEC;
 export const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
 export const DELTA_TT = 32.184;
-export const DELTA_TT_DAYS = DELTA_TT / 86400;
+export const DELTA_TT_DAYS = DELTA_TT / DAY_SEC;
 
 /* eslint-disable @typescript-eslint/indent, comma-spacing, space-infix-ops */
 const baseHistoricDeltaT = [
@@ -108,14 +108,14 @@ export function getDeltaTAtJulianDate(timeJDE: number): number {
 }
 
 export function getDeltaTAtTaiMillis(millis: number): number {
-  return getDeltaTAtJulianDate(millis / SECS_IN_DAY + UNIX_TIME_ZERO_AS_JULIAN_DAY);
+  return getDeltaTAtJulianDate(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY);
 }
 
 export function utToTt(timeJDU: number): number {
   let timeJDE = timeJDU;
 
   for (let i = 0; i < 5; ++i)
-    timeJDE = timeJDU + getDeltaTAtJulianDate(timeJDE) / 86400.0;
+    timeJDE = timeJDU + getDeltaTAtJulianDate(timeJDE) / DAY_SEC;
 
   return timeJDE;
 }
@@ -125,12 +125,12 @@ export function utToTai(timeJDU: number): number {
 }
 
 export function utToTaiMillis(millis: number): number {
-  return (utToTt(millis / SECS_IN_DAY + UNIX_TIME_ZERO_AS_JULIAN_DAY) - DELTA_TT_DAYS) * SECS_IN_DAY -
+  return (utToTt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY) - DELTA_TT_DAYS) * DAY_MSEC -
     UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
 }
 
 export function ttToUt(timeJDE: number): number {
-  return timeJDE - getDeltaTAtJulianDate(timeJDE) / 86400.0;
+  return timeJDE - getDeltaTAtJulianDate(timeJDE) / DAY_SEC;
 }
 
 export function taiToUt(timeJDE: number): number {
@@ -138,7 +138,7 @@ export function taiToUt(timeJDE: number): number {
 }
 
 export function taiToUtMillis(millis: number): number {
-  return ttToUt(millis / SECS_IN_DAY + UNIX_TIME_ZERO_AS_JULIAN_DAY + DELTA_TT_DAYS) * SECS_IN_DAY -
+  return ttToUt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY + DELTA_TT_DAYS) * DAY_MSEC -
     UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
 }
 
