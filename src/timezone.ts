@@ -976,7 +976,7 @@ export class Timezone {
     });
 
     // Proleptic extension of leap seconds back to 1958, per Tony Finch, https://fanf.livejournal.com/69586.html.
-    const leapSecondDays = [-3837, -3106, 2376, -1826, -1280, -915, 549, -184, 181, 546];
+    const leapSecondDays = [-3837, -3106, -2376, -1826, -1280, -915, -549, -184, 181, 546];
 
     leapSecondDays.push(...leaps.split(/\s+/).map(day => toNumber(day)));
 
