@@ -5,8 +5,10 @@ import { DAY_MSEC, DAY_SEC } from './common';
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 export const UNIX_TIME_ZERO_AS_JULIAN_MILLIS = UNIX_TIME_ZERO_AS_JULIAN_DAY * DAY_MSEC;
 export const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
-export const DELTA_TT = 32.184;
-export const DELTA_TT_DAYS = DELTA_TT / DAY_SEC;
+export const DELTA_TDT_SEC = 32.184;
+export const DELTA_TDT_MSEC = 32184;
+export const DELTA_TDT_DAYS = DELTA_TDT_SEC / DAY_SEC;
+export const DELTA_MJD = 2400000.5;
 
 /* eslint-disable @typescript-eslint/indent, comma-spacing, space-infix-ops */
 const baseHistoricDeltaT = [
@@ -69,10 +71,11 @@ const baseHistoricDeltaT = [
    56.86,  57.57,  58.31,  59.12,  59.98,  60.79,  61.63,  62.30,  62.97,  63.47,
   // 2000-2019
    63.83,  64.09,  64.30,  64.47,  64.57,  64.69,  64.85,  65.15,  65.46,  65.78,
-   66.07,  66.32,  66.60,  66.91,  67.28,  67.64,  68.10,  68.59,  68.97,  69.22,
+   66.07,  66.32,  66.60,  66.91,  67.28,  67.64,  68.10,  68.59,  68.97,  69.22
 
+// From 2020 onward, data from timezone files, via updateDeltaTs().
 // Get additional data from https://www.iers.org/IERS/EN/DataProducts/EarthOrientationData/eop.html
-// As ΔT = 32.184 (for TT - TAI) + 37 (for TAI - UTC) - (UT1-UTC)
+// As ΔT = 32.184 (for TDT - TAI) + 37 (for TAI - UTC) - (UT1-UTC)
 ];
 
 let historicDeltaT = clone(baseHistoricDeltaT);
@@ -111,7 +114,7 @@ export function getDeltaTAtTaiMillis(millis: number): number {
   return getDeltaTAtJulianDate(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY);
 }
 
-export function utToTt(timeJDU: number): number {
+export function utToTdt(timeJDU: number): number {
   let timeJDE = timeJDU;
 
   for (let i = 0; i < 5; ++i)
@@ -121,24 +124,32 @@ export function utToTt(timeJDU: number): number {
 }
 
 export function utToTai(timeJDU: number): number {
-  return utToTt(timeJDU) - DELTA_TT_DAYS;
+  return utToTdt(timeJDU) - DELTA_TDT_DAYS;
 }
 
 export function utToTaiMillis(millis: number): number {
-  return (utToTt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY) - DELTA_TT_DAYS) * DAY_MSEC -
+  return (utToTdt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY) - DELTA_TDT_DAYS) * DAY_MSEC -
     UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
 }
 
-export function ttToUt(timeJDE: number): number {
+export function tdtToUt(timeJDE: number): number {
   return timeJDE - getDeltaTAtJulianDate(timeJDE) / DAY_SEC;
 }
 
-export function taiToUt(timeJDE: number): number {
-  return ttToUt(timeJDE + DELTA_TT_DAYS);
+export function tdtDaysToTaiMillis(timeJDE: number): number {
+  return (timeJDE - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC - DELTA_TDT_MSEC;
+}
+
+export function taiDaysToUt(timeJDE: number): number {
+  return tdtToUt(timeJDE + DELTA_TDT_DAYS);
+}
+
+export function taiMillisToTdt(millis: number): number {
+  return (millis + DELTA_TDT_MSEC) / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
 }
 
 export function taiToUtMillis(millis: number): number {
-  return ttToUt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY + DELTA_TT_DAYS) * DAY_MSEC -
+  return tdtToUt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY + DELTA_TDT_DAYS) * DAY_MSEC -
     UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
 }
 

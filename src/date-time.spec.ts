@@ -548,4 +548,8 @@ describe('DateTime', () => {
     expect(dt.utcSeconds).to.equal(1616117915);
     expect(dt.taiSeconds).to.equal(1616117952);
   });
+
+  it('should correctly handle TT/UT/TAI conversions', () => {
+//    console.log(new DateTime({ jde: 2415771.8558099265 }, 'utc'));
+  });
 });

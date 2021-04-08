@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import {
-  DELTA_TT, getDeltaTAtTaiMillis, taiToUt, taiToUtMillis, UNIX_TIME_ZERO_AS_JULIAN_DAY, utToTai, utToTaiMillis
+  DELTA_TDT_SEC, getDeltaTAtTaiMillis, taiDaysToUt, taiToUtMillis, UNIX_TIME_ZERO_AS_JULIAN_DAY, utToTai, utToTaiMillis
 } from './ut-converter';
 import { DateTime } from './date-time';
 import { DAY_MSEC } from './common';
@@ -24,14 +24,14 @@ describe('UT/TT Converter', () => {
     for (let t = UNIX_TIME_ZERO_AS_JULIAN_DAY - 75 * SIX_MONTHS_DAYS; t < UNIX_TIME_ZERO_AS_JULIAN_DAY + 75 * SIX_MONTHS_DAYS; t += SIX_MONTHS_DAYS) {
       const millis = (t - UNIX_TIME_ZERO_AS_JULIAN_DAY) / DAY_MSEC;
 
-      expect(utToTai(taiToUt(t))).to.be.approximately(t, 1E-15);
+      expect(utToTai(taiDaysToUt(t))).to.be.approximately(t, 1E-15);
       expect(utToTaiMillis(taiToUtMillis(millis))).to.be.approximately(millis, 0.001);
     }
 
     for (let y = 1922; y <= 2021; ++y) {
       const now = new DateTime([y], 'UTC').epochMillis;
 
-      expect((utToTaiMillis(now) - now) / 1000 + DELTA_TT).to.be.approximately(TEST_DTS[y - 1922], 0.01);
+      expect((utToTaiMillis(now) - now) / 1000 + DELTA_TDT_SEC).to.be.approximately(TEST_DTS[y - 1922], 0.01);
       expect(getDeltaTAtTaiMillis(now)).to.be.approximately(TEST_DTS[y - 1922], 0.01);
     }
   });

@@ -203,6 +203,7 @@ let osDstOffset: number;
 export class Timezone {
   private static encodedTimezones: Record<string, string> = {};
   private static shortZoneNames: Record<string, ShortZoneNameInfo> = {};
+  private static zonesByLowercase: Record<string, string> = {};
   private static zonesByOffsetAndDst: Record<string, Set<string>> = {};
   private static countriesForZone: Record<string, Set<string>> = {};
   private static zonesForCountry: Record<string, Set<string>> = {};
@@ -450,7 +451,11 @@ export class Timezone {
   static getTimezone(name?: string, longitude?: number): Timezone {
     if (!name)
       return this.OS_ZONE;
-    else if (name.toUpperCase() === 'TAI')
+
+    if (this.zonesByLowercase[name.toLowerCase()])
+      name = this.zonesByLowercase[name.toLowerCase()];
+
+    if (name === 'TAI')
       return this.TAI_ZONE;
 
     const cached = this.zoneLookup[name];
@@ -459,17 +464,17 @@ export class Timezone {
       return cached;
 
     let zone: Timezone;
-    const $: string[] = /LMT|OS|(?:(GMT|UTC?)?([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?))?)|(?:.+\/.+)|\w+/.exec(name);
+    const $: string[] = /LMT|OS|((GMT|UTC?)?([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?))?)|(.+\/.+)|\w+/i.exec(name);
 
     if ($ === null || $.length === 0)
       throw new Error('Unrecognized format for timezone name "' + name + '"');
-    else  if ($[0] === 'LMT') {
+    else  if ($[0].toUpperCase() === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
       zone = new Timezone({ zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
                              usesDst: false, dstOffset: 0, transitions: null });
     }
-    else if ($[0] === 'OS')
+    else if ($[0].toUpperCase() === 'OS')
       zone = this.OS_ZONE;
     else if ($.length > 1 && (/GMT|UTC?/.test($[1]) || $[2])) {
       let offset = 0;
@@ -854,6 +859,7 @@ export class Timezone {
 
   private static extractZoneInfo(): void {
     this.shortZoneNames = {};
+    this.zonesByLowercase = { gmt: 'GMT', lmt: 'LMT', os: 'OS', tai: 'TAI', ut: 'UT', utc: 'UTC'};
     this.zonesByOffsetAndDst = {};
     this.countriesForZone = {};
     this.zonesForCountry = {};
@@ -875,6 +881,8 @@ export class Timezone {
     keys.forEach(ianaName => {
       let etz = this.encodedTimezones[ianaName];
       let popAndC: string;
+
+      this.zonesByLowercase[ianaName.toLowerCase()] = ianaName;
 
       if (!etz.includes(';')) {
         const $ = /^!(.*,)?(.*)$/.exec(etz);

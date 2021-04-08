@@ -74,10 +74,12 @@ export interface DateAndTime extends YMDDate {
 
   /** Julian days, ephemeris. */
   jde?: number;
+  /** Modified Julian days, ephemeris. */
+  mjde?: number;
   /** Julian days, UT. */
   jdu?: number;
-  /** Terrestrial Time (aka TDT, Dynamic Time) in milliseconds from 1970-01-01 TT. */
-  tt?: number;
+  /** Modified Julian days, UT. */
+  mjdu?: number;
 }
 
 const altFields = [
@@ -98,7 +100,7 @@ const fieldOrder = [
   'hrs', 'min', 'sec',
   'hour', 'minute', 'second', 'millis',
   'utcOffset', 'dstOffset', 'occurrence', 'deltaTai',
-  'jde', 'jdu', 'tt',
+  'jde', 'mjde', 'jdu', 'mjdu',
   'error'
 ];
 
@@ -143,8 +145,10 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
       const value = obj[key];
 
       if (value != null) {
-        if (!isNumber(value) && /^(jde|jdu|tt)$/.test(key))
-          throw new Error(`${key} must be a numeric value (${value})`);
+        if (/^(m?(jde|jdu))$/.test(key)) {
+          if (!isNumber(value))
+            throw new Error(`${key} must be a numeric value (${value})`);
+        }
         else if (!isNumber(value) || value !== floor(value))
           throw new Error(`${key} must be an integer value (${value})`);
       }
@@ -153,17 +157,15 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
 
   if (obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
       obj.ywl == null && obj.yearByWeekLocale == null && obj.n == null && obj.epochDay == null &&
-      dt.hrs == null && dt.hour == null && dt.jde && dt.jdu && dt.tt)
-    throw new Error('A year value, an epoch day, an hour value, a Julian day, or a TT must be specified');
+      dt.hrs == null && dt.hour == null && dt.jde == null && dt.mjde == null && dt.jdu == null && dt.mjdu == null)
+    throw new Error('A year value, an epoch day, an hour value, or a Julian date value must be specified');
 }
 
-export const MINUTE_MSEC =    60_000;
+export const MINUTE_MSEC =     60_000;
 export const HOUR_MSEC   =  3_600_000;
 export const DAY_MSEC    = 86_400_000;
-
-export const DAY_SEC    = 86_400;
-
-export const DAY_MINUTES = 1440;
+export const DAY_SEC     =     86_400;
+export const DAY_MINUTES =       1440;
 
 export function millisFromDateTime_SGC(year: number, month: number, day: number, hour: number, minute: number, second?: number, millis?: number): number {
   millis = millis || 0;
