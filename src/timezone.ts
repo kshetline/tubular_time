@@ -1,7 +1,7 @@
 import { abs, div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
 import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
-import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset } from './common';
+import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset, YMDDate } from './common';
 import { hasIntlDateTime } from './locale-data';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 import { updateDeltaTs } from './ut-converter';
@@ -109,6 +109,7 @@ class Rule {
 export interface LeapSecondInfo {
   utcMillis: number;
   taiMillis: number;
+  dateAfter: YMDDate;
   deltaTai: number;
   isNegative: boolean;
   inLeap?: boolean;
@@ -209,6 +210,7 @@ export class Timezone {
   private static zonesForCountry: Record<string, Set<string>> = {};
   private static populationForZone: Record<string, number> = {};
   private static leapSeconds: LeapSecondInfo[] = [];
+  private static lastLeapSecond: YMDDate;
   private static _version: string = 'unspecified';
 
   static get version(): string { return this._version; }
@@ -255,8 +257,8 @@ export class Timezone {
 
     this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
     this.extractZoneInfo();
-    this.extractDeltaTs();
     this.extractLeapSeconds();
+    this.extractDeltaTs();
 
     if (changed) {
       this.offsetsAndZones = undefined;
@@ -464,7 +466,7 @@ export class Timezone {
       return cached;
 
     let zone: Timezone;
-    const $: string[] = /LMT|OS|((GMT|UTC?)?([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?))?)|(.+\/.+)|\w+/i.exec(name);
+    const $: string[] = /LMT|OS|(?:(GMT|UTC?)?([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?))?)|(?:.+\/.+)|\w+/.exec(name);
 
     if ($ === null || $.length === 0)
       throw new Error('Unrecognized format for timezone name "' + name + '"');
@@ -961,45 +963,51 @@ export class Timezone {
     const deltaTs = this.encodedTimezones?.deltaTs;
 
     if (deltaTs)
-      updateDeltaTs(deltaTs.split(/\s+/).map(dt => toNumber(dt)));
+      updateDeltaTs(deltaTs.split(/\s+/).map(dt => toNumber(dt)), this.getDateAfterLastKnownLeapSecond());
     else
-      updateDeltaTs();
+      updateDeltaTs(null, this.getDateAfterLastKnownLeapSecond());
   }
 
   private static extractLeapSeconds(): void {
     this.leapSeconds = [];
+    this.lastLeapSecond = undefined;
 
     const leaps = this.encodedTimezones?.leapSeconds;
 
     if (!leaps)
       return;
 
-    let deltaTai = 0;
+    let deltaTai = -1;
 
     this.leapSeconds.push({
       utcMillis: Number.MIN_SAFE_INTEGER,
       taiMillis: Number.MIN_SAFE_INTEGER + 10000,
+      dateAfter: null,
       deltaTai: 0,
       isNegative: false
     });
 
     // Proleptic extension of leap seconds back to 1958, per Tony Finch, https://fanf.livejournal.com/69586.html.
-    const leapSecondDays = [-3837, -3106, -2376, -1826, -1280, -915, -549, -184, 181, 546];
+    const leapSecondDays = [-4383, -3837, -3106, -2376, -1826, -1280, -915, -549, -184, 181, 546];
 
     leapSecondDays.push(...leaps.split(/\s+/).map(day => toNumber(day)));
 
-    leapSecondDays.forEach((day, index) => {
-      deltaTai += (index > 9 && day < 0 ? -1 : 1);
+    leapSecondDays.forEach((signCodedDay, index) => {
+      const day = (index < 11 ? signCodedDay : abs(signCodedDay));
+      const utcMillis = day * DAY_MSEC;
 
-      const utcMillis = (index < 10 ? day : abs(day)) * DAY_MSEC;
+      deltaTai += (index > 10 && signCodedDay < 0 ? -1 : 1);
 
       this.leapSeconds.push({
         utcMillis,
         taiMillis: utcMillis + deltaTai * 1000,
+        dateAfter: getDateFromDayNumber_SGC(day),
         deltaTai,
-        isNegative: index > 9 && day < 0
+        isNegative: index > 10 && signCodedDay < 0
       });
     });
+
+    this.lastLeapSecond = last(this.leapSeconds).dateAfter;
   }
 
   static formatUtcOffset(offsetSeconds: number, noColons = false): string {
@@ -1201,6 +1209,10 @@ export class Timezone {
     }
 
     return Object.assign({ inLeap: false }, this.leapSeconds[0]);
+  }
+
+  static getDateAfterLastKnownLeapSecond(): YMDDate {
+    return this.lastLeapSecond;
   }
 
   static findDeltaTaiFromTai(taiTime: number): LeapSecondInfo {

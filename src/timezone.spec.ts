@@ -5,10 +5,12 @@ import timezoneLarge from './timezone-large';
 const version = timezoneLarge.version;
 
 describe('Timezone', () => {
-  beforeEach(() => Timezone.defineTimezones(Object.assign({
+  beforeEach(() => Timezone.defineTimezones(Object.assign(Object.assign({
     'America/Barberg': 'America/Chicago',
     'America/Fooberg': '!250,XX,America/New_York'
-  }, timezoneLarge)));
+  }, timezoneLarge), {
+    leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167'
+  })));
 
   it('should properly create Timezone instances', () => {
     expect(Timezone.from('America/New_York').aliasFor).to.equal(null);
@@ -53,5 +55,7 @@ describe('Timezone', () => {
     expect((offsets.find(o => o.offset === '-05:00§')?.zones ?? []).includes('America/New York')).to.be.true;
     expect((offsets.find(o => o.offset === '-10:00')?.zones ?? []).includes('Pacific/Honolulu')).to.be.true;
     expect(!!offsets.find(o => o.offset === '-99:99')).to.be.false;
+
+    expect(Timezone.getDateAfterLastKnownLeapSecond()).includes({ y: 2017, m: 1, d: 1 });
   });
 });

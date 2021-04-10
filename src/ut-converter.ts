@@ -1,14 +1,8 @@
-import { floor, squared } from '@tubular/math';
+import { floor, max, round, squared } from '@tubular/math';
 import { clone } from '@tubular/util';
-import { DAY_MSEC, DAY_SEC } from './common';
-
-export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
-export const UNIX_TIME_ZERO_AS_JULIAN_MILLIS = UNIX_TIME_ZERO_AS_JULIAN_DAY * DAY_MSEC;
-export const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
-export const DELTA_TDT_SEC = 32.184;
-export const DELTA_TDT_MSEC = 32184;
-export const DELTA_TDT_DAYS = DELTA_TDT_SEC / DAY_SEC;
-export const DELTA_MJD = 2400000.5;
+import { DAY_MSEC, DAY_SEC, DELTA_TDT_DAYS, DELTA_TDT_MSEC, JD_J2000, UNIX_TIME_ZERO_AS_JULIAN_DAY, UNIX_TIME_ZERO_AS_JULIAN_MILLIS, YMDDate } from './common';
+import { Timezone } from './timezone';
+import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 
 /* eslint-disable @typescript-eslint/indent, comma-spacing, space-infix-ops */
 const baseHistoricDeltaT = [
@@ -81,10 +75,12 @@ const baseHistoricDeltaT = [
 let historicDeltaT = clone(baseHistoricDeltaT);
 let calibration = 0;
 let lastTableYear = -1;
+const preKnownLeapSeconds = getDayNumber_SGC(1958, 1, 1) + UNIX_TIME_ZERO_AS_JULIAN_DAY;
+let postKnownLeapSeconds: number;
 
 updateDeltaTs();
 
-export function updateDeltaTs(post2019values?: number[]): void {
+export function updateDeltaTs(post2019values?: number[], lastKnownLeapSecond?: YMDDate): void {
   if (!post2019values)
     post2019values = [69.36, 69.36];
 
@@ -92,6 +88,16 @@ export function updateDeltaTs(post2019values?: number[]): void {
   historicDeltaT.push(...post2019values);
   calibration = 0;
   lastTableYear = -1;
+
+  // const now = new DateTime().wallTime; // max(new DateTime(), new DateTime(Timezone.getDateAfterLastKnownLeapSecond(), 'UTC')).wallTime;
+  let lastDay = Date.now() / DAY_MSEC;
+
+  if (lastKnownLeapSecond)
+    lastDay = max(lastDay, getDayNumber_SGC(lastKnownLeapSecond));
+
+  const lastYMD = getDateFromDayNumber_SGC(lastDay);
+
+  postKnownLeapSeconds = getDayNumber_SGC({ y: lastYMD.y + 1, m: lastYMD.m < 7 ? 1 : 7, d: 1 }) + UNIX_TIME_ZERO_AS_JULIAN_DAY;
 }
 
 export function getDeltaTAtJulianDate(timeJDE: number): number {
@@ -123,17 +129,39 @@ export function utToTdt(timeJDU: number): number {
   return timeJDE;
 }
 
-export function utToTai(timeJDU: number): number {
-  return utToTdt(timeJDU) - DELTA_TDT_DAYS;
+export function utToTai(timeJDU: number, asUtc = false): number {
+  let utcMillis: number;
+  let deltaTai: number;
+
+  if (asUtc && preKnownLeapSeconds - 365 <= timeJDU && timeJDU <= postKnownLeapSeconds + 365) {
+    utcMillis = round((timeJDU - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
+    deltaTai = Timezone.findDeltaTaiFromUtc(utcMillis).deltaTai;
+  }
+
+  if (asUtc && preKnownLeapSeconds <= timeJDU && timeJDU <= postKnownLeapSeconds)
+    return timeJDU + deltaTai / DAY_MSEC;
+
+  const tai = utToTdt(timeJDU) - DELTA_TDT_DAYS;
+
+  if (!asUtc || timeJDU < preKnownLeapSeconds - 365 || timeJDU > postKnownLeapSeconds + 365)
+    return tai;
+
+  const weight = (timeJDU <= preKnownLeapSeconds ? preKnownLeapSeconds - timeJDU : timeJDU - postKnownLeapSeconds);
+
+  return ((timeJDU + deltaTai / DAY_MSEC) * (weight - 365) + tai * weight) / 365;
 }
 
-export function utToTaiMillis(millis: number): number {
-  return (utToTdt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY) - DELTA_TDT_DAYS) * DAY_MSEC -
-    UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
+export function utToTaiMillis(millis: number, asUtc = false): number {
+  return (utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
+    UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 }
 
 export function tdtToUt(timeJDE: number): number {
   return timeJDE - getDeltaTAtJulianDate(timeJDE) / DAY_SEC;
+}
+
+export function tdtDaysToUtMillis(timeJDE: number): number {
+  return (tdtToUt(timeJDE) - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 }
 
 export function tdtDaysToTaiMillis(timeJDE: number): number {

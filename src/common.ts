@@ -5,6 +5,20 @@ import { isNumber, toNumber } from '@tubular/util';
 export const MIN_YEAR = -271820;
 export const MAX_YEAR = 275759;
 
+export const MINUTE_MSEC =     60_000;
+export const HOUR_MSEC   =  3_600_000;
+export const DAY_MSEC    = 86_400_000;
+export const DAY_SEC     =     86_400;
+export const DAY_MINUTES =       1440;
+
+export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
+export const UNIX_TIME_ZERO_AS_JULIAN_MILLIS = UNIX_TIME_ZERO_AS_JULIAN_DAY * DAY_MSEC;
+export const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
+export const DELTA_TDT_SEC = 32.184;
+export const DELTA_TDT_MSEC = 32184;
+export const DELTA_TDT_DAYS = DELTA_TDT_SEC / DAY_SEC;
+export const DELTA_MJD = 2400000.5;
+
 /**
  * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
  * or Gregorian.
@@ -160,12 +174,6 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
       dt.hrs == null && dt.hour == null && dt.jde == null && dt.mjde == null && dt.jdu == null && dt.mjdu == null)
     throw new Error('A year value, an epoch day, an hour value, or a Julian date value must be specified');
 }
-
-export const MINUTE_MSEC =     60_000;
-export const HOUR_MSEC   =  3_600_000;
-export const DAY_MSEC    = 86_400_000;
-export const DAY_SEC     =     86_400;
-export const DAY_MINUTES =       1440;
 
 export function millisFromDateTime_SGC(year: number, month: number, day: number, hour: number, minute: number, second?: number, millis?: number): number {
   millis = millis || 0;

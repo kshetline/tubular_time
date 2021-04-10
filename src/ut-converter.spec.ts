@@ -1,9 +1,7 @@
 import { expect } from 'chai';
-import {
-  DELTA_TDT_SEC, getDeltaTAtTaiMillis, taiDaysToUt, taiToUtMillis, UNIX_TIME_ZERO_AS_JULIAN_DAY, utToTai, utToTaiMillis
-} from './ut-converter';
+import { getDeltaTAtTaiMillis, taiDaysToUt, taiToUtMillis, utToTai, utToTaiMillis } from './ut-converter';
 import { DateTime } from './date-time';
-import { DAY_MSEC } from './common';
+import { DAY_MSEC, DELTA_TDT_SEC, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './common';
 
 const SIX_MONTHS_DAYS = 180;
 const TEST_DTS = [
@@ -22,7 +20,7 @@ const TEST_DTS = [
 describe('UT/TT Converter', () => {
   it('should convert properly between time systems', () => {
     for (let t = UNIX_TIME_ZERO_AS_JULIAN_DAY - 75 * SIX_MONTHS_DAYS; t < UNIX_TIME_ZERO_AS_JULIAN_DAY + 75 * SIX_MONTHS_DAYS; t += SIX_MONTHS_DAYS) {
-      const millis = (t - UNIX_TIME_ZERO_AS_JULIAN_DAY) / DAY_MSEC;
+      const millis = (t - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 
       expect(utToTai(taiDaysToUt(t))).to.be.approximately(t, 1E-15);
       expect(utToTaiMillis(taiToUtMillis(millis))).to.be.approximately(millis, 0.001);

@@ -5,13 +5,13 @@ import {
   getDateFromDayNumberGregorian
 } from './calendar';
 import {
-  DateAndTime, DAY_MSEC, MAX_YEAR, MIN_YEAR, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
-  syncDateAndTime, validateDateAndTime, YMDDate
+  DateAndTime, DAY_MSEC, DELTA_MJD, MAX_YEAR, MIN_YEAR, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
+  syncDateAndTime, UNIX_TIME_ZERO_AS_JULIAN_DAY, validateDateAndTime, YMDDate
 } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
-import { DELTA_MJD, taiMillisToTdt, tdtDaysToTaiMillis, tdtToUt, UNIX_TIME_ZERO_AS_JULIAN_DAY, utToTdt } from './ut-converter';
+import { taiMillisToTdt, tdtDaysToTaiMillis, tdtDaysToUtMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
 
 export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
@@ -1573,30 +1573,31 @@ export class DateTime extends Calendar {
       wallTime.dwl = wallTime.dwl ?? 1;
     }
 
-    const sec = min(wallTime.sec ?? 0, 59);
-    const secOverflow = max((wallTime.sec ?? 0) - sec, 0);
     const isTai = this.isTai();
     let millis: number;
-    let dayNum: number;
 
     if (wallTime.jde != null || wallTime.mjde != null || wallTime.jdu != null || wallTime.mjdu != null) {
       if (wallTime.jde != null || wallTime.mjde != null) {
-        millis = round(tdtDaysToTaiMillis(wallTime.jde != null ? wallTime.jde : wallTime.mjde + DELTA_MJD));
-
-        if (!isTai)
-          millis -= (Timezone.findDeltaTaiFromTai(millis)?.deltaTai ?? 0) * 1000;
-      }
-      else {
-        millis = round(DateTime.millisFromJulianDay(wallTime.jdu != null ? wallTime.jdu : wallTime.mjdu + DELTA_MJD));
+        wallTime.jde = wallTime.jde ?? wallTime.mjde + DELTA_MJD;
 
         if (isTai)
-          millis += (Timezone.findDeltaTaiFromUtc(millis)?.deltaTai ?? 0) * 1000;
+          millis = round(tdtDaysToTaiMillis(wallTime.jde));
+        else
+          millis = round(tdtDaysToUtMillis(wallTime.jde));
       }
+      else {
+        wallTime.jdu = wallTime.jdu ?? wallTime.mjdu + DELTA_MJD;
+        millis = round(DateTime.millisFromJulianDay(wallTime.jdu));
 
-      dayNum = floor(millis / DAY_MSEC);
+        if (isTai)
+          millis = utToTaiMillis(millis, true);
+      }
     }
     else {
-      dayNum = wallTime.n ?? this.getDayNumber(wallTime);
+      const sec = min(wallTime.sec ?? 0, 59);
+      const secOverflow = max((wallTime.sec ?? 0) - sec, 0);
+      const dayNum = wallTime.n ?? this.getDayNumber(wallTime);
+
       millis = (wallTime.millis ?? 0) +
                sec * 1000 +
                (wallTime.min ?? 0) * 60000 +
@@ -1608,7 +1609,7 @@ export class DateTime extends Calendar {
       else
         millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
 
-      if (this.isTai() || secOverflow !== 1 || !Timezone.findDeltaTaiFromUtc(millis)?.inLeap)
+      if (isTai || secOverflow !== 1 || !Timezone.findDeltaTaiFromUtc(millis)?.inLeap)
         millis += secOverflow * 1000;
 
       if ((wallTime.occurrence ?? 1) < 2) {
