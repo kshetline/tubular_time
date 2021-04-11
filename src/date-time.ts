@@ -18,7 +18,7 @@ export type DateTimeArg = number | string | DateAndTime | Date | number[] | null
 export enum DateTimeField {
   BAD_FIELD = Number.NEGATIVE_INFINITY,
   FULL = -1,
-  MILLI, SECOND, MINUTE, HOUR_12, HOUR, AM_PM, DAY,
+  MILLI, MILLI_TAI, SECOND, SECOND_TAI, MINUTE, MINUTE_TAI, HOUR_12, HOUR, HOUR_TAI, AM_PM, DAY, DAY_TAI,
   DAY_BY_WEEK, DAY_BY_WEEK_LOCALE, DAY_OF_YEAR, WEEK, WEEK_LOCALE,
   MONTH, QUARTER, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
 }
@@ -26,7 +26,9 @@ export enum DateTimeField {
 export type DateTimeFieldName = 'milli' | 'millis' | 'millisecond' | 'milliseconds' | 'second' | 'seconds' |
   'minute' | 'minutes' | 'hour12' | 'hours12' | 'hour' | 'hours' | 'ampm' | 'am_pm' | 'day' | 'days' | 'date' |
   'dayByWeek' | 'dayByWeekLocale' | 'dayOfYear' | 'week' | 'weeks' | 'weekLocale' | 'month' | 'months' |
-  'quarter' | 'quarters' | 'year' | 'years' | 'yearWeek' | 'yearWeekLocale' | 'era';
+  'quarter' | 'quarters' | 'year' | 'years' | 'yearWeek' | 'yearWeekLocale' | 'era' |
+  'milli_tai' | 'millis_tai' | 'millisecond_tai' | 'milliseconds_tai' | 'second_tai' | 'seconds_tai' |
+  'minute_tai' | 'minutes_tai' | 'hour_tai' | 'hours_tai' | 'day_tai' | 'days_tai';
 
 const fieldNames = {
   milli: DateTimeField.MILLI,
@@ -60,7 +62,19 @@ const fieldNames = {
   years: DateTimeField.YEAR,
   yearWeek: DateTimeField.YEAR_WEEK,
   yearWeekLocale: DateTimeField.YEAR_WEEK_LOCALE,
-  era: DateTimeField.ERA
+  era: DateTimeField.ERA,
+  milli_tai: DateTimeField.MILLI_TAI,
+  millis_tai: DateTimeField.MILLI_TAI,
+  millisecond_tai: DateTimeField.MILLI_TAI,
+  milliseconds_tai: DateTimeField.MILLI_TAI,
+  second_tai: DateTimeField.SECOND_TAI,
+  seconds_tai: DateTimeField.SECOND_TAI,
+  minute_tai: DateTimeField.MINUTE_TAI,
+  minutes_tai: DateTimeField.MINUTE_TAI,
+  hour_tai: DateTimeField.HOUR_TAI,
+  hours_tai: DateTimeField.HOUR_TAI,
+  day_tai: DateTimeField.DAY_TAI,
+  days_tai: DateTimeField.DAY_TAI
 };
 
 forEach(fieldNames, (key, value) => { if (key !== key.toLowerCase()) fieldNames[key.toLowerCase()] = value; });
@@ -416,12 +430,19 @@ export class DateTime extends Calendar {
     if (this.locked)
       throw lockError;
 
-    if (!this.isTai())
-      newTime = taiToUtMillis(newTime, true);
+    let inLeapSecond = false;
 
-    if (this._epochMillis !== newTime || !this.wallTime) {
+    if (!this.isTai()) {
+      inLeapSecond = Timezone.findDeltaTaiFromTai(newTime)?.inLeap;
+      newTime = taiToUtMillis(newTime, true) - (inLeapSecond ? 1000 : 0);
+    }
+
+    if (this._epochMillis !== newTime || !this.wallTime || (inLeapSecond && this._wallTime.sec !== 60)) {
       this._epochMillis = newTime;
       this.updateWallTimeFromEpochMillis();
+
+      if (inLeapSecond)
+        this._wallTime.sec = 60;
     }
   }
 
@@ -598,6 +619,7 @@ export class DateTime extends Calendar {
       throw nonIntError;
 
     let updateFromWall = false;
+    let updateFromTai = false;
     let normalized: YMDDate;
     let weekCount: number;
     const wallTime = result._wallTime;
@@ -608,16 +630,35 @@ export class DateTime extends Calendar {
         result._epochMillis += amount;
         break;
 
+      case DateTimeField.MILLI_TAI:
+        updateFromTai = true;
+        break;
+
       case DateTimeField.SECOND:
         result._epochMillis += amount * 1000;
+        break;
+
+      case DateTimeField.SECOND_TAI:
+        amount *= 1000;
+        updateFromTai = true;
         break;
 
       case DateTimeField.MINUTE:
         result._epochMillis += amount * 60_000;
         break;
 
+      case DateTimeField.MINUTE_TAI:
+        amount *= 60000;
+        updateFromTai = true;
+        break;
+
       case DateTimeField.HOUR:
         result._epochMillis += amount * 3_600_000;
+        break;
+
+      case DateTimeField.HOUR_TAI:
+        amount *= 3600000;
+        updateFromTai = true;
         break;
 
       case DateTimeField.DAY:
@@ -632,6 +673,11 @@ export class DateTime extends Calendar {
         }
         else
           result._epochMillis += amount * 86_400_000;
+        break;
+
+      case DateTimeField.DAY_TAI:
+        amount *= DAY_MSEC;
+        updateFromTai = true;
         break;
 
       case DateTimeField.WEEK:
@@ -694,7 +740,23 @@ export class DateTime extends Calendar {
         throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid add()/subtract() field`);
     }
 
-    if (updateFromWall) {
+    if (updateFromTai) {
+      let millis = result._epochMillis;
+
+      if (!result.isTai())
+        millis = round(millis + result._wallTime.deltaTai * 1000);
+
+      millis += amount;
+
+      if (result.isTai())
+        result._epochMillis = millis;
+      else {
+        result.taiMillis = millis;
+
+        return result._lock(this.locked);
+      }
+    }
+    else if (updateFromWall) {
       delete wallTime.dy;
       delete wallTime.occurrence;
       delete wallTime.deltaTai;
