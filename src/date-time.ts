@@ -163,7 +163,7 @@ export class DateTime extends Calendar {
     if (resolution === DateTimeField.FULL || resolution === DateTimeField.MILLI)
       return d1.taiMillis - d2.taiMillis;
 
-    const divisor = [1, 1000, 60_000, undefined, 3_600_000][resolution];
+    const divisor = [1, 1, 1000, 1000, 60_000, 60_000, undefined, 3_600_000, 3_600_000][resolution];
 
     if (divisor != null && divisor < DateTimeField.MINUTE)
       return floor(d1.taiMillis / divisor) - floor(d2.taiMillis / divisor);
@@ -393,7 +393,7 @@ export class DateTime extends Calendar {
   get epochSeconds(): number { return floor(this._epochMillis / 1000); }
   set epochSeconds(newTime: number) { this.epochMillis = newTime * 1000; }
 
-  get utcMillis(): number { return this.isTai() ? this._epochMillis - this._wallTime.deltaTai * 1000 : this._epochMillis; }
+  get utcMillis(): number { return this.isTai() ? this._epochMillis - round(this._wallTime.deltaTai * 1000) : this._epochMillis; }
   set utcMillis(newTime: number) {
     if (this.locked)
       throw lockError;
@@ -422,7 +422,7 @@ export class DateTime extends Calendar {
 
   get taiMillis(): number {
     return !this.isTai()
-      ? this._epochMillis + this._wallTime.deltaTai * 1000 + (this._wallTime.sec === 60 ? 1000 : 0)
+      ? this._epochMillis + round(this._wallTime.deltaTai * 1000) + (this._wallTime.sec === 60 ? 1000 : 0)
       : this._epochMillis;
   }
 
@@ -437,8 +437,12 @@ export class DateTime extends Calendar {
       newTime = taiToUtMillis(newTime, true) - (inLeapSecond ? 1000 : 0);
     }
 
-    if (this._epochMillis !== newTime || !this.wallTime || (inLeapSecond && this._wallTime.sec !== 60)) {
+    if (this._epochMillis !== newTime || !this.wallTime || (inLeapSecond !== (this._wallTime.sec === 60))) {
       this._epochMillis = newTime;
+
+      if (!inLeapSecond && this._wallTime.sec === 60)
+        this._wallTime.sec = 59;
+
       this.updateWallTimeFromEpochMillis();
 
       if (inLeapSecond)
@@ -741,12 +745,7 @@ export class DateTime extends Calendar {
     }
 
     if (updateFromTai) {
-      let millis = result._epochMillis;
-
-      if (!result.isTai())
-        millis = round(millis + result._wallTime.deltaTai * 1000);
-
-      millis += amount;
+      const millis = (result.isTai() ? result._epochMillis : result.taiMillis) + amount;
 
       if (result.isTai())
         result._epochMillis = millis;
