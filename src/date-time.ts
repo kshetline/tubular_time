@@ -11,7 +11,7 @@ import {
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
-import { taiMillisToTdt, taiToUtMillis, tdtDaysToTaiMillis, tdtDaysToUtMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
+import { taiMillisToTdt, taiToUtMillis, tdtDaysToTaiMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
 
 export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
@@ -323,7 +323,8 @@ export class DateTime extends Calendar {
       }
     }
     else
-      this.epochMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
+      this.epochMillis = (isNumber(initialTime) ? initialTime as number :
+        (parseZone === Timezone.TAI_ZONE ? utToTaiMillis(Date.now()) : Date.now()));
 
     if (parseZone && timezone)
       this.timezone = timezone;
@@ -495,7 +496,7 @@ export class DateTime extends Calendar {
       const wasTai = this.isTai();
 
       this._timezone = newZone;
-      this.updateWallTimeFromEpochMillis(0, wasTai);
+      this.updateWallTimeFromEpochMillis(0, wasTai, false, !wasTai && this.isTai());
     }
   }
 
@@ -1536,7 +1537,7 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (this.isTai())
-      millis = utToTaiMillis(millis, true);
+      millis = taiToUtMillis(millis, true);
 
     return millis;
   }
@@ -1545,7 +1546,7 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (!this.isTai())
-      millis = taiToUtMillis(millis, true);
+      millis = utToTaiMillis(millis, true);
 
     return millis;
   }
@@ -1587,7 +1588,7 @@ export class DateTime extends Calendar {
       if (isTai)
         millis = round(tdtDaysToTaiMillis(wallTime.jde));
       else
-        millis = round(tdtDaysToUtMillis(wallTime.jde)); // TODO - check UTC handling
+        millis = taiToUtMillis(tdtDaysToTaiMillis(wallTime.jde), true);
     }
     else {
       const sec = min(wallTime.sec ?? 0, 59);
@@ -1624,7 +1625,7 @@ export class DateTime extends Calendar {
     return millis;
   }
 
-  private updateWallTimeFromEpochMillis(day = 0, switchFromTai = false, sec60 = false): void { // TODO: check switchFromTai
+  private updateWallTimeFromEpochMillis(day = 0, switchFromTai = false, sec60 = false, switchToTai = false): void {
     if (isNaN(this._epochMillis) || this._epochMillis < Number.MIN_SAFE_INTEGER || this._epochMillis > Number.MAX_SAFE_INTEGER) {
       this._error = `Invalid core millisecond time value: ${this._epochMillis}`;
       this._epochMillis = null;
@@ -1634,13 +1635,17 @@ export class DateTime extends Calendar {
 
     const lsi = switchFromTai ? Timezone.findDeltaTaiFromTai(this._epochMillis) : undefined;
 
-    if (lsi)
+    if (lsi && lsi.deltaTai)
       this._epochMillis -= lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0);
+    else if (switchFromTai)
+      this._epochMillis = taiToUtMillis(this._epochMillis, true);
+    else if (switchToTai)
+      this._epochMillis = utToTaiMillis(this._epochMillis, true);
     else if (sec60 && !Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap)
       sec60 = false;
 
     this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._epochMillis, day));
-    this._error = undefined;
+    delete this._error;
 
     if (lsi?.inLeap || sec60)
       this._wallTime.sec = this._wallTime.second = 60;

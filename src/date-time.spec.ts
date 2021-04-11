@@ -531,6 +531,7 @@ describe('DateTime', () => {
       .map(dt => dt.format(ttime.DATETIME_LOCAL_SECONDS)).join()).to.equal('1995-12-31T23:59:59,1995-12-31T23:59:60');
 
     expect(new DateTime().computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(8000);
+    expect(new DateTime(null, 'TAI').computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(-8000);
     expect(new DateTime(0, 'TAI').computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 2, utcOffset: 0 })).to.equal(86400000);
     expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
     expect(new DateTime(0, 'TAI').computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(-8000);

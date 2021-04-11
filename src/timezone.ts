@@ -961,11 +961,12 @@ export class Timezone {
 
   private static extractDeltaTs(): void {
     const deltaTs = this.encodedTimezones?.deltaTs;
+    const lastLeap = this.getDateAfterLastKnownLeapSecond();
 
     if (deltaTs)
-      updateDeltaTs(deltaTs.split(/\s+/).map(dt => toNumber(dt)), this.getDateAfterLastKnownLeapSecond());
+      updateDeltaTs(deltaTs.split(/\s+/).map(dt => toNumber(dt)), lastLeap);
     else
-      updateDeltaTs(null, this.getDateAfterLastKnownLeapSecond());
+      updateDeltaTs(null, lastLeap);
   }
 
   private static extractLeapSeconds(): void {

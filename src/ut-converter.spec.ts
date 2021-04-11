@@ -3,6 +3,7 @@ import { getDeltaTAtTaiMillis, taiDaysToUt, taiToUtMillis, utToTai, utToTaiMilli
 import { DateTime } from './date-time';
 import { DAY_MSEC, DELTA_TDT_SEC, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './common';
 import { initTimezoneSmall } from './index';
+import { round } from '@tubular/math';
 
 const SIX_MONTHS_DAYS = 180;
 const TEST_DTS = [
@@ -32,10 +33,16 @@ describe('UT/TT Converter', () => {
     }
 
     for (let y = 1922; y <= 2021; ++y) {
-      const now = new DateTime([y], 'UTC').epochMillis;
+      const now = new DateTime([y], 'UTC');
+      const epochMillis = now.epochMillis;
+      const deltaTai = round(now.wallTime.deltaTai * 1000);
 
-      expect((utToTaiMillis(now) - now) / 1000 + DELTA_TDT_SEC).to.be.approximately(TEST_DTS[y - 1922], 0.01);
-      expect(getDeltaTAtTaiMillis(now)).to.be.approximately(TEST_DTS[y - 1922], 0.01);
+      expect((utToTaiMillis(epochMillis) - epochMillis) / 1000 + DELTA_TDT_SEC).to.be.approximately(TEST_DTS[y - 1922], 0.01);
+      expect(getDeltaTAtTaiMillis(epochMillis)).to.be.approximately(TEST_DTS[y - 1922], 0.01);
+      now.timezone = 'TAI' as any;
+      expect(now.epochMillis - epochMillis).equals(deltaTai);
+      now.timezone = 'UTC' as any;
+      expect(now.epochMillis).equals(epochMillis);
     }
   });
 });

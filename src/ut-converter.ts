@@ -148,7 +148,7 @@ export function utToTai(timeJDU: number, asUtc = false): number {
 
   const weight = (timeJDU <= preKnownLeapSeconds ? preKnownLeapSeconds - timeJDU : timeJDU - postKnownLeapSeconds);
 
-  return ((timeJDU + deltaTai / DAY_MSEC) * (365 - weight) + tai * weight) / 365;
+  return ((timeJDU + deltaTai / DAY_SEC) * (365 - weight) + tai * weight) / 365;
 }
 
 export function utToTaiMillis(millis: number, asUtc = false): number {
@@ -158,10 +158,6 @@ export function utToTaiMillis(millis: number, asUtc = false): number {
 
 export function tdtToUt(timeJDE: number): number {
   return timeJDE - getDeltaTAtJulianDate(timeJDE) / DAY_SEC;
-}
-
-export function tdtDaysToUtMillis(timeJDE: number): number {
-  return (tdtToUt(timeJDE) - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 }
 
 export function tdtDaysToTaiMillis(timeJDE: number): number {
