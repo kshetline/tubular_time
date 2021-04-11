@@ -1,6 +1,6 @@
 import { floor, max, round, squared } from '@tubular/math';
 import { clone } from '@tubular/util';
-import { DAY_MSEC, DAY_SEC, DELTA_TDT_DAYS, DELTA_TDT_MSEC, JD_J2000, UNIX_TIME_ZERO_AS_JULIAN_DAY, UNIX_TIME_ZERO_AS_JULIAN_MILLIS, YMDDate } from './common';
+import { DAY_MSEC, DAY_SEC, DELTA_TDT_DAYS, DELTA_TDT_MSEC, JD_J2000, UNIX_TIME_ZERO_AS_JULIAN_DAY, YMDDate } from './common';
 import { Timezone } from './timezone';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 
@@ -135,11 +135,11 @@ export function utToTai(timeJDU: number, asUtc = false): number {
 
   if (asUtc && preKnownLeapSeconds - 365 <= timeJDU && timeJDU <= postKnownLeapSeconds + 365) {
     utcMillis = round((timeJDU - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
-    deltaTai = Timezone.findDeltaTaiFromUtc(utcMillis).deltaTai;
+    deltaTai = Timezone.findDeltaTaiFromUtc(utcMillis)?.deltaTai ?? 0;
   }
 
   if (asUtc && preKnownLeapSeconds <= timeJDU && timeJDU <= postKnownLeapSeconds)
-    return timeJDU + deltaTai / DAY_MSEC;
+    return timeJDU + deltaTai / DAY_SEC;
 
   const tai = utToTdt(timeJDU) - DELTA_TDT_DAYS;
 
@@ -148,12 +148,12 @@ export function utToTai(timeJDU: number, asUtc = false): number {
 
   const weight = (timeJDU <= preKnownLeapSeconds ? preKnownLeapSeconds - timeJDU : timeJDU - postKnownLeapSeconds);
 
-  return ((timeJDU + deltaTai / DAY_MSEC) * (weight - 365) + tai * weight) / 365;
+  return ((timeJDU + deltaTai / DAY_MSEC) * (365 - weight) + tai * weight) / 365;
 }
 
 export function utToTaiMillis(millis: number, asUtc = false): number {
-  return (utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
-    UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
+  return round((utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
+    UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
 }
 
 export function tdtToUt(timeJDE: number): number {
@@ -176,9 +176,23 @@ export function taiMillisToTdt(millis: number): number {
   return (millis + DELTA_TDT_MSEC) / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY;
 }
 
-export function taiToUtMillis(millis: number): number {
-  return tdtToUt(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY + DELTA_TDT_DAYS) * DAY_MSEC -
-    UNIX_TIME_ZERO_AS_JULIAN_MILLIS;
+export function taiToUtMillis(millis: number, forUtc = false): number {
+  const tdt = millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY + DELTA_TDT_DAYS;
+  const timeJDU = tdtToUt(tdt);
+  const jduMillis = (timeJDU - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
+
+  if (!forUtc || timeJDU < preKnownLeapSeconds - 365 || timeJDU > postKnownLeapSeconds + 365)
+    return round(jduMillis);
+
+  const deltaTai = Timezone.findDeltaTaiFromTai(millis)?.deltaTai ?? 0;
+  const utMillis = millis - deltaTai * 1000;
+
+  if (preKnownLeapSeconds <= timeJDU && timeJDU <= postKnownLeapSeconds)
+    return utMillis;
+
+  const weight = (timeJDU <= preKnownLeapSeconds ? preKnownLeapSeconds - timeJDU : timeJDU - postKnownLeapSeconds);
+
+  return round((utMillis * (365 - weight) + jduMillis * weight) / 365);
 }
 
 function deltaTAtStartOfYear(year: number): number {

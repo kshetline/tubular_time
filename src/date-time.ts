@@ -11,7 +11,7 @@ import {
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
-import { taiMillisToTdt, tdtDaysToTaiMillis, tdtDaysToUtMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
+import { taiMillisToTdt, taiToUtMillis, tdtDaysToTaiMillis, tdtDaysToUtMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
 
 export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
@@ -384,7 +384,7 @@ export class DateTime extends Calendar {
       throw lockError;
 
     if (this.isTai())
-      newTime += (Timezone.findDeltaTaiFromUtc(newTime)?.deltaTai ?? 0) * 1000;
+      newTime = utToTaiMillis(newTime, true);
 
     if (this._epochMillis !== newTime || !this.wallTime) {
       this._epochMillis = newTime;
@@ -416,7 +416,7 @@ export class DateTime extends Calendar {
       throw lockError;
 
     if (!this.isTai())
-      newTime -= (Timezone.findDeltaTaiFromTai(newTime)?.deltaTai ?? 0) * 1000;
+      newTime = taiToUtMillis(newTime, true);
 
     if (this._epochMillis !== newTime || !this.wallTime) {
       this._epochMillis = newTime;
@@ -1536,7 +1536,7 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (this.isTai())
-      millis -= (Timezone.findDeltaTaiFromTai(millis)?.deltaTai ?? 0) * 1000;
+      millis = utToTaiMillis(millis, true);
 
     return millis;
   }
@@ -1545,7 +1545,7 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (!this.isTai())
-      millis += (Timezone.findDeltaTaiFromUtc(millis)?.deltaTai ?? 0) * 1000 + (this._wallTime.sec === 60 ? 1000 : 0);
+      millis = taiToUtMillis(millis, true);
 
     return millis;
   }
@@ -1577,21 +1577,17 @@ export class DateTime extends Calendar {
     let millis: number;
 
     if (wallTime.jde != null || wallTime.mjde != null || wallTime.jdu != null || wallTime.mjdu != null) {
-      if (wallTime.jde != null || wallTime.mjde != null) {
-        wallTime.jde = wallTime.jde ?? wallTime.mjde + DELTA_MJD;
-
-        if (isTai)
-          millis = round(tdtDaysToTaiMillis(wallTime.jde));
-        else
-          millis = round(tdtDaysToUtMillis(wallTime.jde));
-      }
-      else {
+      if (wallTime.jde == null && wallTime.mjde == null) {
         wallTime.jdu = wallTime.jdu ?? wallTime.mjdu + DELTA_MJD;
-        millis = round(DateTime.millisFromJulianDay(wallTime.jdu));
-
-        if (isTai)
-          millis = utToTaiMillis(millis, true);
+        wallTime.jde = utToTdt(wallTime.jdu);
       }
+      else if (wallTime.jde == null)
+        wallTime.jde = wallTime.mjde + DELTA_MJD;
+
+      if (isTai)
+        millis = round(tdtDaysToTaiMillis(wallTime.jde));
+      else
+        millis = round(tdtDaysToUtMillis(wallTime.jde)); // TODO - check UTC handling
     }
     else {
       const sec = min(wallTime.sec ?? 0, 59);
@@ -1628,7 +1624,7 @@ export class DateTime extends Calendar {
     return millis;
   }
 
-  private updateWallTimeFromEpochMillis(day = 0, switchFromTai = false, sec60 = false): void {
+  private updateWallTimeFromEpochMillis(day = 0, switchFromTai = false, sec60 = false): void { // TODO: check switchFromTai
     if (isNaN(this._epochMillis) || this._epochMillis < Number.MIN_SAFE_INTEGER || this._epochMillis > Number.MAX_SAFE_INTEGER) {
       this._error = `Invalid core millisecond time value: ${this._epochMillis}`;
       this._epochMillis = null;
@@ -1692,12 +1688,12 @@ export class DateTime extends Calendar {
     wallTime.occurrence = 1;
 
     if (this.isTai()) {
-      wallTime.deltaTai = Timezone.findDeltaTaiFromTai(millis)?.deltaTai;
+      wallTime.deltaTai = (millis - taiToUtMillis(millis, true)) / 1000;
       wallTime.jde = taiMillisToTdt(millis);
       wallTime.jdu = tdtToUt(wallTime.jde);
     }
     else {
-      wallTime.deltaTai = Timezone.findDeltaTaiFromUtc(millis)?.deltaTai;
+      wallTime.deltaTai = (utToTaiMillis(millis, true) - millis) / 1000;
       wallTime.jdu = DateTime.julianDay(millis);
       wallTime.jde = utToTdt(wallTime.jdu);
     }
