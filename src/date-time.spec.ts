@@ -519,13 +519,18 @@ describe('DateTime', () => {
     expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 37).tz('UTC').toString()).to.equal('DateTime<2023-01-01T00:00:00.000 +00:00>');
 
     expect(new DateTime('1995-12-31 23:59:60Z').toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1995-12-31 23:59:59Z').taiSeconds).to.equal(820454428);
     expect(new DateTime('1995-12-31 23:59:60Z').taiSeconds).to.equal(820454429);
+    expect(new DateTime('1996-01-01 00:00:00Z').taiSeconds).to.equal(820454430);
     expect(new DateTime('1995-12-31 23:59:59Z').utcSeconds).to.equal(820454399);
     expect(new DateTime('1995-12-31 23:59:59Z').utcMillis).to.equal(820454399000);
     expect(new DateTime('1995-12-31 23:59:60Z').utcSeconds).to.equal(820454399);
-    expect(new DateTime('1995-12-31 23:59:60Z').utcMillis).to.equal(820454399000);
+    expect(new DateTime('1995-12-31 23:59:60Z').utcMillis).to.equal(820454399999);
     expect(new DateTime('1995-12-31 23:59:60Z').compare(new DateTime('1995-12-31 23:59:59Z'))).to.be.greaterThan(0);
     expect(new DateTime('1996-12-31 23:59:60Z').toString()).to.equal('DateTime<1997-01-01T00:00:00.000 +00:00>');
+    expect(new DateTime('1972-06-30 23:59:60Z', 'TAI').toString()).to.equal('DateTime<1972-07-01T00:00:10.000 TAI>');
+    expect(new DateTime('1997-06-30 23:59:60Z').wallTime.jde).to.be.closeTo(2450630.500724913, 1E-9);
+    expect(new DateTime({ jde: 2450630.500724913 }, 'utc').toIsoString(19)).to.equal('1997-06-30T23:59:60');
 
     expect(ttime.sort([new DateTime('1995-12-31 23:59:60Z'), new DateTime('1995-12-31 23:59:59Z')])
       .map(dt => dt.format(ttime.DATETIME_LOCAL_SECONDS)).join()).to.equal('1995-12-31T23:59:59,1995-12-31T23:59:60');

@@ -6,10 +6,11 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
 * IANA timezone support, with features beyond formatting using timezones, such as parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region), and live updates of timezone definitions.
+* Support for leap seconds and conversions between TAI (International Atomic Time) and UTC (Universal Coordinated Time).
 * Supports and recognizes negative Daylight Saving Time.
 * Extensive date/time manipulation and calculation capabilities.
 * Many features available using a familiar Moment.js-style API.
-* Astronomical time functions, and local mean time from longitude to one minute (of time) resolution.
+* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Package suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
@@ -59,7 +60,9 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Another way to drop a day](#another-way-to-drop-a-day)
 - [Dealing with weird days](#dealing-with-weird-days)
   - [Typical Daylight Saving Time examples](#typical-daylight-saving-time-examples)
-  - [Examples of big UTC shifts due to moving the International Dateline](#examples-of-big-utc-shifts-due-to-moving-the-international-dateline)
+  - [Examples of big UTC offset shifts due to moving the International Dateline](#examples-of-big-utc-offset-shifts-due-to-moving-the-international-dateline)
+- [Leap Seconds, TAI, and Julian Dates](#leap-seconds-tai-and-julian-dates)
+  - [Leap second time values](#leap-second-time-values)
 - [Global default settings](#global-default-settings)
 - [The `DateTime` class](#the-datetime-class)
   - [Constructor](#constructor)
@@ -459,6 +462,12 @@ function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'smal
   utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
   dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative (output only)
   occurrence: 1, // usually 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
+  deltaTai: 37, // How much (in seconds) TAI exceeds UTC or UT1 at given moment in time
+
+  jde: 2459249.722008264, // Julian days, ephemeris
+  mjde: 59249.22200826416, // Modified Julian days, ephemeris
+  jdu: 2459249.7212051502, // Julian days, UT
+  mjdu: 59249.22120515024 // Modified Julian days, UT
 }
 ```
 
@@ -523,7 +532,9 @@ The above produces a date one year later than the current time. In most cases, t
 
 `ttime('2021-01-31').add(DateTimeField.MONTH, 1).toIsoString(10)` → `2021-02-28`
 
-You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, `YEAR_WEEK`, and `YEAR_WEEK_LOCALE`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.)
+You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, `YEAR_WEEK`, and `YEAR_WEEK_LOCALE`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.).
+
+_(There are further fields defined for dealing with [leap seconds and TAI](leap-seconds-and-tai), described later.)_
 
 For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amount` you pass, are applied. When dealing with months, quarters, and years, the variable lengths of months, quarters, and years apply.
 
@@ -854,7 +865,7 @@ getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number)
 `new DateTime('2021-11-07', 'America/New_York').getDiscontinuityDuringDay()` →<br>
 `{ start: '02:00:00', end: '01:00:00', delta: -3600000 } // fall back!`
 
-### Examples of big UTC shifts due to moving the International Dateline
+### Examples of big UTC offset shifts due to moving the International Dateline
 
 `// As soon as it’s midnight on the 30th, it’s instantly midnight on the 31st, erasing 24 hours:`<br>
 `new DateTime('2011-12-30', 'Pacific/Apia').getDiscontinuityDuringDay()`) →<br>
@@ -867,6 +878,34 @@ getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number)
 Here’s a skyviewcafe.com image for that extra-long day in the Marshall Islands, with two sunrises, two sunsets, and 24 hours, 6 minutes worth of daylight packed into a 47-hour day:
 
 <img src="https://shetline.com/readme/tubular-time/2.4.0/mhl_sep_30_1969.jpg" width=215 height=195 alt="Marshall Islands, September 30, 1969">
+
+## Leap Seconds, TAI, and Julian Dates
+
+UTC (Universal Coordinated Time) is not a uniform timescale. It is currently defined to track closely with another time standard, UT1, which is based on the slightly variable, and (in the long run) slowly lengthening rotation time of the Earth. Each single second of UTC is equal to one standard, atomically-defined second, but whole seconds are occasionally inserted (and, theoretically, might occasionally be deleted) to keep UTC within 0.9s of UT1. These seconds are called _leap seconds_.
+
+The current system for UTC was adopted in 1970 and implemented in 1972[*](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). UTC is only strictly defined relative to TAI starting in 1972 and going forward in time until the next announced omission or addition of a leap second. You can, however, create a **@tubular/time** `DateTime` instance using UTC while also using year values in the distant past or future.
+
+So how are dates and times outside of the well-defined range of UTC handled?
+
+The answer is that `DateTime` uses both extended UTC and UT1 outside of the well-defined UTC range. This works as follows:
+
+* For all dates prior to 1957, estimated UT1 is in effect. This is most accurate back to 1600, for which there is sufficient astronomical data for reasonable approximate conversions from UT1 to TAI and dynamical time. Further back in time less accurate approximations are in effect.
+* From 1957-1958, using a sliding weighted average, UT1 transitions to *proleptic* UTC.
+* From 1958-1972 *proleptic* UTC, [as proposed by Tony Finch](https://fanf.livejournal.com/69586.html), is used, with the first non-official leap second occurring at 1959-06-30 23:59:60.
+* From 1972 up until the latest updates provided by the [International Bureau of Weights and Measures](https://en.wikipedia.org/wiki/International_Bureau_of_Weights_and_Measures), well-defined UTC prevails, with the first official leap second occurring at 1972-06-30 23:59:60.
+* For a year to 18 months after the current time, or after the last defined leap second, *whichever is later*, a presumed leap-second-free span of UTC is projected to occur.
+* A sliding weighted average transition from UTC to estimated UT1 follows for the next 365 days.
+* Formulaic predicted UT1 is used for all later dates and times thereafter.
+
+> Note: It is possible (no sooner than 2023) that the use of leap seconds might be abandoned, depending on the results of the World Radiocommunication Conference that year. One possible outcome is that UTC will become locked to TAI, and allowed to drift further and further out of synchronization with UT1.
+
+All timezones other than TAI, ZONELESS, and DATELESS, such as Europe/London or Asia/Tokyo, are handled the same way as described for UTC above &mdash; simply at varying timezone offsets from UTC.
+
+### Leap second time values
+
+`DateTime` instances generally behave as if leap seconds do not exist. `DateTime` instances which express leap seconds can be created as follows:
+
+* By being directly parsed: `new DateTime('1972-06-30 23:59:60Z')`
 
 ## Global default settings
 

@@ -443,7 +443,7 @@ export class Timezone {
   }
 
   static has(name: string): boolean {
-    return !!this.zoneLookup[name] || !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS|TAI)$/.test(name);
+    return !!this.zoneLookup[name] || !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS|TAI)$/i.test(name);
   }
 
   static from(name: string): Timezone {
@@ -454,11 +454,17 @@ export class Timezone {
     if (!name)
       return this.OS_ZONE;
 
-    if (this.zonesByLowercase[name.toLowerCase()])
-      name = this.zonesByLowercase[name.toLowerCase()];
+    const lcName = name.toLowerCase();
 
-    if (name === 'TAI')
+    if (lcName === 'tai')
       return this.TAI_ZONE;
+    else if (lcName === 'dateless')
+      return this.DATELESS;
+    else if (lcName === 'zoneless')
+      return this.ZONELESS;
+
+    if (this.zonesByLowercase[lcName])
+      name = this.zonesByLowercase[lcName];
 
     const cached = this.zoneLookup[name];
 

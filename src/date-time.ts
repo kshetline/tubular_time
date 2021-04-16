@@ -115,6 +115,7 @@ export class DateTime extends Calendar {
   private _timezone = DateTime.defaultTimezone;
   private _epochMillis = 0;
   private _wallTime: DateAndTime;
+  private wallTimeCounter = 0;
 
   static INVALID_DATE = new DateTime(NaN, 'UTC').lock();
 
@@ -379,12 +380,18 @@ export class DateTime extends Calendar {
     return this;
   }
 
-  get epochMillis(): number { return this._epochMillis; }
+  get epochMillis(): number {
+    if (this._wallTime?.sec < 60)
+      return this._epochMillis;
+    else
+      return floor(this._epochMillis / 1000) * 1000 + 999;
+  }
+
   set epochMillis(newTime: number) {
     if (this.locked)
       throw lockError;
 
-    if (this._epochMillis !== newTime || !this.wallTime) {
+    if (this._epochMillis !== newTime || !this.wallTime || this._wallTime?.sec === 60) {
       this._epochMillis = newTime;
       this.updateWallTimeFromEpochMillis();
     }
@@ -393,7 +400,7 @@ export class DateTime extends Calendar {
   get epochSeconds(): number { return floor(this._epochMillis / 1000); }
   set epochSeconds(newTime: number) { this.epochMillis = newTime * 1000; }
 
-  get utcMillis(): number { return this.isTai() ? this._epochMillis - round(this._wallTime.deltaTai * 1000) : this._epochMillis; }
+  get utcMillis(): number { return this.isTai() ? this._epochMillis - round(this._wallTime.deltaTai * 1000) : this.epochMillis; }
   set utcMillis(newTime: number) {
     if (this.locked)
       throw lockError;
@@ -500,9 +507,13 @@ export class DateTime extends Calendar {
       else if (this._timezone === DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null || newTime.n != null))
         this._timezone = ZONELESS;
 
+      const counter = this.wallTimeCounter;
+
       this._wallTime = newTime;
-      this.updateEpochMillisFromWallTime();
-      this.updateWallTimeFromEpochMillis(this._wallTime.d, false, this._wallTime.sec === 60 && !this.isTai());
+      this.updateEpochMillisFromWallTime(!this.isTai());
+
+      if (this.wallTimeCounter === counter)
+        this.updateWallTimeFromEpochMillis(this._wallTime.d, false, this._wallTime.sec === 60 && !this.isTai());
     }
   }
 
@@ -521,7 +532,7 @@ export class DateTime extends Calendar {
       const wasTai = this.isTai();
 
       this._timezone = newZone;
-      this.updateWallTimeFromEpochMillis(0, wasTai, false, !wasTai && this.isTai());
+      this.updateWallTimeFromEpochMillis(0, wasTai, this.wallTime?.sec === 60, !wasTai && this.isTai());
     }
   }
 
@@ -1558,7 +1569,14 @@ export class DateTime extends Calendar {
   }
 
   toString(): string {
-    return `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
+    let s = `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
+
+    if (this.isTai())
+      s = s.replace(' +00:00', ' TAI');
+    else if (this._timezone === Timezone.ZONELESS)
+      s = s.replace(' +00:00', '');
+
+    return s;
   }
 
   toYMDhmString(): string {
@@ -1584,10 +1602,10 @@ export class DateTime extends Calendar {
     return this.format('HH:mm' + (includeDst ? 'v' : ''), 'en-US');
   }
 
-  private updateEpochMillisFromWallTime(): void {
+  private updateEpochMillisFromWallTime(allowSelfUpdate = false): void {
     const wallTime = purgeAliasFields(clone(this._wallTime));
 
-    this._epochMillis = this.computeEpochMillisFromWallTimeAux(wallTime);
+    this._epochMillis = this.computeEpochMillisFromWallTimeAux(wallTime, allowSelfUpdate);
   }
 
   computeEpochMillisFromWallTime(wallTime: DateAndTime): number {
@@ -1607,12 +1625,12 @@ export class DateTime extends Calendar {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
     if (!this.isTai())
-      millis = utToTaiMillis(millis, true);
+      millis = utToTaiMillis(millis, true) + (wallTime.sec === 60 ? 1000 : 0);
 
     return millis;
   }
 
-  private computeEpochMillisFromWallTimeAux(wallTime: DateAndTime): number {
+  private computeEpochMillisFromWallTimeAux(wallTime: DateAndTime, allowSelfUpdate = false): number {
     if (wallTime.y != null) {
       if (wallTime.m != null || wallTime.d != null) {
         wallTime.m = wallTime.m ?? 1;
@@ -1646,10 +1664,17 @@ export class DateTime extends Calendar {
       else if (wallTime.jde == null)
         wallTime.jde = wallTime.mjde + DELTA_MJD;
 
-      if (isTai)
-        millis = round(tdtDaysToTaiMillis(wallTime.jde));
-      else
-        millis = taiToUtMillis(tdtDaysToTaiMillis(wallTime.jde), true);
+      millis = round(tdtDaysToTaiMillis(wallTime.jde));
+
+      if (!isTai) {
+        if (allowSelfUpdate) {
+          this.taiMillis = millis;
+          ++this.wallTimeCounter;
+          millis = this._epochMillis;
+        }
+        else
+          millis = taiToUtMillis(millis, true);
+      }
     }
     else {
       const sec = min(wallTime.sec ?? 0, 59);
@@ -1695,17 +1720,23 @@ export class DateTime extends Calendar {
     }
 
     const lsi = switchFromTai ? Timezone.findDeltaTaiFromTai(this._epochMillis) : undefined;
+    let extra = (sec60 ? 1000 : 0);
 
     if (lsi && lsi.deltaTai)
       this._epochMillis -= lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0);
     else if (switchFromTai)
       this._epochMillis = taiToUtMillis(this._epochMillis, true);
-    else if (switchToTai)
-      this._epochMillis = utToTaiMillis(this._epochMillis, true);
-    else if (sec60 && !Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap)
+    else if (switchToTai) {
+      this._epochMillis = utToTaiMillis(this._epochMillis, true) + extra;
       sec60 = false;
+      extra = 0;
+    }
+    else if (sec60 && !Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap) {
+      sec60 = false;
+      extra = 0;
+    }
 
-    this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._epochMillis, day));
+    this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._epochMillis, day, extra));
     delete this._error;
 
     if (lsi?.inLeap || sec60)
@@ -1733,7 +1764,7 @@ export class DateTime extends Calendar {
     }
   }
 
-  getTimeOfDayFieldsFromMillis(millis: number, day = 0): DateAndTime {
+  getTimeOfDayFieldsFromMillis(millis: number, day = 0, extra = 0): DateAndTime {
     if (millis == null || isNaN(millis))
       return syncDateAndTime({ y: NaN, m: NaN, d: NaN, n: NaN });
 
@@ -1755,12 +1786,12 @@ export class DateTime extends Calendar {
 
     if (this.isTai()) {
       wallTime.deltaTai = (millis - taiToUtMillis(millis, true)) / 1000;
-      wallTime.jde = taiMillisToTdt(millis);
+      wallTime.jde = taiMillisToTdt(millis + extra);
       wallTime.jdu = tdtToUt(wallTime.jde);
     }
     else {
       wallTime.deltaTai = (utToTaiMillis(millis, true) - millis) / 1000;
-      wallTime.jdu = DateTime.julianDay(millis);
+      wallTime.jdu = DateTime.julianDay(millis + extra);
       wallTime.jde = utToTdt(wallTime.jdu);
     }
 

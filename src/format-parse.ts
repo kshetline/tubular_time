@@ -538,7 +538,7 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
 
   localeNames = normalizeLocale(localeNames);
 
-  if (timezone === 'DATELESS' || timezone === 'ZONELESS')
+  if (timezone === 'DATELESS' || timezone === 'ZONELESS' || timezone === 'TAI')
     options.timeZone = 'UTC';
   else if (($ = /^(?:GMT|UTC?)([-+])(\d\d(?::?\d\d))/.exec(timezone))) {
     options.timeZone = 'Etc/GMT' + ($[1] === '-' ? '+' : '-') + $[2].replace(/^0+(?=\d)|:|00$/g, '');
