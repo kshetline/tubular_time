@@ -57,5 +57,8 @@ describe('Timezone', () => {
     expect(!!offsets.find(o => o.offset === '-99:99')).to.be.false;
 
     expect(Timezone.getDateAfterLastKnownLeapSecond()).includes({ y: 2017, m: 1, d: 1 });
+    expect(Timezone.getUpcomingLeapSecond()).equals(null);
+    expect(Timezone.getLeapSecondList().length).equals(39);
+    expect(Timezone.getLeapSecondList()[30].dateAfter).includes({ y: 1994, m: 7, d: 1 });
   });
 });

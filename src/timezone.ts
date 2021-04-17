@@ -1,6 +1,6 @@
 import { abs, div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
-import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
+import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayNumber_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
 import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset, YMDDate } from './common';
 import { hasIntlDateTime } from './locale-data';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
@@ -1218,8 +1218,21 @@ export class Timezone {
     return Object.assign({ inLeap: false }, this.leapSeconds[0]);
   }
 
+  static getLeapSecondList(): LeapSecondInfo[] {
+    return clone(this.leapSeconds);
+  }
+
   static getDateAfterLastKnownLeapSecond(): YMDDate {
     return this.lastLeapSecond;
+  }
+
+  static getUpcomingLeapSecond(): YMDDate {
+    if (!this.lastLeapSecond)
+      return null;
+    else if (getDayNumber_SGC(this.lastLeapSecond) * DAY_MSEC > Date.now())
+      return this.lastLeapSecond;
+    else
+      return null;
   }
 
   static findDeltaTaiFromTai(taiTime: number): LeapSecondInfo {

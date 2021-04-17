@@ -232,8 +232,12 @@ Please note that, as most unaccented Latin letters are interpreted as special fo
 | | ZZ | -0700 -0600 ... +0600 +0700
 | | zz,&nbsp;z | EST, CDT, MST, PDT, AEST, etc.<br><br>Please note that timezones in this format are not internationalized, and are not unambiguous when parsed. |
 | | Z | -07:00 -06:00 ... +06:00 +07:00
-| Unix timestamp | X | 1360013296 |
-| Unix millisecond timestamp | x | 1360013296123 |
+| Unix timestamp, UTC | X | 1360013296 |
+| Unix millisecond timestamp, UTC | x | 1360013296123 |
+| Unix timestamp, epoch | XX | 1360013296 |
+| Unix millisecond timestamp, epoch | xx | 1360013296123 |
+| Unix timestamp, TAI | X | 1360013331 |
+| Unix millisecond timestamp, TAI | x | 1360013331123 |
 | Daylight Saving Time indicator | V | § # ^ ~ ❄<br><br>Symbol indicating DST is in effect.<br>This is typically §, meaning the clock has been turned forward one hour.<br># means two hours forward, ^ means half an hour, ~ is any other forward amount.<br>❄ is negative DST, i.e. “Winter Time”.<br>Renders one blank space when DST is not in effect. |
 | | v | Same as above, but no blank space when DST is not in effect. |
 | Occurrence indicator | R | 1:00 , 1:01 ... 1:58 , 1:59 , 1:00₂, 1:01₂ ... 1:58₂, 1:59₂, 2:00 , 2:01<br><br>A subscript 2 (₂) that denotes the second occurrence of the same clock time during a day when clocks are turned back for Daylight Saving Time. |
