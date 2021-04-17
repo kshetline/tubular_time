@@ -11,6 +11,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 * Extensive date/time manipulation and calculation capabilities.
 * Many features available using a familiar Moment.js-style API.
 * Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
+* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Package suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
@@ -81,6 +82,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [The `Timezone` class](#the-timezone-class)
   - [Static `Timezone` constants](#static-timezone-constants)
   - [Static `Timezone` getter](#static-timezone-getter)
+  - [`LeapSecondInfo` interface](#leapsecondinfo-interface)
   - [Static `Timezone` methods](#static-timezone-methods)
   - [`Timezone` getters](#timezone-getters)
   - [`Timezone` methods](#timezone-methods)
@@ -1095,8 +1097,8 @@ epochSeconds: number;
 taiMillis: number;
 taiSeconds: number;
 timezone: Timezone;
-utcMillis: number;
-utcSeconds: number;
+utcMillis: number; // utcTimeMillis has been deprecated
+utcSeconds: number; // utcTimeSeconds has been deprecated
 wallTime: DateAndTime;
 ```
 
@@ -1231,8 +1233,10 @@ toIsoString(maxLength?: number): string;
 // Create a clone of a DateTime instance with a different locale.
 toLocale(newLocale: string | string[]): DateTime;
 
-// Convert to a string, such as 'DateTime<2017-03-02T14:45:00.000 +01:00> or, when dateless,
-//   'DateTime<20:17:15.000>'.
+// Convert to a string, such as 'DateTime<2017-03-02T14:45:00.000 +01:00>.
+//   When dateless: 'DateTime<20:17:15.000>'
+//   When zoneless: 'DateTime<2017-03-02T14:45:00.000>'
+//   When TAI: 'DateTime<2017-03-02T14:45:00.000 TAI>'
 toString(): string;
 
 // Format as 'Y-MM-DD HH:mmv'.
@@ -1274,6 +1278,27 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 version: string; // Current timezone version, e.g. 2021a
 ```
 
+### `LeapSecondInfo` interface
+
+This defines the moment *immediately after* the insertion or deletion of a leap second.
+
+```typescript
+export interface LeapSecondInfo {
+  utcMillis: number;
+  taiMillis: number;
+  dateAfter: YMDDate;
+  deltaTai: number;
+  isNegative: boolean;
+  // Optional flag indicating if a specific moment in time is during a leap second.
+  // When a query is a UTC value, this flag is true for the 59th second of a minute.
+  inLeap?: boolean;
+  // For an unlikely, but theoretically possible, negative leap second, this optional flag
+  // is true if a query time is in the 58th second of a minute, preceding an omitted 59th
+  // second.
+  inNegativeLeap?: boolean;
+}
+```
+
 ### Static `Timezone` methods
 
 Check if a given IANA `zoneName` is associated with an ISO Alpha-2 (two-letter) `country` code:
@@ -1282,13 +1307,25 @@ Check if a given IANA `zoneName` is associated with an ISO Alpha-2 (two-letter) 
 static doesZoneMatchCountry(zoneName: string, country: string): boolean;
 ```
 
+Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given TAI moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
+```
+
+Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given UTC moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
+```
+
 <a id="format-utc-offset" name="format-utc-offset"></a>Take a duration, `offsetSeconds`, and turn it into a formatted UTC offset, e.g. `-18000` → `'-05:00'`. If `noColons` is set to `false` (it defaults to `true` if not specified), colons will be omitted from the output, e.g. `'-0500'`. If the duration is not in whole minutes, seconds will be added to the output, e.g. `'+15:02:19'`:
 
 ```typescript
 static formatUtcOffset(offsetSeconds: number, noColons = false): string;
 ```
 
-Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message:
+Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message. `name` can be `"DATELESS"`, `"TAI"`, or `"ZONELESS"`, as well as an IANA timezone name, or common name like `"UTC"` or `"GMT"`:
 
 ```typescript
 static from(name: string): Timezone;
@@ -1306,10 +1343,22 @@ Get a `Set` of ISO Alpha-2 (two-letter) country codes associated with a given IA
 static getCountries(zoneName: string): Set<string>;
 ```
 
+The last known, declared leap second. This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static getDateAfterLastKnownLeapSecond(): YMDDate
+```
+
 Get the symbol (`^`, `§`, `#`, `❄`, or `~`) **@tubular/time** associates with various Daylight Saving Time offsets, or an empty string for `dstOffsetSeconds` of 0:
 
 ```typescript
 static getDstSymbol(dstOffsetSeconds: number): string;
+```
+
+Get the full list of leap seconds, including 10 non-official, proleptic leap seconds defined from 1959 to 1971, and all officially declared leap seconds thereafter (up to the latest software update). This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static getLeapSecondList(): LeapSecondInfo[];
 ```
 
 This method returns a list of available IANA timezone names in a structured form, grouped by standard UTC offset and Daylight Saving Time offset (if any), e.g. `+02:00`, `-05:00§`, etc. The “MISC” timezones, and the various IANA “Etc” timezones, are filtered out:
@@ -1358,6 +1407,12 @@ Return a timezone matching `name`, if available. If no such timezone exists, a c
 
 ```typescript
 static getTimezone(name: string, longitude?: number): Timezone
+```
+
+The same as `getDateAfterLastKnownLeapSecond()`, but `null` if the given date is in the past:
+
+```typescript
+static getUpcomingLeapSecond(): YMDDate;
 ```
 
 This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not a guess at all, but a proper system-reported value. Otherwise, the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`. If `recheck` is `true`, a fresh check is forced instead of using a cached result:
