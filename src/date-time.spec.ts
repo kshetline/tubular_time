@@ -287,7 +287,7 @@ describe('DateTime', () => {
     expect(() => new DateTime().set(DateTimeField.MILLI, -7)).to.throw('MILLI (-7) must be in the range [0, 999]');
     expect(new DateTime('2020-11-29 23:24:35').set(DateTimeField.SECOND, 30).toIsoString(19))
       .to.equal('2020-11-29T23:24:30');
-    expect(() => new DateTime().set(DateTimeField.SECOND, 63)).to.throw('SECOND (63) must be in the range [0, 59]');
+    expect(() => new DateTime().set(DateTimeField.SECOND, 63)).to.throw('SECOND (63) must be in the range [0, 60]');
     expect(new DateTime('1884-02-03 22:14').set(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T22:14');
     expect(() => new DateTime().set(DateTimeField.MINUTE, 77)).to.throw('MINUTE (77) must be in the range [0, 59]');
