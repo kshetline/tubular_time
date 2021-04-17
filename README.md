@@ -63,6 +63,10 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Examples of big UTC offset shifts due to moving the International Dateline](#examples-of-big-utc-offset-shifts-due-to-moving-the-international-dateline)
 - [Leap Seconds, TAI, and Julian Dates](#leap-seconds-tai-and-julian-dates)
   - [Leap second time values](#leap-second-time-values)
+  - [TAI field values](#tai-field-values)
+  - [Astronomical `DateAndTime` fields](#astronomical-dateandtime-fields)
+  - [`epochMillis`, `utcMillis`, and `taiMillis` getters/setters](#epochmillis-utcmillis-and-taimillis-getterssetters)
+  - [Sorting and comparison with TAI and non-TAI `DateTime` instances](#sorting-and-comparison-with-tai-and-non-tai-datetime-instances)
 - [Global default settings](#global-default-settings)
 - [The `DateTime` class](#the-datetime-class)
   - [Constructor](#constructor)
@@ -462,7 +466,9 @@ function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'smal
   utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
   dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative (output only)
   occurrence: 1, // usually 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
-  deltaTai: 37, // How much (in seconds) TAI exceeds UTC or UT1 at given moment in time
+  deltaTai: 37, // How much (in seconds) TAI exceeds UTC or UT1 at given moment in time (output only)
+  /* In the well-defined range for UTC, deltaTai is always an integer value.
+     Outside that range it can be a non-integer with millisecond precision. */
 
   jde: 2459249.722008264, // Julian days, ephemeris
   mjde: 59249.22200826416, // Modified Julian days, ephemeris
@@ -492,6 +498,8 @@ In specifying a date, the date fields have the following priority:
 * `ywl` / `yearByWeekLocale`, etc: These fields work the same as `yw` / `yearByWeek`, etc., except that they apply to locale-specific rules for the day of the week on which each week starts, and for the definition of the first week of the year.
 
 In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
+
+[Astronomical time fields](#astronomical-dateandtime-fields) will supersede any of the above date fields.
 
 As discussed earlier, concerning parsing time strings, ambiguous times due to Daylight Saving Time default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish this disambiguation.
 
@@ -534,7 +542,7 @@ The above produces a date one year later than the current time. In most cases, t
 
 You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, `YEAR_WEEK`, and `YEAR_WEEK_LOCALE`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.).
 
-_(There are further fields defined for dealing with [leap seconds and TAI](leap-seconds-and-tai), described later.)_
+_(There are further fields defined for dealing with [leap seconds and TAI](#tai-field-values), described later.)_
 
 For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amount` you pass, are applied. When dealing with months, quarters, and years, the variable lengths of months, quarters, and years apply.
 
@@ -905,7 +913,50 @@ All timezones other than TAI, ZONELESS, and DATELESS, such as Europe/London or A
 
 `DateTime` instances generally behave as if leap seconds do not exist. `DateTime` instances which express leap seconds can be created as follows:
 
-* By being directly parsed: `new DateTime('1972-06-30 23:59:60Z')`
+* By being directly parsed:<br>
+`new DateTime('1972-06-30 23:59:60Z')` → `"DateTime<1972-07-01T00:00:10.000 TAI>"`<br>
+<br>
+Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23:59:60Z')`, not a valid leap second, is treated as `2021-04-16 00:00:00Z`.<br>
+<br>
+* From TAI, Julian date, or modified Julian date values. For example:<br>
+`new DateTime('1972-07-01T00:00:10 TAI', 'UTC').toString()` →
+`"DateTime<1972-06-30T23:59:60.000 +00:00>"`<br>
+`new DateTime({ jde: 2450630.500724913 }, 'UTC').toIsoString(19)` →
+`"1997-06-30T23:59:60"`<br>
+<br>
+* By add/subtract operations using TAI quantities:
+`new DateTime('2016-12-31 18:59:59 EST').add('seconds_tai', 1).toString()` →<br>
+`"DateTime<2016-12-31T18:59:60.000 -05:00>"`
+
+### TAI field values
+
+You can `add` and `subtract` TAI quantities using the following fields: `MILLI_TAI`, `SECOND_TAI`, `MINUTE_TAI`, `HOUR_TAI`, and `DAY_TAI`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli_tai'`, `'millis_tai'`, `'millisecond_tai'`, `'milliseconds_tai'`, `'second_tai'`... etc.).
+
+### Astronomical `DateAndTime` fields
+
+* `jde`: Julian Date (ephemeris) &mdash; Time measured in fixed-length days of dynamical time from noon, January 1, 4713 BCE (-4712-01-01T12:00) Terrestrial Dynamical Time (TDT), defined to be exactly 32.184 seconds ahead of TAI.
+* `mjde`: Modified Julian Date (ephemeris) &mdash; Same as Julian Date (ephemeris) plus 2400000.5, moving time 0 to midnight, November 17, 1858 (1858-11-07T00:00).
+* `jdu`: Julian Date (UT) &mdash; Time measured in variable-length days of earth rotation time from mean solar noon on the Prime Meridian, January 1 4713 BCE (-4712-01-01T12:00).
+* `mjdu`: Modified Julian Date (UT) &mdash; Same as Julian Date (UT) plus 2400000.5, moving time 0 to mean solar midnight, November 17, 1858 (1858-11-07T00:00).
+
+### `epochMillis`, `utcMillis`, and `taiMillis` getters/setters
+
+The `epochMillis` getter/setter returns, or allows you to modify, the fundamental core value for a `DateTime` instance.
+
+For a TAI instance, `epochMillis` is the same as `taiMillis`, with `utcMillis` providing a conversion to or from UTC (or UT1 outside of the well-defined UTC range). For a non-TAI instance `epochMillis` is the same as `utcMillis`, with `taiMillis` performing conversions.
+
+During a leap second the `epochMillis`/`utcMillis` value is pinned 59 seconds, 999 milliseconds into the minute in which the leap seconds occurs. The `taiMillis` value, however, still varies over the course of that second.
+
+In the unlikely event a negative leap second is ever declared, the `epochMillis`/`utcMillis` value for a non-TAI `DateTime` instance will simply skip over the leap second, while `taiMillis` advances contiguously.
+
+`epochSeconds`, `utcSeconds`, and `taiSeconds` are essentially the same as `epochMillis`, `utcMillis`, and `taiMillis`, but functioning at one-second resolution.
+
+### Sorting and comparison with TAI and non-TAI `DateTime` instances
+
+* TAI instances are compared to each other by `taiMillis`.
+* Non-TAI instances are compared to each other by `utcMillis`, but if the `utcMillis` values are identical, comparison is done using `taiMillis`.
+* Mixed types are compared by `taiMillis`.
+* Coarse-resolution comparison (e.g. only comparing to a resolution of whole seconds or whole days) between mixed TAI and non-TAI instances is not well-defined and should be avoided.
 
 ## Global default settings
 

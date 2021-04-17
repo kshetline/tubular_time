@@ -183,7 +183,7 @@ export function max(...dates: DateTime[]): DateTime {
   let result = dates[0];
 
   for (let i = 1; i < dates.length; ++i) {
-    if (dates[i].taiMillis > result.taiMillis)
+    if (DateTime.milliCompare(dates[i], result) > 0)
       result = dates[i];
   }
 
@@ -194,7 +194,7 @@ export function min(...dates: DateTime[]): DateTime {
   let result = dates[0];
 
   for (let i = 1; i < dates.length; ++i) {
-    if (dates[i].taiMillis < result.taiMillis)
+    if (DateTime.milliCompare(dates[i], result) < 0)
       result = dates[i];
   }
 

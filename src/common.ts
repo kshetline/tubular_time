@@ -3,7 +3,7 @@ import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 import { isNumber, toNumber } from '@tubular/util';
 
 export const MIN_YEAR = -271820;
-export const MAX_YEAR = 275759;
+export const MAX_YEAR =  275759;
 
 export const MINUTE_MSEC =     60_000;
 export const HOUR_MSEC   =  3_600_000;
@@ -12,7 +12,6 @@ export const DAY_SEC     =     86_400;
 export const DAY_MINUTES =       1440;
 
 export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
-export const UNIX_TIME_ZERO_AS_JULIAN_MILLIS = UNIX_TIME_ZERO_AS_JULIAN_DAY * DAY_MSEC;
 export const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
 export const DELTA_TDT_SEC = 32.184;
 export const DELTA_TDT_MSEC = 32184;

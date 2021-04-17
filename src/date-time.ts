@@ -5,7 +5,7 @@ import {
   getDateFromDayNumberGregorian
 } from './calendar';
 import {
-  DateAndTime, DAY_MSEC, DELTA_MJD, MAX_YEAR, MIN_YEAR, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
+  DateAndTime, DAY_MSEC, DELTA_MJD, HOUR_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
   syncDateAndTime, UNIX_TIME_ZERO_AS_JULIAN_DAY, validateDateAndTime, YMDDate
 } from './common';
 import { format as formatter } from './format-parse';
@@ -162,9 +162,9 @@ export class DateTime extends Calendar {
       throw new Error(`Resolution ${DateTimeField[resolution]} not valid for time-only values`);
 
     if (resolution === DateTimeField.FULL || resolution === DateTimeField.MILLI)
-      return d1.taiMillis - d2.taiMillis;
+      return this.milliCompare(d1, d2);
 
-    const divisor = [1, 1, 1000, 1000, 60_000, 60_000, undefined, 3_600_000, 3_600_000][resolution];
+    const divisor = [1, 1, 1000, 1000, MINUTE_MSEC, MINUTE_MSEC, undefined, HOUR_MSEC, HOUR_MSEC][resolution];
 
     if (divisor != null && divisor < DateTimeField.MINUTE)
       return floor(d1.taiMillis / divisor) - floor(d2.taiMillis / divisor);
@@ -178,6 +178,23 @@ export class DateTime extends Calendar {
       return d1.wallTime.y - d2.wallTime.y;
 
     throw new Error(`Resolution ${DateTimeField[resolution]} not valid`);
+  }
+
+  /**
+   * While TAI millis is generally the best way to compare two dates for sort order, two non-TAI DateTime instances
+   * might have different epochMillis, but identical taiMillis, because of rounding errors. On the other hand, two
+   * non-TAI instances might have identical epochMillis during a leap second, with taiMillis being the only
+   * distinguishing difference. TAI is the only reasonable way to compare a TAI DateTime and a non-TAI DateTime.
+   */
+  static milliCompare(d1: DateTime, d2: DateTime): number {
+    if (!d1.isTai() && !d2.isTai()) {
+      const diff = d1.epochMillis - d2.epochMillis;
+
+      if (diff !== 0)
+        return diff;
+    }
+
+    return d1.taiMillis - d2.taiMillis;
   }
 
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);

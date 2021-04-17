@@ -19,7 +19,7 @@ const TEST_DTS = [
   66.6, 66.91, 67.28, 67.64, 68.1, 68.59, 68.97, 69.22, 69.36, 69.36
 ];
 
-describe('UT/TT Converter', () => {
+describe('UT/TDT Converter', () => {
   initTimezoneSmall();
 
   it('should convert properly between time systems', () => {
