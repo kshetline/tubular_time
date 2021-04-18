@@ -422,6 +422,15 @@ export class DateTime extends Calendar {
   get epochSeconds(): number { return floor(this._epochMillis / 1000); }
   set epochSeconds(newTime: number) { this.epochMillis = newTime * 1000; }
 
+  get leapSecondsMillis(): number { return this._leapSecondMillis; }
+  get deltaTaiMillis(): number { return this._deltaTaiMillis; }
+
+  isJustBeforeNegativeLeapSecond(): boolean {
+    return this.isUtcBased() && !!Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inNegativeLeap;
+  }
+
+  isInLeapSecond(): boolean { return this.leapSecondsMillis > 0; }
+
   get utcMillis(): number { return this.isTai() ? this._epochMillis - this._deltaTaiMillis : this.epochMillis; }
   set utcMillis(newTime: number) {
     if (this.locked)
@@ -1052,7 +1061,6 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.SECOND:
-        max = 60;
         wallTime.sec = value;
 
         break;
@@ -1206,6 +1214,10 @@ export class DateTime extends Calendar {
 
       default:
         throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid set() field`);
+    }
+
+    if (fieldN === DateTimeField.SECOND && value > 59 && this.isUtcBased()) {
+      max = 60;
     }
 
     if (value < min || value > max)

@@ -1209,7 +1209,8 @@ export class Timezone {
       if (utcTime >= leapInfo.utcMillis) {
         leapInfo = clone(leapInfo);
         leapInfo.inLeap = (next && !next.isNegative && utcTime >= next.utcMillis - 1000);
-        leapInfo.inNegativeLeap = (next && next.isNegative && utcTime >= next.utcMillis - 1000);
+        leapInfo.inNegativeLeap = (next && next.isNegative && utcTime >= next.utcMillis - 2000 &&
+          utcTime < next.utcMillis - 1000);
 
         return leapInfo;
       }

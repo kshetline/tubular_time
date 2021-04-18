@@ -528,6 +528,10 @@ describe('DateTime', () => {
     expect(new DateTime('1995-12-31 23:59:59Z').utcMillis).to.equal(820454399000);
     expect(new DateTime('1995-12-31 23:59:60Z').utcSeconds).to.equal(820454399);
     expect(new DateTime('1995-12-31 23:59:60Z').utcMillis).to.equal(820454399999);
+    expect(new DateTime('1995-12-31 23:59:60Z').deltaTaiMillis).to.equal(29000);
+    expect(new DateTime('1995-12-31 23:59:60Z').leapSecondsMillis).to.equal(1);
+    expect(new DateTime('1995-12-31 23:59:60.123Z').leapSecondsMillis).to.equal(124);
+    expect(new DateTime('1995-12-31 23:59:60Z').add(DateTimeField.MILLI_TAI, 1000).deltaTaiMillis).to.equal(30000);
     expect(new DateTime('1995-12-31 23:59:60Z').compare(new DateTime('1995-12-31 23:59:59Z'))).to.be.greaterThan(0);
     expect(new DateTime('1996-12-31 23:59:60Z').toString()).to.equal('DateTime<1997-01-01T00:00:00.000 +00:00>');
     expect(new DateTime('1972-06-30 23:59:60Z', 'TAI').toString()).to.equal('DateTime<1972-07-01T00:00:10.000 TAI>');
@@ -555,9 +559,23 @@ describe('DateTime', () => {
     dt.utcSeconds = 1616117915;
     expect(dt.utcSeconds).to.equal(1616117915);
     expect(dt.taiSeconds).to.equal(1616117952);
+
+    expect(new DateTime('1995-12-31 23:59:59Z').isInLeapSecond()).to.be.false;
+    expect(new DateTime('1995-12-31 23:59:60Z').isInLeapSecond()).to.be.true;
+    expect(new DateTime('1995-12-31 23:59:60.999Z').isInLeapSecond()).to.be.true;
+    expect(new DateTime('1996-01-01Z').isInLeapSecond()).to.be.false;
+
+    // Test fictitious negative leap second
+    expect(new DateTime('2022-12-31T23:59:57Z').isJustBeforeNegativeLeapSecond()).to.be.false;
+    expect(new DateTime('2022-12-31T23:59:58Z').isJustBeforeNegativeLeapSecond()).to.be.true;
+    expect(new DateTime('2022-12-31T23:59:58.999Z').isJustBeforeNegativeLeapSecond()).to.be.true;
+    expect(new DateTime('2022-12-31T23:59:59Z').isJustBeforeNegativeLeapSecond()).to.be.false;
+    expect(new DateTime('2023-01-01Z').isJustBeforeNegativeLeapSecond()).to.be.false;
   });
 
   it('should correctly handle TDT/UT/TAI conversions', () => {
+    expect(new DateTime('1945-05-08Z').deltaTaiMillis).to.be.closeTo(-5249, 2);
+
     expect(new DateTime('1995-12-31 23:59:59Z').add('second_tai', 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1995-12-31 23:59:00Z').add(DateTimeField.MINUTE_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1995-12-31 23:00:00Z').add(DateTimeField.HOUR_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
