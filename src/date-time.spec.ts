@@ -510,6 +510,8 @@ describe('DateTime', () => {
   it('should correctly handle TAI and leap seconds', () => {
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 16).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:59.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1977-12-31T23:59:59.7 TAI').add('seconds', 17).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:60.700 +00:00>');
+    expect(new DateTime('utc').setUtcMillis(252460799999, 701).toString()).to.equal('DateTime<1977-12-31T23:59:60.700 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 18).tz('UTC').toString()).to.equal('DateTime<1978-01-01T00:00:00.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('America/New_York').toString()).to.equal('DateTime<1977-12-31T18:59:60.000 -05:00>');
 

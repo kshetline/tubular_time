@@ -437,20 +437,21 @@ export class DateTime extends Calendar {
     }
   }
 
-  setUtcMillis(newTime: number, leapSecondMillis = 0): void {
-    if (this.locked)
-      throw lockError;
+  setUtcMillis(newTime: number, leapSecondMillis = 0): this {
+    const result = this.locked ? this.clone(false) : this;
 
-    if (this.isTai()) {
+    if (result.isTai()) {
       newTime = utToTaiMillis(newTime + leapSecondMillis, true);
       leapSecondMillis = 0;
     }
 
-    if (this._epochMillis !== newTime || !this.wallTime || this._leapSecondMillis !== leapSecondMillis) {
-      this._epochMillis = newTime;
-      this._leapSecondMillis = leapSecondMillis;
-      this.updateWallTimeFromEpochMillis();
+    if (result._epochMillis !== newTime || !result.wallTime || result._leapSecondMillis !== leapSecondMillis) {
+      result._epochMillis = newTime;
+      result._leapSecondMillis = leapSecondMillis;
+      result.updateWallTimeFromEpochMillis();
     }
+
+    return result;
   }
 
   // noinspection JSUnusedGlobalSymbols /** @deprecated */
@@ -479,7 +480,7 @@ export class DateTime extends Calendar {
     let leapMillis = 0;
 
     if (!this.isTai()) {
-      if (Timezone.findDeltaTaiFromTai(newTime)?.inLeap)
+      if (this.isUtcBased() && Timezone.findDeltaTaiFromTai(newTime)?.inLeap)
         leapMillis = mod(newTime, 1000) + 1;
 
       newTime = taiToUtMillis(newTime, true) - leapMillis;
@@ -501,6 +502,11 @@ export class DateTime extends Calendar {
 
   isTai(): boolean {
     return this._timezone === Timezone.TAI_ZONE;
+  }
+
+  isUtcBased(): boolean {
+    return this._timezone !== Timezone.TAI_ZONE &&
+           this._timezone !== Timezone.DATELESS && this._timezone !== Timezone.ZONELESS;
   }
 
   private getWallTime(purge?: boolean): DateAndTime {
@@ -1440,7 +1446,7 @@ export class DateTime extends Calendar {
 
     if (this._timezone === DATELESS)
       result._epochMillis = mod(result._epochMillis, DAY_MSEC);
-    else if (!this.isTai() && Timezone.findDeltaTaiFromUtc(result._epochMillis)?.inLeap) {
+    else if (this.isUtcBased() && Timezone.findDeltaTaiFromUtc(result._epochMillis)?.inLeap) {
       result._epochMillis = floor(result._epochMillis / 1000) * 1000 + 999;
       result._leapSecondMillis = 1000;
     }
@@ -1625,6 +1631,9 @@ export class DateTime extends Calendar {
   private updateEpochMillisFromWallTime(allowSelfUpdate = false): void {
     const wallTime = purgeAliasFields(clone(this._wallTime));
 
+    if (allowSelfUpdate)
+      this._deltaTaiMillis = this._leapSecondMillis = 0;
+
     this._epochMillis = this.computeEpochMillisFromWallTimeAux(wallTime, allowSelfUpdate);
   }
 
@@ -1644,7 +1653,7 @@ export class DateTime extends Calendar {
   computeTaiMillisFromWallTime(wallTime: DateAndTime): number {
     let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
 
-    if (!this.isTai())
+    if (this.isUtcBased())
       millis = utToTaiMillis(millis, true) + (wallTime.sec === 60 ? 1000 : 0);
 
     return millis;
@@ -1724,7 +1733,7 @@ export class DateTime extends Calendar {
           millis += transition.deltaOffset * 1000;
       }
 
-      if (allowSelfUpdate && !isTai && secOverflow && Timezone.findDeltaTaiFromUtc(millis)?.inLeap) {
+      if (allowSelfUpdate && secOverflow && this.isUtcBased() && Timezone.findDeltaTaiFromUtc(millis)?.inLeap) {
         this._leapSecondMillis = (wallTime.millis ?? 0) + 1;
         millis = floor(millis / 1000) * 1000 + 999;
       }
@@ -1744,10 +1753,15 @@ export class DateTime extends Calendar {
     }
 
     const lsi = switchFromTai ? Timezone.findDeltaTaiFromTai(this._epochMillis) : undefined;
-    let extra = (switchFromTai ? 0 : this._leapSecondMillis);
+    let extra = (switchFromTai ? (lsi.inLeap ? mod(this._epochMillis, 1000) + 1 : 0) : this._leapSecondMillis);
+    let adjustMillis = false;
 
-    if (lsi && lsi.deltaTai)
+    if (lsi && lsi.deltaTai) {
       this._epochMillis -= lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0);
+
+      if (lsi.inLeap && this.isUtcBased())
+        adjustMillis = true;
+    }
     else if (switchFromTai)
       this._epochMillis = taiToUtMillis(this._epochMillis, true);
     else if (switchToTai) {
@@ -1761,8 +1775,10 @@ export class DateTime extends Calendar {
     this._deltaTaiMillis = round(this._wallTime.deltaTai * 1000);
     delete this._error;
 
-    if (lsi?.inLeap || extra)
-      this._wallTime.sec = this._wallTime.second = 60;
+    if (adjustMillis) {
+      this._epochMillis = floor(this._epochMillis / 1000) * 1000 + 999;
+      this._leapSecondMillis = extra;
+    }
 
     if (this._wallTime.y < MIN_YEAR || this._wallTime.y > MAX_YEAR) {
       this._error = `Invalid year: ${this._wallTime.y}`;
