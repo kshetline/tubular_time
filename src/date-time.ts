@@ -367,17 +367,9 @@ export class DateTime extends Calendar {
   }
 
   clone(cloneLock = true): this {
-    const copy = new DateTime(this._epochMillis, this._timezone, this._locale);
+    const copy = clone(this, new Set([Timezone]));
 
-    if (this.isPureJulian())
-      copy.setPureJulian(true);
-    else if (this.isPureGregorian())
-      copy.setPureGregorian(true);
-    else
-      copy.setGregorianChange(this.getGregorianChange());
-
-    if (cloneLock && this.locked)
-      copy.lock();
+    copy._locked = cloneLock ? this._locked : false;
 
     return copy as this;
   }
@@ -1063,6 +1055,9 @@ export class DateTime extends Calendar {
       case DateTimeField.SECOND:
         wallTime.sec = value;
 
+        if (Timezone.findDeltaTaiFromUtc(floor(this.epochMillis / 60_000) * 60_000 + 59_000)?.inLeap)
+          max = 60;
+
         break;
 
       case DateTimeField.MINUTE:
@@ -1216,10 +1211,6 @@ export class DateTime extends Calendar {
         throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid set() field`);
     }
 
-    if (fieldN === DateTimeField.SECOND && value > 59 && this.isUtcBased()) {
-      max = 60;
-    }
-
     if (value < min || value > max)
       throw new Error(`${DateTimeField[fieldN]} (${value}) must be in the range [${min}, ${max}]`);
 
@@ -1231,12 +1222,16 @@ export class DateTime extends Calendar {
     delete wallTime.mjde;
     delete wallTime.jdu;
     delete wallTime.mjdu;
-    result.updateEpochMillisFromWallTime();
 
-    if (this._timezone === DATELESS)
-      this._epochMillis = mod(this._epochMillis, DAY_MSEC);
+    const counter = this.wallTimeCounter;
 
-    result.updateWallTimeFromEpochMillis();
+    result.updateEpochMillisFromWallTime(this.isUtcBased() && wallTime.sec === 60);
+
+    if (result._timezone === DATELESS)
+      result._epochMillis = mod(result._epochMillis, DAY_MSEC);
+
+    if (this.wallTimeCounter === counter)
+      result.updateWallTimeFromEpochMillis();
 
     return result._lock(this.locked);
   }

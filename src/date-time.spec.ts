@@ -287,7 +287,7 @@ describe('DateTime', () => {
     expect(() => new DateTime().set(DateTimeField.MILLI, -7)).to.throw('MILLI (-7) must be in the range [0, 999]');
     expect(new DateTime('2020-11-29 23:24:35').set(DateTimeField.SECOND, 30).toIsoString(19))
       .to.equal('2020-11-29T23:24:30');
-    expect(() => new DateTime().set(DateTimeField.SECOND, 63)).to.throw('SECOND (63) must be in the range [0, 60]');
+    expect(() => new DateTime().set(DateTimeField.SECOND, 63)).to.throw('SECOND (63) must be in the range [0, 59]');
     expect(new DateTime('1884-02-03 22:14').set(DateTimeField.MINUTE, 14).toIsoString(16))
       .to.equal('1884-02-03T22:14');
     expect(() => new DateTime().set(DateTimeField.MINUTE, 77)).to.throw('MINUTE (77) must be in the range [0, 59]');
@@ -514,6 +514,9 @@ describe('DateTime', () => {
     expect(new DateTime('utc').setUtcMillis(252460799999, 701).toString()).to.equal('DateTime<1977-12-31T23:59:60.700 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 18).tz('UTC').toString()).to.equal('DateTime<1978-01-01T00:00:00.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('America/New_York').toString()).to.equal('DateTime<1977-12-31T18:59:60.000 -05:00>');
+    expect(() => new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 60)).not.to.throw();
+    expect(() => new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 61)).to.throw('SECOND (61) must be in the range [0, 60]');
+    expect(new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 60).tz('TAI').toString()).to.equal('DateTime<1978-01-01T00:00:16.000 TAI>');
 
     // Test fictitious negative leap second
     expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 35).tz('UTC').toString()).to.equal('DateTime<2022-12-31T23:59:57.000 +00:00>');

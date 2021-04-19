@@ -921,15 +921,12 @@ All timezones other than TAI, ZONELESS, and DATELESS, such as Europe/London or A
 
 * By being directly parsed:<br>
 `new DateTime('1972-06-30 23:59:60Z')` → `"DateTime<1972-07-01T00:00:10.000 TAI>"`<br>
-<br>
-Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23:59:60Z')`, not a valid leap second, is treated as `2021-04-16 00:00:00Z`.<br>
-<br>
+Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23:59:60Z')`, not a valid leap second, is treated as `2021-04-16 00:00:00Z`.<br><br>
 * From TAI, Julian date, or modified Julian date values. For example:<br>
 `new DateTime('1972-07-01T00:00:10 TAI', 'UTC').toString()` →
 `"DateTime<1972-06-30T23:59:60.000 +00:00>"`<br>
 `new DateTime({ jde: 2450630.500724913 }, 'UTC').toIsoString(19)` →
-`"1997-06-30T23:59:60"`<br>
-<br>
+`"1997-06-30T23:59:60"`<br><br>
 * By add/subtract operations using TAI quantities:
 `new DateTime('2016-12-31 18:59:59 EST').add('seconds_tai', 1).toString()` →<br>
 `"DateTime<2016-12-31T18:59:60.000 -05:00>"`
@@ -960,7 +957,7 @@ In the unlikely event a negative leap second is ever declared, the `epochMillis`
 ### Sorting and comparison with TAI and non-TAI `DateTime` instances
 
 * TAI instances are compared to each other by `taiMillis`.
-* Non-TAI instances are compared to each other by `utcMillis`, but if the `utcMillis` values are identical, comparison is done using `taiMillis`.
+* Non-TAI instances are compared to each other by `utcMillis`, but if the `utcMillis` values are identical, comparison is done using `leapSecondMillis`.
 * Mixed types are compared by `taiMillis`.
 * Coarse-resolution comparison (e.g. only comparing to a resolution of whole seconds or whole days) between mixed TAI and non-TAI instances is not well-defined and should be avoided.
 
