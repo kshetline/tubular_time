@@ -14,3 +14,4 @@
 /make-remote-zone-data.ts
 *.tgz
 /test.html
+.travis.yml
