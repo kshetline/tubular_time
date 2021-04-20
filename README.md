@@ -1125,7 +1125,8 @@ toDate(): Date;
 toHoursAndMinutesString(includeDst = false): string;
 
 // Format as 'Y-MM-DDTHH:mm:ss.SSSZ', trimming to an optional maxLength that *does not* count
-//   any leading + or - sign.
+//   any leading + or - sign. If maxLength is negative, remove that many characters from the
+//   end of the full string. Base length for positive years <= 9999 is 24 characters.
 toIsoString(maxLength?: number): string;
 
 // Create a clone of a DateTime instance with a different locale.
@@ -1166,6 +1167,12 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
   static UT_ZONE: Timezone; // Universal Coordinated Time (AKA UTC, UCT, GMT, Zulu Time, etc.)
   static ZONELESS: Timezone; // A pseudo timezone for abstract date/time instances.
   static DATELESS: Timezone; // A pseudo timezone for abstract dateless, time-only `DateTime` instances.
+```
+
+### Static `Timezone` getter
+
+```typescript
+version: string; // Current timezone version, e.g. 2021a
 ```
 
 ### Static `Timezone` methods
