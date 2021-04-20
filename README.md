@@ -2,14 +2,18 @@
 
 Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library for handling both day-to-day situations (so to speak) and some weird ones too.
 
+[![npm](https://img.shields.io/npm/v/@tubular/time.svg)](https://www.npmjs.com/package/@tubular/time/) [![Build Status](https://img.shields.io/travis/kshetline/tubular_time/master.svg)](https://travis-ci.com/github/kshetline/tubular_time/) [![Coverage Status](https://coveralls.io/repos/github/kshetline/tubular_time/badge.svg)](https://coveralls.io/github/kshetline/tubular_time) [![npm downloads](https://img.shields.io/npm/dm/@tubular/time.svg)](https://npmjs.org/package/@tubular/time/) ![npm bundle size (scoped)](https://img.shields.io/bundlephobia/min/@tubular/time)  ![license](https://img.shields.io/badge/licence-mit-informational)
+
 ## Key features<!-- omit in toc -->
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
 * IANA timezone support, with features beyond formatting using timezones, such as parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region), and live updates of timezone definitions.
+* Support for leap seconds and conversions between TAI (International Atomic Time) and UTC (Universal Coordinated Time).
 * Supports and recognizes negative Daylight Saving Time.
 * Extensive date/time manipulation and calculation capabilities.
 * Many features available using a familiar Moment.js-style API.
-* Astronomical time functions, and local mean time from longitude to one minute (of time) resolution.
+* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
+* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Package suitable for tree shaking and Angular optimization.
 * Full TypeScript typing support.
@@ -59,7 +63,13 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Another way to drop a day](#another-way-to-drop-a-day)
 - [Dealing with weird days](#dealing-with-weird-days)
   - [Typical Daylight Saving Time examples](#typical-daylight-saving-time-examples)
-  - [Examples of big UTC shifts due to moving the International Dateline](#examples-of-big-utc-shifts-due-to-moving-the-international-dateline)
+  - [Examples of big UTC offset shifts due to moving the International Dateline](#examples-of-big-utc-offset-shifts-due-to-moving-the-international-dateline)
+- [Leap Seconds, TAI, and Julian Dates](#leap-seconds-tai-and-julian-dates)
+  - [Leap second time values](#leap-second-time-values)
+  - [TAI field values](#tai-field-values)
+  - [Astronomical `DateAndTime` fields](#astronomical-dateandtime-fields)
+  - [`epochMillis`, `utcMillis`, and `taiMillis` getters/setters](#epochmillis-utcmillis-and-taimillis-getterssetters)
+  - [Sorting and comparison with TAI and non-TAI `DateTime` instances](#sorting-and-comparison-with-tai-and-non-tai-datetime-instances)
 - [Global default settings](#global-default-settings)
 - [The `DateTime` class](#the-datetime-class)
   - [Constructor](#constructor)
@@ -73,9 +83,12 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [The `Calendar` class](#the-calendar-class)
 - [The `Timezone` class](#the-timezone-class)
   - [Static `Timezone` constants](#static-timezone-constants)
+  - [Static `Timezone` getter](#static-timezone-getter)
+  - [`LeapSecondInfo` interface](#leapsecondinfo-interface)
   - [Static `Timezone` methods](#static-timezone-methods)
   - [`Timezone` getters](#timezone-getters)
   - [`Timezone` methods](#timezone-methods)
+- [Other functions available on `ttime`](#other-functions-available-on-ttime)
 - [Constants available on `ttime`](#constants-available-on-ttime)
 
 ## Installation
@@ -224,8 +237,12 @@ Please note that, as most unaccented Latin letters are interpreted as special fo
 | | ZZ | -0700 -0600 ... +0600 +0700
 | | zz,&nbsp;z | EST, CDT, MST, PDT, AEST, etc.<br><br>Please note that timezones in this format are not internationalized, and are not unambiguous when parsed. |
 | | Z | -07:00 -06:00 ... +06:00 +07:00
-| Unix timestamp | X | 1360013296 |
-| Unix millisecond timestamp | x | 1360013296123 |
+| Unix timestamp, UTC | X | 1360013296 |
+| Unix millisecond timestamp, UTC | x | 1360013296123 |
+| Unix timestamp, epoch | XX | 1360013296 |
+| Unix millisecond timestamp, epoch | xx | 1360013296123 |
+| Unix timestamp, TAI | X | 1360013331 |
+| Unix millisecond timestamp, TAI | x | 1360013331123 |
 | Daylight Saving Time indicator | V | § # ^ ~ ❄<br><br>Symbol indicating DST is in effect.<br>This is typically §, meaning the clock has been turned forward one hour.<br># means two hours forward, ^ means half an hour, ~ is any other forward amount.<br>❄ is negative DST, i.e. “Winter Time”.<br>Renders one blank space when DST is not in effect. |
 | | v | Same as above, but no blank space when DST is not in effect. |
 | Occurrence indicator | R | 1:00 , 1:01 ... 1:58 , 1:59 , 1:00₂, 1:01₂ ... 1:58₂, 1:59₂, 2:00 , 2:01<br><br>A subscript 2 (₂) that denotes the second occurrence of the same clock time during a day when clocks are turned back for Daylight Saving Time. |
@@ -458,6 +475,14 @@ function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'smal
   utcOffset: -18000, // offset (in seconds) from UTC, negative west from 0°, including DST offset when applicable
   dstOffset: 0, // DST offset, in minutes - usually positive, but can be negative (output only)
   occurrence: 1, // usually 1, but can be 2 for the second occurrence of the same wall clock time during a single day, caused by clock being turned back for DST
+  deltaTai: 37, // How much (in seconds) TAI exceeds UTC or UT1 at given moment in time (output only)
+  /* In the well-defined range for UTC, deltaTai is always an integer value.
+     Outside that range it can be a non-integer with millisecond precision. */
+
+  jde: 2459249.722008264, // Julian days, ephemeris
+  mjde: 59249.22200826416, // Modified Julian days, ephemeris
+  jdu: 2459249.7212051502, // Julian days, UT
+  mjdu: 59249.22120515024 // Modified Julian days, UT
 }
 ```
 
@@ -482,6 +507,8 @@ In specifying a date, the date fields have the following priority:
 * `ywl` / `yearByWeekLocale`, etc: These fields work the same as `yw` / `yearByWeek`, etc., except that they apply to locale-specific rules for the day of the week on which each week starts, and for the definition of the first week of the year.
 
 In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
+
+[Astronomical time fields](#astronomical-dateandtime-fields) will supersede any of the above date fields.
 
 As discussed earlier, concerning parsing time strings, ambiguous times due to Daylight Saving Time default to the earlier of two times. You can, however, use `occurrence: 2` to explicitly specify the later time. An explicit `utcOffset` can also accomplish this disambiguation.
 
@@ -522,7 +549,9 @@ The above produces a date one year later than the current time. In most cases, t
 
 `ttime('2021-01-31').add(DateTimeField.MONTH, 1).toIsoString(10)` → `2021-02-28`
 
-You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, `YEAR_WEEK`, and `YEAR_WEEK_LOCALE`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.)
+You can `add` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`, `QUARTER`, `YEAR`, `YEAR_WEEK`, and `YEAR_WEEK_LOCALE`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli'`, `'millis'`, `'millisecond'`, `'milliseconds'`... `'day'`, `'days'`, `'date'`, `'month'`, `'months'`, etc.).
+
+_(There are further fields defined for dealing with [leap seconds and TAI](#tai-field-values), described later.)_
 
 For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amount` you pass, are applied. When dealing with months, quarters, and years, the variable lengths of months, quarters, and years apply.
 
@@ -599,11 +628,11 @@ These functions transform a `DateTime` to the beginning or end of a given unit o
 
 In milliseconds:
 
-`ttime().utcTimeMillis`
+`ttime().utcMillis`
 
 In seconds:
 
-`ttime().utcTimeSeconds`
+`ttime().utcSeconds`
 
 As a native JavaScript `Date` object:
 
@@ -671,13 +700,15 @@ The `yearOrDate` argument can be just a number for the year (in which case `mont
 There is also this method, available on instances of `Calendar` or `DateTime`, which determines the validity of a date according to that instance’s Julian/Gregorian switch-over:
 
 ```typescript
-isValidDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
+isValidDate(year: number, month: number, day: number): boolean;
+isValidDate(yearOrDate: YMDDate | number[]): boolean;
 ```
 
 A related method takes a possibly invalid date and coerces it into a valid date, such as turning September 31 into October 1.
 
 ```typescript
-normalizeDate(yearOrDate: YearOrDate, month?: number, day?: number): YMDDate;
+normalizeDate(year: number, month: number, day: number): YMDDate;
+normalizeDate(yearOrDate: YMDDate | number[]): YMDDate;
 ```
 
 ## Comparison and sorting
@@ -853,7 +884,7 @@ getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number)
 `new DateTime('2021-11-07', 'America/New_York').getDiscontinuityDuringDay()` →<br>
 `{ start: '02:00:00', end: '01:00:00', delta: -3600000 } // fall back!`
 
-### Examples of big UTC shifts due to moving the International Dateline
+### Examples of big UTC offset shifts due to moving the International Dateline
 
 `// As soon as it’s midnight on the 30th, it’s instantly midnight on the 31st, erasing 24 hours:`<br>
 `new DateTime('2011-12-30', 'Pacific/Apia').getDiscontinuityDuringDay()`) →<br>
@@ -866,6 +897,80 @@ getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number)
 Here’s a skyviewcafe.com image for that extra-long day in the Marshall Islands, with two sunrises, two sunsets, and 24 hours, 6 minutes worth of daylight packed into a 47-hour day:
 
 <img src="https://shetline.com/readme/tubular-time/2.4.0/mhl_sep_30_1969.jpg" width=215 height=195 alt="Marshall Islands, September 30, 1969">
+
+## Leap Seconds, TAI, and Julian Dates
+
+UTC (Universal Coordinated Time) is not a uniform timescale. It is currently defined to track closely with another time standard, UT1, which is based on the slightly variable, and (in the long run) slowly lengthening rotation time of the Earth. Each single second of UTC is equal to one standard, atomically-defined second, but whole seconds are occasionally inserted (and, theoretically, might occasionally be deleted) to keep UTC within 0.9s of UT1. These seconds are called _leap seconds_.
+
+The current system for UTC was adopted in 1970 and implemented in 1972[*](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). UTC is only strictly defined relative to TAI starting in 1972 and going forward in time until the next announced omission or addition of a leap second. You can, however, create a **@tubular/time** `DateTime` instance using UTC while also using year values in the distant past or future.
+
+So how are dates and times outside of the well-defined range of UTC handled?
+
+The answer is that `DateTime` uses both extended UTC and UT1 outside of the well-defined UTC range. This works as follows:
+
+* For all dates prior to 1957, estimated UT1 is in effect. This is most accurate back to 1600, for which there is sufficient astronomical data for reasonable approximate conversions from UT1 to TAI and dynamical time. Further back in time less accurate approximations are in effect.
+* From 1957-1958, using a sliding weighted average, UT1 transitions to *proleptic* UTC.
+* From 1958-1972 *proleptic* UTC, [as proposed by Tony Finch](https://fanf.livejournal.com/69586.html), is used, with the first non-official leap second occurring at 1959-06-30 23:59:60.
+* From 1972 up until the latest updates provided by the [International Bureau of Weights and Measures](https://en.wikipedia.org/wiki/International_Bureau_of_Weights_and_Measures), well-defined UTC prevails, with the first official leap second occurring at 1972-06-30 23:59:60.
+* For a year to 18 months after the current time, or after the last defined leap second, *whichever is later*, a presumed leap-second-free span of UTC is projected to occur.
+* A sliding weighted average transition from UTC to estimated UT1 follows for the next 365 days.
+* Formulaic predicted UT1 is used for all later dates and times thereafter.
+
+> Note: It is possible (no sooner than 2023) that the use of leap seconds might be abandoned, depending on the results of the World Radiocommunication Conference that year. One possible outcome is that UTC will become locked to TAI, and allowed to drift further and further out of synchronization with UT1.
+
+All timezones other than TAI, ZONELESS, and DATELESS, such as Europe/London or Asia/Tokyo, are handled the same way as described for UTC above &mdash; simply at varying timezone offsets from UTC.
+
+### Leap second time values
+
+`DateTime` instances generally behave as if leap seconds do not exist. `DateTime` instances which express leap seconds can be created as follows:
+
+* By being directly parsed:<br>
+`new DateTime('1972-06-30 23:59:60Z')` → `"DateTime<1972-07-01T00:00:10.000 TAI>"`<br>
+Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23:59:60Z')`, not a valid leap second, is treated as `2021-04-16 00:00:00Z`.<br><br>
+* From TAI, Julian date, or modified Julian date values. For example:<br>
+`new DateTime('1972-07-01T00:00:10 TAI', 'UTC').toString()` →
+`"DateTime<1972-06-30T23:59:60.000 +00:00>"`<br>
+`new DateTime({ jde: 2450630.500724913 }, 'UTC').toIsoString(19)` →
+`"1997-06-30T23:59:60"`<br><br>
+* By add/subtract operations using TAI quantities:
+`new DateTime('2016-12-31 18:59:59 EST').add('seconds_tai', 1).toString()` →
+`"DateTime<2016-12-31T18:59:60.000 -05:00>"`<br><br>
+* Using the set operation (this only works if the result is the is considered a valid leap second):
+`new DateTime('2016-12-31 18:59:59 EST').set('second', 60).toString()` →
+`"DateTime<2016-12-31T18:59:60.000 -05:00>"`<br><br>
+* Using the `setUtcMillis` method, with the optional second `leapSecondMillis` argument:
+`new DateTime('utc').setUtcMillis(252460799999, 701).toString()` →
+`"DateTime<1977-12-31T23:59:60.700 +00:00>"`<br>
+
+### TAI field values
+
+You can `add` and `subtract` TAI quantities using the following fields: `MILLI_TAI`, `SECOND_TAI`, `MINUTE_TAI`, `HOUR_TAI`, and `DAY_TAI`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli_tai'`, `'millis_tai'`, `'millisecond_tai'`, `'milliseconds_tai'`, `'second_tai'`... etc.).
+
+### Astronomical `DateAndTime` fields
+
+* `jde`: Julian Date (ephemeris) &mdash; Time measured in fixed-length days of dynamical time from noon, January 1, 4713 BCE (-4712-01-01T12:00) Terrestrial Dynamical Time (TDT), defined to be exactly 32.184 seconds ahead of TAI.
+* `mjde`: Modified Julian Date (ephemeris) &mdash; Same as Julian Date (ephemeris) plus 2400000.5, moving time 0 to midnight, November 17, 1858 (1858-11-07T00:00).
+* `jdu`: Julian Date (UT) &mdash; Time measured in variable-length days of earth rotation time from mean solar noon on the Prime Meridian, January 1 4713 BCE (-4712-01-01T12:00).
+* `mjdu`: Modified Julian Date (UT) &mdash; Same as Julian Date (UT) plus 2400000.5, moving time 0 to mean solar midnight, November 17, 1858 (1858-11-07T00:00).
+
+### `epochMillis`, `utcMillis`, and `taiMillis` getters/setters
+
+The `epochMillis` getter/setter returns, or allows you to modify, the fundamental core value for a `DateTime` instance.
+
+For a TAI instance, `epochMillis` is the same as `taiMillis`, with `utcMillis` providing a conversion to or from UTC (or UT1 outside of the well-defined UTC range). For a non-TAI instance `epochMillis` is the same as `utcMillis`, with `taiMillis` performing conversions.
+
+During a leap second the `epochMillis`/`utcMillis` value is pinned 59 seconds, 999 milliseconds into the minute in which the leap seconds occurs. The `taiMillis` value, however, still varies over the course of that second.
+
+In the unlikely event a negative leap second is ever declared, the `epochMillis`/`utcMillis` value for a non-TAI `DateTime` instance will simply skip over the leap second, while `taiMillis` advances contiguously.
+
+`epochSeconds`, `utcSeconds`, and `taiSeconds` are essentially the same as `epochMillis`, `utcMillis`, and `taiMillis`, but functioning at one-second resolution.
+
+### Sorting and comparison with TAI and non-TAI `DateTime` instances
+
+* TAI instances are compared to each other by `taiMillis`.
+* Non-TAI instances are compared to each other by `utcMillis`, but if the `utcMillis` values are identical, comparison is done using `leapSecondMillis`.
+* Mixed types are compared by `taiMillis`.
+* Coarse-resolution comparison (e.g. only comparing to a resolution of whole seconds or whole days) between mixed TAI and non-TAI instances is not well-defined and should be avoided.
 
 ## Global default settings
 
@@ -981,6 +1086,7 @@ static isDateTime(obj: any): obj is DateTime; // boolean
 dstOffsetMinutes: number;
 dstOffsetSeconds: number;
 error: string | undefined; // Explanation of why a DateTime is considered invalid, undefined if valid.
+leapSecondMillis: number; // Number of milliseconds into a leap second (normally 0)
 // 'DATETIME` is the usual type, but a DateTime instance can be DATELESS (time-only)
 //   or an abstract date/time with no real-world timezone.
 type: 'ZONELESS' | 'DATELESS' | 'DATETIME';
@@ -995,9 +1101,13 @@ wallTimeShort: DateAndTime;
 
 ```typescript
 locale: string | string[];
+epochMillis: number;
+epochSeconds: number;
+taiMillis: number;
+taiSeconds: number;
 timezone: Timezone;
-utcTimeMillis: number;
-utcTimeSeconds: number;
+utcMillis: number; // utcTimeMillis has been deprecated
+utcSeconds: number; // utcTimeSeconds has been deprecated
 wallTime: DateAndTime;
 ```
 
@@ -1019,7 +1129,9 @@ getDateOfNthWeekdayOfMonth(dayOfTheWeek: number, index: number): number;
 getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number);
 
 // Day of the week for date, 0-6 for Sun-Sat
-getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number;
+getDayOfWeek(): number;
+getDayOfWeek(year: number, month: number, day: number): number;
+getDayOfWeek(date: YMDDate | number[]): number; // As number[]: [year, month, day]
 
 // How many times does a given day of the week (0-6 for Sun-Sat) occur during this month?
 getDayOfWeekInMonthCount(year: number, month: number, dayOfTheWeek: number): number;
@@ -1101,6 +1213,13 @@ isPureGregorian(): boolean;
 
 isPureJulian(): boolean;
 
+// Is the DateTime instance TAI?
+isTai(): boolean;
+
+// Is the DateTime instance UTC, or a timezone offset from UTC?
+// (Anything other than TAI, DATELESS, and ZONELESS.)
+isUtcBased(): boolean;
+
 // Sets the first date when the Gregorian calendar starts. Pass 'J' as the first argument to get
 //   a perpetual Julian calendar, or 'G' for always-Gregorian (extending even before the Gregorian
 //   calendar existed - a fancy word for that being a "proleptic" Gregorian calendar). You can
@@ -1132,8 +1251,10 @@ toIsoString(maxLength?: number): string;
 // Create a clone of a DateTime instance with a different locale.
 toLocale(newLocale: string | string[]): DateTime;
 
-// Convert to a string, such as 'DateTime<2017-03-02T14:45:00.000 +01:00> or, when dateless,
-//   'DateTime<20:17:15.000>'.
+// Convert to a string, such as 'DateTime<2017-03-02T14:45:00.000 +01:00>.
+//   When dateless: 'DateTime<20:17:15.000>'
+//   When zoneless: 'DateTime<2017-03-02T14:45:00.000>'
+//   When TAI: 'DateTime<2017-03-02T14:45:00.000 TAI>'
 toString(): string;
 
 // Format as 'Y-MM-DD HH:mmv'.
@@ -1175,6 +1296,27 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 version: string; // Current timezone version, e.g. 2021a
 ```
 
+### `LeapSecondInfo` interface
+
+This defines the moment *immediately after* the insertion or deletion of a leap second.
+
+```typescript
+export interface LeapSecondInfo {
+  utcMillis: number;
+  taiMillis: number;
+  dateAfter: YMDDate;
+  deltaTai: number;
+  isNegative: boolean;
+  // Optional flag indicating if a specific moment in time is during a leap second.
+  // When a query is a UTC value, this flag is true for the 59th second of a minute.
+  inLeap?: boolean;
+  // For an unlikely, but theoretically possible, negative leap second, this optional flag
+  // is true if a query time is in the 58th second of a minute, preceding an omitted 59th
+  // second.
+  inNegativeLeap?: boolean;
+}
+```
+
 ### Static `Timezone` methods
 
 Check if a given IANA `zoneName` is associated with an ISO Alpha-2 (two-letter) `country` code:
@@ -1183,13 +1325,25 @@ Check if a given IANA `zoneName` is associated with an ISO Alpha-2 (two-letter) 
 static doesZoneMatchCountry(zoneName: string, country: string): boolean;
 ```
 
+Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given TAI moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
+```
+
+Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given UTC moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
+```
+
 <a id="format-utc-offset" name="format-utc-offset"></a>Take a duration, `offsetSeconds`, and turn it into a formatted UTC offset, e.g. `-18000` → `'-05:00'`. If `noColons` is set to `false` (it defaults to `true` if not specified), colons will be omitted from the output, e.g. `'-0500'`. If the duration is not in whole minutes, seconds will be added to the output, e.g. `'+15:02:19'`:
 
 ```typescript
 static formatUtcOffset(offsetSeconds: number, noColons = false): string;
 ```
 
-Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message:
+Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message. `name` can be `"DATELESS"`, `"TAI"`, or `"ZONELESS"`, as well as an IANA timezone name, or common name like `"UTC"` or `"GMT"`:
 
 ```typescript
 static from(name: string): Timezone;
@@ -1207,10 +1361,22 @@ Get a `Set` of ISO Alpha-2 (two-letter) country codes associated with a given IA
 static getCountries(zoneName: string): Set<string>;
 ```
 
+The last known, declared leap second. This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static getDateAfterLastKnownLeapSecond(): YMDDate
+```
+
 Get the symbol (`^`, `§`, `#`, `❄`, or `~`) **@tubular/time** associates with various Daylight Saving Time offsets, or an empty string for `dstOffsetSeconds` of 0:
 
 ```typescript
 static getDstSymbol(dstOffsetSeconds: number): string;
+```
+
+Get the full list of leap seconds, including 10 non-official, proleptic leap seconds defined from 1959 to 1971, and all officially declared leap seconds thereafter (up to the latest software update). This can be `null` if no leap seconds are declared in the current timezone data:
+
+```typescript
+static getLeapSecondList(): LeapSecondInfo[];
 ```
 
 This method returns a list of available IANA timezone names in a structured form, grouped by standard UTC offset and Daylight Saving Time offset (if any), e.g. `+02:00`, `-05:00§`, etc. The “MISC” timezones, and the various IANA “Etc” timezones, are filtered out:
@@ -1259,6 +1425,12 @@ Return a timezone matching `name`, if available. If no such timezone exists, a c
 
 ```typescript
 static getTimezone(name: string, longitude?: number): Timezone
+```
+
+The same as `getDateAfterLastKnownLeapSecond()`, but `null` if the given date is in the past:
+
+```typescript
+static getUpcomingLeapSecond(): YMDDate;
 ```
 
 This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not a guess at all, but a proper system-reported value. Otherwise, the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`. If `recheck` is `true`, a fresh check is forced instead of using a cached result:
@@ -1358,6 +1530,56 @@ Check if this timezone explicitly supports the given `country`, specified as a t
 
 ```typescript
 supportsCountry(country: string): boolean;
+```
+
+## Other functions available on `ttime`
+
+Determine if a value is an instance of the `Date` class:
+
+```typescript
+ttime.isDate(obj: any): obj is Date; // boolean
+```
+
+Determine if a value is an instance of the `DateTime` class:
+
+```typescript
+ttime.isDateTime(obj: any): obj is DateTime; // boolean
+```
+
+Converts Julian days into milliseconds from the 1970-01-01T00:00 UTC epoch:
+
+```typescript
+ttime.julianDay(millis: number): number;
+```
+
+Converts milliseconds from the 1970-01-01T00:00 UTC epoch into Julian days:
+
+```typescript
+ttime.millisFromJulianDay(jd: number): number;
+```
+
+Given a year, month, day according to the standard Gregorian calendar change (SGC) of 1582-10-15, and optional hour, minute, and second UTC, returns a Julian day number.
+
+```typescript
+ttime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number;
+```
+
+For a given TDT Julian Date (ephemeris time), return the number of seconds that TDT is ahead of Universal Time (UT1):
+
+```typescript
+ttime.getDeltaTAtJulianDate(timeJDE: number): number;
+```
+
+For a given TDT Julian Date (ephemeris time), return the Julian Date in Universal Time (UT1):
+
+```typescript
+ttime.tdtToUt(timeJDE: number): number;
+```
+
+For a given UT1 Julian Date (Universal Time), return the Julian Date in ephemeris time (TDT):
+
+```typescript
+ttime.utToTdt(timeJDU: number): number;
 ```
 
 ## Constants available on `ttime`

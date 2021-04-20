@@ -17,6 +17,7 @@
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
+import { DAY_MSEC } from './common';
 import { DateTime, DateTimeArg } from './date-time';
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
@@ -24,8 +25,9 @@ import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
 import { parse } from './format-parse';
-import { forEach, isString } from '@tubular/util';
+import { forEach, isString, toNumber } from '@tubular/util';
 import { CalendarType, DayOfWeek, Month, LAST } from './calendar';
+import { getDeltaTAtJulianDate, tdtToUt, utToTdt } from './ut-converter';
 
 let win: any = null;
 
@@ -55,7 +57,8 @@ export {
   DateAndTime, MINUTE_MSEC, dateAndTimeFromMillis_SGC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, millisFromDateTime_SGC,
   parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
-export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './date-time';
+export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity } from './date-time';
+export { getDeltaTAtJulianDate, utToTdt, tdtToUt } from './ut-converter';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
@@ -119,7 +122,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
     poll();
 
     if (intervalDays > 0) {
-      pollingInterval = setInterval(poll, Math.max(intervalDays * 86400000, 3600000));
+      pollingInterval = setInterval(poll, Math.max(intervalDays * DAY_MSEC, 3600000));
 
       // Using unref prevents the interval alone from keeping a process alive
       if (pollingInterval.unref)
@@ -181,7 +184,7 @@ export function max(...dates: DateTime[]): DateTime {
   let result = dates[0];
 
   for (let i = 1; i < dates.length; ++i) {
-    if (dates[i].utcTimeMillis > result.utcTimeMillis)
+    if (DateTime.milliCompare(dates[i], result) > 0)
       result = dates[i];
   }
 
@@ -192,7 +195,7 @@ export function min(...dates: DateTime[]): DateTime {
   let result = dates[0];
 
   for (let i = 1; i < dates.length; ++i) {
-    if (dates[i].utcTimeMillis < result.utcTimeMillis)
+    if (DateTime.milliCompare(dates[i], result) < 0)
       result = dates[i];
   }
 
@@ -255,8 +258,12 @@ ttime.julianDay             = DateTime.julianDay;
 ttime.millisFromJulianDay   = DateTime.millisFromJulianDay;
 ttime.julianDay_SGC         = DateTime.julianDay_SGC;
 
-forEach(DayOfWeek, (key, value) => ttime[key] = value);
-forEach(Month, (key, value) => ttime[key] = value);
+ttime.getDeltaTAtJulianDate = getDeltaTAtJulianDate;
+ttime.tdtToUt               = tdtToUt;
+ttime.utToTdt               = utToTdt;
+
+forEach(DayOfWeek, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; });
+forEach(Month, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; });
 ttime.LAST = LAST;
 
 Object.freeze(ttime);

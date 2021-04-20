@@ -15,7 +15,7 @@ const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m:
                     ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
 const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|X|x)/g;
+const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 
 function formatEscape(s: string): string {
@@ -127,7 +127,7 @@ function timeMatch(dt: DateTime, locale: ILocale): boolean {
   if (!format)
     return false;
 
-  const fields = format.formatToParts(dt.utcTimeMillis);
+  const fields = format.formatToParts(dt.epochMillis);
   const wt = dt.wallTime;
 
   return wt.hrs === getDateValue(fields, 'hour') &&
@@ -352,12 +352,28 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         }
         break;
 
+      case 'XX': // Epoch 1970-01-01 00:00 seconds
+        result.push(dt.epochSeconds.toString());
+        break;
+
+      case 'xx': // Epoch 1970-01-01 00:00 milliseconds
+        result.push(dt.epochMillis.toString());
+        break;
+
+      case 'XT': // Epoch 1970-01-01 00:00 TAI seconds
+        result.push(dt.taiSeconds.toString());
+        break;
+
+      case 'xt': // Epoch 1970-01-01 00:00 TAI milliseconds
+        result.push(dt.taiSeconds.toString());
+        break;
+
       case 'X': // Epoch 1970-01-01 00:00 UTC seconds
-        result.push(floor(dt.utcTimeMillis / 1000).toString());
+        result.push(dt.utcSeconds.toString());
         break;
 
       case 'x': // Epoch 1970-01-01 00:00 UTC milliseconds
-        result.push(dt.utcTimeMillis.toString());
+        result.push(dt.utcMillis.toString());
         break;
 
       case 'LLLL': // Various Moment.js-style shorthand date/time formats
@@ -378,7 +394,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           else if (isString(localeFormat))
             result.push(format(dt, localeFormat, localeOverride));
           else
-            result.push(localeFormat.format(dt.utcTimeMillis));
+            result.push(localeFormat.format(dt.epochMillis));
         }
         break;
 
@@ -395,7 +411,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
         if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof DateTimeFormat) {
-          result.push(getDatePart(locale.dateTimeFormats.Z, dt.utcTimeMillis, 'timeZoneName'));
+          result.push(getDatePart(locale.dateTimeFormats.Z, dt.epochMillis, 'timeZoneName'));
           break;
         }
 
@@ -403,7 +419,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
         if (hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
-          result.push(getDatePart(locale.dateTimeFormats.z, dt.utcTimeMillis, 'timeZoneName'));
+          result.push(getDatePart(locale.dateTimeFormats.z, dt.epochMillis, 'timeZoneName'));
           break;
         }
         else if (dt.timezone.zoneName !== 'OS') {
@@ -414,7 +430,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'ZZ': // Zone as UTC offset
       case 'Z':
-        result.push(dt.timezone.getFormattedOffset(dt.utcTimeMillis, field === 'ZZ'));
+        result.push(dt.timezone.getFormattedOffset(dt.epochMillis, field === 'ZZ'));
         break;
 
       case 'V':
@@ -472,7 +488,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
             }
 
             if (timeMatch(dt, locale))
-              result.push(intlFormat.format(dt.utcTimeMillis));
+              result.push(intlFormat.format(dt.epochMillis));
             else {
               // Favor @tubular/time timezone offsets over those derived from Intl.
               let intlFormatAlt = locale.dateTimeFormats['_' + field] as string;
@@ -522,7 +538,7 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
 
   localeNames = normalizeLocale(localeNames);
 
-  if (timezone === 'DATELESS' || timezone === 'ZONELESS')
+  if (timezone === 'DATELESS' || timezone === 'ZONELESS' || timezone === 'TAI')
     options.timeZone = 'UTC';
   else if (($ = /^(?:GMT|UTC?)([-+])(\d\d(?::?\d\d))/.exec(timezone))) {
     options.timeZone = 'Etc/GMT' + ($[1] === '-' ? '+' : '-') + $[2].replace(/^0+(?=\d)|:|00$/g, '');

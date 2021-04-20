@@ -135,7 +135,7 @@ describe('FormatParse', () => {
               break loop;
             }
 
-            expect(parsed?.utcTimeMillis).to.equal(t, `${lcl}, ${fmt}: ${timeString} ==> ${parsed.toIsoString()}`);
+            expect(parsed?.epochMillis).to.equal(t, `${lcl}, ${fmt}: ${timeString} ==> ${parsed.toIsoString()}`);
           }
         }
       }
@@ -162,21 +162,21 @@ describe('FormatParse', () => {
   });
 
   it('should be able to parse times with timezones', () => {
-    expect(parse('Jul 7, 2022 04:05 PM America/Chicago', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM America/Chicago', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 5 * 3_600_000);
-    expect(parse('Jul 7, 2022 04:05 PM EDT', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM EDT', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 4 * 3_600_000);
-    expect(parse('Jul 7, 2022 04:05 PM PST', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM PST', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 8 * 3_600_000);
     expect(parse('Jul 7, 2022 04:05 PM PST', 'MMM D, y n hh:mm A z', 'America/New_York').format('IMM z'))
       .to.equal('Jul 7, 2022, 8:05:00 PM EDT');
-    expect(parse('Jul 7, 2022 04:05 PM +03:00', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM +03:00', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) - 3 * 3_600_000);
-    expect(parse('Jul 7, 2022 04:05 PM UT+0300', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM UT+0300', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) - 3 * 3_600_000);
-    expect(parse('Jul 7, 2022 04:05 PM GMT-0300', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM GMT-0300', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 3 * 3_600_000);
-    expect(parse('Jul 7, 2022 04:05 PM Etc/GMT+3', 'MMM D, y n hh:mm A z').utcTimeMillis)
+    expect(parse('Jul 7, 2022 04:05 PM Etc/GMT+3', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 3 * 3_600_000);
   });
 });

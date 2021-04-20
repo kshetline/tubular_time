@@ -11,6 +11,8 @@ describe('DateTime', () => {
 
   beforeEach(() => {
     Timezone.defineTimezones({
+      // Includes fictitious negative leap second at the very end of 2022
+      leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167 -19358',
       'America/Chicago': '-055036 -0600 60;-5O.A/0/LMT -60/0/CST -50/10/CDT -50/0/EST -50/10/CWT -50/10/CPT;121212121212121212121212121212121212131212121212145121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121;-3tFG0 1nEe0 1nX0 11B0 1nX0 1wp0 TX0 WN0 1qL0 1cN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 11B0 1Hz0 14p0 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 RB0 8x30 iw0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 s10 1Vz0 LB0 1BX0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;92e5;US',
       'America/Juneau': '+1502 -0900 60;f2/0/LMT -8W/0/LMT -80/0/PST -70/10/PWT -70/10/PPT -70/10/PDT -80/10/YDT -90/0/YST -90/0/AKST -80/10/AKDT;1234252525252525252525252526252525789898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898989898;-48PP2 1jVM0 1EX12 8x10 iy0 Vo10 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 s10 1Vz0 LB0 1BX0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cM0 1cM0 1cL0 1cN0 1fz0 1a10 1fz0 co0 10q0 1cL0 1cN0 1cL0 1cN0 1cL0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;33e3;US',
       'America/New_York': '-045602 -0500 60;-4U.2/0/LMT -50/0/EST -40/10/EDT -40/10/EWT -40/10/EPT;121212121212121212121212121212121212121212121212134121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121212121;-3tFH0 1nEe0 1nX0 11B0 1nX0 11B0 1qL0 1a10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 RB0 8x40 iv0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1qN0 WL0 1qN0 11z0 1o10 11z0 1o10 11z0 1o10 11z0 1o10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1cN0 1cL0 1cN0 1cL0 s10 1Vz0 LB0 1BX0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 1cN0 1fz0 1a10 1fz0 1cN0 1cL0 1cN0 1cL0 1cN0 1cL0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0 11B0 1nX0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;21e6;US',
@@ -86,10 +88,10 @@ describe('DateTime', () => {
     const time = new DateTime({ y: 2018, m: 3, d: 11, hrs: 1, min: 59, sec: 59 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EST');
     time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EDT');
     expect(time.wallTime.hrs).to.equal(3);
     time.add(DateTimeField.SECOND, -1);
     expect(time.wallTime.hrs).to.equal(1);
@@ -107,10 +109,10 @@ describe('DateTime', () => {
     expect(time.wallTimeShort).to.not.include({ year: 2018 });
     expect(time.wallTimeLong).to.include({ year: 2018 });
     expect(time.wallTimeLong).to.not.include({ y: 2018 });
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EDT');
     time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EST');
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(2);
     time.add(DateTimeField.SECOND, -1);
@@ -125,10 +127,10 @@ describe('DateTime', () => {
     const time = new DateTime({ y: 2100, m: 11, d: 7, hrs: 1, min: 59, sec: 59, occurrence: 1 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(-4 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EDT');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EDT');
     time.add(DateTimeField.SECOND, 1);
     expect(time.wallTime.utcOffset).to.equal(-5 * 3600);
-    expect(zone.getDisplayName(time.utcTimeMillis)).to.equal('EST');
+    expect(zone.getDisplayName(time.epochMillis)).to.equal('EST');
     expect(time.wallTime.hrs).to.equal(1);
     expect(time.wallTime.occurrence).to.equal(2);
     time.add(DateTimeField.SECOND, -1);
@@ -175,16 +177,16 @@ describe('DateTime', () => {
     const time = new DateTime({ y: 1892, m: 1, d: 1, hrs: 0, min: 0, sec: 0 }, zone);
 
     expect(time.wallTime.utcOffset).to.equal(45184);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('+12:33:04');
+    expect(zone.getFormattedOffset(time.epochMillis)).to.equal('+12:33:04');
     time.add(DateTimeField.YEAR, 1);
     expect(time.wallTime.utcOffset).to.equal(-41216);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('-11:26:56');
+    expect(zone.getFormattedOffset(time.epochMillis)).to.equal('-11:26:56');
     time.add(DateTimeField.YEAR, 20);
     expect(time.wallTime.utcOffset).to.equal(-41400);
-    expect(zone.getFormattedOffset(time.utcTimeMillis)).to.equal('-11:30');
+    expect(zone.getFormattedOffset(time.epochMillis)).to.equal('-11:30');
 
     const time2 = new DateTime({ y: 1900, m: 1, d: 1, hrs: 0, min: 0, sec: 0 }, Timezone.UT_ZONE);
-    const time3 = new DateTime(time2.utcTimeMillis, zone);
+    const time3 = new DateTime(time2.epochMillis, zone);
 
     expect(time3.wallTime.y).to.equal(1899);
     expect(time3.wallTime.m).to.equal(12);
@@ -355,8 +357,12 @@ describe('DateTime', () => {
       .to.equal('2300-05-05T04:08:59.999');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf('hour').toIsoString(23))
       .to.equal('2300-05-05T04:59:59.999');
+    expect(new DateTime('1985-06-30T19:08:10.087 EDT').endOf('hour').toIsoString(23))
+      .to.equal('1985-06-30T19:59:60.999');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf('day').toIsoString(23))
       .to.equal('2300-05-05T23:59:59.999');
+    expect(new DateTime('1985-06-30T04:08:10.087Z').endOf('day').toIsoString(23))
+      .to.equal('1985-06-30T23:59:60.999');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.WEEK).format(ttime.WEEK_AND_DAY))
       .to.equal('2300-W18-7');
     expect(new DateTime('2300-05-05T04:08:10.909').endOf(DateTimeField.WEEK_LOCALE).format(ttime.WEEK_AND_DAY_LOCALE))
@@ -405,9 +411,9 @@ describe('DateTime', () => {
   it('should lock DateTime instances to make them immutable', () => {
     const d = new DateTime(null, 'UT');
 
-    d.utcTimeSeconds = 0;
+    d.epochSeconds = 0;
     expect(d.wallTime.y).to.equal(1970);
-    expect(() => d.lock().utcTimeSeconds = 1).to.throw('This DateTime instance is locked and immutable');
+    expect(() => d.lock().epochSeconds = 1).to.throw('This DateTime instance is locked and immutable');
   });
 
   it('should correctly perform DateTime comparisons', () => {
@@ -463,8 +469,8 @@ describe('DateTime', () => {
     expect(new DateTime('2021-07-04 05:06 America/New_York').toHoursAndMinutesString()).to.equal('05:06');
     expect(new DateTime('2021-07-04 05:06 America/New_York').toHoursAndMinutesString(true)).to.equal('05:06§');
     expect(new DateTime('2021-07-04 05:06 America/New_York').toYMDhmString()).to.equal('2021-07-04 05:06§');
-    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(0);
-    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
+    expect(new DateTime().computeEpochMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(0);
+    expect(new DateTime().computeEpochMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
     expect(ttime({ y: 1994, m: 2, d: 2, utcOffset: 0 }).toDate().toISOString()).to.equal('1994-02-02T00:00:00.000Z');
     expect(new DateTime().isLeapYear(1900)).to.be.false;
     expect(new DateTime().isLeapYear(1904)).to.be.true;
@@ -475,6 +481,7 @@ describe('DateTime', () => {
     expect(() => new DateTime().tz('foo')).to.throw('Bad timezone: foo');
     expect(new DateTime().tz('EST').timezone.zoneName).to.equal('America/New_York');
     expect(new DateTime().utc().timezone.zoneName).to.equal('UT');
+    expect(new DateTime().local().timezone.zoneName).to.equal(Timezone.guess());
   });
 
   it('should correctly determine length of day', () => {
@@ -498,5 +505,91 @@ describe('DateTime', () => {
       .to.contain({ start: '00:00:00', end: '24:00:00', delta: 86400000 });
     expect(new DateTime('1969-09-30', 'Pacific/Kwajalein').getDiscontinuityDuringDay())
       .to.contain({ start: '24:00:00', end: '01:00:00', delta: -82800000 });
+  });
+
+  it('should correctly handle TAI and leap seconds', () => {
+    expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 16).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:59.000 +00:00>');
+    expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1977-12-31T23:59:59.7 TAI').add('seconds', 17).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:60.700 +00:00>');
+    expect(new DateTime('utc').setUtcMillis(252460799999, 701).toString()).to.equal('DateTime<1977-12-31T23:59:60.700 +00:00>');
+    expect(new DateTime('utc').setUtcMillis(252460799988, 701).leapSecondMillis).to.equal(690);
+    expect(new DateTime('utc').setUtcMillis(252460799988, 1).isInLeapSecond()).to.be.false;
+    expect(new DateTime('utc').setUtcMillis(252460799988, 11).isInLeapSecond()).to.be.false;
+    expect(new DateTime('utc').setUtcMillis(252460799988, 12).isInLeapSecond()).to.be.true;
+    expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 18).tz('UTC').toString()).to.equal('DateTime<1978-01-01T00:00:00.000 +00:00>');
+    expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('America/New_York').toString()).to.equal('DateTime<1977-12-31T18:59:60.000 -05:00>');
+    expect(() => new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 60)).not.to.throw();
+    expect(() => new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 61)).to.throw('SECOND (61) must be in the range [0, 60]');
+    expect(new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 60).tz('TAI').toString()).to.equal('DateTime<1978-01-01T00:00:16.000 TAI>');
+
+    // Test fictitious negative leap second
+    expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 35).tz('UTC').toString()).to.equal('DateTime<2022-12-31T23:59:57.000 +00:00>');
+    expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 36).tz('UTC').toString()).to.equal('DateTime<2022-12-31T23:59:58.000 +00:00>');
+    expect(new DateTime('2022-12-31T23:59:59 TAI').add('seconds', 37).tz('UTC').toString()).to.equal('DateTime<2023-01-01T00:00:00.000 +00:00>');
+
+    expect(new DateTime('1995-12-31 23:59:60Z').toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1995-12-31 23:59:59Z').taiSeconds).to.equal(820454428);
+    expect(new DateTime('1995-12-31 23:59:60Z').taiSeconds).to.equal(820454429);
+    expect(new DateTime('1996-01-01 00:00:00Z').taiSeconds).to.equal(820454430);
+    expect(new DateTime('1995-12-31 23:59:59Z').utcSeconds).to.equal(820454399);
+    expect(new DateTime('1995-12-31 23:59:59Z').utcMillis).to.equal(820454399000);
+    expect(new DateTime('1995-12-31 23:59:60Z').utcSeconds).to.equal(820454399);
+    expect(new DateTime('1995-12-31 23:59:60Z').utcMillis).to.equal(820454399999);
+    expect(new DateTime('1995-12-31 23:59:60Z').deltaTaiMillis).to.equal(29000);
+    expect(new DateTime('1995-12-31 23:59:60Z').leapSecondMillis).to.equal(1);
+    expect(new DateTime('1995-12-31 23:59:60.123Z').leapSecondMillis).to.equal(124);
+    expect(new DateTime('1995-12-31 23:59:60Z').add(DateTimeField.MILLI_TAI, 1000).deltaTaiMillis).to.equal(30000);
+    expect(new DateTime('1995-12-31 23:59:60Z').compare(new DateTime('1995-12-31 23:59:59Z'))).to.be.greaterThan(0);
+    expect(new DateTime('1996-12-31 23:59:60Z').toString()).to.equal('DateTime<1997-01-01T00:00:00.000 +00:00>');
+    expect(new DateTime('1972-06-30 23:59:60Z', 'TAI').toString()).to.equal('DateTime<1972-07-01T00:00:10.000 TAI>');
+    expect(new DateTime('1997-06-30 23:59:60Z').wallTime.jde).to.be.closeTo(2450630.500724913, 1E-9);
+    expect(new DateTime({ jde: 2450630.500724913 }, 'utc').toIsoString(19)).to.equal('1997-06-30T23:59:60');
+
+    expect(ttime.sort([new DateTime('1995-12-31 23:59:60Z'), new DateTime('1995-12-31 23:59:59Z')])
+      .map(dt => dt.format(ttime.DATETIME_LOCAL_SECONDS)).join()).to.equal('1995-12-31T23:59:59,1995-12-31T23:59:60');
+
+    expect(new DateTime().computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(8000);
+    expect(new DateTime(null, 'TAI').computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1, utcOffset: 0 })).to.equal(-8000);
+    expect(new DateTime(0, 'TAI').computeTaiMillisFromWallTime({ y: 1970, m: 1, d: 2, utcOffset: 0 })).to.equal(86400000);
+    expect(new DateTime().computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(18000000);
+    expect(new DateTime(0, 'TAI').computeUtcMillisFromWallTime({ y: 1970, m: 1, d: 1 })).to.equal(-8000);
+
+    const dt = new DateTime();
+
+    dt.taiSeconds = 0;
+    expect(dt.utcSeconds).to.equal(-8);
+    expect(dt.taiSeconds).to.equal(0);
+    dt.timezone = Timezone.TAI_ZONE;
+    dt.taiSeconds = 77;
+    expect(dt.utcSeconds).to.equal(69);
+    expect(dt.taiSeconds).to.equal(77);
+    dt.utcSeconds = 1616117915;
+    expect(dt.utcSeconds).to.equal(1616117915);
+    expect(dt.taiSeconds).to.equal(1616117952);
+
+    expect(new DateTime('1995-12-31 23:59:59Z').isInLeapSecond()).to.be.false;
+    expect(new DateTime('1995-12-31 23:59:60Z').isInLeapSecond()).to.be.true;
+    expect(new DateTime('1995-12-31 23:59:60.999Z').isInLeapSecond()).to.be.true;
+    expect(new DateTime('1996-01-01Z').isInLeapSecond()).to.be.false;
+
+    // Test fictitious negative leap second
+    expect(new DateTime('2022-12-31T23:59:57Z').isJustBeforeNegativeLeapSecond()).to.be.false;
+    expect(new DateTime('2022-12-31T23:59:58Z').isJustBeforeNegativeLeapSecond()).to.be.true;
+    expect(new DateTime('2022-12-31T23:59:58.999Z').isJustBeforeNegativeLeapSecond()).to.be.true;
+    expect(new DateTime('2022-12-31T23:59:59Z').isJustBeforeNegativeLeapSecond()).to.be.false;
+    expect(new DateTime('2023-01-01Z').isJustBeforeNegativeLeapSecond()).to.be.false;
+  });
+
+  it('should correctly handle TDT/UT/TAI conversions', () => {
+    expect(new DateTime('1945-05-08Z').deltaTaiMillis).to.be.closeTo(-5249, 2);
+
+    expect(new DateTime('1995-12-31 23:59:59Z').add('second_tai', 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1995-12-31 23:59:00Z').add(DateTimeField.MINUTE_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1995-12-31 23:00:00Z').add(DateTimeField.HOUR_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1995-12-31 00:00:00Z').add(DateTimeField.DAY_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
+    expect(new DateTime('1995-12-31 23:59:60Z').subtract('second_tai', 1).toString()).to.equal('DateTime<1995-12-31T23:59:59.000 +00:00>');
+
+    // Test fictitious negative leap second
+    expect(new DateTime('2022-12-31T23:59:58Z').add('seconds_tai', 1).toString()).to.equal('DateTime<2023-01-01T00:00:00.000 +00:00>');
   });
 });

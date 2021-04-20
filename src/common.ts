@@ -3,7 +3,20 @@ import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 import { isNumber, toNumber } from '@tubular/util';
 
 export const MIN_YEAR = -271820;
-export const MAX_YEAR = 275759;
+export const MAX_YEAR =  275759;
+
+export const MINUTE_MSEC =     60_000;
+export const HOUR_MSEC   =  3_600_000;
+export const DAY_MSEC    = 86_400_000;
+export const DAY_SEC     =     86_400;
+export const DAY_MINUTES =       1440;
+
+export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
+export const JD_J2000 = 2451545.0; // Julian date for the J2000.0 epoch.
+export const DELTA_TDT_SEC = 32.184;
+export const DELTA_TDT_MSEC = 32184;
+export const DELTA_TDT_DAYS = DELTA_TDT_SEC / DAY_SEC;
+export const DELTA_MJD = 2400000.5;
 
 /**
  * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
@@ -70,6 +83,16 @@ export interface DateAndTime extends YMDDate {
   utcOffset?: number;
   dstOffset?: number;
   occurrence?: number;
+  deltaTai?: number;
+
+  /** Julian days, ephemeris. */
+  jde?: number;
+  /** Modified Julian days, ephemeris. */
+  mjde?: number;
+  /** Julian days, UT. */
+  jdu?: number;
+  /** Modified Julian days, UT. */
+  mjdu?: number;
 }
 
 const altFields = [
@@ -88,9 +111,9 @@ const fieldOrder = [
   'ywl', 'wl', 'dwl',
   'yearByWeekLocale', 'weekLocale', 'dayByWeekLocale',
   'hrs', 'min', 'sec',
-  'hour', 'minute', 'second',
-  'millis',
-  'utcOffset', 'dstOffset', 'occurrence',
+  'hour', 'minute', 'second', 'millis',
+  'utcOffset', 'dstOffset', 'occurrence', 'deltaTai',
+  'jde', 'mjde', 'jdu', 'mjdu',
   'error'
 ];
 
@@ -128,26 +151,28 @@ export function orderFields<T extends YMDDate | DateAndTime>(obj: T): T {
 }
 
 export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
+  const dt = obj as DateAndTime;
+
   Object.keys(obj).forEach(key => {
     if (key !== 'j' && key !== 'isJulian') {
       const value = obj[key];
 
-      if (value != null && !isNumber(value) || value !== floor(value))
-        throw new Error(`${key} must be an integer value (${value})`);
+      if (value != null) {
+        if (/^(m?(jde|jdu))$/.test(key)) {
+          if (!isNumber(value))
+            throw new Error(`${key} must be a numeric value (${value})`);
+        }
+        else if (!isNumber(value) || value !== floor(value))
+          throw new Error(`${key} must be an integer value (${value})`);
+      }
     }
   });
 
   if (obj.y == null && obj.year == null && obj.yw == null && obj.yearByWeek == null &&
       obj.ywl == null && obj.yearByWeekLocale == null && obj.n == null && obj.epochDay == null &&
-      (obj as DateAndTime).hrs == null && (obj as DateAndTime).hour == null)
-    throw new Error('A year value, an epoch day, or an hour value must be specified');
+      dt.hrs == null && dt.hour == null && dt.jde == null && dt.mjde == null && dt.jdu == null && dt.mjdu == null)
+    throw new Error('A year value, an epoch day, an hour value, or a Julian date value must be specified');
 }
-
-export const MINUTE_MSEC =    60000;
-export const HOUR_MSEC   =  3600000;
-export const DAY_MSEC    = 86400000;
-
-export const DAY_MINUTES = 1440;
 
 export function millisFromDateTime_SGC(year: number, month: number, day: number, hour: number, minute: number, second?: number, millis?: number): number {
   millis = millis || 0;
@@ -161,7 +186,7 @@ export function millisFromDateTime_SGC(year: number, month: number, day: number,
 }
 
 export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
-  const wallTime = getDateFromDayNumber_SGC(div_rd(ticks, 86400000)) as DateAndTime;
+  const wallTime = getDateFromDayNumber_SGC(div_rd(ticks, DAY_MSEC)) as DateAndTime;
 
   wallTime.millis = mod(ticks, 1000);
   ticks = div_rd(ticks, 1000);

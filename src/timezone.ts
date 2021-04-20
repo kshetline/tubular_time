@@ -1,9 +1,10 @@
-import { div_tt0, floor, min, mod2, round } from '@tubular/math';
+import { abs, div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
-import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
-import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset } from './common';
+import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayNumber_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
+import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset, YMDDate } from './common';
 import { hasIntlDateTime } from './locale-data';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
+import { updateDeltaTs } from './ut-converter';
 
 export interface OffsetsAndZones {
   offset: string;
@@ -55,6 +56,10 @@ const CLOCK_TYPE_UTC = 2; // eslint-disable-line @typescript-eslint/no-unused-va
 const LAST_DST_YEAR = 2500;
 const TIME_GAP_AFTER_LAST_TRANSITION = 172800000; // Two days
 
+const extendedRegions = /^(America\/Argentina|America\/Indiana)\/(.+)$/;
+const miscUnique = /^(CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET)$/;
+const nonZones = new Set(['deltaTs', 'leapSeconds', 'version', 'years']);
+
 class Rule {
   startYear: number;
   month: number;
@@ -99,6 +104,16 @@ class Rule {
 
     return millis;
   }
+}
+
+export interface LeapSecondInfo {
+  utcMillis: number;
+  taiMillis: number;
+  dateAfter: YMDDate;
+  deltaTai: number;
+  isNegative: boolean;
+  inLeap?: boolean;
+  inNegativeLeap?: boolean;
 }
 
 let osTransitions: Transition[] = [];
@@ -189,10 +204,13 @@ let osDstOffset: number;
 export class Timezone {
   private static encodedTimezones: Record<string, string> = {};
   private static shortZoneNames: Record<string, ShortZoneNameInfo> = {};
+  private static zonesByLowercase: Record<string, string> = {};
   private static zonesByOffsetAndDst: Record<string, Set<string>> = {};
   private static countriesForZone: Record<string, Set<string>> = {};
   private static zonesForCountry: Record<string, Set<string>> = {};
   private static populationForZone: Record<string, number> = {};
+  private static leapSeconds: LeapSecondInfo[] = [];
+  private static lastLeapSecond: YMDDate;
   private static _version: string = 'unspecified';
 
   static get version(): string { return this._version; }
@@ -201,6 +219,9 @@ export class Timezone {
                             dstOffset: osDstOffset, transitions: osTransitions });
 
   static UT_ZONE = new Timezone({ zoneName: 'UT', currentUtcOffset: 0, usesDst: false,
+                            dstOffset: 0, transitions: null });
+
+  static TAI_ZONE = new Timezone({ zoneName: 'TAI', currentUtcOffset: 0, usesDst: false,
                             dstOffset: 0, transitions: null });
 
   static ZONELESS = new Timezone({ zoneName: 'ZONELESS', currentUtcOffset: 0, usesDst: false,
@@ -226,9 +247,6 @@ export class Timezone {
 
   private _error: string;
 
-  private static extendedRegions = /^(America\/Argentina|America\/Indiana)\/(.+)$/;
-  private static miscUnique = /^(CST6CDT|EET|EST5EDT|MST7MDT|PST8PDT|SystemV\/AST4ADT|SystemV\/CST6CDT|SystemV\/EST5EDT|SystemV\/MST7MDT|SystemV\/PST8PDT|SystemV\/YST9YDT|WET)$/;
-
   static defineTimezones(encodedTimezones: Record<string, string>): boolean {
     const changed = !isEqual(this.encodedTimezones, encodedTimezones);
 
@@ -239,6 +257,8 @@ export class Timezone {
 
     this.encodedTimezones = Object.assign({}, encodedTimezones ?? {});
     this.extractZoneInfo();
+    this.extractLeapSeconds();
+    this.extractDeltaTs();
 
     if (changed) {
       this.offsetsAndZones = undefined;
@@ -267,7 +287,7 @@ export class Timezone {
     const zoneHash: Record<string, string[]> = {};
 
     for (const zone of Object.keys(this.encodedTimezones)) {
-      if (!zone.includes('/') || zone.startsWith('Etc/') || this.miscUnique.test(zone))
+      if (!zone.includes('/') || zone.startsWith('Etc/') || miscUnique.test(zone))
         continue;
 
       let etz = this.encodedTimezones[zone];
@@ -331,7 +351,7 @@ export class Timezone {
     for (const zone of Object.keys(this.encodedTimezones)) {
       let region: string;
       let locale: string;
-      const $ = this.extendedRegions.exec(zone) ?? /^(.+?)\/(.+)$/.exec(zone);
+      const $ = extendedRegions.exec(zone) ?? /^(.+?)\/(.+)$/.exec(zone);
 
       if (!$) {
         region = zone;
@@ -342,7 +362,7 @@ export class Timezone {
         locale = $[2].replace(/_/g, ' ');
       }
 
-      if (locale == null || this.miscUnique.test(zone)) {
+      if (locale == null || miscUnique.test(zone)) {
         region = '~'; // Force miscellaneous zones to sort to end of region list.
         locale = zone;
         hasMisc = true;
@@ -423,16 +443,28 @@ export class Timezone {
   }
 
   static has(name: string): boolean {
-    return !!this.zoneLookup[name] || !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS)$/.test(name);
+    return !!this.zoneLookup[name] || !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS|TAI)$/i.test(name);
   }
 
   static from(name: string): Timezone {
     return Timezone.getTimezone(name);
   }
 
-  static getTimezone(name: string, longitude?: number): Timezone {
+  static getTimezone(name?: string, longitude?: number): Timezone {
     if (!name)
       return this.OS_ZONE;
+
+    const lcName = name.toLowerCase();
+
+    if (lcName === 'tai')
+      return this.TAI_ZONE;
+    else if (lcName === 'dateless')
+      return this.DATELESS;
+    else if (lcName === 'zoneless')
+      return this.ZONELESS;
+
+    if (this.zonesByLowercase[lcName])
+      name = this.zonesByLowercase[lcName];
 
     const cached = this.zoneLookup[name];
 
@@ -444,13 +476,13 @@ export class Timezone {
 
     if ($ === null || $.length === 0)
       throw new Error('Unrecognized format for timezone name "' + name + '"');
-    else  if ($[0] === 'LMT') {
+    else  if ($[0].toUpperCase() === 'LMT') {
       longitude = (!longitude ? 0 : longitude);
 
       zone = new Timezone({ zoneName: 'LMT', currentUtcOffset: Math.round(mod2(longitude, 360) * 4) * 60,
                              usesDst: false, dstOffset: 0, transitions: null });
     }
-    else if ($[0] === 'OS')
+    else if ($[0].toUpperCase() === 'OS')
       zone = this.OS_ZONE;
     else if ($.length > 1 && (/GMT|UTC?/.test($[1]) || $[2])) {
       let offset = 0;
@@ -835,6 +867,7 @@ export class Timezone {
 
   private static extractZoneInfo(): void {
     this.shortZoneNames = {};
+    this.zonesByLowercase = { gmt: 'GMT', lmt: 'LMT', os: 'OS', tai: 'TAI', ut: 'UT', utc: 'UTC'};
     this.zonesByOffsetAndDst = {};
     this.countriesForZone = {};
     this.zonesForCountry = {};
@@ -849,12 +882,15 @@ export class Timezone {
       'Pacific/Apia'
     ]);
     const sortKey = (key: string): string => preferredZones.has(key) ? '!' + key : key;
-    const keys = Object.keys(this.encodedTimezones).sort((a, b) =>
-      compareStrings(sortKey(a), sortKey(b)));
+    const keys = Object.keys(this.encodedTimezones)
+      .filter(key => !nonZones.has(key) && !key.startsWith('_'))
+      .sort((a, b) => compareStrings(sortKey(a), sortKey(b)));
 
     keys.forEach(ianaName => {
       let etz = this.encodedTimezones[ianaName];
       let popAndC: string;
+
+      this.zonesByLowercase[ianaName.toLowerCase()] = ianaName;
 
       if (!etz.includes(';')) {
         const $ = /^!(.*,)?(.*)$/.exec(etz);
@@ -927,6 +963,58 @@ export class Timezone {
         }
       }
     });
+  }
+
+  private static extractDeltaTs(): void {
+    const deltaTs = this.encodedTimezones?.deltaTs;
+    const lastLeap = this.getDateAfterLastKnownLeapSecond();
+
+    if (deltaTs)
+      updateDeltaTs(deltaTs.split(/\s+/).map(dt => toNumber(dt)), lastLeap);
+    else
+      updateDeltaTs(null, lastLeap);
+  }
+
+  private static extractLeapSeconds(): void {
+    this.leapSeconds = [];
+    this.lastLeapSecond = undefined;
+
+    const leaps = this.encodedTimezones?.leapSeconds;
+
+    if (!leaps)
+      return;
+
+    let deltaTai = -1;
+
+    this.leapSeconds.push({
+      utcMillis: Number.MIN_SAFE_INTEGER,
+      taiMillis: Number.MIN_SAFE_INTEGER + 10000,
+      dateAfter: null,
+      deltaTai: 0,
+      isNegative: false
+    });
+
+    // Proleptic extension of leap seconds back to 1958, per Tony Finch, https://fanf.livejournal.com/69586.html.
+    const leapSecondDays = [-4383, -3837, -3106, -2376, -1826, -1280, -915, -549, -184, 181, 546];
+
+    leapSecondDays.push(...leaps.split(/\s+/).map(day => toNumber(day)));
+
+    leapSecondDays.forEach((signCodedDay, index) => {
+      const day = (index < 11 ? signCodedDay : abs(signCodedDay));
+      const utcMillis = day * DAY_MSEC;
+
+      deltaTai += (index > 10 && signCodedDay < 0 ? -1 : 1);
+
+      this.leapSeconds.push({
+        utcMillis,
+        taiMillis: utcMillis + deltaTai * 1000,
+        dateAfter: getDateFromDayNumber_SGC(day),
+        deltaTai,
+        isNegative: index > 10 && signCodedDay < 0
+      });
+    });
+
+    this.lastLeapSecond = last(this.leapSeconds).dateAfter;
   }
 
   static formatUtcOffset(offsetSeconds: number, noColons = false): string {
@@ -1108,6 +1196,63 @@ export class Timezone {
     }
 
     return last(this.transitions);
+  }
+
+  static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo {
+    if (!this.leapSeconds || this.leapSeconds.length === 0)
+      return null;
+
+    for (let i = this.leapSeconds.length - 1; i >= 0; --i) {
+      let leapInfo = this.leapSeconds[i];
+      const next = this.leapSeconds[i + 1];
+
+      if (utcTime >= leapInfo.utcMillis) {
+        leapInfo = clone(leapInfo);
+        leapInfo.inLeap = (next && !next.isNegative && utcTime >= next.utcMillis - 1000);
+        leapInfo.inNegativeLeap = (next && next.isNegative && utcTime >= next.utcMillis - 2000 &&
+          utcTime < next.utcMillis - 1000);
+
+        return leapInfo;
+      }
+    }
+
+    return Object.assign({ inLeap: false }, this.leapSeconds[0]);
+  }
+
+  static getLeapSecondList(): LeapSecondInfo[] {
+    return clone(this.leapSeconds);
+  }
+
+  static getDateAfterLastKnownLeapSecond(): YMDDate {
+    return this.lastLeapSecond;
+  }
+
+  static getUpcomingLeapSecond(): YMDDate {
+    if (!this.lastLeapSecond)
+      return null;
+    else if (getDayNumber_SGC(this.lastLeapSecond) * DAY_MSEC > Date.now())
+      return this.lastLeapSecond;
+    else
+      return null;
+  }
+
+  static findDeltaTaiFromTai(taiTime: number): LeapSecondInfo {
+    if (!this.leapSeconds || this.leapSeconds.length === 0)
+      return null;
+
+    for (let i = this.leapSeconds.length - 1; i >= 0; --i) {
+      let leapInfo = this.leapSeconds[i];
+      const next = this.leapSeconds[i + 1];
+
+      if (taiTime >= leapInfo.taiMillis) {
+        leapInfo = clone(leapInfo);
+        leapInfo.inLeap = (next && !next.isNegative && taiTime >= next.taiMillis - 1000);
+
+        return leapInfo;
+      }
+    }
+
+    return Object.assign({ inLeap: false }, this.leapSeconds[0]);
   }
 
   findTransitionByWallTime(wallTime: number): Transition | null {

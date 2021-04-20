@@ -5,19 +5,20 @@ import {
   getDateFromDayNumberGregorian
 } from './calendar';
 import {
-  DateAndTime, DAY_MSEC, MAX_YEAR, MIN_YEAR, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
-  syncDateAndTime, validateDateAndTime, YMDDate
+  DateAndTime, DAY_MSEC, DELTA_MJD, HOUR_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
+  syncDateAndTime, UNIX_TIME_ZERO_AS_JULIAN_DAY, validateDateAndTime, YMDDate
 } from './common';
 import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
+import { taiMillisToTdt, taiToUtMillis, tdtDaysToTaiMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
 
 export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
 
 export enum DateTimeField {
   BAD_FIELD = Number.NEGATIVE_INFINITY,
   FULL = -1,
-  MILLI, SECOND, MINUTE, HOUR_12, HOUR, AM_PM, DAY,
+  MILLI, MILLI_TAI, SECOND, SECOND_TAI, MINUTE, MINUTE_TAI, HOUR_12, HOUR, HOUR_TAI, AM_PM, DAY, DAY_TAI,
   DAY_BY_WEEK, DAY_BY_WEEK_LOCALE, DAY_OF_YEAR, WEEK, WEEK_LOCALE,
   MONTH, QUARTER, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
 }
@@ -25,7 +26,9 @@ export enum DateTimeField {
 export type DateTimeFieldName = 'milli' | 'millis' | 'millisecond' | 'milliseconds' | 'second' | 'seconds' |
   'minute' | 'minutes' | 'hour12' | 'hours12' | 'hour' | 'hours' | 'ampm' | 'am_pm' | 'day' | 'days' | 'date' |
   'dayByWeek' | 'dayByWeekLocale' | 'dayOfYear' | 'week' | 'weeks' | 'weekLocale' | 'month' | 'months' |
-  'quarter' | 'quarters' | 'year' | 'years' | 'yearWeek' | 'yearWeekLocale' | 'era';
+  'quarter' | 'quarters' | 'year' | 'years' | 'yearWeek' | 'yearWeekLocale' | 'era' |
+  'milli_tai' | 'millis_tai' | 'millisecond_tai' | 'milliseconds_tai' | 'second_tai' | 'seconds_tai' |
+  'minute_tai' | 'minutes_tai' | 'hour_tai' | 'hours_tai' | 'day_tai' | 'days_tai';
 
 const fieldNames = {
   milli: DateTimeField.MILLI,
@@ -59,7 +62,19 @@ const fieldNames = {
   years: DateTimeField.YEAR,
   yearWeek: DateTimeField.YEAR_WEEK,
   yearWeekLocale: DateTimeField.YEAR_WEEK_LOCALE,
-  era: DateTimeField.ERA
+  era: DateTimeField.ERA,
+  milli_tai: DateTimeField.MILLI_TAI,
+  millis_tai: DateTimeField.MILLI_TAI,
+  millisecond_tai: DateTimeField.MILLI_TAI,
+  milliseconds_tai: DateTimeField.MILLI_TAI,
+  second_tai: DateTimeField.SECOND_TAI,
+  seconds_tai: DateTimeField.SECOND_TAI,
+  minute_tai: DateTimeField.MINUTE_TAI,
+  minutes_tai: DateTimeField.MINUTE_TAI,
+  hour_tai: DateTimeField.HOUR_TAI,
+  hours_tai: DateTimeField.HOUR_TAI,
+  day_tai: DateTimeField.DAY_TAI,
+  days_tai: DateTimeField.DAY_TAI
 };
 
 forEach(fieldNames, (key, value) => { if (key !== key.toLowerCase()) fieldNames[key.toLowerCase()] = value; });
@@ -76,8 +91,6 @@ export interface Discontinuity {
   end: string;
   delta: number;
 }
-
-export const UNIX_TIME_ZERO_AS_JULIAN_DAY = 2440587.5;
 
 const localeTest = /^[a-z][a-z][-_a-z]*$/i;
 const lockError = new Error('This DateTime instance is locked and immutable');
@@ -100,8 +113,11 @@ export class DateTime extends Calendar {
   private _error: string;
   private _locale: string | string[] = DateTime.defaultLocale;
   private _timezone = DateTime.defaultTimezone;
-  private _utcTimeMillis = 0;
+  private _epochMillis = 0;
+  private _leapSecondMillis = 0;
+  private _deltaTaiMillis = 0;
   private _wallTime: DateAndTime;
+  private wallTimeCounter = 0;
 
   static INVALID_DATE = new DateTime(NaN, 'UTC').lock();
 
@@ -148,12 +164,14 @@ export class DateTime extends Calendar {
       throw new Error(`Resolution ${DateTimeField[resolution]} not valid for time-only values`);
 
     if (resolution === DateTimeField.FULL || resolution === DateTimeField.MILLI)
-      return d1._utcTimeMillis - d2._utcTimeMillis;
+      return this.milliCompare(d1, d2);
 
-    const divisor = [1, 1000, 60_000, undefined, 3_600_000][resolution];
+    const divisor = [1, 1, 1000, 1000, MINUTE_MSEC, MINUTE_MSEC, undefined, HOUR_MSEC, HOUR_MSEC][resolution];
 
-    if (divisor != null)
-      return floor(d1._utcTimeMillis / divisor) - floor(d2._utcTimeMillis / divisor);
+    if (divisor != null && divisor < DateTimeField.MINUTE)
+      return floor(d1.taiMillis / divisor) - floor(d2.taiMillis / divisor);
+    else if (divisor != null) // Use _epochMillis here so minutes and higher round off correctly
+      return floor(d1._epochMillis / divisor) - floor(d2._epochMillis / divisor);
     else if (resolution === DateTimeField.DAY)
       return floor(d1._wallTime.n) - floor(d2._wallTime.n);
     else if (resolution === DateTimeField.MONTH)
@@ -162,6 +180,25 @@ export class DateTime extends Calendar {
       return d1.wallTime.y - d2.wallTime.y;
 
     throw new Error(`Resolution ${DateTimeField[resolution]} not valid`);
+  }
+
+  /**
+   * While TAI millis is generally the best way to compare two dates for sort order, two non-TAI DateTime instances
+   * might have different epochMillis, but identical taiMillis, because of rounding errors. On the other hand, two
+   * non-TAI instances might have identical epochMillis during a leap second, with leapSecondMillis being the only
+   * distinguishing difference. TAI is the only reasonable way to compare a TAI DateTime and a non-TAI DateTime.
+   */
+  static milliCompare(d1: DateTime, d2: DateTime): number {
+    if (!d1.isTai() && !d2.isTai()) {
+      const diff = d1.epochMillis - d2.epochMillis;
+
+      if (diff !== 0)
+        return diff;
+      else
+        return d1._leapSecondMillis - d2._leapSecondMillis;
+    }
+
+    return d1.taiMillis - d2.taiMillis;
   }
 
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
@@ -208,7 +245,7 @@ export class DateTime extends Calendar {
       const saveTime = initialTime;
       let zone: string;
 
-      $ = /(Z|\bEtc\/GMT(?:0|[-+]\d{1,2})|\b[_/a-z]+)$/i.exec(initialTime);
+      $ = /(Z|\bEtc\/GMT(?:0|[-+]\d{1,2})|\bTAI|\b[_/a-z]+)$/i.exec(initialTime);
 
       if ($) {
         zone = $[1];
@@ -217,6 +254,8 @@ export class DateTime extends Calendar {
 
         if (/^(Z|UTC?|GMT)$/i.test(zone))
           zone = 'UT';
+        else if (/^TAI$/i.test(zone))
+          zone = 'TAI';
 
         parseZone = Timezone.has(zone) ? Timezone.from(zone) : null;
 
@@ -236,7 +275,7 @@ export class DateTime extends Calendar {
           }
           else {
             this._error = `Bad timezone: ${zone}`;
-            this._utcTimeMillis = null;
+            this._epochMillis = null;
 
             return;
           }
@@ -245,9 +284,10 @@ export class DateTime extends Calendar {
 
       if (initialTime) {
         try {
-          initialTime = parseISODateTime(initialTime);
+          initialTime = parseISODateTime(initialTime, true);
 
-          if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null && initialTime.n == null) {
+          if (initialTime.y == null && initialTime.yw == null && initialTime.ywl == null && initialTime.n == null &&
+              initialTime.jde == null && initialTime.mjde == null && initialTime.jdu == null && initialTime.mjdu == null) {
             parseZone = DATELESS;
             delete initialTime.utcOffset;
             timezone = null;
@@ -272,7 +312,7 @@ export class DateTime extends Calendar {
 
           if (isNaN(initialTime)) {
             this._error = e.message;
-            this._utcTimeMillis = null;
+            this._epochMillis = null;
 
             return;
           }
@@ -287,7 +327,7 @@ export class DateTime extends Calendar {
 
     if (timezone?.error) {
       this._error = `Bad timezone: ${timezone!.zoneName}`;
-      this._utcTimeMillis = null;
+      this._epochMillis = null;
 
       return;
     }
@@ -303,7 +343,7 @@ export class DateTime extends Calendar {
       this._locale = normalizeLocale(gregorianOrLocale as string | string[]);
 
     if (initialTime instanceof Date)
-      this.utcTimeMillis = +initialTime;
+      this.epochMillis = +initialTime;
     else if (isObject(initialTime)) {
       if (!parseZone && !timezone && (initialTime as any).utcOffset != null && (initialTime as any).utcOffset !== 0)
         this._timezone = Timezone.from(Timezone.formatUtcOffset((initialTime as any).utcOffset));
@@ -313,30 +353,23 @@ export class DateTime extends Calendar {
       }
       catch (e) {
         this._error = e.message;
-        this._utcTimeMillis = null;
+        this._epochMillis = null;
 
         return;
       }
     }
     else
-      this.utcTimeMillis = (isNumber(initialTime) ? initialTime as number : Date.now());
+      this.epochMillis = (isNumber(initialTime) ? initialTime as number :
+        (parseZone === Timezone.TAI_ZONE ? utToTaiMillis(Date.now()) : Date.now()));
 
     if (parseZone && timezone)
       this.timezone = timezone;
   }
 
   clone(cloneLock = true): this {
-    const copy = new DateTime(this._utcTimeMillis, this._timezone, this._locale);
+    const copy = clone(this, new Set([Timezone]));
 
-    if (this.isPureJulian())
-      copy.setPureJulian(true);
-    else if (this.isPureGregorian())
-      copy.setPureGregorian(true);
-    else
-      copy.setGregorianChange(this.getGregorianChange());
-
-    if (cloneLock && this.locked)
-      copy.lock();
+    copy._locked = cloneLock ? this._locked : false;
 
     return copy as this;
   }
@@ -350,7 +383,7 @@ export class DateTime extends Calendar {
       return 'DATETIME';
   }
 
-  get valid(): boolean { return this._utcTimeMillis != null && !isNaN(this._utcTimeMillis); }
+  get valid(): boolean { return this._epochMillis != null && !isNaN(this._epochMillis); }
   get error(): string | undefined { return this._error || ((!this.valid && 'general error') || undefined); }
 
   throwIfInvalid(): this {
@@ -360,22 +393,140 @@ export class DateTime extends Calendar {
     return this;
   }
 
-  get utcTimeMillis(): number { return this._utcTimeMillis; }
-  set utcTimeMillis(newTime: number) {
+  get epochMillis(): number {
+    if (this._leapSecondMillis === 0)
+      return this._epochMillis;
+    else
+      return floor(this._epochMillis / 1000) * 1000 + 999;
+  }
+
+  set epochMillis(newTime: number) {
     if (this.locked)
       throw lockError;
 
-    if (this._utcTimeMillis !== newTime || !this.wallTime) {
-      this._utcTimeMillis = newTime;
-      this.updateWallTimeFromCurrentMillis();
+    if (this._epochMillis !== newTime || !this.wallTime || this._leapSecondMillis !== 0) {
+      this._epochMillis = newTime;
+      this._leapSecondMillis = 0;
+      this.updateWallTimeFromEpochMillis();
     }
   }
 
-  get utcTimeSeconds(): number { return floor(this._utcTimeMillis / 1000); }
-  set utcTimeSeconds(newTime: number) { this.utcTimeMillis = newTime * 1000; }
+  get epochSeconds(): number { return floor(this._epochMillis / 1000); }
+  set epochSeconds(newTime: number) { this.epochMillis = newTime * 1000; }
+
+  get leapSecondMillis(): number { return this._leapSecondMillis; }
+  get deltaTaiMillis(): number { return this._deltaTaiMillis; }
+
+  isJustBeforeNegativeLeapSecond(): boolean {
+    return this.isUtcBased() && !!Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inNegativeLeap;
+  }
+
+  isInLeapSecond(): boolean { return this.leapSecondMillis > 0; }
+
+  get utcMillis(): number { return this.isTai() ? this._epochMillis - this._deltaTaiMillis : this.epochMillis; }
+  set utcMillis(newTime: number) {
+    if (this.locked)
+      throw lockError;
+
+    if (this.isTai())
+      newTime = utToTaiMillis(newTime, true);
+
+    if (this._epochMillis !== newTime || !this.wallTime) {
+      this._epochMillis = newTime;
+      this._deltaTaiMillis = 0;
+      this.updateWallTimeFromEpochMillis();
+    }
+  }
+
+  setUtcMillis(newTime: number, leapSecondMillis = 0): this {
+    const result = this.locked ? this.clone(false) : this;
+
+    if (result.isTai()) {
+      newTime = utToTaiMillis(newTime + leapSecondMillis, true);
+      leapSecondMillis = 0;
+    }
+    else if (!result.isUtcBased())
+      leapSecondMillis = 0;
+
+    if (result._epochMillis !== newTime || !result.wallTime || result._leapSecondMillis !== leapSecondMillis) {
+      if (leapSecondMillis) {
+        const sec59 = floor(newTime / 60_000) * 60_000 + 59_000;
+
+        if (newTime >= sec59 && Timezone.findDeltaTaiFromUtc(sec59)?.inLeap) {
+          leapSecondMillis -= sec59 + 999 - newTime;
+
+          if (leapSecondMillis < 0)
+            leapSecondMillis = 0;
+          else
+            leapSecondMillis = min(leapSecondMillis, 999);
+        }
+        else {
+          newTime = newTime + min(leapSecondMillis, 999);
+          leapSecondMillis = 0;
+        }
+      }
+
+      result._epochMillis = newTime;
+      result._leapSecondMillis = leapSecondMillis;
+      result.updateWallTimeFromEpochMillis();
+    }
+
+    return result;
+  }
+
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  get utcTimeMillis(): number { return this.utcMillis; }
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  set utcTimeMillis(newTime: number) { this.utcMillis = newTime; }
+
+  get utcSeconds(): number { return floor(this.utcMillis / 1000); }
+  set utcSeconds(newTime: number) { this.utcMillis = newTime * 1000; }
+
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  get utcTimeSeconds(): number { return this.utcSeconds; }
+  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  set utcTimeSeconds(newTime: number) { this.utcSeconds = newTime; }
+
+  get taiMillis(): number {
+    return !this.isTai()
+      ? this._epochMillis + this._leapSecondMillis + this._deltaTaiMillis
+      : this._epochMillis;
+  }
+
+  set taiMillis(newTime: number) {
+    if (this.locked)
+      throw lockError;
+
+    let leapMillis = 0;
+
+    if (!this.isTai()) {
+      if (this.isUtcBased() && Timezone.findDeltaTaiFromTai(newTime)?.inLeap)
+        leapMillis = mod(newTime, 1000) + 1;
+
+      newTime = taiToUtMillis(newTime, true) - leapMillis;
+    }
+
+    if (this._epochMillis !== newTime || !this.wallTime || leapMillis !== this._leapSecondMillis) {
+      this._epochMillis = newTime;
+      this._leapSecondMillis = leapMillis;
+      this.updateWallTimeFromEpochMillis();
+    }
+  }
+
+  get taiSeconds(): number { return floor(this.taiMillis / 1000); }
+  set taiSeconds(newTime: number) { this.taiMillis = newTime * 1000; }
 
   toDate(): Date {
-    return new Date(this._utcTimeMillis);
+    return new Date(this._epochMillis);
+  }
+
+  isTai(): boolean {
+    return this._timezone === Timezone.TAI_ZONE;
+  }
+
+  isUtcBased(): boolean {
+    return this._timezone !== Timezone.TAI_ZONE &&
+           this._timezone !== Timezone.DATELESS && this._timezone !== Timezone.ZONELESS;
   }
 
   private getWallTime(purge?: boolean): DateAndTime {
@@ -389,7 +540,7 @@ export class DateTime extends Calendar {
        'dowmi', 'dayOfWeekMonthIndex', 'n', 'epochDay', 'j', 'isJulian',
        'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayByWeek',
        'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayByWeekLocale',
-       'utcOffset', 'dstOffset', 'occurrence'].forEach(key => delete w[key]);
+       'utcOffset', 'dstOffset', 'occurrence', 'deltaTai', 'jde', 'mjde', 'jdu', 'mjdu'].forEach(key => delete w[key]);
 
     if (purge != null)
       purgeAliasFields(w, purge);
@@ -407,7 +558,8 @@ export class DateTime extends Calendar {
     validateDateAndTime(newTime);
 
     if (!isEqual(this._wallTime, newTime)) {
-      if (newTime.y == null && newTime.yw == null && newTime.ywl == null && newTime.n == null) {
+      if (newTime.y == null && newTime.yw == null && newTime.ywl == null && newTime.n == null &&
+          newTime.jde == null && newTime.mjde == null && newTime.jdu == null && newTime.mjdu == null) {
         newTime.y = 1970;
         newTime.m = 1;
         newTime.d = 1;
@@ -416,9 +568,13 @@ export class DateTime extends Calendar {
       else if (this._timezone === DATELESS && (newTime.y != null || newTime.yw != null || newTime.ywl != null || newTime.n != null))
         this._timezone = ZONELESS;
 
+      const counter = this.wallTimeCounter;
+
       this._wallTime = newTime;
-      this.updateUtcMillisFromWallTime();
-      this.updateWallTimeFromCurrentMillis(this._wallTime.d);
+      this.updateEpochMillisFromWallTime(!this.isTai());
+
+      if (this.wallTimeCounter === counter)
+        this.updateWallTimeFromEpochMillis(this._wallTime.d);
     }
   }
 
@@ -434,8 +590,10 @@ export class DateTime extends Calendar {
       newZone = Timezone.from(newZone);
 
     if (this._timezone !== newZone) {
+      const wasTai = this.isTai();
+
       this._timezone = newZone;
-      this.updateWallTimeFromCurrentMillis();
+      this.updateWallTimeFromEpochMillis(0, wasTai, !wasTai && this.isTai());
     }
   }
 
@@ -463,6 +621,8 @@ export class DateTime extends Calendar {
     if (keepLocalTime) {
       delete wallTime.utcOffset;
       delete wallTime.occurrence;
+      delete wallTime.deltaTai;
+      result._leapSecondMillis = 0;
       result.wallTime = wallTime;
     }
 
@@ -493,19 +653,19 @@ export class DateTime extends Calendar {
   }
 
   get utcOffsetSeconds(): number {
-    return this._timezone.getOffset(this._utcTimeMillis);
+    return this._timezone.getOffset(this._epochMillis);
   }
 
   get utcOffsetMinutes(): number {
-    return round(this._timezone.getOffset(this._utcTimeMillis) / 60);
+    return round(this._timezone.getOffset(this._epochMillis) / 60);
   }
 
   get dstOffsetSeconds(): number {
-    return this._timezone.getOffsets(this._utcTimeMillis)[1];
+    return this._timezone.getOffsets(this._epochMillis)[1];
   }
 
   get dstOffsetMinutes(): number {
-    return round(this._timezone.getOffsets(this._utcTimeMillis)[1] / 60);
+    return round(this._timezone.getOffsets(this._epochMillis)[1] / 60);
   }
 
   isDST(): boolean {
@@ -513,7 +673,7 @@ export class DateTime extends Calendar {
   }
 
   getTimezoneDisplayName(): string {
-    return this._timezone.getDisplayName(this._utcTimeMillis);
+    return this._timezone.getDisplayName(this._epochMillis);
   }
 
   private checkDateless(field: DateTimeField): void {
@@ -532,6 +692,7 @@ export class DateTime extends Calendar {
       throw nonIntError;
 
     let updateFromWall = false;
+    let updateFromTai = false;
     let normalized: YMDDate;
     let weekCount: number;
     const wallTime = result._wallTime;
@@ -539,19 +700,38 @@ export class DateTime extends Calendar {
 
     switch (fieldN) {
       case DateTimeField.MILLI:
-        result._utcTimeMillis += amount;
+        result._epochMillis += amount;
+        break;
+
+      case DateTimeField.MILLI_TAI:
+        updateFromTai = true;
         break;
 
       case DateTimeField.SECOND:
-        result._utcTimeMillis += amount * 1000;
+        result._epochMillis += amount * 1000;
+        break;
+
+      case DateTimeField.SECOND_TAI:
+        amount *= 1000;
+        updateFromTai = true;
         break;
 
       case DateTimeField.MINUTE:
-        result._utcTimeMillis += amount * 60_000;
+        result._epochMillis += amount * 60_000;
+        break;
+
+      case DateTimeField.MINUTE_TAI:
+        amount *= 60000;
+        updateFromTai = true;
         break;
 
       case DateTimeField.HOUR:
-        result._utcTimeMillis += amount * 3_600_000;
+        result._epochMillis += amount * 3_600_000;
+        break;
+
+      case DateTimeField.HOUR_TAI:
+        amount *= 3600000;
+        updateFromTai = true;
         break;
 
       case DateTimeField.DAY:
@@ -565,12 +745,17 @@ export class DateTime extends Calendar {
           delete wallTime.ywl;
         }
         else
-          result._utcTimeMillis += amount * 86_400_000;
+          result._epochMillis += amount * 86_400_000;
+        break;
+
+      case DateTimeField.DAY_TAI:
+        amount *= DAY_MSEC;
+        updateFromTai = true;
         break;
 
       case DateTimeField.WEEK:
         this.checkDateless(fieldN);
-        result._utcTimeMillis += amount * 604_800_000;
+        result._epochMillis += amount * 604_800_000;
         break;
 
       case DateTimeField.QUARTER:
@@ -628,18 +813,35 @@ export class DateTime extends Calendar {
         throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid add()/subtract() field`);
     }
 
-    if (updateFromWall) {
+    if (updateFromTai) {
+      const millis = (result.isTai() ? result._epochMillis : result.taiMillis) + amount;
+
+      if (result.isTai())
+        result._epochMillis = millis;
+      else {
+        result.taiMillis = millis;
+
+        return result._lock(this.locked);
+      }
+    }
+    else if (updateFromWall) {
       delete wallTime.dy;
       delete wallTime.occurrence;
+      delete wallTime.deltaTai;
       delete wallTime.utcOffset;
       delete wallTime.j;
-      result.updateUtcMillisFromWallTime();
+      delete wallTime.jde;
+      delete wallTime.mjde;
+      delete wallTime.jdu;
+      delete wallTime.mjdu;
+      result._leapSecondMillis = 0;
+      result.updateEpochMillisFromWallTime();
     }
 
     if (this._timezone === DATELESS)
-      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+      this._epochMillis = mod(this._epochMillis, DAY_MSEC);
 
-    result.updateWallTimeFromCurrentMillis();
+    result.updateWallTimeFromEpochMillis();
 
     return result._lock(this.locked);
   }
@@ -669,7 +871,7 @@ export class DateTime extends Calendar {
         break;
 
       case DateTimeField.SECOND:
-        wallTime.sec = mod(wallTime.sec + amount, 60);
+        wallTime.sec = mod(min(wallTime.sec, 59) + amount, 60);
         break;
 
       case DateTimeField.MINUTE:
@@ -829,16 +1031,22 @@ export class DateTime extends Calendar {
 
     delete wallTime.n;
     delete wallTime.j;
+    delete wallTime.deltaTai;
+    delete wallTime.jde;
+    delete wallTime.mjde;
+    delete wallTime.jdu;
+    delete wallTime.mjdu;
+    result._leapSecondMillis = 0;
 
     if (clearOccurrence)
       delete wallTime.occurrence;
 
-    result.updateUtcMillisFromWallTime();
+    result.updateEpochMillisFromWallTime();
 
     if (this._timezone === DATELESS)
-      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+      this._epochMillis = mod(this._epochMillis, 86400000);
 
-    result.updateWallTimeFromCurrentMillis();
+    result.updateWallTimeFromEpochMillis();
 
     return result._lock(this.locked);
   }
@@ -865,6 +1073,10 @@ export class DateTime extends Calendar {
 
       case DateTimeField.SECOND:
         wallTime.sec = value;
+
+        if (Timezone.findDeltaTaiFromUtc(floor(this.epochMillis / 60_000) * 60_000 + 59_000)?.inLeap)
+          max = 60;
+
         break;
 
       case DateTimeField.MINUTE:
@@ -1024,12 +1236,21 @@ export class DateTime extends Calendar {
     delete wallTime.n;
     delete wallTime.j;
     delete wallTime.occurrence;
-    result.updateUtcMillisFromWallTime();
+    delete wallTime.deltaTai;
+    delete wallTime.jde;
+    delete wallTime.mjde;
+    delete wallTime.jdu;
+    delete wallTime.mjdu;
 
-    if (this._timezone === DATELESS)
-      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+    const counter = this.wallTimeCounter;
 
-    result.updateWallTimeFromCurrentMillis();
+    result.updateEpochMillisFromWallTime(this.isUtcBased() && wallTime.sec === 60);
+
+    if (result._timezone === DATELESS)
+      result._epochMillis = mod(result._epochMillis, DAY_MSEC);
+
+    if (this.wallTimeCounter === counter)
+      result.updateWallTimeFromEpochMillis();
 
     return result._lock(this.locked);
   }
@@ -1120,12 +1341,17 @@ export class DateTime extends Calendar {
     delete wallTime.j;
     delete wallTime.utcOffset;
     delete wallTime.occurrence;
-    result.updateUtcMillisFromWallTime();
+    delete wallTime.deltaTai;
+    delete wallTime.jde;
+    delete wallTime.mjde;
+    delete wallTime.jdu;
+    delete wallTime.mjdu;
+    result.updateEpochMillisFromWallTime();
 
     if (this._timezone === DATELESS)
-      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+      this._epochMillis = mod(this._epochMillis, 86400000);
 
-    result.updateWallTimeFromCurrentMillis();
+    result.updateWallTimeFromEpochMillis();
 
     return result._lock(this.locked);
   }
@@ -1237,12 +1463,21 @@ export class DateTime extends Calendar {
     delete wallTime.j;
     delete wallTime.utcOffset;
     delete wallTime.occurrence;
-    result.updateUtcMillisFromWallTime();
+    delete wallTime.deltaTai;
+    delete wallTime.jde;
+    delete wallTime.mjde;
+    delete wallTime.jdu;
+    delete wallTime.mjdu;
+    result.updateEpochMillisFromWallTime();
 
     if (this._timezone === DATELESS)
-      this._utcTimeMillis = mod(this._utcTimeMillis, 86400000);
+      result._epochMillis = mod(result._epochMillis, DAY_MSEC);
+    else if (this.isUtcBased() && Timezone.findDeltaTaiFromUtc(result._epochMillis)?.inLeap) {
+      result._epochMillis = floor(result._epochMillis / 1000) * 1000 + 999;
+      result._leapSecondMillis = 1000;
+    }
 
-    result.updateWallTimeFromCurrentMillis();
+    result.updateWallTimeFromEpochMillis();
 
     return result._lock(this.locked);
   }
@@ -1386,7 +1621,14 @@ export class DateTime extends Calendar {
   }
 
   toString(): string {
-    return `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
+    let s = `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
+
+    if (this.isTai())
+      s = s.replace(' +00:00', ' TAI');
+    else if (this._timezone === Timezone.ZONELESS)
+      s = s.replace(' +00:00', '');
+
+    return s;
   }
 
   toYMDhmString(): string {
@@ -1412,17 +1654,38 @@ export class DateTime extends Calendar {
     return this.format('HH:mm' + (includeDst ? 'v' : ''), 'en-US');
   }
 
-  private updateUtcMillisFromWallTime(): void {
+  private updateEpochMillisFromWallTime(allowSelfUpdate = false): void {
     const wallTime = purgeAliasFields(clone(this._wallTime));
 
-    this._utcTimeMillis = this.computeUtcMillisFromWallTimeAux(wallTime);
+    if (allowSelfUpdate)
+      this._deltaTaiMillis = this._leapSecondMillis = 0;
+
+    this._epochMillis = this.computeEpochMillisFromWallTimeAux(wallTime, allowSelfUpdate);
+  }
+
+  computeEpochMillisFromWallTime(wallTime: DateAndTime): number {
+    return this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
   }
 
   computeUtcMillisFromWallTime(wallTime: DateAndTime): number {
-    return this.computeUtcMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
+    let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
+
+    if (this.isTai())
+      millis = taiToUtMillis(millis, true);
+
+    return millis;
   }
 
-  private computeUtcMillisFromWallTimeAux(wallTime: DateAndTime): number {
+  computeTaiMillisFromWallTime(wallTime: DateAndTime): number {
+    let millis = this.computeEpochMillisFromWallTimeAux(syncDateAndTime(clone(wallTime)));
+
+    if (this.isUtcBased())
+      millis = utToTaiMillis(millis, true) + (wallTime.sec === 60 ? 1000 : 0);
+
+    return millis;
+  }
+
+  private computeEpochMillisFromWallTimeAux(wallTime: DateAndTime, allowSelfUpdate = false): number {
     if (wallTime.y != null) {
       if (wallTime.m != null || wallTime.d != null) {
         wallTime.m = wallTime.m ?? 1;
@@ -1445,47 +1708,107 @@ export class DateTime extends Calendar {
       wallTime.dwl = wallTime.dwl ?? 1;
     }
 
-    const dayNum = wallTime.n ?? this.getDayNumber(wallTime);
-    let millis = (wallTime.millis ?? 0) +
-                 (wallTime.sec ?? 0) * 1000 +
-                 (wallTime.min ?? 0) * 60000 +
-                 (wallTime.hrs ?? 0) * 3600000 +
-                 dayNum * 86400000;
+    const isTai = this.isTai();
+    let millis: number;
 
-    if (wallTime.utcOffset != null)
-      millis -= wallTime.utcOffset * 1000;
-    else
-      millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
+    if (wallTime.jde != null || wallTime.mjde != null || wallTime.jdu != null || wallTime.mjdu != null) {
+      if (wallTime.jde == null && wallTime.mjde == null) {
+        wallTime.jdu = wallTime.jdu ?? wallTime.mjdu + DELTA_MJD;
+        wallTime.jde = utToTdt(wallTime.jdu);
+      }
+      else if (wallTime.jde == null)
+        wallTime.jde = wallTime.mjde + DELTA_MJD;
 
-    if ((wallTime.occurrence ?? 1) < 2) {
-      const transition = this.timezone.findTransitionByUtc(millis);
-      let day = wallTime.d;
+      millis = round(tdtDaysToTaiMillis(wallTime.jde));
 
-      if (wallTime.j)
-        day = getDateFromDayNumberGregorian(dayNum).d;
+      if (!isTai) {
+        if (allowSelfUpdate) {
+          this.taiMillis = millis;
+          ++this.wallTimeCounter;
+          millis = this._epochMillis;
+        }
+        else
+          millis = taiToUtMillis(millis, true);
+      }
+    }
+    else {
+      const sec = min(wallTime.sec ?? 0, 59);
+      const secOverflow = max((wallTime.sec ?? 0) - sec, 0);
+      const dayNum = wallTime.n ?? this.getDayNumber(wallTime);
 
-      if (transition !== null && transition.deltaOffset < 0 && transition.wallTimeDay === day &&
-          millis < transition.transitionTime - transition.deltaOffset * 1000)
-        millis += transition.deltaOffset * 1000;
+      millis = (wallTime.millis ?? 0) +
+               sec * 1000 +
+               (wallTime.min ?? 0) * 60000 +
+               (wallTime.hrs ?? 0) * 3600000 +
+               dayNum * DAY_MSEC;
+
+      if (wallTime.utcOffset != null)
+        millis -= wallTime.utcOffset * 1000;
+      else
+        millis -= this._timezone.getOffsetForWallTime(millis) * 1000;
+
+      if ((wallTime.occurrence ?? 1) < 2) {
+        const transition = this.timezone.findTransitionByUtc(millis);
+        let day = wallTime.d;
+
+        if (wallTime.j)
+          day = getDateFromDayNumberGregorian(dayNum).d;
+
+        if (transition !== null && transition.deltaOffset < 0 && transition.wallTimeDay === day &&
+            millis < transition.transitionTime - transition.deltaOffset * 1000)
+          millis += transition.deltaOffset * 1000;
+      }
+
+      if (allowSelfUpdate && secOverflow && this.isUtcBased() && Timezone.findDeltaTaiFromUtc(millis)?.inLeap) {
+        this._leapSecondMillis = (wallTime.millis ?? 0) + 1;
+        millis = floor(millis / 1000) * 1000 + 999;
+      }
+      else if (isTai || secOverflow !== 1 || !Timezone.findDeltaTaiFromUtc(millis)?.inLeap)
+        millis += secOverflow * 1000;
     }
 
     return millis;
   }
 
-  private updateWallTimeFromCurrentMillis(day = 0): void {
-    if (isNaN(this._utcTimeMillis) || this._utcTimeMillis < Number.MIN_SAFE_INTEGER || this._utcTimeMillis > Number.MAX_SAFE_INTEGER) {
-      this._error = `Invalid core millisecond time value: ${this._utcTimeMillis}`;
-      this._utcTimeMillis = null;
+  private updateWallTimeFromEpochMillis(day = 0, switchFromTai = false, switchToTai = false): void {
+    if (isNaN(this._epochMillis) || this._epochMillis < Number.MIN_SAFE_INTEGER || this._epochMillis > Number.MAX_SAFE_INTEGER) {
+      this._error = `Invalid core millisecond time value: ${this._epochMillis}`;
+      this._epochMillis = null;
 
       return;
     }
 
-    this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._utcTimeMillis, day));
-    this._error = undefined;
+    const lsi = switchFromTai ? Timezone.findDeltaTaiFromTai(this._epochMillis) : undefined;
+    let extra = (switchFromTai ? (lsi.inLeap ? mod(this._epochMillis, 1000) + 1 : 0) : this._leapSecondMillis);
+    let adjustMillis = false;
+
+    if (lsi && lsi.deltaTai) {
+      this._epochMillis -= lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0);
+
+      if (lsi.inLeap && this.isUtcBased())
+        adjustMillis = true;
+    }
+    else if (switchFromTai)
+      this._epochMillis = taiToUtMillis(this._epochMillis, true);
+    else if (switchToTai) {
+      this._epochMillis = utToTaiMillis(this._epochMillis, true) + extra;
+      extra = 0;
+    }
+    else if (extra && !Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inLeap)
+      extra = 0;
+
+    this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._epochMillis, day, extra));
+    this._deltaTaiMillis = round(this._wallTime.deltaTai * 1000);
+    delete this._error;
+
+    if (adjustMillis) {
+      this._epochMillis = floor(this._epochMillis / 1000) * 1000 + 999;
+      this._leapSecondMillis = extra;
+    }
 
     if (this._wallTime.y < MIN_YEAR || this._wallTime.y > MAX_YEAR) {
       this._error = `Invalid year: ${this._wallTime.y}`;
-      this._utcTimeMillis = null;
+      this._epochMillis = null;
     }
     else {
       let field: string = '';
@@ -1500,12 +1823,12 @@ export class DateTime extends Calendar {
 
       if (field) {
         this._error = `Invalid ${field}: ${badValue}`;
-        this._utcTimeMillis = null;
+        this._epochMillis = null;
       }
     }
   }
 
-  getTimeOfDayFieldsFromMillis(millis: number, day = 0): DateAndTime {
+  getTimeOfDayFieldsFromMillis(millis: number, day = 0, extra = 0): DateAndTime {
     if (millis == null || isNaN(millis))
       return syncDateAndTime({ y: NaN, m: NaN, d: NaN, n: NaN });
 
@@ -1525,6 +1848,22 @@ export class DateTime extends Calendar {
     wallTime.dstOffset = offsets[1];
     wallTime.occurrence = 1;
 
+    if (this.isTai()) {
+      wallTime.deltaTai = (millis - taiToUtMillis(millis, true)) / 1000;
+      wallTime.jde = taiMillisToTdt(millis + extra);
+      wallTime.jdu = tdtToUt(wallTime.jde);
+    }
+    else {
+      wallTime.deltaTai = (utToTaiMillis(millis, true) - millis) / 1000;
+      wallTime.jdu = DateTime.julianDay(millis + extra);
+      wallTime.jde = utToTdt(wallTime.jdu);
+      wallTime.sec = (extra ? 60 : wallTime.sec);
+      wallTime.millis = (extra ? extra - 1 : wallTime.millis);
+    }
+
+    wallTime.mjde = wallTime.jde - DELTA_MJD;
+    wallTime.mjdu = wallTime.jdu - DELTA_MJD;
+
     const transition = this.timezone.findTransitionByWallTime(wallTimeMillis);
 
     if (transition && millis >= transition.transitionTime && millis < transition.transitionTime - transition.deltaOffset * 1000)
@@ -1541,6 +1880,7 @@ export class DateTime extends Calendar {
       this.getYearWeekAndWeekdayLocale(wallTime);
     wallTime.dy = wallTime.n - this.getDayNumber(wallTime.y, 1, 1) + 1;
     wallTime.j = this.isJulianCalendarDate(wallTime);
+
     syncDateAndTime(wallTime);
 
     return wallTime;
@@ -1550,7 +1890,7 @@ export class DateTime extends Calendar {
     super.setGregorianChange(gcYearOrDate, gcMonth, gcDate);
 
     if (this._timezone)
-      this.updateWallTimeFromCurrentMillis();
+      this.updateWallTimeFromEpochMillis();
 
     return this;
   }
@@ -1584,6 +1924,9 @@ export class DateTime extends Calendar {
     return this.isValidDate(year ?? this._wallTime.y, 2, 29);
   }
 
+  getDayOfWeek(): number;
+  getDayOfWeek(year: number, month: number, day: number): number;
+  getDayOfWeek(date: YMDDate | number[]): number;
   getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number {
     return super.getDayOfWeek(yearOrDateOrDayNum ?? this._wallTime, month, day);
   }

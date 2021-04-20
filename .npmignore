@@ -15,3 +15,4 @@
 *.tgz
 /test.html
 .travis.yml
+.coveralls.yml

@@ -348,7 +348,7 @@ export function getDayOfWeekInMonthCount_SGC(year: number, month: number, dayOfT
   const firstDay = getDayNumber_SGC(year, month, getDateOfNthWeekdayOfMonth_SGC(year, month, dayOfTheWeek, 1));
   const nextMonth = getDayNumber_SGC(year, month + 1, 1);
 
-  return (nextMonth - firstDay - 1) / 7 + 1;
+  return div_tt0(nextMonth - firstDay - 1, 7) + 1;
 }
 
 export function getDayOnOrAfter_SGC(year: number, month: number, dayOfTheWeek: number, minDate: number): number {
@@ -921,6 +921,8 @@ export class Calendar {
     return dates;
   }
 
+  isValidDate(year: number, month: number, day: number): boolean;
+  isValidDate(yearOrDate: YMDDate | number[]): boolean;
   isValidDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this, true);
     const ymd = this.getDateFromDayNumber(this.getDayNumber(year, month, day));
@@ -928,6 +930,8 @@ export class Calendar {
     return (year === ymd.y && month === ymd.m && day === ymd.d);
   }
 
+  normalizeDate(year: number, month: number, day: number): YMDDate;
+  normalizeDate(yearOrDate: YMDDate | number[]): YMDDate;
   normalizeDate(yearOrDate: YearOrDate, month?: number, day?: number): YMDDate {
     let year: number; [year, month, day] = handleVariableDateArgs(yearOrDate, month, day, this, true);
 
