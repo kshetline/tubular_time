@@ -25,8 +25,9 @@ import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
 import { parse } from './format-parse';
-import { forEach, isString } from '@tubular/util';
+import { forEach, isString, toNumber } from '@tubular/util';
 import { CalendarType, DayOfWeek, Month, LAST } from './calendar';
+import { getDeltaTAtJulianDate, tdtToUt, utToTdt } from './ut-converter';
 
 let win: any = null;
 
@@ -57,7 +58,7 @@ export {
   parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
 export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity } from './date-time';
-export * from './ut-converter';
+export { getDeltaTAtJulianDate, utToTdt, tdtToUt } from './ut-converter';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
@@ -257,8 +258,12 @@ ttime.julianDay             = DateTime.julianDay;
 ttime.millisFromJulianDay   = DateTime.millisFromJulianDay;
 ttime.julianDay_SGC         = DateTime.julianDay_SGC;
 
-forEach(DayOfWeek, (key, value) => ttime[key] = value);
-forEach(Month, (key, value) => ttime[key] = value);
+ttime.getDeltaTAtJulianDate = getDeltaTAtJulianDate;
+ttime.tdtToUt               = tdtToUt;
+ttime.utToTdt               = utToTdt;
+
+forEach(DayOfWeek, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; });
+forEach(Month, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; });
 ttime.LAST = LAST;
 
 Object.freeze(ttime);

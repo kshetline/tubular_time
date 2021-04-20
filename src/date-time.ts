@@ -1905,6 +1905,9 @@ export class DateTime extends Calendar {
     return this.isValidDate(year ?? this._wallTime.y, 2, 29);
   }
 
+  getDayOfWeek(): number;
+  getDayOfWeek(year: number, month: number, day: number): number;
+  getDayOfWeek(date: YMDDate | number[]): number;
   getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number {
     return super.getDayOfWeek(yearOrDateOrDayNum ?? this._wallTime, month, day);
   }

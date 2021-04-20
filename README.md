@@ -86,6 +86,8 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Static `Timezone` methods](#static-timezone-methods)
   - [`Timezone` getters](#timezone-getters)
   - [`Timezone` methods](#timezone-methods)
+- [Functions available on `ttime`](#functions-available-on-ttime)
+  - [Timezone definition set-up](#timezone-definition-set-up)
 - [Constants available on `ttime`](#constants-available-on-ttime)
 
 ## Installation
@@ -697,13 +699,15 @@ The `yearOrDate` argument can be just a number for the year (in which case `mont
 There is also this method, available on instances of `Calendar` or `DateTime`, which determines the validity of a date according to that instance’s Julian/Gregorian switch-over:
 
 ```typescript
-isValidDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
+isValidDate(year: number, month: number, day: number): boolean;
+isValidDate(yearOrDate: YMDDate | number[]): boolean;
 ```
 
 A related method takes a possibly invalid date and coerces it into a valid date, such as turning September 31 into October 1.
 
 ```typescript
-normalizeDate(yearOrDate: YearOrDate, month?: number, day?: number): YMDDate;
+normalizeDate(year: number, month: number, day: number): YMDDate;
+normalizeDate(yearOrDate: YMDDate | number[]): YMDDate;
 ```
 
 ## Comparison and sorting
@@ -1117,7 +1121,9 @@ getDateOfNthWeekdayOfMonth(dayOfTheWeek: number, index: number): number;
 getDayNumber(yearOrDate: YearOrDate, month?: number, day?: number);
 
 // Day of the week for date, 0-6 for Sun-Sat
-getDayOfWeek(yearOrDateOrDayNum?: YearOrDate, month?: number, day?: number): number;
+getDayOfWeek(): number;
+getDayOfWeek(year: number, month: number, day: number): number;
+getDayOfWeek(date: YMDDate | number[]): number; // As number[]: [year, month, day]
 
 // How many times does a given day of the week (0-6 for Sun-Sat) occur during this month?
 getDayOfWeekInMonthCount(year: number, month: number, dayOfTheWeek: number): number;
@@ -1509,6 +1515,22 @@ Check if this timezone explicitly supports the given `country`, specified as a t
 
 ```typescript
 supportsCountry(country: string): boolean;
+```
+
+## Functions available on `ttime`
+
+### Timezone definition set-up
+
+These functions initialize the set of timezone definitions which will be used. `initTimezoneSmall()` is called by default, and is always available. The small set covers at least five years, both forward and back, from the build time of the library, with direct IANA timezone definition data. This data is extended further backward in time using data extracted from the JavaScript `Intl` library, if available, and forward in time based on encoded definitions for Daylight Saving Time policy, such as “turn the clocks forward one hour at 1:00 UTC on the last Sunday of March”.
+
+These forward definitions work very well in most cases, but for some timezones, such as where the beginning and end of DST are based on the Islamic calendar, no such rules are available.
+
+If you build your code with no references to either `initTimezoneLarge()` or `initTimezoneLargeAlt()`, along with build tools that perform proper tree shaking, the approximately 280K of data associated with each of these two sets of timezone definitions will be saved.
+
+```typescript
+function initTimezoneSmall(): void;
+function initTimezoneLarge(failQuietly = false): void;
+function initTimezoneLargeAlt(failQuietly = false): void;
 ```
 
 ## Constants available on `ttime`
