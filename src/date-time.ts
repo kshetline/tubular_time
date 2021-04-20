@@ -414,14 +414,14 @@ export class DateTime extends Calendar {
   get epochSeconds(): number { return floor(this._epochMillis / 1000); }
   set epochSeconds(newTime: number) { this.epochMillis = newTime * 1000; }
 
-  get leapSecondsMillis(): number { return this._leapSecondMillis; }
+  get leapSecondMillis(): number { return this._leapSecondMillis; }
   get deltaTaiMillis(): number { return this._deltaTaiMillis; }
 
   isJustBeforeNegativeLeapSecond(): boolean {
     return this.isUtcBased() && !!Timezone.findDeltaTaiFromUtc(this._epochMillis)?.inNegativeLeap;
   }
 
-  isInLeapSecond(): boolean { return this.leapSecondsMillis > 0; }
+  isInLeapSecond(): boolean { return this.leapSecondMillis > 0; }
 
   get utcMillis(): number { return this.isTai() ? this._epochMillis - this._deltaTaiMillis : this.epochMillis; }
   set utcMillis(newTime: number) {
@@ -445,8 +445,27 @@ export class DateTime extends Calendar {
       newTime = utToTaiMillis(newTime + leapSecondMillis, true);
       leapSecondMillis = 0;
     }
+    else if (!result.isUtcBased())
+      leapSecondMillis = 0;
 
     if (result._epochMillis !== newTime || !result.wallTime || result._leapSecondMillis !== leapSecondMillis) {
+      if (leapSecondMillis) {
+        const sec59 = floor(newTime / 60_000) * 60_000 + 59_000;
+
+        if (newTime >= sec59 && Timezone.findDeltaTaiFromUtc(sec59)?.inLeap) {
+          leapSecondMillis -= sec59 + 999 - newTime;
+
+          if (leapSecondMillis < 0)
+            leapSecondMillis = 0;
+          else
+            leapSecondMillis = min(leapSecondMillis, 999);
+        }
+        else {
+          newTime = newTime + min(leapSecondMillis, 999);
+          leapSecondMillis = 0;
+        }
+      }
+
       result._epochMillis = newTime;
       result._leapSecondMillis = leapSecondMillis;
       result.updateWallTimeFromEpochMillis();

@@ -86,8 +86,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
   - [Static `Timezone` methods](#static-timezone-methods)
   - [`Timezone` getters](#timezone-getters)
   - [`Timezone` methods](#timezone-methods)
-- [Functions available on `ttime`](#functions-available-on-ttime)
-  - [Timezone definition set-up](#timezone-definition-set-up)
+- [Other functions available on `ttime`](#other-functions-available-on-ttime)
 - [Constants available on `ttime`](#constants-available-on-ttime)
 
 ## Installation
@@ -932,8 +931,14 @@ Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23
 `new DateTime({ jde: 2450630.500724913 }, 'UTC').toIsoString(19)` →
 `"1997-06-30T23:59:60"`<br><br>
 * By add/subtract operations using TAI quantities:
-`new DateTime('2016-12-31 18:59:59 EST').add('seconds_tai', 1).toString()` →<br>
-`"DateTime<2016-12-31T18:59:60.000 -05:00>"`
+`new DateTime('2016-12-31 18:59:59 EST').add('seconds_tai', 1).toString()` →
+`"DateTime<2016-12-31T18:59:60.000 -05:00>"`<br><br>
+* Using the set operation (this only works if the result is the is considered a valid leap second):
+`new DateTime('2016-12-31 18:59:59 EST').set('second', 60).toString()` →
+`"DateTime<2016-12-31T18:59:60.000 -05:00>"`<br><br>
+* Using the `setUtcMillis` method, with the optional second `leapSecondMillis` argument:
+`new DateTime('utc').setUtcMillis(252460799999, 701).toString()` →
+`"DateTime<1977-12-31T23:59:60.700 +00:00>"`<br>
 
 ### TAI field values
 
@@ -1517,20 +1522,54 @@ Check if this timezone explicitly supports the given `country`, specified as a t
 supportsCountry(country: string): boolean;
 ```
 
-## Functions available on `ttime`
+## Other functions available on `ttime`
 
-### Timezone definition set-up
-
-These functions initialize the set of timezone definitions which will be used. `initTimezoneSmall()` is called by default, and is always available. The small set covers at least five years, both forward and back, from the build time of the library, with direct IANA timezone definition data. This data is extended further backward in time using data extracted from the JavaScript `Intl` library, if available, and forward in time based on encoded definitions for Daylight Saving Time policy, such as “turn the clocks forward one hour at 1:00 UTC on the last Sunday of March”.
-
-These forward definitions work very well in most cases, but for some timezones, such as where the beginning and end of DST are based on the Islamic calendar, no such rules are available.
-
-If you build your code with no references to either `initTimezoneLarge()` or `initTimezoneLargeAlt()`, along with build tools that perform proper tree shaking, the approximately 280K of data associated with each of these two sets of timezone definitions will be saved.
+Determine if a value is an instance of the `Date` class:
 
 ```typescript
-function initTimezoneSmall(): void;
-function initTimezoneLarge(failQuietly = false): void;
-function initTimezoneLargeAlt(failQuietly = false): void;
+ttime.isDate(obj: any): obj is Date; // boolean
+```
+
+Determine if a value is an instance of the `DateTime` class:
+
+```typescript
+ttime.isDateTime(obj: any): obj is DateTime; // boolean
+```
+
+Converts Julian days into milliseconds from the 1970-01-01T00:00 UTC epoch:
+
+```typescript
+ttime.julianDay(millis: number): number;
+```
+
+Converts milliseconds from the 1970-01-01T00:00 UTC epoch into Julian days:
+
+```typescript
+ttime.millisFromJulianDay(jd: number): number;
+```
+
+Given a year, month, day according to the standard Gregorian calendar change (SGC) of 1582-10-15, and optional hour, minute, and second UTC, returns a Julian day number.
+
+```typescript
+ttime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number;
+```
+
+For a given TDT Julian Date (ephemeris time), return the number of seconds that TDT is ahead of Universal Time (UT1):
+
+```typescript
+ttime.getDeltaTAtJulianDate(timeJDE: number): number;
+```
+
+For a given TDT Julian Date (ephemeris time), return the Julian Date in Universal Time (UT1):
+
+```typescript
+ttime.tdtToUt(timeJDE: number): number;
+```
+
+For a given UT1 Julian Date (Universal Time), return the Julian Date in ephemeris time (TDT):
+
+```typescript
+ttime.utToTdt(timeJDU: number): number;
 ```
 
 ## Constants available on `ttime`

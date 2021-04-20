@@ -512,6 +512,10 @@ describe('DateTime', () => {
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59.7 TAI').add('seconds', 17).tz('UTC').toString()).to.equal('DateTime<1977-12-31T23:59:60.700 +00:00>');
     expect(new DateTime('utc').setUtcMillis(252460799999, 701).toString()).to.equal('DateTime<1977-12-31T23:59:60.700 +00:00>');
+    expect(new DateTime('utc').setUtcMillis(252460799988, 701).leapSecondMillis).to.equal(690);
+    expect(new DateTime('utc').setUtcMillis(252460799988, 1).isInLeapSecond()).to.be.false;
+    expect(new DateTime('utc').setUtcMillis(252460799988, 11).isInLeapSecond()).to.be.false;
+    expect(new DateTime('utc').setUtcMillis(252460799988, 12).isInLeapSecond()).to.be.true;
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 18).tz('UTC').toString()).to.equal('DateTime<1978-01-01T00:00:00.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('America/New_York').toString()).to.equal('DateTime<1977-12-31T18:59:60.000 -05:00>');
     expect(() => new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 60)).not.to.throw();
@@ -532,8 +536,8 @@ describe('DateTime', () => {
     expect(new DateTime('1995-12-31 23:59:60Z').utcSeconds).to.equal(820454399);
     expect(new DateTime('1995-12-31 23:59:60Z').utcMillis).to.equal(820454399999);
     expect(new DateTime('1995-12-31 23:59:60Z').deltaTaiMillis).to.equal(29000);
-    expect(new DateTime('1995-12-31 23:59:60Z').leapSecondsMillis).to.equal(1);
-    expect(new DateTime('1995-12-31 23:59:60.123Z').leapSecondsMillis).to.equal(124);
+    expect(new DateTime('1995-12-31 23:59:60Z').leapSecondMillis).to.equal(1);
+    expect(new DateTime('1995-12-31 23:59:60.123Z').leapSecondMillis).to.equal(124);
     expect(new DateTime('1995-12-31 23:59:60Z').add(DateTimeField.MILLI_TAI, 1000).deltaTaiMillis).to.equal(30000);
     expect(new DateTime('1995-12-31 23:59:60Z').compare(new DateTime('1995-12-31 23:59:59Z'))).to.be.greaterThan(0);
     expect(new DateTime('1996-12-31 23:59:60Z').toString()).to.equal('DateTime<1997-01-01T00:00:00.000 +00:00>');
