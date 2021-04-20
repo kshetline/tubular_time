@@ -1084,6 +1084,7 @@ static isDateTime(obj: any): obj is DateTime; // boolean
 dstOffsetMinutes: number;
 dstOffsetSeconds: number;
 error: string | undefined; // Explanation of why a DateTime is considered invalid, undefined if valid.
+leapSecondMillis: number; // Number of milliseconds into a leap second (normally 0)
 // 'DATETIME` is the usual type, but a DateTime instance can be DATELESS (time-only)
 //   or an abstract date/time with no real-world timezone.
 type: 'ZONELESS' | 'DATELESS' | 'DATETIME';
