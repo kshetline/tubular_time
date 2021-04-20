@@ -348,7 +348,7 @@ export function getDayOfWeekInMonthCount_SGC(year: number, month: number, dayOfT
   const firstDay = getDayNumber_SGC(year, month, getDateOfNthWeekdayOfMonth_SGC(year, month, dayOfTheWeek, 1));
   const nextMonth = getDayNumber_SGC(year, month + 1, 1);
 
-  return (nextMonth - firstDay - 1) / 7 + 1;
+  return div_tt0(nextMonth - firstDay - 1, 7) + 1;
 }
 
 export function getDayOnOrAfter_SGC(year: number, month: number, dayOfTheWeek: number, minDate: number): number {
