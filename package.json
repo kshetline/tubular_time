@@ -12,6 +12,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "rimraf dist/ && tsc && tsc --build tsconfig.es6.json && tsc --build tsconfig.es5.json && webpack && webpack --env esver=5 && ts-node make-remote-zone-data.ts",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
     "prepack": "npm run build",
     "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
     "test": "TS_NODE_FILES=true nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
@@ -51,6 +52,7 @@
     "babel-loader": "^8.2.2",
     "by-request": "^1.2.0",
     "chai": "^4.2.0",
+    "coveralls": "^3.1.0",
     "eslint": "^7.24.0",
     "eslint-plugin-chai-friendly": "^0.6.0",
     "eslint-plugin-import": "^2.22.1",
