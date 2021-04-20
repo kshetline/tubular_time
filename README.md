@@ -2,6 +2,8 @@
 
 Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library for handling both day-to-day situations (so to speak) and some weird ones too.
 
+[![npm](https://img.shields.io/npm/v/@tubular/time.svg)](https://www.npmjs.com/package/@tubular/time/) [![Build Status](https://img.shields.io/travis/com/kshetline/tubular_time.svg)](https://travis-ci.com/github/kshetline/tubular_time/) [![Coverage Status](https://coveralls.io/repos/github/kshetline/tubular_time/badge.svg?branch=development)](https://coveralls.io/github/kshetline/tubular_time?branch=development) [![npm downloads](https://img.shields.io/npm/dm/@tubular/time.svg)](https://npmjs.org/package/@tubular/time/) ![npm bundle size (scoped)](https://img.shields.io/bundlephobia/min/@tubular/time)  ![license](https://img.shields.io/badge/licence-mit-informational)
+
 ## Key features<!-- omit in toc -->
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
@@ -1210,6 +1212,13 @@ isLeapYear(year?: number): boolean;
 isPureGregorian(): boolean;
 
 isPureJulian(): boolean;
+
+// Is the DateTime instance TAI?
+isTai(): boolean;
+
+// Is the DateTime instance UTC, or a timezone offset from UTC?
+// (Anything other than TAI, DATELESS, and ZONELESS.)
+isUtcBased(): boolean;
 
 // Sets the first date when the Gregorian calendar starts. Pass 'J' as the first argument to get
 //   a perpetual Julian calendar, or 'G' for always-Gregorian (extending even before the Gregorian
