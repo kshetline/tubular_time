@@ -1,6 +1,6 @@
 # @tubular/time
 
-Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library for handling both day-to-day situations (so to speak) and some weird ones too.
+Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. Some minutes are 61 seconds long. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library for handling both day-to-day situations (so to speak) and some weird ones too.
 
 [![npm](https://img.shields.io/npm/v/@tubular/time.svg)](https://www.npmjs.com/package/@tubular/time/) [![Build Status](https://img.shields.io/travis/kshetline/tubular_time/master.svg)](https://travis-ci.com/github/kshetline/tubular_time/) [![Coverage Status](https://coveralls.io/repos/github/kshetline/tubular_time/badge.svg?branch=master)](https://coveralls.io/github/kshetline/tubular_time) [![npm downloads](https://img.shields.io/npm/dm/@tubular/time.svg)](https://npmjs.org/package/@tubular/time/) ![npm bundle size (scoped)](https://img.shields.io/bundlephobia/min/@tubular/time)  ![license](https://img.shields.io/badge/licence-mit-informational)
 
@@ -8,11 +8,12 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
 * IANA timezone support, with features beyond formatting using timezones, such as parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region), and live updates of timezone definitions.
-* Support for leap seconds and conversions between TAI (International Atomic Time) and UTC (Universal Coordinated Time).
+* Supports leap seconds and conversions between TAI (International Atomic Time) and UTC (Universal Coordinated Time).
 * Supports and recognizes negative Daylight Saving Time.
 * Extensive date/time manipulation and calculation capabilities.
 * Many features available using a familiar Moment.js-style API.
-* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
+* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI.
+* Local mean time, by geographic longitude, to one minute (of time) resolution.
 * Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
 * Package suitable for tree shaking and Angular optimization.
@@ -24,7 +25,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 
 This library was originally developed for an astronomy website, <https://skyviewcafe.com>, and has some features of particular interest for astronomy and historical events, but has been expanded to provide many features similar to the now-legacy-status Moment.js.
 
-Unlike Moment.js, IANA timezone handling is built in, not a separate module, with a compact set of timezone data that reaches roughly five years into the past and five years into the future, expanded into the past and future using Daylight Saving Time rules and/or values extracted from `Intl.DateTimeFormat`. Unlike the `Intl` API, the full list of available timezones is exposed, facilitating the creation of timezone selection interfaces.
+Unlike Moment.js, IANA timezone handling is built in, not a separate module, with a compact set of timezone definitions that reach roughly five years into the past and five years into the future, expanded into the past and future using Daylight Saving Time rules and/or values extracted from `Intl.DateTimeFormat`. Unlike the `Intl` API, the full list of available timezones is exposed, facilitating the creation of timezone selection interfaces.
 
 Two alternate large timezone definition sets, of approximately 280K each, are available, each serving slightly different purposes. These definitions can be bundled at compile time, or loaded dynamically at run time. You can also download live updates when the IANA Time Zone Database is updated.
 
@@ -535,7 +536,7 @@ When you use the add/subtract/roll/set methods on a locked instance, a new modif
 
 ### Using `add` (and `subtract`)
 
-The `add()` method is the main method here. `subtract()` is nothing more than a convenience method which negates the amount being added, and then calls `add()`, so I will speak of this going forward in terms of the `add()` method alone.
+> `subtract()` is nothing more than a convenience method which negates the amount being added, and then calls `add()`. The documentation that follows is in terms of the `add()` method alone, but applies, with this negation, to the `subtract()` method as well.
 
 An example of using `add()`:
 
@@ -543,7 +544,7 @@ An example of using `add()`:
 
 The above produces a date one year later than the current time. In most cases, this means that the resulting date has the same month and date, but in the case of a leap day:
 
-`ttime('2024-02-29').add('year', 1)..toIsoString(10)` → `2025-02-28`
+`ttime('2024-02-29').add('year', 1).toIsoString(10)` → `2025-02-28`
 
 ...the date is pinned to 28 so that an invalid date is not created. Similarly, when adding months, invalid dates are prevented:
 
@@ -577,13 +578,13 @@ Even with the default behavior, however, it is still possible for hours and minu
 
 ### Using `roll()`
 
-You can use the `roll()` method to “spin” through values for each date/time field. This can be used, for example, in a user interface where you select a field and use up/down arrows to change the value, and the value changes in a wrap-around fashion, e.g. ...58 → 59 → 00 → 01..., etc.
+You can use the `roll()` method to roll, or “spin”, through values for each date/time field. This operation can be used, for example, in a user interface where you select a field and use up/down arrows to change the value, and the value changes in a wrap-around fashion, e.g. ...58 → 59 → 00 → 01..., etc.
 
 While seconds and minutes wrap at 59, hours at 23, and dates wrap at the length of the current month, there are no natural wrapping boundaries for years. The wrap-range defaults to 1900-2099, but you can pass optional arguments to change this range (this only effects rolling of years, not other time units).
 
 You can `roll` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `AM_PM`, `DAY`, `DAY_OF_WEEK`, `DAY_OF_WEEK_LOCALE`, `DAY_OF_YEAR`, `WEEK`, `WEEK_LOCALE`, `MONTH`, `YEAR`, `YEAR_WEEK`, `YEAR_WEEK_LOCALE`, `ERA`.
 
-For the purpose of the `roll()` method, `AM_PM` and `ERA` are treated as numeric values. AM and BC are 0, PM and AD are 1. If you roll by an odd number, the value will be changed. If you roll by an even value, the value will be unchanged.
+For the purpose of the `roll()` method, `AM_PM` and `ERA` are treated as numeric values. AM and BC are 0, PM and AD are 1. If you roll by an odd number, the value will be changed. If you roll by an even value, the value will remain unchanged.
 
 Examples of using `roll()`:
 
@@ -845,7 +846,7 @@ In December 2011, the nation of Samoa jumped over the International Dateline (or
 ]
 ```
 
-Here’s what that month looks like, as rendered by the drop-time date picker at skyviewcafe.com:
+Here’s what that month looks like, as rendered by the drop-down date picker at skyviewcafe.com:
 
 <img src="https://shetline.com/readme/tubular-time/2.4.0/apia_dec_2011_cal.jpg" width=185 height=150 alt="Apia Dec 2011">
 
