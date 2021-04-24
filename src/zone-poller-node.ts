@@ -1,6 +1,6 @@
 import { IZonePoller } from './i-zone-poller';
 
-let requestText: (url: string) => Promise<string>;
+let requestText: (url: string, options?: any) => Promise<string>;
 let byRequestCheckDone = false;
 
 export const zonePollerNode: IZonePoller = {
@@ -21,7 +21,7 @@ export const zonePollerNode: IZonePoller = {
       throw new Error(msg);
     }
 
-    const zones = (await requestText(url)).replace(/^.*?=\s*/, '');
+    const zones = (await requestText(url, { timeout: 60000 })).replace(/^.*?=\s*/, '');
 
     return JSON.parse(zones);
   }
