@@ -931,7 +931,7 @@ Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23
 * From TAI, Julian date, or modified Julian date values. For example:<br>
 `new DateTime('1972-07-01T00:00:10 TAI', 'UTC').toString()` →
 `"DateTime<1972-06-30T23:59:60.000 +00:00>"`<br>
-`new DateTime({ jde: 2450630.500724913 }, 'UTC').toIsoString(19)` →
+`new DateTime({ jde: 2450630.5007242477 }, 'UTC').toIsoString(19)` →
 `"1997-06-30T23:59:60"`<br><br>
 * By add/subtract operations using TAI quantities:
 `new DateTime('2016-12-31 18:59:59 EST').add('seconds_tai', 1).toString()` →
@@ -1286,6 +1286,7 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 
 ```typescript
   static OS_ZONE: Timezone; // Local timezone as derived from analyzing values returned by JavaScript `Date`.
+  static TAI_ZONE: Timezone; // International Atomic Time (TAI).
   static UT_ZONE: Timezone; // Universal Coordinated Time (AKA UTC, UCT, GMT, Zulu Time, etc.)
   static ZONELESS: Timezone; // A pseudo timezone for abstract date/time instances.
   static DATELESS: Timezone; // A pseudo timezone for abstract dateless, time-only `DateTime` instances.
