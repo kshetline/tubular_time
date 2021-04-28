@@ -16,7 +16,8 @@ const TEST_DTS = [
   52.13, 52.94, 53.70, 54.39, 54.98, 55.46, 55.89, 56.37, 56.99, 57.70,
   58.45, 59.19, 59.92, 60.68, 61.46, 62.23, 62.90, 63.42, 63.81, 64.08,
   64.27, 64.41, 64.55, 64.73, 64.95, 65.20, 65.48, 65.77, 66.06, 66.33,
-  66.61, 66.92, 67.28, 67.69, 68.11, 68.53, 68.92, 69.24, 69.36, 69.36
+  66.61, 66.92, 67.28, 67.69, 68.11, 68.53, 68.92, 69.24, 69.36, 69.36,
+  69.45
 ];
 
 describe('UT/TDT Converter', () => {
@@ -32,7 +33,7 @@ describe('UT/TDT Converter', () => {
       expect(taiToUtMillis(utToTaiMillis(millis, true), true)).to.equal(millis);
     }
 
-    for (let y = 1922; y <= 2021; ++y) {
+    for (let y = 1922; y <= 2022; ++y) {
       const now = new DateTime([y], 'UTC');
       const epochMillis = now.epochMillis;
       const deltaTai = round(now.wallTime.deltaTai * 1000);

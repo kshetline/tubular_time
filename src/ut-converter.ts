@@ -198,7 +198,6 @@ function deltaTAtStartOfYear(year: number): number {
   if (lastTableYear < 0) {
     lastTableYear = historicDeltaT.length + 1578; // Temporarily 1 less than it should be
     calibration = historicDeltaT[historicDeltaT.length - 1] - deltaTAtStartOfYear(lastTableYear + 1);
-    console.log('calibration', calibration);
     ++lastTableYear;
   }
 
