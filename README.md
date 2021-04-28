@@ -1286,6 +1286,7 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 
 ```typescript
   static OS_ZONE: Timezone; // Local timezone as derived from analyzing values returned by JavaScript `Date`.
+  static TAI_ZONE: Timezone; // International Atomic Time (TAI).
   static UT_ZONE: Timezone; // Universal Coordinated Time (AKA UTC, UCT, GMT, Zulu Time, etc.)
   static ZONELESS: Timezone; // A pseudo timezone for abstract date/time instances.
   static DATELESS: Timezone; // A pseudo timezone for abstract dateless, time-only `DateTime` instances.
