@@ -603,6 +603,8 @@ Examples of using `set()`:
 `ttime('1690-09-15').set('month', 5).toIsoString(10)` → `1690-02-15`<br>
 `ttime('1690-09-15').set('month', 13, true).toIsoString(10)` → `1691-01-15`
 
+There is a corresponding `get()` method which returns the numeric value of a field, or `undefined` if the field does not exist.
+
 ### Using `startOf()` and `endOf()`
 
 These functions transform a `DateTime` to the beginning or end of a given unit of time.

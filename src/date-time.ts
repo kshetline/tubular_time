@@ -179,7 +179,7 @@ export class DateTime extends Calendar {
     else if (resolution === DateTimeField.YEAR)
       return d1.wallTime.y - d2.wallTime.y;
 
-    throw new Error(`Resolution ${DateTimeField[resolution]} not valid`);
+    throw new Error(`Resolution ${DateTimeField[resolution] || resolution} not valid`);
   }
 
   /**
@@ -678,7 +678,11 @@ export class DateTime extends Calendar {
 
   private checkDateless(field: DateTimeField): void {
     if (this._timezone === DATELESS)
-      throw new Error(`${DateTimeField[field]} cannot be used with a dateless time value`);
+      throw new Error(`${DateTimeField[field] || field} cannot be used with a dateless time value`);
+  }
+
+  private undefinedIfDateless(value: number): number | undefined {
+    return this._timezone === DATELESS ? undefined : value;
   }
 
   add(field: DateTimeField | DateTimeFieldName, amount: number, variableDays = false): this {
@@ -810,7 +814,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid add()/subtract() field`);
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid add()/subtract() field`);
     }
 
     if (updateFromTai) {
@@ -1026,7 +1030,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid roll() field`);
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid roll() field`);
     }
 
     delete wallTime.n;
@@ -1049,6 +1053,33 @@ export class DateTime extends Calendar {
     result.updateWallTimeFromEpochMillis();
 
     return result._lock(this.locked);
+  }
+
+  get(field: DateTimeField | DateTimeFieldName): number {
+    const fieldN = fieldNameToField(field);
+    const wallTime = this._wallTime;
+
+    switch (fieldN) {
+      case DateTimeField.MILLI: return wallTime.millis;
+      case DateTimeField.SECOND: return wallTime.sec;
+      case DateTimeField.MINUTE: return wallTime.min;
+      case DateTimeField.HOUR: return wallTime.hrs;
+      case DateTimeField.HOUR_12: return wallTime.hrs === 0 ? 12 : wallTime.hrs < 13 ? wallTime.hrs : wallTime.hrs - 12;
+      case DateTimeField.AM_PM: return wallTime.hrs < 12 ? 0 : 1;
+      case DateTimeField.DAY: return this.undefinedIfDateless(wallTime.d);
+      case DateTimeField.DAY_BY_WEEK: return this.undefinedIfDateless(wallTime.dw);
+      case DateTimeField.DAY_BY_WEEK_LOCALE: return this.undefinedIfDateless(wallTime.dwl);
+      case DateTimeField.DAY_OF_YEAR: return this.undefinedIfDateless(wallTime.dy);
+      case DateTimeField.WEEK: return this.undefinedIfDateless(wallTime.w);
+      case DateTimeField.WEEK_LOCALE: return this.undefinedIfDateless(wallTime.wl);
+      case DateTimeField.MONTH: return this.undefinedIfDateless(wallTime.m);
+      case DateTimeField.YEAR: return this.undefinedIfDateless(wallTime.y);
+      case DateTimeField.YEAR_WEEK: return this.undefinedIfDateless(wallTime.yw);
+      case DateTimeField.YEAR_WEEK_LOCALE: return this.undefinedIfDateless(wallTime.ywl);
+      case DateTimeField.ERA: return this.undefinedIfDateless(wallTime.y <= 0 ? 0 : 1);
+      default:
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid set() field`);
+    }
   }
 
   set(field: DateTimeField | DateTimeFieldName, value: number, loose = false): this {
@@ -1227,7 +1258,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid set() field`);
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid set() field`);
     }
 
     if (value < min || value > max)
@@ -1334,7 +1365,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid startOf() field`);
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid startOf() field`);
     }
 
     delete wallTime.n;
@@ -1456,7 +1487,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field]} is not a valid startOf() field`);
+        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid startOf() field`);
     }
 
     delete wallTime.n;

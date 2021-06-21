@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.0-alpha.2",
   "description": "Date/time, IANA timezones, leap seconds, TAI/UTC conversions, calendar with settable Julian/Gregorian switchover",
   "web": "dist/umd/index.js",
   "main": "dist/cjs/index.js",
