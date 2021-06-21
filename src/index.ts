@@ -267,5 +267,6 @@ forEach(Month, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; 
 ttime.LAST = LAST;
 
 Object.freeze(ttime);
+initTimezoneSmall();
 
 export default ttime;
