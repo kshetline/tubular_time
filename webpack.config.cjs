@@ -65,6 +65,9 @@ module.exports = env => {
       new class OutputMonitor {
         // noinspection JSUnusedGlobalSymbols
         apply(compiler) {
+          if (!umd)
+            return;
+
           compiler.hooks.thisCompilation.tap('OutputMonitor', (compilation) => {
             compilation.hooks.processAssets.tap(
               { name: 'OutputMonitor', stage: Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE },
