@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { SUNDAY } from './calendar';
 import { DateTime, DateTimeField } from './date-time';
 import { Timezone } from './timezone';
-import { ttime, initTimezoneLarge, initTimezoneLargeAlt, initTimezoneSmall } from './index';
+import { initTimezoneLarge, initTimezoneLargeAlt, initTimezoneSmall, ttime } from './index';
 
 describe('DateTime', () => {
   initTimezoneSmall();
@@ -323,6 +323,21 @@ describe('DateTime', () => {
     expect(new DateTime('1970-w03-3').set(DateTimeField.YEAR_WEEK_LOCALE, 2).format('gggg-[w]ww-e')).to.equal('0002-w03-3');
     expect(new DateTime('1970-03-31').set(DateTimeField.ERA, 0).toIsoString(10)).to.equal('-1969-03-31');
     expect(() => new DateTime('04:05').set(DateTimeField.WEEK, 1)).to.throw('WEEK cannot be used with a dateless time value');
+  });
+
+  it('should correctly get DateTime fields', () => {
+    const date = new DateTime('2300-05-05T14:08:10.909');
+
+    expect(date.get(DateTimeField.ERA)).to.equal(1);
+    expect(date.get('year')).to.equal(2300);
+    expect(date.get('month')).to.equal(5);
+    expect(date.get(DateTimeField.DAY)).to.equal(5);
+    expect(date.get(DateTimeField.AM_PM)).to.equal(1);
+    expect(date.get('hour')).to.equal(14);
+    expect(date.get('hour12')).to.equal(2);
+    expect(date.get(DateTimeField.MINUTE)).to.equal(8);
+    expect(date.get('second')).to.equal(10);
+    expect(date.get('millis')).to.equal(909);
   });
 
   it('should correctly perform DateTime.startOf()', () => {
