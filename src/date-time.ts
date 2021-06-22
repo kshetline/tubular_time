@@ -23,6 +23,15 @@ export enum DateTimeField {
   MONTH, QUARTER, YEAR, YEAR_WEEK, YEAR_WEEK_LOCALE, ERA
 }
 
+function dtfToString(field: DateTimeField | string): string {
+  if (isString(field))
+    return `"${field}"`;
+  else if (DateTimeField[field])
+    return `"${DateTimeField[field]}"`;
+  else
+    return `#${field}`;
+}
+
 export type DateTimeFieldName = 'milli' | 'millis' | 'millisecond' | 'milliseconds' | 'second' | 'seconds' |
   'minute' | 'minutes' | 'hour12' | 'hours12' | 'hour' | 'hours' | 'ampm' | 'am_pm' | 'day' | 'days' | 'date' |
   'dayByWeek' | 'dayByWeekLocale' | 'dayOfYear' | 'week' | 'weeks' | 'weekLocale' | 'month' | 'months' |
@@ -161,7 +170,7 @@ export class DateTime extends Calendar {
     if (d1.type !== d2.type)
       throw new Error(`Mismatched DateTime types ${d1.type}/${d2.type}`);
     else if (d1._timezone === DATELESS && resolution > DateTimeField.HOUR)
-      throw new Error(`Resolution ${DateTimeField[resolution]} not valid for time-only values`);
+      throw new Error(`Resolution ${dtfToString(resolution)} not valid for time-only values`);
 
     if (resolution === DateTimeField.FULL || resolution === DateTimeField.MILLI)
       return this.milliCompare(d1, d2);
@@ -179,7 +188,7 @@ export class DateTime extends Calendar {
     else if (resolution === DateTimeField.YEAR)
       return d1.wallTime.y - d2.wallTime.y;
 
-    throw new Error(`Resolution ${DateTimeField[resolution] || resolution} not valid`);
+    throw new Error(`Resolution ${dtfToString(resolution)} not valid`);
   }
 
   /**
@@ -678,7 +687,7 @@ export class DateTime extends Calendar {
 
   private checkDateless(field: DateTimeField): void {
     if (this._timezone === DATELESS)
-      throw new Error(`${DateTimeField[field] || field} cannot be used with a dateless time value`);
+      throw new Error(`${dtfToString(field)} cannot be used with a dateless time value`);
   }
 
   private undefinedIfDateless(value: number): number | undefined {
@@ -814,7 +823,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid add()/subtract() field`);
+        throw new Error(`${dtfToString(field)} is not a valid add()/subtract() field`);
     }
 
     if (updateFromTai) {
@@ -1030,7 +1039,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid roll() field`);
+        throw new Error(`${dtfToString(field)} is not a valid roll() field`);
     }
 
     delete wallTime.n;
@@ -1078,7 +1087,7 @@ export class DateTime extends Calendar {
       case DateTimeField.YEAR_WEEK_LOCALE: return this.undefinedIfDateless(wallTime.ywl);
       case DateTimeField.ERA: return this.undefinedIfDateless(wallTime.y <= 0 ? 0 : 1);
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid set() field`);
+        throw new Error(`${dtfToString(field)} is not a valid get() field`);
     }
   }
 
@@ -1258,7 +1267,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid set() field`);
+        throw new Error(`${dtfToString(field)} is not a valid set() field`);
     }
 
     if (value < min || value > max)
@@ -1365,7 +1374,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid startOf() field`);
+        throw new Error(`${dtfToString(field)} is not a valid startOf() field`);
     }
 
     delete wallTime.n;
@@ -1487,7 +1496,7 @@ export class DateTime extends Calendar {
         break;
 
       default:
-        throw new Error(`${isString(field) ? `"${field}"` : DateTimeField[field] || field} is not a valid startOf() field`);
+        throw new Error(`${dtfToString(field)} is not a valid endOf() field`);
     }
 
     delete wallTime.n;
