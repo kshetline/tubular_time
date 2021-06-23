@@ -120,14 +120,14 @@ To remotely download the full code as an ES module:
 </script>
 ```
 
-For the old-fashioned UMD approach, that can skip about 560K of extra data:
+For the old-fashioned UMD approach (which can save you from about 560K of extra data):
 
 ```html
 <script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
 <script src="https://unpkg.com/@tubular/time/dist/umd/index.js"></script>
 ```
 
-The script element just above the `index.js` URL is an example of optionally loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
+The script element just above the `index.js` URL is an example of _optionally_ loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
 The **@tubular/time** package will be available via the global variable `tbTime`. `tbTime.ttime` is the default function, and other functions, classes, and constants will also be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, `tbTime.TIME_MS`, etc.
 
