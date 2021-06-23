@@ -46,8 +46,8 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "license": "MIT",
   "dependencies": {
-    "@tubular/math": "^3.0.1-alpha.2",
-    "@tubular/util": "^4.0.1-alpha.1"
+    "@tubular/math": "^3.0.1",
+    "@tubular/util": "^4.0.1"
   },
   "optionalDependencies": {
     "by-request": "^1.2.7"
