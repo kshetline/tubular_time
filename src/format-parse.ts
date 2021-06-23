@@ -1,4 +1,4 @@
-import { DateAndTime, getDatePart, getDateValue, parseTimeOffset } from './common';
+import { DateAndTime, getDatePart, getDateValue, parseTimeOffset, setFormatter } from './common';
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
@@ -531,6 +531,8 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
   return result.join('');
 }
+
+setFormatter(format);
 
 function quickFormat(localeNames: string | string[], timezone: string, opts: any): DateTimeFormat {
   const options: DateTimeFormatOptions = { calendar: 'gregory' };

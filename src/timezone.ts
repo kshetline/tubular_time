@@ -1,10 +1,12 @@
 import { abs, div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
-import { getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayNumber_SGC, getDayOnOrAfter_SGC, LAST } from './calendar';
-import { dateAndTimeFromMillis_SGC, DAY_MSEC, getDateValue, millisFromDateTime_SGC, MINUTE_MSEC, parseTimeOffset, YMDDate } from './common';
+import {
+  dateAndTimeFromMillis_SGC, getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayNumber_SGC,
+  getDayOnOrAfter_SGC, LAST, millisFromDateTime_SGC
+} from './calendar';
+import { DAY_MSEC, deltaTUpdater, getDateValue, MINUTE_MSEC, parseTimeOffset, YMDDate } from './common';
 import { hasIntlDateTime } from './locale-data';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
-import { updateDeltaTs } from './ut-converter';
 
 export interface OffsetsAndZones {
   offset: string;
@@ -970,9 +972,9 @@ export class Timezone {
     const lastLeap = this.getDateAfterLastKnownLeapSecond();
 
     if (deltaTs)
-      updateDeltaTs(deltaTs.split(/\s+/).map(dt => toNumber(dt)), lastLeap);
+      deltaTUpdater(deltaTs.split(/\s+/).map(dt => toNumber(dt)), lastLeap);
     else
-      updateDeltaTs(null, lastLeap);
+      deltaTUpdater(null, lastLeap);
   }
 
   private static extractLeapSeconds(): void {

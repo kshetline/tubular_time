@@ -44,18 +44,18 @@ if (win) {
 }
 
 export {
-  Calendar, CalendarType, DayOfWeek, Month, GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR,
+  Calendar, CalendarType, dateAndTimeFromMillis_SGC, DayOfWeek, Month,
+  GREGORIAN_CHANGE_MAX_YEAR, GREGORIAN_CHANGE_MIN_YEAR,
   SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, LAST,
   YearOrDate, GregorianChange, getISOFormatDate, addDaysToDate_SGC,
   getDateFromDayNumber_SGC, getDateFromDayNumberGregorian, getDateFromDayNumberJulian, getDateOfNthWeekdayOfMonth_SGC,
   getDayNumber_SGC, getDayNumberGregorian, getDayNumberJulian, getDayOfWeek, getDayOfWeek_SGC,
   getDayOfWeekInMonthCount_SGC, getDayOnOrAfter_SGC, getDayOnOrBefore_SGC, getDaysInMonth_SGC, getDaysInYear_SGC,
   getFirstDateInMonth_SGC, getLastDateInMonth_SGC, getLastDateInMonthGregorian, getLastDateInMonthJulian,
-  isJulianCalendarDate_SGC, isValidDate_SGC, isValidDateGregorian, isValidDateJulian, parseISODate
+  isJulianCalendarDate_SGC, isValidDate_SGC, isValidDateGregorian, isValidDateJulian, millisFromDateTime_SGC,
+  parseISODate
 } from './calendar';
-export {
-  DateAndTime, MINUTE_MSEC, dateAndTimeFromMillis_SGC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, millisFromDateTime_SGC,
-  parseISODateTime, parseTimeOffset, YMDDate
+export { DateAndTime, MINUTE_MSEC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
 export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity } from './date-time';
 export { getDeltaTAtJulianDate, utToTdt, tdtToUt } from './ut-converter';

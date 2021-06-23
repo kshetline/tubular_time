@@ -5,10 +5,11 @@ import {
   getDateFromDayNumberGregorian
 } from './calendar';
 import {
-  DateAndTime, DAY_MSEC, DELTA_MJD, HOUR_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC, orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
+  DateAndTime, formatter,
+  DAY_MSEC, DELTA_MJD, HOUR_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC,
+  orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
   syncDateAndTime, UNIX_TIME_ZERO_AS_JULIAN_DAY, validateDateAndTime, YMDDate
 } from './common';
-import { format as formatter } from './format-parse';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
 import { taiMillisToTdt, taiToUtMillis, tdtDaysToTaiMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
