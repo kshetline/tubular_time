@@ -48,7 +48,12 @@ module.exports = env => {
       minimize: !dev,
       minimizer: [new TerserPlugin({
         terserOptions: {
-          output: { max_line_len: 511 }
+          output: {
+            comments: (node, comment) => {
+              return comment.type === 'comment2' && /\bwebpackIgnore\b/.test(comment.value);
+            },
+            max_line_len: 511
+          }
         }
       })],
     },

@@ -16,7 +16,12 @@ export default [
       }
     ],
     plugins: [
-      terser({ output: { max_line_len: 511 } })
+      terser({ output: {
+        comments: (node, comment) => {
+          return comment.type === 'comment2' && /\bwebpackIgnore\b/.test(comment.value);
+        },
+        max_line_len: 511
+      } })
     ]
   }
 ];
