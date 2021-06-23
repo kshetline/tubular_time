@@ -1,6 +1,5 @@
-import { div_rd, floor, mod } from '@tubular/math';
-import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
-import { isNumber, toNumber } from '@tubular/util';
+import { floor } from '@tubular/math';
+import { convertDigitsToAscii, isNumber, toNumber } from '@tubular/util';
 
 export const MIN_YEAR = -271820;
 export const MAX_YEAR =  275759;
@@ -17,6 +16,15 @@ export const DELTA_TDT_SEC = 32.184;
 export const DELTA_TDT_MSEC = 32184;
 export const DELTA_TDT_DAYS = DELTA_TDT_SEC / DAY_SEC;
 export const DELTA_MJD = 2400000.5;
+
+// Hacks to eliminate circular dependencies.
+type Formatter = (dt: any, fmt: string, localeOverride?: string | string[]) => string;
+export let formatter: Formatter;
+export const setFormatter = (fmt: Formatter): any => formatter = fmt;
+
+type DeltaTUpdater = (post2019values?: number[], lastKnownLeapSecond?: YMDDate) => void;
+export let deltaTUpdater: DeltaTUpdater;
+export const setDeltaTUpdater = (dtu: DeltaTUpdater): any => deltaTUpdater = dtu;
 
 /**
  * Specifies a calendar date by year, month, and day. Optionally provides day number and boolean flag indicating Julian
@@ -174,34 +182,6 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
     throw new Error('A year value, an epoch day, an hour value, or a Julian date value must be specified');
 }
 
-export function millisFromDateTime_SGC(year: number, month: number, day: number, hour: number, minute: number, second?: number, millis?: number): number {
-  millis = millis || 0;
-  second = second || 0;
-
-  return millis +
-         second * 1000 +
-         minute * MINUTE_MSEC +
-         hour * HOUR_MSEC +
-         getDayNumber_SGC(year, month, day) * DAY_MSEC;
-}
-
-export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
-  const wallTime = getDateFromDayNumber_SGC(div_rd(ticks, DAY_MSEC)) as DateAndTime;
-
-  wallTime.millis = mod(ticks, 1000);
-  ticks = div_rd(ticks, 1000);
-  wallTime.sec = mod(ticks, 60);
-  ticks = div_rd(ticks, 60);
-  wallTime.min = mod(ticks, 60);
-  ticks = div_rd(ticks, 60);
-  wallTime.hrs = mod(ticks, 24);
-  wallTime.utcOffset = 0;
-  wallTime.dstOffset = 0;
-  wallTime.occurrence = 1;
-
-  return syncDateAndTime(wallTime);
-}
-
 const invalidDateTime = new Error('Invalid ISO date/time');
 
 export function parseISODateTime(date: string, allowLeapSecond = false): DateAndTime {
@@ -304,15 +284,6 @@ export function parseTimeOffset(offset: string, roundToMinutes = false): number 
   return sign * offsetSeconds;
 }
 
-export function convertDigits(n: string): string {
-  return n.replace(/[\u0660-\u0669]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0630)) // Arabic digits
-    .replace(/[\u06F0-\u06F9]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x06C0)) // Urdu/Persian digits
-    .replace(/[\u0966-\u096F]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0936)) // Devanagari digits
-    .replace(/[\u09E6-\u09EF]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x09B6)) // Bengali digits
-    .replace(/[\u0F20-\u0F29]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x0EF0)) // Tibetan digits
-    .replace(/[\u1040-\u1049]/g, ch => String.fromCodePoint(ch.charCodeAt(0) - 0x1010)); // Myanmar digits
-}
-
 export function getDatePart(format: Intl.DateTimeFormat, date: number, partName: string): string;
 export function getDatePart(fields: Intl.DateTimeFormatPart[], partName: string): string;
 export function getDatePart(source: Intl.DateTimeFormat | Intl.DateTimeFormatPart[],
@@ -331,5 +302,5 @@ export function getDateValue(format: Intl.DateTimeFormat, date: number, partName
 export function getDateValue(fields: Intl.DateTimeFormatPart[], partName: string): number;
 export function getDateValue(source: Intl.DateTimeFormat | Intl.DateTimeFormatPart[],
                             dateOrPart: number | string, partName?: string): number {
-  return toNumber(convertDigits(getDatePart(source as any, dateOrPart as any, partName)));
+  return toNumber(convertDigitsToAscii(getDatePart(source as any, dateOrPart as any, partName)));
 }

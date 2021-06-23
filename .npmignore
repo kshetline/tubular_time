@@ -8,6 +8,7 @@
 /img
 /.nyc_output
 *.js.map
+!/dist/**/*.js.map
 *.spec.d.ts
 *.spec.js
 /webpack.config.cjs

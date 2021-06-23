@@ -1,6 +1,9 @@
 import { floor, max, round } from '@tubular/math';
 import { clone } from '@tubular/util';
-import { DAY_MSEC, DAY_SEC, DELTA_TDT_DAYS, DELTA_TDT_MSEC, JD_J2000, UNIX_TIME_ZERO_AS_JULIAN_DAY, YMDDate } from './common';
+import {
+  DAY_MSEC, DAY_SEC, DELTA_TDT_DAYS, DELTA_TDT_MSEC, JD_J2000, UNIX_TIME_ZERO_AS_JULIAN_DAY,
+  setDeltaTUpdater, YMDDate
+} from './common';
 import { Timezone } from './timezone';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 
@@ -101,6 +104,8 @@ export function updateDeltaTs(post2019values?: number[], lastKnownLeapSecond?: Y
 
   postKnownLeapSeconds = getDayNumber_SGC({ y: lastYMD.y + 1, m: lastYMD.m < 7 ? 1 : 7, d: 1 }) + UNIX_TIME_ZERO_AS_JULIAN_DAY;
 }
+
+setDeltaTUpdater(updateDeltaTs);
 
 export function getDeltaTAtJulianDate(timeJDE: number): number {
   const year = (timeJDE - JD_J2000) / 365.25 + 2000.0;

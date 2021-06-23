@@ -1,8 +1,8 @@
-import { convertDigits, DateAndTime, getDatePart, getDateValue, parseTimeOffset } from './common';
+import { DateAndTime, getDatePart, getDateValue, parseTimeOffset, setFormatter } from './common';
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
-import { flatten, isArray, isEqual, isNumber, isString, last, toNumber } from '@tubular/util';
+import { convertDigitsToAscii, flatten, isArray, isEqual, isNumber, isString, last, toNumber } from '@tubular/util';
 import {
   checkDtfOptions, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend,
   hasIntlDateTime, normalizeLocale
@@ -459,7 +459,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
             if (!intlFormat) {
               const options: DateTimeFormatOptions = { calendar: 'gregory' };
-              const zone = convertDigits(dt.timezone.zoneName);
+              const zone = convertDigitsToAscii(dt.timezone.zoneName);
               let $: RegExpExecArray;
 
               if (($ = /^(?:GMT|UTC?)([-+])(\d\d(?::?\d\d))/.exec(zone))) {
@@ -531,6 +531,8 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
   return result.join('');
 }
+
+setFormatter(format);
 
 function quickFormat(localeNames: string | string[], timezone: string, opts: any): DateTimeFormat {
   const options: DateTimeFormatOptions = { calendar: 'gregory' };
@@ -749,19 +751,19 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
 
   if (dateStyleOrFormatter == null || isString(dateStyleOrFormatter)) {
     if (dateStyleOrFormatter)
-      options.dateStyle = dateStyle = dateStyleOrFormatter as string;
+      options.dateStyle = dateStyle = dateStyleOrFormatter as any;
 
     if (timeStyle)
-      options.timeStyle = timeStyle;
+      options.timeStyle = timeStyle as any;
   }
   else {
     const formatOptions = dateStyleOrFormatter.resolvedOptions();
 
     Object.assign(options, formatOptions);
     options.timeZone = 'UTC';
-    dateStyle = formatOptions.dateStyle ??
+    dateStyle = (formatOptions as any).dateStyle ??
       (options.month === 'long' ? 'long' : options.month === 'short' ? 'short' : null);
-    timeStyle = formatOptions.timeStyle;
+    timeStyle = (formatOptions as any).timeStyle;
   }
 
   const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
@@ -773,7 +775,7 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
   let formatString = '';
 
   parts.forEach(part => {
-    const value = part.value = convertDigits(part.value);
+    const value = part.value = convertDigitsToAscii(part.value);
     const len = value.length;
 
     switch (part.type) {
@@ -787,7 +789,7 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
 
       case 'hour':
         formatString += ({ h11: 'KK', h12: 'hh', h23: 'HH', h24: 'kk' }
-          [format.resolvedOptions().hourCycle ?? 'h23'] ?? 'HH').substr(0, len);
+          [(format.resolvedOptions() as any).hourCycle ?? 'h23'] ?? 'HH').substr(0, len);
         break;
 
       case 'literal':
@@ -885,7 +887,7 @@ function matchMonth(locale: ILocale, input: string): [number, number] {
     let month = 0;
 
     for (let i = 0; i < 12; ++i) {
-      const MMM = convertDigits(months[i]);
+      const MMM = convertDigitsToAscii(months[i]);
 
       if (MMM.length > maxLen && input.startsWith(MMM)) {
         maxLen = MMM.length;
@@ -941,7 +943,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
   if (input.includes('₂'))
     occurrence = 2;
 
-  input = convertDigits(input.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-')
+  input = convertDigitsToAscii(input.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-')
     .replace(/\s+/g, ' ').trim()).replace(/[\u200F₂]/g, '');
   format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());

@@ -1,6 +1,6 @@
 import { div_rd, div_tt0, floor, mod } from '@tubular/math';
 import { isArray, isNumber, isObject, isString, padLeft } from '@tubular/util';
-import { syncDateAndTime, YMDDate } from './common';
+import { DateAndTime, DAY_MSEC, HOUR_MSEC, MINUTE_MSEC, syncDateAndTime, YMDDate } from './common';
 
 export enum CalendarType { PURE_GREGORIAN, PURE_JULIAN }
 export const GREGORIAN_CHANGE_MIN_YEAR = 300;
@@ -451,6 +451,34 @@ export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
     day -= lastDay;
 
   return syncDateAndTime({ y: year, m: month, d: day, n: dayNum, j: true });
+}
+
+export function millisFromDateTime_SGC(year: number, month: number, day: number, hour: number, minute: number, second?: number, millis?: number): number {
+  millis = millis || 0;
+  second = second || 0;
+
+  return millis +
+         second * 1000 +
+         minute * MINUTE_MSEC +
+         hour * HOUR_MSEC +
+         getDayNumber_SGC(year, month, day) * DAY_MSEC;
+}
+
+export function dateAndTimeFromMillis_SGC(ticks: number): DateAndTime {
+  const wallTime = getDateFromDayNumber_SGC(div_rd(ticks, DAY_MSEC)) as DateAndTime;
+
+  wallTime.millis = mod(ticks, 1000);
+  ticks = div_rd(ticks, 1000);
+  wallTime.sec = mod(ticks, 60);
+  ticks = div_rd(ticks, 60);
+  wallTime.min = mod(ticks, 60);
+  ticks = div_rd(ticks, 60);
+  wallTime.hrs = mod(ticks, 24);
+  wallTime.utcOffset = 0;
+  wallTime.dstOffset = 0;
+  wallTime.occurrence = 1;
+
+  return syncDateAndTime(wallTime);
 }
 
 export function isValidDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {

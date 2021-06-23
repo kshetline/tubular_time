@@ -102,20 +102,32 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 ...or...
 
-`const { ttime, DateTime, Timezone`...`} = require('@tubular/time/es6'); // CommonJS`
+`const { ttime, DateTime, Timezone`...`} = require('@tubular/time/cjs'); // CommonJS`
 
-Documentation examples will assume **@tubular/time** has been imported as above. You can also require `'@tubular/time/es5'` for ES5-compatible code.
+Documentation examples will assume **@tubular/time** has been imported as above.
 
 ### Via `<script>` tag
 
+To remotely download the full code as an ES module:
+
 ```html
-<script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
-<script src="https://unpkg.com/@tubular/time/dist/web/index.js"></script>
+<script type="module">
+  import('https://unpkg.com/@tubular/time/dist/fesm2015/index.mjs').then(pkg => {
+    const { ttime, DateTime, Timezone} = pkg;
+      
+    // ...
+  });
+</script>
 ```
 
-_(For ES5-compatible code, use `https://unpkg.com/@tubular/time/dist/web5/index.js"`)_
+For the old-fashioned UMD approach (which can save you from about 560K of extra data):
 
-The first script element is an example of optionally loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
+```html
+<script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
+<script src="https://unpkg.com/@tubular/time/dist/umd/index.js"></script>
+```
+
+The script element just above the `index.js` URL is an example of _optionally_ loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
 The **@tubular/time** package will be available via the global variable `tbTime`. `tbTime.ttime` is the default function, and other functions, classes, and constants will also be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, `tbTime.TIME_MS`, etc.
 
@@ -602,6 +614,8 @@ Examples of using `set()`:
 
 `ttime('1690-09-15').set('month', 5).toIsoString(10)` → `1690-02-15`<br>
 `ttime('1690-09-15').set('month', 13, true).toIsoString(10)` → `1691-01-15`
+
+There is a corresponding `get()` method which returns the numeric value of a field, or `undefined` if the field does not exist.
 
 ### Using `startOf()` and `endOf()`
 

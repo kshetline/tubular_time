@@ -20,7 +20,10 @@ try {
   else
     console.warn('Intl.DateTimeFormat not available');
 }
-catch {}
+catch (e) {
+  _hasIntl = false;
+  console.warn('Intl.DateTimeFormat not available: %s', e.message || e.toString());
+}
 
 export const hasIntlDateTime = _hasIntl;
 export const hasDateTimeStyle = _hasDateTimeStyle;
