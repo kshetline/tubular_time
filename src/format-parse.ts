@@ -18,6 +18,22 @@ const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 
+function newDateTimeFormat(locale?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat {
+  options = options && checkDtfOptions(options);
+
+  let dtf: DateTimeFormat;
+
+  try {
+    dtf = new DateTimeFormat(locale, options);
+  }
+  catch (e) {
+    options = options && checkDtfOptions(options, true);
+    dtf = new DateTimeFormat(locale, options);
+  }
+
+  return dtf;
+}
+
 function formatEscape(s: string): string {
   let result = '';
   let inAlpha = false;
@@ -478,12 +494,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
                 options.timeStyle = styleOptValues[field.charAt(2)];
 
               try {
-                locale.dateTimeFormats[field] = intlFormat = new DateTimeFormat(localeNames, checkDtfOptions(options));
+                locale.dateTimeFormats[field] = intlFormat = newDateTimeFormat(localeNames, options);
               }
               catch {
                 console.warn('Timezone "%s" not recognized', options.timeZone);
                 delete options.timeZone;
-                locale.dateTimeFormats[field] = intlFormat = new DateTimeFormat(localeNames, options);
+                locale.dateTimeFormats[field] = intlFormat = newDateTimeFormat(localeNames, options);
               }
             }
 
@@ -557,7 +573,7 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
     options[key] = value;
   });
 
-  return new DateTimeFormat(localeNames, checkDtfOptions(options));
+  return newDateTimeFormat(localeNames, options);
 }
 
 // Find the shortest case-insensitive version of each string in the array that doesn't match
@@ -767,7 +783,7 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
   }
 
   const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
-  const format = new DateTimeFormat(locale, checkDtfOptions(options));
+  const format = newDateTimeFormat(locale, options);
   const parts = format.formatToParts(sampleDate);
   const dateLong = (dateStyle === 'full' || dateStyle === 'long');
   const monthLong = (dateLong || (dateStyle === 'medium' && isLocale(locale, 'ne')));

@@ -41,14 +41,18 @@ const backupTimeFormats: Record<string, DateTimeFormatOptions> = {
   short: { hour: 'numeric', minute: '2-digit' }
 };
 
-export function checkDtfOptions(options: DateTimeFormatOptions): DateTimeFormatOptions {
-  if (!hasDateTimeStyle && options.dateStyle) {
-    Object.assign(options, backupDateFormats[options.dateStyle]);
+function populate(original: any, supplement: any): void {
+  Object.keys(supplement).forEach(key => original[key] = original[key] ?? supplement[key]);
+}
+
+export function checkDtfOptions(options: DateTimeFormatOptions, forceReplacement = false): DateTimeFormatOptions {
+  if ((!hasDateTimeStyle || forceReplacement) && options.dateStyle) {
+    populate(options, backupDateFormats[options.dateStyle]);
     delete options.dateStyle;
   }
 
-  if (!hasDateTimeStyle && options.timeStyle) {
-    Object.assign(options, backupTimeFormats[options.timeStyle]);
+  if ((!hasDateTimeStyle || forceReplacement) && options.timeStyle) {
+    populate(options, backupTimeFormats[options.timeStyle]);
     delete options.timeStyle;
   }
 
@@ -129,6 +133,7 @@ const meridiems = {
   'eo': [['a.t.m.', 'A.T.M.'], ['p.t.m.', 'P.T.M.']],
   'fa': [['قبل از ظهر'], ['بعد از ظهر']],
   'gu': [['રાત'], ['રાત'], ['રાત'], ['રાત'], ['સવાર'], ['સવાર'], ['સવાર'], ['સવાર'], ['સવાર'], ['સવાર'], ['બપોર'], ['બપોર'], ['બપોર'], ['બપોર'], ['બપોર'], ['બપોર'], ['બપોર'], ['સાંજ'], ['સાંજ'], ['સાંજ'], ['રાત'], ['રાત'], ['રાત'], ['રાત']],
+  'he': [['לפנה״צ'], ['אחה״צ']],
   'hi': [['रात'], ['रात'], ['रात'], ['रात'], ['सुबह'], ['सुबह'], ['सुबह'], ['सुबह'], ['सुबह'], ['सुबह'], ['दोपहर'], ['दोपहर'], ['दोपहर'], ['दोपहर'], ['दोपहर'], ['दोपहर'], ['दोपहर'], ['शाम'], ['शाम'], ['शाम'], ['रात'], ['रात'], ['रात'], ['रात']],
   'hu': [['de', 'DE'], ['du', 'DU']],
   'hy': [['գիշերվա'], ['գիշերվա'], ['գիշերվա'], ['գիշերվա'], ['առավոտվա'], ['առավոտվա'], ['առավոտվա'], ['առավոտվա'], ['առավոտվա'], ['առավոտվա'], ['առավոտվա'], ['առավոտվա'], ['ցերեկվա'], ['ցերեկվա'], ['ցերեկվա'], ['ցերեկվա'], ['ցերեկվա'], ['երեկոյան'], ['երեկոյան'], ['երեկոյան'], ['երեկոյան'], ['երեկոյան'], ['երեկոյան'], ['երեկոյան']],
