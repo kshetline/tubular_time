@@ -179,4 +179,9 @@ describe('FormatParse', () => {
     expect(parse('Jul 7, 2022 04:05 PM Etc/GMT+3', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 3 * 3_600_000);
   });
+
+  it('should use priority meridiem forms over Intl forms', () => {
+    expect(new DateTime(0, 'UTC', 'he').format('A')).to.equal('לפ׳');
+    expect(new DateTime('1970-01-01T12:00', 'UTC', 'hi').format('A')).to.equal('अ');
+  });
 });

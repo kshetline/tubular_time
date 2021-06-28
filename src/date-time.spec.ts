@@ -52,6 +52,8 @@ describe('DateTime', () => {
     expect(new DateTime('2245W343').format(ttime.DATE)).to.equal('2245-08-20');
     expect(new DateTime('2245W34').format(ttime.DATE)).to.equal('2245-08-18');
     expect(new DateTime('2245').format(ttime.DATE)).to.equal('2245-01-01');
+    expect(new DateTime({ tai: 0 }).format(ttime.DATETIME_LOCAL_SECONDS + ' z')).to.equal('1970-01-01T00:00:00 TAI');
+    expect(new DateTime({ tai: 0 }, 'UTC').format(ttime.DATETIME_LOCAL_SECONDS + ' z')).to.equal('1969-12-31T23:59:52 UTC');
     expect(() => new DateTime(NaN).throwIfInvalid()).to.throw('Invalid core millisecond time value: NaN');
     expect(() => new DateTime().throwIfInvalid()).to.not.throw();
 

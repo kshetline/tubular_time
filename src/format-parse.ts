@@ -2,10 +2,10 @@ import { DateAndTime, getDatePart, getDateValue, parseTimeOffset, setFormatter }
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
-import { convertDigitsToAscii, flatten, isArray, isEqual, isNumber, isString, last, toNumber } from '@tubular/util';
+import { clone, convertDigitsToAscii, flatten, forEach, isArray, isEqual, isNumber, isString, last, toNumber } from '@tubular/util';
 import {
   checkDtfOptions, getMeridiems, getMinDaysInWeek, getOrdinals, getStartOfWeek, getWeekend,
-  hasIntlDateTime, normalizeLocale
+  hasIntlDateTime, hasPriorityMeridiems, normalizeLocale
 } from './locale-data';
 import { Timezone } from './timezone';
 import DateTimeFormat = Intl.DateTimeFormat;
@@ -18,20 +18,43 @@ const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 
-function newDateTimeFormat(locale?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat {
+export function newDateTimeFormat(locale?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat {
   options = options && checkDtfOptions(options);
 
-  let dtf: DateTimeFormat;
+  for (let i = 0; i < 2; ++i) {
+    let orig = options;
 
-  try {
-    dtf = new DateTimeFormat(locale, options);
-  }
-  catch (e) {
-    options = options && checkDtfOptions(options, true);
-    dtf = new DateTimeFormat(locale, options);
+    if (options.dateStyle || options.timeStyle) {
+      const standardOptions = resolveFormatDetails(locale, options.dateStyle, options.timeStyle);
+      let changes = 0;
+
+      orig = clone(options);
+      delete options.dateStyle;
+      delete options.timeStyle;
+
+      forEach(standardOptions as any, (key, value) => {
+        if (options[key] == null)
+          options[key] = value;
+        else if (options[key] !== value)
+          ++changes;
+      });
+
+      forEach(orig as any, key => changes += +(orig[key] !== standardOptions[key] &&
+        ['day', 'era', 'fractionalSecondDigits', 'hour', 'minute', 'month', 'second', 'timeZoneName', 'weekday', 'year'].includes(key)));
+
+      if (changes === 0 && i !== 1)
+        options = orig;
+    }
+
+    try {
+      return new DateTimeFormat(locale, options);
+    }
+    catch {
+      options = orig;
+    }
   }
 
-  return dtf;
+  return new DateTimeFormat(locale, options);
 }
 
 function formatEscape(s: string): string {
@@ -434,7 +457,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
-        if (hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
+        if (dt.timezone.zoneName !== 'TAI' && hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
           result.push(getDatePart(locale.dateTimeFormats.z, dt.epochMillis, 'timeZoneName'));
           break;
         }
@@ -703,6 +726,12 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
   locale.ordinals = getOrdinals(localeNames);
   locale.parsePatterns = {};
 
+  if (hasPriorityMeridiems(localeNames)) {
+    const temp = locale.meridiem;
+    locale.meridiem = locale.meridiemAlt;
+    locale.meridiemAlt = temp;
+  }
+
   cachedLocales[joinedNames] = locale;
 
   return locale;
@@ -846,6 +875,86 @@ export function analyzeFormat(locale: string | string[], dateStyleOrFormatter: s
   });
 
   return formatString;
+}
+
+const formatCache: Record<string, DateTimeFormatOptions> = {};
+
+export function resolveFormatDetails(locale: string | string[], dateStyle: string, timeStyle?: string): DateTimeFormatOptions {
+  const key = JSON.stringify(locale ?? null) + ';' + (dateStyle || '') + ';' + (timeStyle || '');
+  let result: DateTimeFormatOptions = formatCache[key];
+
+  if (result)
+    return result;
+
+  result = {};
+
+  const options: DateTimeFormatOptions = { timeZone: 'UTC', calendar: 'gregory',
+                                           dateStyle: dateStyle as any, timeStyle: timeStyle as any };
+  const sampleDate = Date.UTC(2233, 3 /* 4 */, 5, 6, 7, 8);
+  const format = new DateTimeFormat(locale, options);
+  const parts = format.formatToParts(sampleDate);
+  const dateLong = (dateStyle === 'full' || dateStyle === 'long');
+  const monthLong = (dateLong || (dateStyle === 'medium' && isLocale(locale, 'ne')));
+
+  parts.forEach(part => {
+    const value = part.value = convertDigitsToAscii(part.value);
+    const len = value.length;
+    const asNumber = (len === 2 ? '2-digit' : 'numeric');
+
+    switch (part.type) {
+      case 'day':
+        result.day = asNumber;
+        break;
+
+      case 'dayPeriod':
+        result.hour12 = true;
+        break;
+
+      case 'hour':
+        result.hour = asNumber;
+
+        if ((format.resolvedOptions() as any).hourCycle)
+          result.hourCycle = (format.resolvedOptions() as any).hourCycle;
+        else
+          result.hourCycle = format.formatToParts(Date.UTC(2233, 3 /* 4 */, 5, 13, 7, 8))['hour'] === '13' ? 'h23' : 'h12';
+
+        break;
+
+      case 'minute':
+        result.minute = asNumber;
+        break;
+
+      case 'month':
+        if (/^\d+$/.test(value))
+          result.month = asNumber;
+        else
+          result.month = (monthLong ? 'long' : 'short');
+        break;
+
+      case 'second':
+        result.second = asNumber;
+        break;
+
+      case 'weekday':
+        result.weekday = (dateLong ? 'long' : 'short');
+        break;
+
+      case 'year':
+        result.year = (len < 3 ? '2-digit' : 'numeric');
+        break;
+
+      case 'era':
+        result.era = dateStyle === 'full' ? 'short' : 'long';
+        break;
+    }
+  });
+
+  if (result.hourCycle)
+    delete result.hour12;
+
+  formatCache[key] = result;
+
+  return result;
 }
 
 function validateField(name: string, value: number, min: number, max: number): void {

@@ -149,6 +149,7 @@ While there are a wide range of functions and classes available from **@tubular/
 | `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone. | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
 | `ttime('20:17:15')` | Dateless time from an ISO-8601 time string. | `DateTime<20:17:15.000>` |
 | `ttime(1200848400000)` | From a millisecond timestamp. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
+| `ttime({ tai: 1200848400000 })` | From a TAI millisecond timestamp. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })` | From a `DateAndTime` object, short-style field names. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })` | From a `DateAndTime` object, long-style field names. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
 | `ttime([2013, 12, 11, 10, 9, 8, 765])` | From a numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order. | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
