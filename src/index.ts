@@ -58,6 +58,7 @@ export {
 export { DateAndTime, MINUTE_MSEC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
 export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity } from './date-time';
+export { newDateTimeFormat } from './format-parse';
 export { getDeltaTAtJulianDate, utToTdt, tdtToUt } from './ut-converter';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
