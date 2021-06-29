@@ -149,6 +149,17 @@ export function decomposeFormatString(format: string): string[] {
   return flatten(parts) as string[];
 }
 
+function parseDateTimeFormatMods(s: string): DateTimeFormatOptions {
+  s = s.replace(/\b([-_a-z0-9]+)\b/ig, '"$1"');
+
+  try {
+    return JSON.parse(s);
+  }
+  catch {}
+
+  return null;
+}
+
 function isLetter(char: string, checkDot = false): boolean {
   // This custom test works out better than the \p{L} character class for parsing purposes here.
   return (checkDot && char === '.') ||
@@ -188,6 +199,14 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
     else
       return n.toString().padStart(pad, '0').replace(/\d/g, ch => String.fromCharCode(ch.charCodeAt(0) + zeroAdj));
   };
+
+  let dtfMods: DateTimeFormatOptions;
+  const $ = /(.*\bI[FLMSx][FLMS]?)({[^}]+})(.*)/.exec(fmt);
+
+  if ($) {
+    dtfMods = parseDateTimeFormatMods($[2]);
+    fmt = $[1] + $[3];
+  }
 
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
@@ -494,10 +513,19 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           result.push(locale.eras[(year < 1 ? 0 : 1) + (field.length === 4 ? 2 : 0)]);
         else if (field.startsWith('I')) {
           if (hasIntlDateTime) {
-            let intlFormat = locale.dateTimeFormats[field] as DateTimeFormat;
+            const formatKey = field + (dtfMods ? JSON.stringify(dtfMods) : '');
+            let intlFormat = locale.dateTimeFormats[formatKey] as DateTimeFormat;
 
             if (!intlFormat) {
-              const options: DateTimeFormatOptions = { calendar: 'gregory' };
+              const options: DateTimeFormatOptions = {};
+
+              if (dtfMods) {
+                Object.assign(options, dtfMods);
+                dtfMods = undefined;
+              }
+
+              options.calendar = 'gregory';
+
               const zone = convertDigitsToAscii(dt.timezone.zoneName);
               let $: RegExpExecArray;
 
@@ -517,12 +545,12 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
                 options.timeStyle = styleOptValues[field.charAt(2)];
 
               try {
-                locale.dateTimeFormats[field] = intlFormat = newDateTimeFormat(localeNames, options);
+                locale.dateTimeFormats[formatKey] = intlFormat = newDateTimeFormat(localeNames, options);
               }
               catch {
                 console.warn('Timezone "%s" not recognized', options.timeZone);
                 delete options.timeZone;
-                locale.dateTimeFormats[field] = intlFormat = newDateTimeFormat(localeNames, options);
+                locale.dateTimeFormats[formatKey] = intlFormat = newDateTimeFormat(localeNames, options);
               }
             }
 

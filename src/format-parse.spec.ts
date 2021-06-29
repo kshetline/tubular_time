@@ -16,6 +16,7 @@ describe('FormatParse', () => {
   it('should properly decompose format strings', () => {
     expect(new DateTime('2022-07-07 8:08 ACST').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Australian Central Standard Time Australia/Adelaide GMT+9:30');
     expect(new DateTime('2022-07-07 8:08 PST').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 9:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
+    expect(new DateTime('2022-07-07 8:08 PST').format('IMM{hourCycle:h23} zzz ZZZ z')).to.equal('Jul 7, 2022, 09:08:00 Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('2022-07-07 8:08 PDT').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('1995-05-06 EDT').format('IMM zzz ZZZ z')).to.equal('May 6, 1995, 12:00:00 AM Eastern Daylight Time America/New_York EDT');
     expect(new DateTime('foo').valid).is.false;
@@ -44,6 +45,8 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
     expect(new DateTime('1986-09-04').format('D\u200F/M\u200F/YYYY h:mm A', 'ar')).to.equal('٤\u200F/٩\u200F/١٩٨٦ ١٢:٠٠ ص');
     expect(new DateTime('1986-09-04').format('D/M/YY h:mm A', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
+    expect(new DateTime('1986-09-04').format('ISS', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
+    expect(new DateTime('1986-09-04').format('ISS{numberingSystem:latn}', 'bn')).to.equal('4/9/86 12:00 AM');
     expect(new DateTime('1986-09-04').format('DD-MM-YY နံနက် H:mm', 'my')).to.equal('၀၄-၀၉-၈၆ နံနက် ၀:၀၀');
   });
 

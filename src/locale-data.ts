@@ -78,7 +78,7 @@ export function normalizeLocale(locale: string | string[]): string | string[] {
     return 'en-us';
 
   if (isString(locale) && locale.includes(','))
-    locale = locale.split(',').map(lcl => lcl.trim());
+    locale = locale.split(',').map(lcl => lcl.trim().replace(/-u-.*$/, ''));
 
   if (isArray(locale)) {
     if (locale.length === 0)
@@ -333,7 +333,7 @@ export function getOrdinals(locale: string | string[]): string[] {
   if (isNumber(ords)) {
     result = [];
 
-    for (let i = 0; i <= 31; ++i)
+    for (let i = 0; i <= 31; ++i) // noinspection SpellCheckingInspection
       result.push(i + (' .aº\u0645η'.substr(ords - 1, 1).trim()));
   }
   else if (!ords)
