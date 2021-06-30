@@ -1036,8 +1036,14 @@ export class Timezone {
 
     result += padLeft(hours, 2, '0') + colon + padLeft(minutes, 2, '0');
 
-    if (offsetSeconds !== 0)
-      result += colon + padLeft(offsetSeconds, 2, '0');
+    if (offsetSeconds !== 0) {
+      result += colon + padLeft(floor(offsetSeconds), 2, '0');
+
+      if (offsetSeconds % 1 !== 0) {
+        result += '.' + offsetSeconds.toFixed(3).substr(2);
+        result = result.replace(/\.000$/, '');
+      }
+    }
 
     return result;
   }

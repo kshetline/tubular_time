@@ -19,6 +19,7 @@
 
 import { DAY_MSEC } from './common';
 import { DateTime, DateTimeArg } from './date-time';
+import { newDateTimeFormat } from './format-parse';
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
 import timezoneSmall from './timezone-small';
@@ -260,6 +261,7 @@ ttime.millisFromJulianDay   = DateTime.millisFromJulianDay;
 ttime.julianDay_SGC         = DateTime.julianDay_SGC;
 
 ttime.getDeltaTAtJulianDate = getDeltaTAtJulianDate;
+ttime.newDateTimeFormat     = newDateTimeFormat;
 ttime.tdtToUt               = tdtToUt;
 ttime.utToTdt               = utToTdt;
 

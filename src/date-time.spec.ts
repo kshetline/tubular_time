@@ -607,6 +607,9 @@ describe('DateTime', () => {
     expect(new DateTime('1995-12-31 23:00:00Z').add(DateTimeField.HOUR_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1995-12-31 00:00:00Z').add(DateTimeField.DAY_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1995-12-31 23:59:60Z').subtract('second_tai', 1).toString()).to.equal('DateTime<1995-12-31T23:59:59.000 +00:00>');
+    expect(new DateTime('1970 TAI').format('HH:mm:ss Z')).to.equal('00:00:00 +00:00:08');
+    expect(new DateTime('1960 TAI').format('HH:mm:ss Z')).to.equal('00:00:00 +00:00:01');
+    expect(new DateTime('1950 TAI').format('HH:mm:ss Z')).to.equal('00:00:00 -00:00:03.254');
 
     // Test fictitious negative leap second
     expect(new DateTime('2022-12-31T23:59:58Z').add('seconds_tai', 1).toString()).to.equal('DateTime<2023-01-01T00:00:00.000 +00:00>');

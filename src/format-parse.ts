@@ -471,7 +471,11 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       // eslint-disable-next-line no-fallthrough
       case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
-        if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof DateTimeFormat) {
+        if (dt.timezone.zoneName === 'TAI') {
+          result.push('Temps Atomique International');
+          break;
+        }
+        else if (hasIntlDateTime && locale.dateTimeFormats.Z instanceof DateTimeFormat) {
           result.push(getDatePart(locale.dateTimeFormats.Z, dt.epochMillis, 'timeZoneName'));
           break;
         }
@@ -491,7 +495,10 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'ZZ': // Zone as UTC offset
       case 'Z':
-        result.push(dt.timezone.getFormattedOffset(dt.epochMillis, field === 'ZZ'));
+        if (dt.timezone.zoneName === 'TAI')
+          result.push(Timezone.formatUtcOffset(dt.wallTime.deltaTai, field === 'ZZ'));
+        else
+          result.push(dt.timezone.getFormattedOffset(dt.epochMillis, field === 'ZZ'));
         break;
 
       case 'V':
@@ -531,7 +538,9 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
               const zone = convertDigitsToAscii(dt.timezone.zoneName);
               let $: RegExpExecArray;
 
-              if (($ = /^(?:GMT|UTC?)([-+])(\d\d(?::?\d\d))/.exec(zone))) {
+              if (zone === 'TAI')
+                options.timeZone = 'UTC';
+              else if (($ = /^(?:GMT|UTC?)([-+])(\d\d(?::?\d\d))/.exec(zone))) {
                 options.timeZone = 'Etc/GMT' + ($[1] === '-' ? '+' : '-') + $[2].replace(/^0+(?=\d)|:|00$/g, '');
 
                 if (!Timezone.has(options.timeZone))

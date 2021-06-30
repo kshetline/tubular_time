@@ -376,7 +376,8 @@ export class DateTime extends Calendar {
     }
     else
       this.epochMillis = (isNumber(initialTime) ? initialTime as number :
-        (parseZone === Timezone.TAI_ZONE ? utToTaiMillis(Date.now()) : Date.now()));
+        (parseZone === Timezone.TAI_ZONE || (parseZone == null && timezone === Timezone.TAI_ZONE) ?
+          utToTaiMillis(Date.now()) : Date.now()));
 
     if (parseZone && timezone)
       this.timezone = timezone;
@@ -1671,7 +1672,7 @@ export class DateTime extends Calendar {
     let s = `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
 
     if (this.isTai())
-      s = s.replace(' +00:00', ' TAI');
+      s = s.replace(/ [-+]\d\d:[\d:.]+>$/, ' TAI>');
     else if (this._timezone === Timezone.ZONELESS)
       s = s.replace(' +00:00', '');
 
