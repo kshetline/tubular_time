@@ -468,7 +468,8 @@ describe('DateTime', () => {
     expect(new DateTime('2021-01-04 America/New_York').utcOffsetMinutes).to.equal(-300);
     expect(new DateTime('2021-07-04 America/New_York').utcOffsetSeconds).to.equal(-14400);
     expect(new DateTime('2021-01-04 Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
-    expect(new DateTime('2021-01-04', 'Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
+    expect(new DateTime('2021-01-04 Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
+    expect(new DateTime('2021-01-04', 'europe/dublin').timezone.zoneName).to.equal('Europe/Dublin');
     expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetSeconds).to.equal(0);
     expect(new DateTime('2021-07-04 Europe/Dublin').utcOffsetSeconds).to.equal(3600);
     expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetMinutes).to.equal(0);

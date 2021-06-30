@@ -445,7 +445,8 @@ export class Timezone {
   }
 
   static has(name: string): boolean {
-    return !!this.zoneLookup[name] || !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS|TAI)$/i.test(name);
+    return !!this.zoneLookup[name] || !!this.zonesByLowercase[name.toLowerCase()] ||
+           !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS|TAI)$/i.test(name);
   }
 
   static from(name: string): Timezone {
