@@ -15,7 +15,7 @@
     "default": "./dist/cjs/index.js"
   },
   "engines": {
-    "node": ">= 10.24.1"
+    "node": ">=10.24.1"
   },
   "scripts": {
     "build": "rimraf dist/ && tsc && rollup -c -m && webpack && ts-node make-remote-zone-data.ts",
