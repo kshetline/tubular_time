@@ -200,13 +200,16 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       return n.toString().padStart(pad, '0').replace(/\d/g, ch => String.fromCharCode(ch.charCodeAt(0) + zeroAdj));
   };
 
-  let dtfMods: DateTimeFormatOptions;
-  const $ = /(.*\bI[FLMSx][FLMS]?)({[^}]+})(.*)/.exec(fmt);
+  const dtfMods: DateTimeFormatOptions[] = [];
 
-  if ($) {
-    dtfMods = parseDateTimeFormatMods($[2]);
-    fmt = $[1] + $[3];
-  }
+  fmt = fmt.replace(/(\bI[FLMSx][FLMS]?)({[^}]+})?/g, (_match, $1, $2) => {
+    if ($2)
+      dtfMods.push(parseDateTimeFormatMods($2));
+    else
+      dtfMods.push(null);
+
+    return $1;
+  });
 
   const parts = decomposeFormatString(fmt);
   const result: string[] = [];
@@ -518,11 +521,10 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
             if (!intlFormat) {
               const options: DateTimeFormatOptions = {};
+              const dtfMod = dtfMods.splice(0, 1)[0];
 
-              if (dtfMods) {
-                Object.assign(options, dtfMods);
-                dtfMods = undefined;
-              }
+              if (dtfMod)
+                Object.assign(options, dtfMod);
 
               options.calendar = 'gregory';
 
