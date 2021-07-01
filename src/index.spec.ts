@@ -6,6 +6,7 @@ import ttime, {
 import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import { zonePollerNode } from './zone-poller-node';
+import { newDateTimeFormat } from './format-parse';
 
 describe('Zone updates', () => {
   beforeEach(() => {
@@ -68,8 +69,8 @@ describe('Zone updates', () => {
     expect(ttime('Europe/Prague').getTimezoneDisplayName()).to.match(/^CES?T$/);
     expect(ttime('1945-05-08 UTC').epochMillis).to.equal(Date.parse('May 8, 1945 00:00+00:00'));
     expect(ttime('May 8, 1945 UTC', 'MMM D, Y z').epochMillis).to.equal(Date.parse('May 8, 1945 00:00+00:00'));
-    expect(ttime('8/5/1945', 'IS', 'es').format('IM')).to.equal('8 may. 1945');
-    expect(ttime('8/5/45', 'IS', 'es').format('IM')).to.equal('8 may. 2045');
+    expect(ttime('8/5/1945', 'IS', 'es').format('IM')).to.match(/^8 may\.? 1945$/);
+    expect(ttime('8/5/45', 'IS', 'es').format('IM')).to.match(/^8 may\.? 2045$/);
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLLL')).to.equal('Saturday, February 5, 1955, 3:12 AM');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('llll')).to.equal('Sat, Feb 5, 1955, 3:12 AM');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLL')).to.equal('February 5, 1955, 3:12 AM');
@@ -106,5 +107,15 @@ describe('Zone updates', () => {
     expect(ttime.max(a, b, c, d)).to.equal(c);
     expect(ttime.sort([a, b, c, d])).to.eql([a, b, d, c]);
     expect(ttime.sort([a, b, c, d], true)).to.eql([c, d, b, a]);
+  });
+
+  it('should be able to create DateTimeFormat instances without dateStyle/timeStyle exceptions', () => {
+    expect(() => newDateTimeFormat('fr', { timeStyle: 'short', hour: '2-digit' })).to.not.throw();
+
+    const options = newDateTimeFormat('en-US', { dateStyle: 'short', era: 'short' }).resolvedOptions();
+
+    expect(options.era).to.equal('short');
+    expect((options as any).dateStyle).to.be.undefined;
+    expect(options.day).to.match(/^(2-digit|numeric)$/);
   });
 });

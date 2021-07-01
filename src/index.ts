@@ -19,6 +19,7 @@
 
 import { DAY_MSEC } from './common';
 import { DateTime, DateTimeArg } from './date-time';
+import { newDateTimeFormat } from './format-parse';
 import { IZonePoller } from './i-zone-poller';
 import { Timezone } from './timezone';
 import timezoneSmall from './timezone-small';
@@ -58,6 +59,7 @@ export {
 export { DateAndTime, MINUTE_MSEC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, parseISODateTime, parseTimeOffset, YMDDate
 } from './common';
 export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity } from './date-time';
+export { newDateTimeFormat } from './format-parse';
 export { getDeltaTAtJulianDate, utToTdt, tdtToUt } from './ut-converter';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
@@ -259,6 +261,7 @@ ttime.millisFromJulianDay   = DateTime.millisFromJulianDay;
 ttime.julianDay_SGC         = DateTime.julianDay_SGC;
 
 ttime.getDeltaTAtJulianDate = getDeltaTAtJulianDate;
+ttime.newDateTimeFormat     = newDateTimeFormat;
 ttime.tdtToUt               = tdtToUt;
 ttime.utToTdt               = utToTdt;
 

@@ -1,4 +1,6 @@
+import sourcemaps from 'rollup-plugin-sourcemaps';
 import { terser } from 'rollup-plugin-terser';
+import typescript from '@rollup/plugin-typescript';
 
 export default [
   {
@@ -16,12 +18,14 @@ export default [
       }
     ],
     plugins: [
+      sourcemaps(),
       terser({ output: {
         comments: (node, comment) => {
           return comment.type === 'comment2' && /\bwebpackIgnore\b/.test(comment.value);
         },
         max_line_len: 511
-      } })
+      } }),
+      typescript()
     ]
   }
 ];

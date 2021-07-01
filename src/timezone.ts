@@ -445,7 +445,8 @@ export class Timezone {
   }
 
   static has(name: string): boolean {
-    return !!this.zoneLookup[name] || !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS|TAI)$/i.test(name);
+    return !!this.zoneLookup[name] || !!this.zonesByLowercase[name.toLowerCase()] ||
+           !!this.encodedTimezones[name] || /^(GMT|OS|UTC?|ZONELESS|DATELESS|TAI)$/i.test(name);
   }
 
   static from(name: string): Timezone {
@@ -1035,8 +1036,14 @@ export class Timezone {
 
     result += padLeft(hours, 2, '0') + colon + padLeft(minutes, 2, '0');
 
-    if (offsetSeconds !== 0)
-      result += colon + padLeft(offsetSeconds, 2, '0');
+    if (offsetSeconds !== 0) {
+      result += colon + padLeft(floor(offsetSeconds), 2, '0');
+
+      if (offsetSeconds % 1 !== 0) {
+        result += '.' + offsetSeconds.toFixed(3).substr(2);
+        result = result.replace(/\.000$/, '');
+      }
+    }
 
     return result;
   }

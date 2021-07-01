@@ -52,6 +52,8 @@ describe('DateTime', () => {
     expect(new DateTime('2245W343').format(ttime.DATE)).to.equal('2245-08-20');
     expect(new DateTime('2245W34').format(ttime.DATE)).to.equal('2245-08-18');
     expect(new DateTime('2245').format(ttime.DATE)).to.equal('2245-01-01');
+    expect(new DateTime({ tai: 0 }).format(ttime.DATETIME_LOCAL_SECONDS + ' z')).to.equal('1970-01-01T00:00:00 TAI');
+    expect(new DateTime({ tai: 0 }, 'UTC').format(ttime.DATETIME_LOCAL_SECONDS + ' z')).to.equal('1969-12-31T23:59:52 UTC');
     expect(() => new DateTime(NaN).throwIfInvalid()).to.throw('Invalid core millisecond time value: NaN');
     expect(() => new DateTime().throwIfInvalid()).to.not.throw();
 
@@ -466,7 +468,8 @@ describe('DateTime', () => {
     expect(new DateTime('2021-01-04 America/New_York').utcOffsetMinutes).to.equal(-300);
     expect(new DateTime('2021-07-04 America/New_York').utcOffsetSeconds).to.equal(-14400);
     expect(new DateTime('2021-01-04 Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
-    expect(new DateTime('2021-01-04', 'Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
+    expect(new DateTime('2021-01-04 Atlantis/Xanadu').error).to.equal('Bad timezone: Atlantis/Xanadu');
+    expect(new DateTime('2021-01-04', 'europe/dublin').timezone.zoneName).to.equal('Europe/Dublin');
     expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetSeconds).to.equal(0);
     expect(new DateTime('2021-07-04 Europe/Dublin').utcOffsetSeconds).to.equal(3600);
     expect(new DateTime('2021-01-04 Europe/Dublin').utcOffsetMinutes).to.equal(0);
@@ -604,6 +607,9 @@ describe('DateTime', () => {
     expect(new DateTime('1995-12-31 23:00:00Z').add(DateTimeField.HOUR_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1995-12-31 00:00:00Z').add(DateTimeField.DAY_TAI, 1).toString()).to.equal('DateTime<1995-12-31T23:59:60.000 +00:00>');
     expect(new DateTime('1995-12-31 23:59:60Z').subtract('second_tai', 1).toString()).to.equal('DateTime<1995-12-31T23:59:59.000 +00:00>');
+    expect(new DateTime('1970 TAI').format('HH:mm:ss Z')).to.equal('00:00:00 +00:00:08');
+    expect(new DateTime('1960 TAI').format('HH:mm:ss Z')).to.equal('00:00:00 +00:00:01');
+    expect(new DateTime('1950 TAI').format('HH:mm:ss Z')).to.equal('00:00:00 -00:00:03.254');
 
     // Test fictitious negative leap second
     expect(new DateTime('2022-12-31T23:59:58Z').add('seconds_tai', 1).toString()).to.equal('DateTime<2023-01-01T00:00:00.000 +00:00>');

@@ -14,7 +14,7 @@ import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
 import { taiMillisToTdt, taiToUtMillis, tdtDaysToTaiMillis, tdtToUt, utToTaiMillis, utToTdt } from './ut-converter';
 
-export type DateTimeArg = number | string | DateAndTime | Date | number[] | null;
+export type DateTimeArg = number | string | DateAndTime | { tai: number } | Date | number[] | null;
 
 export enum DateTimeField {
   BAD_FIELD = Number.NEGATIVE_INFINITY,
@@ -227,6 +227,13 @@ export class DateTime extends Calendar {
         DateTime.defaultTimezoneExplicit = true;
     }
 
+    let parseZone: Timezone;
+
+    if (isObject(initialTime) && (initialTime as any).tai != null) {
+      initialTime = (initialTime as any).tai;
+      parseZone = Timezone.TAI_ZONE;
+    }
+
     if (isArray(initialTime)) {
       const t = {} as DateAndTime;
       [t.y, t.m, t.d, t.hrs, t.min, t.sec, t.millis] = initialTime;
@@ -236,7 +243,6 @@ export class DateTime extends Calendar {
     if (isEqual(initialTime, {}))
       initialTime = null;
 
-    let parseZone: Timezone;
     let occurrence = 0;
 
     if (isString(initialTime)) {
@@ -370,7 +376,8 @@ export class DateTime extends Calendar {
     }
     else
       this.epochMillis = (isNumber(initialTime) ? initialTime as number :
-        (parseZone === Timezone.TAI_ZONE ? utToTaiMillis(Date.now()) : Date.now()));
+        (parseZone === Timezone.TAI_ZONE || (parseZone == null && timezone === Timezone.TAI_ZONE) ?
+          utToTaiMillis(Date.now()) : Date.now()));
 
     if (parseZone && timezone)
       this.timezone = timezone;
@@ -1665,7 +1672,7 @@ export class DateTime extends Calendar {
     let s = `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
 
     if (this.isTai())
-      s = s.replace(' +00:00', ' TAI');
+      s = s.replace(/ [-+]\d\d:[\d:.]+>$/, ' TAI>');
     else if (this._timezone === Timezone.ZONELESS)
       s = s.replace(' +00:00', '');
 

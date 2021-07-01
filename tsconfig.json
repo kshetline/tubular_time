@@ -12,9 +12,10 @@
     "experimentalDecorators": true,
     "target": "ES2018",
     "resolveJsonModule": true,
-    "typeRoots": [
-      "node_modules/@types",
-      "./types"
+    "types": [
+      "chai",
+      "mocha",
+      "node"
     ],
     "lib": [
       "es2020",
