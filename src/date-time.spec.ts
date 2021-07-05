@@ -341,6 +341,9 @@ describe('DateTime', () => {
     expect(date.get(DateTimeField.MINUTE)).to.equal(8);
     expect(date.get('second')).to.equal(10);
     expect(date.get('millis')).to.equal(909);
+    expect(date.wallTime).to.include({ year: 2300 });
+    expect(date.wallTime.deltaTai).to.exist;
+    expect(date.wallTimeSparse.deltaTai).to.be.undefined;
   });
 
   it('should correctly perform DateTime.startOf()', () => {

@@ -536,7 +536,7 @@ As discussed earlier, concerning parsing time strings, ambiguous times due to Da
 
 As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all `DateAndTime` fields will be filled in with synchronized values. `ttime().wallTime.hour` provides the hour value, `ttime().wallTime.utcOffset` provides the UTC offset in seconds for the given time, etc.
 
-`ttime().wallTimeShort` returns a `DateAndTime` object with all available short-form field names, and `ttime().wallTimeLong` only long-form field names.
+`ttime().wallTimeShort` returns a `DateAndTime` object with all available short-form field names, and `ttime().wallTimeLong` only long-form field names. `ttime().wallTimeSparse` returns a `DateAndTime` object with a minimal set of short-form field names: `y`, `m`, `d`, `hrs`, `min`, `sec`, `millis`.
 
 ## Modifying `DateTime` values
 
@@ -1593,10 +1593,22 @@ For a given TDT Julian Date (ephemeris time), return the number of seconds that 
 ttime.getDeltaTAtJulianDate(timeJDE: number): number;
 ```
 
+For a given TAI millisecond value (1970 epoch), return the corresponding UT1 or UTC milliseconds:
+
+```typescript
+ttime.taiToUtMillis(millis: number, forUtc = false): number;
+```
+
 For a given TDT Julian Date (ephemeris time), return the Julian Date in Universal Time (UT1):
 
 ```typescript
 ttime.tdtToUt(timeJDE: number): number;
+```
+
+For a given UT1 or UTC millisecond value (1970 epoch), return the corresponding TAI milliseconds:
+
+```typescript
+ttime.utToTaiMillis(millis: number, asUtc = false): number;
 ```
 
 For a given UT1 Julian Date (Universal Time), return the Julian Date in ephemeris time (TDT):

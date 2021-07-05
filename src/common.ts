@@ -145,6 +145,18 @@ export function purgeAliasFields<T extends YMDDate | DateAndTime>(obj: T, keepLo
   return obj;
 }
 
+const minimalKeys =
+  new Set(['y', 'year', 'm', 'month', 'd', 'day', 'hrs', 'hour', 'min', 'minute', 'sec', 'second', 'millis']);
+
+export function minimizeFields<T extends YMDDate | DateAndTime>(obj: T): T {
+  Object.keys(obj).forEach(key => {
+    if (!minimalKeys.has(key))
+      delete obj[key];
+  });
+
+  return obj;
+}
+
 export function orderFields<T extends YMDDate | DateAndTime>(obj: T): T {
   for (const key of fieldOrder) {
     const value = obj[key];
@@ -166,7 +178,7 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
       const value = obj[key];
 
       if (value != null) {
-        if (/^(m?(jde|jdu))$/.test(key)) {
+        if (/^(m?(deltaTai|jde|jdu))$/.test(key)) {
           if (!isNumber(value))
             throw new Error(`${key} must be a numeric value (${value})`);
         }
