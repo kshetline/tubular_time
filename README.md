@@ -1138,7 +1138,7 @@ wallTime: DateAndTime;
 ```typescript
 computeUtcMillisFromWallTime(wallTime: DateAndTime): number;
 
-format(fmt = fullIsoFormat, localeOverride?: string): string;
+format(fmt = fullIsoFormat, localeOverride?: string | string[]): string;
 
 // For questions like “What date is the second Tuesday of this month?”
 //   `dayOfTheWeek` 0-6 for Sun-Sat, index is 1-based. You can use the constant `ttime.LAST`

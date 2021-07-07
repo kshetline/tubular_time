@@ -1668,7 +1668,7 @@ export class DateTime extends Calendar {
     return calendar;
   }
 
-  format(fmt = fullIsoFormat, localeOverride?: string): string {
+  format(fmt = fullIsoFormat, localeOverride?: string | string[]): string {
     return formatter(this, fmt, localeOverride);
   }
 
