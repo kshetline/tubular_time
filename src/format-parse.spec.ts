@@ -92,6 +92,8 @@ describe('FormatParse', () => {
     expect(parse('1:05:57 AM', 'LTS').toString()).to.equal('DateTime<01:05:57.000>');
     expect(parse('11/7/2021 1:25 AM', 'MM/DD/YYYY h:m a', 'America/Denver').toString()).to.equal('DateTime<2021-11-07T01:25:00.000 -06:00§>');
     expect(parse('11/7/2021 1:25₂ AM', 'MM/DD/YYYY h:m a', 'America/Denver').toString()).to.equal('DateTime<2021-11-07T01:25:00.000₂-07:00>');
+    expect(parse('2016-12-31T23:59:60', ttime.DATETIME_LOCAL_SECONDS, 'UTC',
+      undefined, true).toString()).to.equal('DateTime<2016-12-31T23:59:60.000 +00:00>');
   });
 
   it('should correctly handle two-digit years', () => {
