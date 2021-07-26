@@ -114,7 +114,7 @@ To remotely download the full code as an ES module:
 <script type="module">
   import('https://unpkg.com/@tubular/time/dist/fesm2015/index.mjs').then(pkg => {
     const { ttime, DateTime, Timezone} = pkg;
-      
+
     // ...
   });
 </script>
@@ -1557,6 +1557,24 @@ supportsCountry(country: string): boolean;
 
 ## Other functions available on `ttime`
 
+Get the minimum number of days within a given calendar year needed for a week to be considered part of a locale’s week-based calendar for that year:
+
+```typescript
+ttime.getMinDaysInWeek(locale: string | string[]): number;
+```
+
+Day number (0-6 for Sunday-Saturday) considered the first day of a week for a locale:
+
+```typescript
+ttime.getStartOfWeek(locale: string | string[]): number;
+```
+
+Day numbers (0-6 for Sunday-Saturday) considered to comprise weekend days for a locale:
+
+```typescript
+ttime.getWeekend(locale: string | string[]): number[];
+```
+
 Determine if a value is an instance of the `Date` class:
 
 ```typescript
@@ -1632,6 +1650,13 @@ Create new `Intl.DateTimeFormat` instances with more flexibility for mixing opti
 ## Constants available on `ttime`
 
 ```typescript
+// Locale
+ttime.defaultLocale;
+
+// Feature flags
+ttime.hasDateTimeStyle: boolean;
+ttime.hasIntlDateTime: boolean;
+
 // Formats
 ttime.DATETIME_LOCAL: string;
 ttime.DATETIME_LOCAL_SECONDS: string;

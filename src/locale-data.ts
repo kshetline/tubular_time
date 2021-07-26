@@ -4,6 +4,7 @@ import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 
 let _hasIntl = false;
 let _hasDateTimeStyle = true;
+let _defaultLocale = 'en';
 
 try {
   _hasIntl = typeof Intl !== 'undefined' && !!Intl?.DateTimeFormat;
@@ -25,8 +26,21 @@ catch (e) {
   console.warn('Intl.DateTimeFormat not available: %s', e.message || e.toString());
 }
 
+try {
+  if (_hasIntl)
+    _defaultLocale = new Intl.DateTimeFormat().resolvedOptions().locale;
+  else if (typeof process === 'object' && process.env?.LANG)
+    _defaultLocale = process.env.LANG.replace(/\..*$/, '').replace(/_/g, '-');
+  else if (typeof navigator === 'object' && navigator.language)
+    _defaultLocale = navigator.language;
+}
+catch (e) {
+  _defaultLocale = 'en';
+}
+
 export const hasIntlDateTime = _hasIntl;
 export const hasDateTimeStyle = _hasDateTimeStyle;
+export const defaultLocale = _defaultLocale;
 
 const backupDateFormats: Record<string, DateTimeFormatOptions> = {
   full: { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' },
