@@ -114,7 +114,7 @@ To remotely download the full code as an ES module:
 <script type="module">
   import('https://unpkg.com/@tubular/time/dist/fesm2015/index.mjs').then(pkg => {
     const { ttime, DateTime, Timezone} = pkg;
-      
+
     // ...
   });
 </script>
@@ -536,7 +536,7 @@ As discussed earlier, concerning parsing time strings, ambiguous times due to Da
 
 As an output from a `DateTime` instance, such as what you get from `ttime().wallTime`, all `DateAndTime` fields will be filled in with synchronized values. `ttime().wallTime.hour` provides the hour value, `ttime().wallTime.utcOffset` provides the UTC offset in seconds for the given time, etc.
 
-`ttime().wallTimeShort` returns a `DateAndTime` object with all available short-form field names, and `ttime().wallTimeLong` only long-form field names.
+`ttime().wallTimeShort` returns a `DateAndTime` object with all available short-form field names, and `ttime().wallTimeLong` only long-form field names. `ttime().wallTimeSparse` returns a `DateAndTime` object with a minimal set of short-form field names: `y`, `m`, `d`, `hrs`, `min`, `sec`, `millis`.
 
 ## Modifying `DateTime` values
 
@@ -1138,7 +1138,7 @@ wallTime: DateAndTime;
 ```typescript
 computeUtcMillisFromWallTime(wallTime: DateAndTime): number;
 
-format(fmt = fullIsoFormat, localeOverride?: string): string;
+format(fmt = fullIsoFormat, localeOverride?: string | string[]): string;
 
 // For questions like “What date is the second Tuesday of this month?”
 //   `dayOfTheWeek` 0-6 for Sun-Sat, index is 1-based. You can use the constant `ttime.LAST`
@@ -1557,6 +1557,24 @@ supportsCountry(country: string): boolean;
 
 ## Other functions available on `ttime`
 
+Get the minimum number of days within a given calendar year needed for a week to be considered part of a locale’s week-based calendar for that year:
+
+```typescript
+ttime.getMinDaysInWeek(locale: string | string[]): number;
+```
+
+Day number (0-6 for Sunday-Saturday) considered the first day of a week for a locale:
+
+```typescript
+ttime.getStartOfWeek(locale: string | string[]): number;
+```
+
+Day numbers (0-6 for Sunday-Saturday) considered to comprise weekend days for a locale:
+
+```typescript
+ttime.getWeekend(locale: string | string[]): number[];
+```
+
 Determine if a value is an instance of the `Date` class:
 
 ```typescript
@@ -1593,10 +1611,22 @@ For a given TDT Julian Date (ephemeris time), return the number of seconds that 
 ttime.getDeltaTAtJulianDate(timeJDE: number): number;
 ```
 
+For a given TAI millisecond value (1970 epoch), return the corresponding UT1 or UTC milliseconds:
+
+```typescript
+ttime.taiToUtMillis(millis: number, forUtc = false): number;
+```
+
 For a given TDT Julian Date (ephemeris time), return the Julian Date in Universal Time (UT1):
 
 ```typescript
 ttime.tdtToUt(timeJDE: number): number;
+```
+
+For a given UT1 or UTC millisecond value (1970 epoch), return the corresponding TAI milliseconds:
+
+```typescript
+ttime.utToTaiMillis(millis: number, asUtc = false): number;
 ```
 
 For a given UT1 Julian Date (Universal Time), return the Julian Date in ephemeris time (TDT):
@@ -1620,6 +1650,13 @@ Create new `Intl.DateTimeFormat` instances with more flexibility for mixing opti
 ## Constants available on `ttime`
 
 ```typescript
+// Locale
+ttime.defaultLocale;
+
+// Feature flags
+ttime.hasDateTimeStyle: boolean;
+ttime.hasIntlDateTime: boolean;
+
 // Formats
 ttime.DATETIME_LOCAL: string;
 ttime.DATETIME_LOCAL_SECONDS: string;

@@ -29,6 +29,7 @@ import { parse } from './format-parse';
 import { forEach, isString, toNumber } from '@tubular/util';
 import { CalendarType, DayOfWeek, Month, LAST } from './calendar';
 import { getDeltaTAtJulianDate, tdtToUt, utToTdt } from './ut-converter';
+import { defaultLocale, getMinDaysInWeek, getStartOfWeek, getWeekend, hasDateTimeStyle, hasIntlDateTime } from './locale-data';
 
 let win: any = null;
 
@@ -60,7 +61,8 @@ export { DateAndTime, MINUTE_MSEC, DAY_MINUTES, DAY_MSEC, HOUR_MSEC, parseISODat
 } from './common';
 export { DateTime, DateTimeField, DateTimeFieldName, Discontinuity } from './date-time';
 export { newDateTimeFormat } from './format-parse';
-export { getDeltaTAtJulianDate, utToTdt, tdtToUt } from './ut-converter';
+export { defaultLocale, getMinDaysInWeek, getStartOfWeek, getWeekend, hasDateTimeStyle, hasIntlDateTime } from './locale-data';
+export { getDeltaTAtJulianDate, utToTaiMillis, utToTdt, taiToUtMillis, tdtToUt } from './ut-converter';
 export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
@@ -264,6 +266,13 @@ ttime.getDeltaTAtJulianDate = getDeltaTAtJulianDate;
 ttime.newDateTimeFormat     = newDateTimeFormat;
 ttime.tdtToUt               = tdtToUt;
 ttime.utToTdt               = utToTdt;
+
+ttime.defaultLocale    = defaultLocale;
+ttime.getMinDaysInWeek = getMinDaysInWeek;
+ttime.getStartOfWeek   = getStartOfWeek;
+ttime.getWeekend       = getWeekend;
+ttime.hasDateTimeStyle = hasDateTimeStyle;
+ttime.hasIntlDateTime  = hasIntlDateTime;
 
 forEach(DayOfWeek, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; });
 forEach(Month, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; });

@@ -1099,7 +1099,8 @@ function isNumericPart(part: string): boolean {
   return /^[gy]/i.test(part) || (part.length < 3 && /^[WwMDEeHhKkmsS]/.test(part));
 }
 
-export function parse(input: string, format: string, zone?: Timezone | string, locales?: string | string[]): DateTime {
+export function parse(input: string, format: string, zone?: Timezone | string, locales?: string | string[],
+                      allowLeapSecond = false): DateTime {
   let origZone = zone;
   let restoreZone = false;
   let occurrence = 0;
@@ -1270,7 +1271,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           break;
 
         case 's':
-          validateField('second', newValue, 0, 59);
+          validateField('second', newValue, 0, allowLeapSecond ? 60 : 59);
           w.sec = newValue;
           break;
 

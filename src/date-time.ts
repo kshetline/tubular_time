@@ -8,7 +8,7 @@ import {
   DateAndTime, formatter,
   DAY_MSEC, DELTA_MJD, HOUR_MSEC, MAX_YEAR, MIN_YEAR, MINUTE_MSEC,
   orderFields, parseISODateTime, parseTimeOffset, purgeAliasFields,
-  syncDateAndTime, UNIX_TIME_ZERO_AS_JULIAN_DAY, validateDateAndTime, YMDDate
+  syncDateAndTime, UNIX_TIME_ZERO_AS_JULIAN_DAY, validateDateAndTime, YMDDate, minimizeFields
 } from './common';
 import { Timezone } from './timezone';
 import { getMinDaysInWeek, getStartOfWeek, hasIntlDateTime, normalizeLocale } from './locale-data';
@@ -546,7 +546,7 @@ export class DateTime extends Calendar {
            this._timezone !== Timezone.DATELESS && this._timezone !== Timezone.ZONELESS;
   }
 
-  private getWallTime(purge?: boolean): DateAndTime {
+  private getWallTime(purge?: boolean, minimal = false): DateAndTime {
     if (!this.valid)
       return { error: this.error };
 
@@ -561,6 +561,9 @@ export class DateTime extends Calendar {
 
     if (purge != null)
       purgeAliasFields(w, purge);
+
+    if (minimal)
+      minimizeFields(w);
 
     return w;
   }
@@ -596,6 +599,7 @@ export class DateTime extends Calendar {
   }
 
   get wallTimeShort(): DateAndTime { return this.getWallTime(false); }
+  get wallTimeSparse(): DateAndTime { return this.getWallTime(false, true); }
   get wallTimeLong(): DateAndTime { return this.getWallTime(true); }
 
   get timezone(): Timezone { return this._timezone; }
@@ -1664,7 +1668,7 @@ export class DateTime extends Calendar {
     return calendar;
   }
 
-  format(fmt = fullIsoFormat, localeOverride?: string): string {
+  format(fmt = fullIsoFormat, localeOverride?: string | string[]): string {
     return formatter(this, fmt, localeOverride);
   }
 

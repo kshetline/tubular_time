@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import ttime, {
-  addZonesUpdateListener, clearZonesUpdateListeners, DateTime, getTimezones, initTimezoneSmall,
+  addZonesUpdateListener, clearZonesUpdateListeners, DateTime, getStartOfWeek, getTimezones, getWeekend, initTimezoneSmall,
   pollForTimezoneUpdates, Timezone
 } from './index';
 import timezoneSmall from './timezone-small';
@@ -117,5 +117,14 @@ describe('Zone updates', () => {
     expect(options.era).to.equal('short');
     expect((options as any).dateStyle).to.be.undefined;
     expect(options.day).to.match(/^(2-digit|numeric)$/);
+  });
+
+  it('should properly determine week starts and weekends', () => {
+    expect(getStartOfWeek('en-us')).to.equal(0);
+    expect(getStartOfWeek('en-gb')).to.equal(1);
+    expect(getStartOfWeek('ar-eg')).to.equal(6);
+    expect(getWeekend('en')).to.eql([6, 0]);
+    expect(getWeekend('ar-eg')).to.eql([5, 6]);
+    expect(getWeekend('sd')).to.eql([5]);
   });
 });
