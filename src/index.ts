@@ -26,7 +26,7 @@ import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
 import { parse } from './format-parse';
-import { forEach, isString, toNumber } from '@tubular/util';
+import { forEach, isBoolean, isString, toNumber } from '@tubular/util';
 import { CalendarType, DayOfWeek, Month, LAST } from './calendar';
 import { getDeltaTAtJulianDate, tdtToUt, utToTdt } from './ut-converter';
 import { defaultLocale, getMinDaysInWeek, getStartOfWeek, getWeekend, hasDateTimeStyle, hasIntlDateTime } from './locale-data';
@@ -105,6 +105,7 @@ export function initTimezoneLargeAlt(failQuietly = false): void {
 }
 
 let pollingInterval: any;
+let lastUpdateName = 'small';
 let currentTzVersion = Timezone.version === 'unspecified' ? '' : Timezone.version;
 
 const versionCheckUrl = 'https://tzexplorer.org/api/tz-version';
@@ -129,7 +130,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
         return;
       }
 
-      if (latestTzVersion <= currentTzVersion) {
+      if (latestTzVersion <= currentTzVersion && lastUpdateName === name) {
         dispatchUpdateNotification(false);
         return;
       }
@@ -157,6 +158,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
       if (updated)
         currentTzVersion = latestTzVersion;
 
+      lastUpdateName = name;
       dispatchUpdateNotification(updated);
     };
 
@@ -191,6 +193,9 @@ export async function getTimezones(zonePoller: IZonePoller, name: ZoneOptions = 
 const listeners = new Set<(result: boolean | Error) => void>();
 
 function dispatchUpdateNotification(result: boolean | Error): void {
+  if (!(result instanceof Error) && !isBoolean(result))
+    result = new Error(String(result)); // Oddly, some errors come through as numbers like 404.
+
   listeners.forEach(listener => {
     try {
       listener(result);
