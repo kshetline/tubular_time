@@ -26,7 +26,7 @@ import timezoneSmall from './timezone-small';
 import timezoneLarge from './timezone-large';
 import timezoneLargeAlt from './timezone-large-alt';
 import { parse } from './format-parse';
-import { forEach, isString, toNumber } from '@tubular/util';
+import { forEach, isBoolean, isString, toNumber } from '@tubular/util';
 import { CalendarType, DayOfWeek, Month, LAST } from './calendar';
 import { getDeltaTAtJulianDate, tdtToUt, utToTdt } from './ut-converter';
 import { defaultLocale, getMinDaysInWeek, getStartOfWeek, getWeekend, hasDateTimeStyle, hasIntlDateTime } from './locale-data';
@@ -105,8 +105,12 @@ export function initTimezoneLargeAlt(failQuietly = false): void {
 }
 
 let pollingInterval: any;
+let lastUpdateName = 'small';
+let currentTzVersion = Timezone.version === 'unspecified' ? '' : Timezone.version;
 
-const zonesUrl = 'https://unpkg.com/@tubular/time/dist/data/timezone-{name}.js';
+const versionCheckUrl = 'https://tzexplorer.org/api/tz-version';
+const zonesUrl1 = 'https://unpkg.com/@tubular/time/dist/data/timezone-{name}.js';
+const zonesUrl2 = 'https://tzexplorer.org/tzdata/timezone-{name}.js';
 
 export type ZoneOptions = 'small' | 'large' | 'large-alt';
 
@@ -115,15 +119,50 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
     clearInterval(pollingInterval);
 
   if (zonePoller && name && intervalDays >= 0) {
-    const url = zonesUrl.replace('{name}', name);
-    const poll = (): void => {
-      zonePoller.getTimezones(url).then(zones => {
-        dispatchUpdateNotification(Timezone.defineTimezones(zones));
-      })
-        .catch(err => dispatchUpdateNotification(err instanceof Error ? err : new Error(err)));
+    const poll = async (): Promise<void> => {
+      let latestTzVersion: string;
+
+      try {
+        latestTzVersion = await zonePoller.getLatestVersion(versionCheckUrl);
+      }
+      catch (e) {
+        dispatchUpdateNotification(e);
+        return;
+      }
+
+      if (latestTzVersion <= currentTzVersion && lastUpdateName === name) {
+        dispatchUpdateNotification(false);
+        return;
+      }
+
+      let zones: any;
+      let updated = false;
+
+      try {
+        zones = await zonePoller.getTimezones(zonesUrl1.replace('{name}', name));
+        updated = Timezone.defineTimezones(zones);
+      }
+      catch {}
+
+      if (!updated) {
+        try {
+          zones = await zonePoller.getTimezones(zonesUrl2.replace('{name}', name));
+          updated = Timezone.defineTimezones(zones);
+        }
+        catch (e) {
+          dispatchUpdateNotification(e);
+          return;
+        }
+      }
+
+      if (updated)
+        currentTzVersion = latestTzVersion;
+
+      lastUpdateName = name;
+      dispatchUpdateNotification(updated);
     };
 
-    poll();
+    poll().finally();
 
     if (intervalDays > 0) {
       pollingInterval = setInterval(poll, Math.max(intervalDays * DAY_MSEC, 3600000));
@@ -154,6 +193,9 @@ export async function getTimezones(zonePoller: IZonePoller, name: ZoneOptions = 
 const listeners = new Set<(result: boolean | Error) => void>();
 
 function dispatchUpdateNotification(result: boolean | Error): void {
+  if (!(result instanceof Error) && !isBoolean(result))
+    result = new Error(String(result)); // Oddly, some errors come through as numbers like 404.
+
   listeners.forEach(listener => {
     try {
       listener(result);

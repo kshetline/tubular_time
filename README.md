@@ -1513,6 +1513,12 @@ For a given `wallTime`, expressed in milliseconds, find the most recent change i
 findTransitionByWallTime(wallTime: number): Transition | null
 ```
 
+Get all transitions in a timezone. Returns null for simple, single-UTC-offset timezones which have no transitions.
+
+```typescript
+getAllTransitions(): Transition[] | null
+```
+
 Get the short-form name for the timezone, dependent upon `utcTime` in milliseconds, such as the America/New_York timezone returning `'EST'` during the winter, but `'EDT'` during the summer.
 
 ```typescript

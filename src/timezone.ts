@@ -1195,6 +1195,10 @@ export class Timezone {
     }
   }
 
+  getAllTransitions(): Transition[] | null {
+    return !this.transitions || this.transitions.length === 0 ? null : clone(this.transitions);
+  }
+
   findTransitionByUtc(utcTime: number): Transition | null {
     if (!this.transitions || this.transitions.length === 0)
       return null;
