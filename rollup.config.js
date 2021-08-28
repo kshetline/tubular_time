@@ -5,7 +5,7 @@ import typescript from '@rollup/plugin-typescript';
 export default [
   {
     input: 'dist/index.js',
-    external: ['by-request', 'json-z', '@tubular/math', '@tubular/util'],
+    external: ['by-request', '@tubular/math', '@tubular/util'],
     output: [
       {
         file: 'dist/cjs/index.js',
