@@ -50,7 +50,8 @@
     "@tubular/util": "^4.3.1"
   },
   "optionalDependencies": {
-    "by-request": "^1.2.7"
+    "by-request": "^1.2.7",
+    "json-z": "^3.3.2"
   },
   "devDependencies": {
     "@babel/core": "^7.14.6",
