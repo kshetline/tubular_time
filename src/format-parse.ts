@@ -18,6 +18,17 @@ const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 
+let allNumeric: RegExp;
+
+try {
+  // Make sure Unicode character classes work.
+  allNumeric = /^\p{Nd}+$/u;
+  allNumeric.test('7१');
+}
+catch {
+  allNumeric = /^\d+$/u;
+}
+
 export function newDateTimeFormat(locale?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat {
   options = options && checkDtfOptions(options);
 
@@ -680,9 +691,19 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 
     for (let month = 1; month <= 12; ++month) {
       const date = Date.UTC(2021, month - 1, 1);
+      let longMonth: string;
 
       format = fmt({ ds: 'l' });
-      locale.months.push(getDatePart(format, date, 'month'));
+      longMonth = getDatePart(format, date, 'month');
+
+      if (allNumeric.test(longMonth)) {
+        const altForm = fmt({ M: 'l' }).format(date);
+
+        if (!allNumeric.test(altForm))
+          longMonth = altForm;
+      }
+
+      locale.months.push(longMonth);
       format = fmt({ ds: 'm' });
       locale.monthsShort.push(getDatePart(format, date, 'month'));
       format = fmt({ M: 'n' });

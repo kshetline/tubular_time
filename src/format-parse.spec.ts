@@ -48,6 +48,7 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').format('ISS', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
     expect(new DateTime('1986-09-04').format('ISS{numberingSystem:latn}', 'bn')).to.equal('4/9/86 12:00 AM');
     expect(new DateTime('1986-09-04').format('DD-MM-YY နံနက် H:mm', 'my')).to.equal('၀၄-၀၉-၈၆ နံနက် ၀:၀၀');
+    expect(new DateTime('2021-08').format('MMMM YYYY', 'zh-tw')).to.equal('8月 2021');
   });
 
   it('should properly analyze Intl.DateTimeFormat-generated formats', function () {
