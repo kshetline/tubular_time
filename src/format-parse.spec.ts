@@ -48,7 +48,6 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').format('ISS', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
     expect(new DateTime('1986-09-04').format('ISS{numberingSystem:latn}', 'bn')).to.equal('4/9/86 12:00 AM');
     expect(new DateTime('1986-09-04').format('DD-MM-YY နံနက် H:mm', 'my')).to.equal('၀၄-၀၉-၈၆ နံနက် ၀:၀၀');
-    expect(new DateTime('2021-08').format('MMMM YYYY', 'zh-tw')).to.equal('8月 2021');
   });
 
   it('should properly analyze Intl.DateTimeFormat-generated formats', function () {
@@ -189,5 +188,19 @@ describe('FormatParse', () => {
   it('should use priority meridiem forms over Intl forms', () => {
     expect(new DateTime(0, 'UTC', 'he').format('A')).to.equal('לפ׳');
     expect(new DateTime('1970-01-01T12:00', 'UTC', 'hi').format('A')).to.equal('अ');
+  });
+
+  it('should properly handle special CJK date formatting', function () {
+    expect(new DateTime('2021-08').format('MMMM YYYY', 'zh-tw')).to.equal('8月 2021');
+    expect(new DateTime('2021-08').format('MMMM_YYYY_', 'zh-tw')).to.equal('8月2021年');
+    expect(new DateTime('2021-08').format('MMMM_YYYY_', 'zh-cn')).to.equal('八月2021年');
+    expect(new DateTime('2021-08').format('M_YYYY_', 'zh-cn')).to.equal('8月2021年');
+    expect(new DateTime('2021-08').format('MM_YYYY_', 'zh-cn')).to.equal('08月2021年');
+    expect(new DateTime('-2021-08').format('MMMM_y_n', 'ko')).to.equal('8월 2022년 BC');
+    expect(new DateTime('-2021-08').format('MMMM_y_n', 'zh-hk')).to.equal('8月2022年公元前');
+    expect(new DateTime('2021-08-29').format('MMMM_YYYY_DD_', 'ja')).to.equal('8月2021年29日');
+    expect(new DateTime('2021-08-29').format('MMMM_YYYY_DD_', 'ko')).to.equal('8월 2021년 29일');
+    expect(new DateTime('2021-08-29').format('MMMM_YYYY_DD_', 'en')).to.equal('August 2021 29');
+    expect(parse('1/17/2022 1:22:33', 'MM_/DD_/YYYY_ H:m:s', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:33');
   });
 });
