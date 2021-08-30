@@ -206,6 +206,7 @@ describe('FormatParse', () => {
     expect(new DateTime('2021-08').format('MMMM', 'zh-cn')).to.equal('八月');
     expect(new DateTime('2021-08').format('MMMM', 'ja')).to.equal('8月');
     expect(new DateTime('2021-08').format('MMMM', 'ko')).to.equal('8월');
+    expect(new DateTime('2021-08-20T20:36').format('MMM D, y n hh:mm~ A z', 'en')).to.equal('Aug 20, 2021 08:36~ PM EDT');
     expect(parse('1/17/2022 1:22:33', 'MM~/DD~/YYYY~ H:m:s', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:33');
   });
 });
