@@ -15,7 +15,7 @@ const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m:
                     ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
 const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM_?|MMM|MM_?|Mo|M_?|Qo|Q|DDDD|DDD|Do|DD_?|D_?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY_?|yyyy|YY|yy|Y|y_?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
+const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 
 let allNumeric: RegExp;
@@ -28,8 +28,8 @@ try {
   dateMarkCheck = /\x80(?=[\p{L}\p{N}])/gu;
 }
 catch {
-  allNumeric = /^\d+$/u;
-  dateMarkCheck = /\x80(?=[a-z0-9])/gu;
+  allNumeric = /^\d+$/;
+  dateMarkCheck = /\x80(?=[a-z0-9])/g;
 }
 
 export function newDateTimeFormat(locale?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat {
@@ -76,7 +76,7 @@ function formatEscape(s: string): string {
   let inAlpha = false;
 
   s.split('').forEach(c => {
-    if (/[_a-z[]/i.test(c)) {
+    if (/[~a-z[]/i.test(c)) {
       if (!inAlpha) {
         inAlpha = true;
         result += '[';
@@ -107,7 +107,7 @@ export function decomposeFormatString(format: string, stripDateMarks = false): s
   let token = '';
 
   for (const ch of format.split('')) {
-    if (/[_a-z]/i.test(ch) || (inBraces && ch === '[')) {
+    if (/[~a-z]/i.test(ch) || (inBraces && ch === '[')) {
       if (inBraces)
         literal += ch;
       else if (inLiteral) {
@@ -124,7 +124,7 @@ export function decomposeFormatString(format: string, stripDateMarks = false): s
 
       if (!inLiteral) {
         if (stripDateMarks)
-          token = token.replace(/_$/, '');
+          token = token.replace(/~$/, '');
 
         parts.push(token);
         token = '';
@@ -135,7 +135,7 @@ export function decomposeFormatString(format: string, stripDateMarks = false): s
       inBraces = false;
     else {
       if (!inLiteral) {
-        if (stripDateMarks && token.endsWith('_')) {
+        if (stripDateMarks && token.endsWith('~')) {
           token = token.slice(0, -1);
           literal += ' ';
         }
@@ -261,7 +261,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
     if (field == null)
       break;
-    else if (field.endsWith('_')) {
+    else if (field.endsWith('~')) {
       dateMark = -1;
       field = field.slice(0, -1);
       usesDateMarks = true;
@@ -656,7 +656,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       dateMarks.forEach(mark => formatted = formatted.replace(new RegExp(mark.repeat(2)), mark));
 
     if (ko || !cjk)
-      formatted = formatted.replace(/\x80$/, '').replace(dateMarkCheck, ' ');
+      formatted = formatted.replace(dateMarkCheck, ' ').replace(/\x80/g, '');
   }
 
   return formatted;

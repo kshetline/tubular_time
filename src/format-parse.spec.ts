@@ -192,15 +192,20 @@ describe('FormatParse', () => {
 
   it('should properly handle special CJK date formatting', function () {
     expect(new DateTime('2021-08').format('MMMM YYYY', 'zh-tw')).to.equal('8月 2021');
-    expect(new DateTime('2021-08').format('MMMM_YYYY_', 'zh-tw')).to.equal('8月2021年');
-    expect(new DateTime('2021-08').format('MMMM_YYYY_', 'zh-cn')).to.equal('八月2021年');
-    expect(new DateTime('2021-08').format('M_YYYY_', 'zh-cn')).to.equal('8月2021年');
-    expect(new DateTime('2021-08').format('MM_YYYY_', 'zh-cn')).to.equal('08月2021年');
-    expect(new DateTime('-2021-08').format('MMMM_y_n', 'ko')).to.equal('8월 2022년 BC');
-    expect(new DateTime('-2021-08').format('MMMM_y_n', 'zh-hk')).to.equal('8月2022年公元前');
-    expect(new DateTime('2021-08-29').format('MMMM_YYYY_DD_', 'ja')).to.equal('8月2021年29日');
-    expect(new DateTime('2021-08-29').format('MMMM_YYYY_DD_', 'ko')).to.equal('8월 2021년 29일');
-    expect(new DateTime('2021-08-29').format('MMMM_YYYY_DD_', 'en')).to.equal('August 2021 29');
-    expect(parse('1/17/2022 1:22:33', 'MM_/DD_/YYYY_ H:m:s', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:33');
+    expect(new DateTime('2021-08').format('MMMM~YYYY~', 'zh-tw')).to.equal('8月2021年');
+    expect(new DateTime('2021-08').format('MMMM~YYYY~', 'zh-cn')).to.equal('八月2021年');
+    expect(new DateTime('2021-08').format('M~YYYY~', 'zh-cn')).to.equal('8月2021年');
+    expect(new DateTime('2021-08').format('MM~YYYY~', 'zh-cn')).to.equal('08月2021年');
+    expect(new DateTime('-2021-08').format('MMMM~y~n', 'ko')).to.equal('8월 2022년 BC');
+    expect(new DateTime('-2021-08').format('MMMM~y~n', 'zh-hk')).to.equal('8月2022年公元前');
+    expect(new DateTime('2021-08-29').format('MMMM~YYYY~DD~', 'ja')).to.equal('8月2021年29日');
+    expect(new DateTime('2021-08-29').format('MMMM~YYYY~DD~', 'ko')).to.equal('8월 2021년 29일');
+    expect(new DateTime('2021-08-29').format('MMMM~YYYY~DD~', 'en')).to.equal('August 2021 29');
+    expect(new DateTime('2021-08-29').format('MMMM~, YYYY~DD~', 'en')).to.equal('August, 2021 29');
+    expect(new DateTime('2021-08').format('MMMM', 'zh-tw')).to.equal('8月');
+    expect(new DateTime('2021-08').format('MMMM', 'zh-cn')).to.equal('八月');
+    expect(new DateTime('2021-08').format('MMMM', 'ja')).to.equal('8月');
+    expect(new DateTime('2021-08').format('MMMM', 'ko')).to.equal('8월');
+    expect(parse('1/17/2022 1:22:33', 'MM~/DD~/YYYY~ H:m:s', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:33');
   });
 });

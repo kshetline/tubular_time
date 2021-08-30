@@ -35,6 +35,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [Basic usage](#basic-usage)
   - [Creating immutable `DateTime` instances with `ttime()`](#creating-immutable-datetime-instances-with-ttime)
 - [Formatting output](#formatting-output)
+  - [Special CJK date formatting options](#special-cjk-date-formatting-options)
 - [Format string tokens](#format-string-tokens)
 - [Moment.js-style localized formats](#momentjs-style-localized-formats)
 - [@tubular/time `Intl.DateTimeFormat` shorthand string formats](#tubulartime-intldatetimeformat-shorthand-string-formats)
@@ -187,7 +188,13 @@ For example:
 `ttime().toLocale('de').format('ddd MMM D, y N [at] h:mm A z')` →<br>
 `Mi 02 3, 2021 n. Chr. at 9:43 PM GMT-5`
 
-Please note that, as most unaccented Latin letters are interpreted as special formatting characters, when using those characters as literal text they should be surrounded with square brackets, as with the word “at” above.
+Please note that most unaccented Latin letters (a-z, A-Z) are interpreted as special formatting characters, as well as the tilde (`~`), so when using those characters as literal text they should be surrounded with square brackets, as with the word “at” in the example above.
+
+### Special CJK date formatting options
+
+A few of the formatting tokens below can have an optional trailing tilde (`~`) added. This is for special handling of Chinese, Japanese, and Korean (CJK) date notation. The `~` is replaced, where appropriate, with `年`, `月`, or `日` for Chinese and Japanese, and with `년`, `월`, or `일` for Korean. Korean formatting also adds a space character when the following character is a letter or digit, but not when punctuation or the end of the format string comes next.
+
+For all other languages, `~` is replaced with a space character when the following character is a letter or digit, or simply removed when followed by punctuation or the end of the format string.
 
 ## Format string tokens
 
@@ -197,27 +204,27 @@ Please note that, as most unaccented Latin letters are interpreted as special fo
 | | NNNN | Before Christ, Anno Domini<br><br>Long-form era.
 | | n | BC<br><br>Abbreviated era, only shows for BC, not AD. When year is AD, leading space before `n` token is removed. |
 | Year | YYYYYY | -001970 -001971 ... +001907 +001971<br><br>Always-signed years, padded to six digits. |
-| | YYYY | 1970 1971 ... 2029 2030<br><br>Padded to at least four digits. |
+| | YYYY&nbsp;&nbsp;<br>YYYY~ | 1970 1971 ... 2029 2030<br><br>Padded to at least four digits. With `~`, `年` or `년` is added when needed for CJK locales, otherwise replaced by a space character or empty string. |
 | | YY | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
 | | Y | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. |
-| | y | 1 2 ... 2020 ...<br>Era year, for use with BC/AD, never 0 or negative. |
+| | y&nbsp;&nbsp;<br>y~ | 1 2 ... 2020 ...<br><br>Era year, for use with BC/AD, never 0 or negative. With `~`, `年` or `년` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
 | Week year (ISO) | GGGG | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
 | | GG | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
 | Week year (locale) | gggg | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
 | | gg | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
 | Quarter | Qo | 1st 2nd 3rd 4th |
 | | Q | 1 2 3 4 |
-| Month | MMMM | January February ... November December |
+| Month | MMMM&nbsp;&nbsp;<br>MMMM~ | January February ... November December<br>1月 2月 ... 11月 12月 • 一月 二月 ... 十一月 十二月 • 1월 2월 ... 11월 12월<br><br>For CJK locales, `月` or `월` is added when using either the `MMMM` and `MMMM~` token, but using `MMMM~` allows the position of the `~` to be replaced with a blank, when appropriate, for other languages. |
 | | MMM | Jan Feb ... Nov Dec |
-| | MM | 01 02 ... 11 12 |
-| | M | 1 2 ... 11 12 |
+| | MM&nbsp;&nbsp;<br>MM~ | 01 02 ... 11 12<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
+| | M&nbsp;&nbsp;<br>M~ | 1 2 ... 11 12<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
 | | Mo | 1st 2nd ... 11th 12th |
 | Week (ISO) | WW | 01 02 ... 52 53 |
 | | W | 1 2 ... 52 53 |
 | Week (locale) | ww | 01 02 ... 52 53 |
 | | w | 1 2 ... 52 53 |
-| Day of month | DD | 01 02 ... 30 31 |
-| | D | 1 2 ... 30 31 |
+| Day of month | DD&nbsp;&nbsp;<br>DD~ | 01 02 ... 30 31<br><br>With `~`, `日` or `일` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
+| | D&nbsp;&nbsp;<br>D~ | 1 2 ... 30 31<br><br>With `~`, `日` or `일` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
 | | Do | 1st 2nd ... 30th 31st |
 | Day of year | DDDD | 001 002 ... 364 365 366 |
 | | DDD | 1 2 ... 364 365 366 |
@@ -472,9 +479,9 @@ function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'smal
   ywl: 2021, // short for yearByWeekLocale
   wl: 6, // short for weekLocale
   dwl: 5, // short for dayByWeekLocale
-  yearByWeekLocale: 2021, // year that accompanies an locale-specific year/week/day-of-week style date
-  weekLocale: 6, // week that accompanies an locale-specific year/week/day-of-week style date
-  dayByWeekLocale: 5, // day that accompanies an locale-specific year/week/day-of-week style date
+  yearByWeekLocale: 2021, // year that accompanies a locale-specific year/week/day-of-week style date
+  weekLocale: 6, // week that accompanies a locale-specific year/week/day-of-week style date
+  dayByWeekLocale: 5, // day that accompanies a locale-specific year/week/day-of-week style date
 
   error: 'Error description if applicable, otherwise undefined'
 }
@@ -524,7 +531,7 @@ In specifying a date, the date fields have the following priority:
     * `w` / `week`: The 1-based week number.
       * If nothing more, the date is treated as the first day of the given week.
       * `dw` / `dayByWeek`: The 1-based day of the given week.
-* `ywl` / `yearByWeekLocale`, etc: These fields work the same as `yw` / `yearByWeek`, etc., except that they apply to locale-specific rules for the day of the week on which each week starts, and for the definition of the first week of the year.
+* `ywl` / `yearByWeekLocale`, etc.: These fields work the same as `yw` / `yearByWeek`, etc., except that they apply to locale-specific rules for the day of the week on which each week starts, and for the definition of the first week of the year.
 
 In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
 
@@ -926,9 +933,9 @@ UTC (Universal Coordinated Time) is not a uniform timescale. It is currently def
 
 The current system for UTC was adopted in 1970 and implemented in 1972[*](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). UTC is only strictly defined relative to TAI starting in 1972 and going forward in time until the next announced omission or addition of a leap second. You can, however, create a **@tubular/time** `DateTime` instance using UTC while also using year values in the distant past or future.
 
-So how are dates and times outside of the well-defined range of UTC handled?
+So how are dates and times outside the well-defined range of UTC handled?
 
-The answer is that `DateTime` uses both extended UTC and UT1 outside of the well-defined UTC range. This works as follows:
+The answer is that `DateTime` uses both extended UTC and UT1 outside the well-defined UTC range. This works as follows:
 
 * For all dates prior to 1957, estimated UT1 is in effect. This is most accurate back to 1600, for which there is sufficient astronomical data for reasonable approximate conversions from UT1 to TAI and dynamical time. Further back in time less accurate approximations are in effect.
 * From 1957-1958, using a sliding weighted average, UT1 transitions to *proleptic* UTC.
@@ -972,14 +979,14 @@ You can `add` and `subtract` TAI quantities using the following fields: `MILLI_T
 
 * `jde`: Julian Date (ephemeris) &mdash; Time measured in fixed-length days of dynamical time from noon, January 1, 4713 BCE (-4712-01-01T12:00) Terrestrial Dynamical Time (TDT), defined to be exactly 32.184 seconds ahead of TAI.
 * `mjde`: Modified Julian Date (ephemeris) &mdash; Same as Julian Date (ephemeris) plus 2400000.5, moving time 0 to midnight, November 17, 1858 (1858-11-07T00:00).
-* `jdu`: Julian Date (UT) &mdash; Time measured in variable-length days of earth rotation time from mean solar noon on the Prime Meridian, January 1 4713 BCE (-4712-01-01T12:00).
+* `jdu`: Julian Date (UT) &mdash; Time measured in variable-length days of earth rotation time from mean solar noon on the Prime Meridian, January 1, 4713 BCE (-4712-01-01T12:00).
 * `mjdu`: Modified Julian Date (UT) &mdash; Same as Julian Date (UT) plus 2400000.5, moving time 0 to mean solar midnight, November 17, 1858 (1858-11-07T00:00).
 
 ### `epochMillis`, `utcMillis`, and `taiMillis` getters/setters
 
 The `epochMillis` getter/setter returns, or allows you to modify, the fundamental core value for a `DateTime` instance.
 
-For a TAI instance, `epochMillis` is the same as `taiMillis`, with `utcMillis` providing a conversion to or from UTC (or UT1 outside of the well-defined UTC range). For a non-TAI instance `epochMillis` is the same as `utcMillis`, with `taiMillis` performing conversions.
+For a TAI instance, `epochMillis` is the same as `taiMillis`, with `utcMillis` providing a conversion to or from UTC (or UT1 outside the well-defined UTC range). For a non-TAI instance `epochMillis` is the same as `utcMillis`, with `taiMillis` performing conversions.
 
 During a leap second the `epochMillis`/`utcMillis` value is pinned 59 seconds, 999 milliseconds into the minute in which the leap seconds occurs. The `taiMillis` value, however, still varies over the course of that second.
 
