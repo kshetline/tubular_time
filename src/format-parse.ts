@@ -15,7 +15,7 @@ const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m:
                     ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
 const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
+const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM~?|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y~?|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 
 let allNumeric: RegExp;
@@ -320,6 +320,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'MMM': // Short textual month
         result.push(locale.monthsShort[month - 1]);
+        dateMark = dateMark && 2;
         break;
 
       case 'MM': // 2-digit month

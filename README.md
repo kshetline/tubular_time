@@ -163,14 +163,11 @@ When dealing with Daylight Saving Time, and days when clocks are turned backward
 
 By default, any ambiguous time is treated as the earlier time, the first occurrence of that time during a day. You can, however, use either an explicit UTC offset, or a subscript 2 (₂), to indicate the later time.
 
-`ttime('11/7/2021 1:25 AM America/Denver', 'MM/DD/YYYY h:m a z').toString()` →<br>
-`DateTime<2021-11-07T01:25:00.000 -06:00§>`
+`ttime('11/7/2021 1:25 AM America/Denver', 'MM/DD/YYYY h:m a z').toString()` →<br>`DateTime<2021-11-07T01:25:00.000 -06:00§>`
 
-`ttime('11/7/2021 1:25₂ AM America/Denver', 'MM/DD/YYYY h:m a z').toString()` →<br>
-`DateTime<2021-11-07T01:25:00.000₂-07:00>`
+`ttime('11/7/2021 1:25₂ AM America/Denver', 'MM/DD/YYYY h:m a z').toString()` →<br>`DateTime<2021-11-07T01:25:00.000₂-07:00>`
 
-`ttime('2021-11-07 01:25 -07:00 America/Denver').toString()` →<br>
-`DateTime<2021-11-07T01:25:00.000₂-07:00>`
+`ttime('2021-11-07 01:25 -07:00 America/Denver').toString()` →<br>`DateTime<2021-11-07T01:25:00.000₂-07:00>`
 
 ## Formatting output
 
@@ -182,11 +179,9 @@ You can also produce more customized, flexible formatting, specifying the order,
 
 For example:
 
-`ttime().format('ddd MMM D, y N [at] h:mm A z')` →<br>
-`Wed Feb 3, 2021 AD at 8:59 PM EST`
+`ttime().format('ddd MMM D, y N [at] h:mm A z')` →<br>`Wed Feb 3, 2021 AD at 8:59 PM EST`
 
-`ttime().toLocale('de').format('ddd MMM D, y N [at] h:mm A z')` →<br>
-`Mi 02 3, 2021 n. Chr. at 9:43 PM GMT-5`
+`ttime().toLocale('de').format('ddd MMM D, y N [at] h:mm A z')` →<br>`Mi 02 3, 2021 n. Chr. at 9:43 PM GMT-5`
 
 Please note that most unaccented Latin letters (a-z, A-Z) are interpreted as special formatting characters, as well as the tilde (`~`), so when using those characters as literal text they should be surrounded with square brackets, as with the word “at” in the example above.
 
@@ -195,6 +190,12 @@ Please note that most unaccented Latin letters (a-z, A-Z) are interpreted as spe
 A few of the formatting tokens below can have an optional trailing tilde (`~`) added. This is for special handling of Chinese, Japanese, and Korean (CJK) date notation. The `~` is replaced, where appropriate, with `年`, `月`, or `日` for Chinese and Japanese, and with `년`, `월`, or `일` for Korean. Korean formatting also adds a space character when the following character is a letter or digit, but not when punctuation or the end of the format string comes next.
 
 For all other languages, `~` is replaced with a space character when the following character is a letter or digit, or simply removed when followed by punctuation or the end of the format string.
+
+For example:
+
+`ttime().toLocale('zh').format('MMM~YYYY~')` →<br>`8月2021年`
+
+`ttime().toLocale('es').format('MMM~YYYY~')` →<br>`ago 2021`
 
 ## Format string tokens
 
@@ -206,7 +207,7 @@ For all other languages, `~` is replaced with a space character when the followi
 | Year | YYYYYY | -001970 -001971 ... +001907 +001971<br><br>Always-signed years, padded to six digits. |
 | | YYYY&nbsp;&nbsp;<br>YYYY~ | 1970 1971 ... 2029 2030<br><br>Padded to at least four digits. With `~`, `年` or `년` is added when needed for CJK locales, otherwise replaced by a space character or empty string. |
 | | YY | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
-| | Y | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. |
+| | Y&nbsp;&nbsp;<br>Y~ | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. With `~`, `年` or `년` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
 | | y&nbsp;&nbsp;<br>y~ | 1 2 ... 2020 ...<br><br>Era year, for use with BC/AD, never 0 or negative. With `~`, `年` or `년` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
 | Week year (ISO) | GGGG | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
 | | GG | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
@@ -215,9 +216,9 @@ For all other languages, `~` is replaced with a space character when the followi
 | Quarter | Qo | 1st 2nd 3rd 4th |
 | | Q | 1 2 3 4 |
 | Month | MMMM&nbsp;&nbsp;<br>MMMM~ | January February ... November December<br>1月 2月 ... 11月 12月 • 一月 二月 ... 十一月 十二月 • 1월 2월 ... 11월 12월<br><br>For CJK locales, `月` or `월` is added when using either the `MMMM` and `MMMM~` token, but using `MMMM~` allows the position of the `~` to be replaced with a blank, when appropriate, for other languages. |
-| | MMM | Jan Feb ... Nov Dec |
-| | MM&nbsp;&nbsp;<br>MM~ | 01 02 ... 11 12<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| | M&nbsp;&nbsp;<br>M~ | 1 2 ... 11 12<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
+| | MMM&nbsp;&nbsp;<br>MMM~ | Jan Feb ... Nov Dec<br>1月 2月 ... 11月 12月 • 1월 2월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
+| | MM&nbsp;&nbsp;<br>MM~ | 01 02 ... 11 12<br>01月 02月 ... 11月 12月 • 01월 02월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
+| | M&nbsp;&nbsp;<br>M~ | 1 2 ... 11 12<br>1月 2月 ... 11月 12月 • 1월 2월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
 | | Mo | 1st 2nd ... 11th 12th |
 | Week (ISO) | WW | 01 02 ... 52 53 |
 | | W | 1 2 ... 52 53 |
@@ -342,28 +343,21 @@ ttime.MONTH                  = 'Y-MM';
 
 ## Converting timezones
 
-`ttime('2005-10-10 16:30 America/Los_Angeles').tz('Europe/Warsaw').toString()` →<br>
-`DateTime<2005-10-11T01:30:00.000 +02:00>`
+`ttime('2005-10-10 16:30 America/Los_Angeles').tz('Europe/Warsaw').toString()` →<br>`DateTime<2005-10-11T01:30:00.000 +02:00>`
 
 Please note that if you pass a second argument of `true`, the timezone is changed, _but the wall time stays the same._ This same option to preserve wall time is available for the `utc()` and `local()` methods, where the optional boolean value will be the one and only argument.
 
-`ttime('2005-10-10 16:30 America/Los_Angeles').tz('Europe/Warsaw', true).toString()` →<br>
-`DateTime<2005-10-10T16:30:00.000 +02:00>`
+`ttime('2005-10-10 16:30 America/Los_Angeles').tz('Europe/Warsaw', true).toString()` →<br>`DateTime<2005-10-10T16:30:00.000 +02:00>`
 
-`ttime('2005-10-10 16:30 America/Los_Angeles').utc().toString()` →<br>
-`DateTime<2005-10-10T23:30:00.000 +00:00>`
+`ttime('2005-10-10 16:30 America/Los_Angeles').utc().toString()` →<br>`DateTime<2005-10-10T23:30:00.000 +00:00>`
 
-`ttime('2005-10-10 16:30 America/Los_Angeles').utc().toString(true)` →<br>
-`DateTime<2005-10-10T16:30:00.000 +00:00>`
+`ttime('2005-10-10 16:30 America/Los_Angeles').utc().toString(true)` →<br>`DateTime<2005-10-10T16:30:00.000 +00:00>`
 
-`// Local zone is America/New_York`<br>
-`ttime('2005-10-10 16:30 America/Los_Angeles').local().toString()` →<br>
-`DateTime<2005-10-10T19:30:00.000 +04:00>`
+`// Local zone is America/New_York`<br>`ttime('2005-10-10 16:30 America/Los_Angeles').local().toString()` →<br>`DateTime<2005-10-10T19:30:00.000 +04:00>`
 
 ## Converting locales
 
-`ttime('7. helmikuuta 2021', 'IL', 'fi').toLocale('de').format('IL')` →<br>
-`7. Februar 2021`
+`ttime('7. helmikuuta 2021', 'IL', 'fi').toLocale('de').format('IL')` →<br>`7. Februar 2021`
 
 ## Defining and updating timezones
 
@@ -586,21 +580,18 @@ For fields `MILLI` through `HOUR`, fixed units of time, multiplied by the `amoun
 
 DST can alter the duration of days, typically adding or subtracting an hour, but other amounts of change are possible (like the half-hour shift used by Australia’s Lord Howe Island), so adding days can possibly cause the hour (and even minute) fields to change:
 
-`ttime('2021-02-28T07:00 Europe/London', false).add('days', 100).toIsoString()` →<br>
-`2021-06-08T08:00:00.000+01:00` (note shift from 7:00 to 8:00)
+`ttime('2021-02-28T07:00 Europe/London', false).add('days', 100).toIsoString()` →<br>`2021-06-08T08:00:00.000+01:00` (note shift from 7:00 to 8:00)
 
 `ttime('2021-02-28T07:00 Australia/Lord_Howe, false').add('days', 100).toIsoString()` →<br>
-`2021-06-08T06:30:00.000+10:30` (note shift from 7:00 to 6:30)
+2021-06-08T06:30:00.000+10:30` (note shift from 7:00 to 6:30)
 
 By default, however, hour and minute fields remain unchanged.
 
-`ttime('2021-02-28T07:00 Australia/Lord_Howe').add('days', 100).toIsoString()` →<br>
-`2021-06-08T07:00:00.000+10:30`
+`ttime('2021-02-28T07:00 Australia/Lord_Howe').add('days', 100).toIsoString()` →<br>`2021-06-08T07:00:00.000+10:30`
 
 Even with the default behavior, however, it is still possible for hours and minutes to change, in just the same way adding one month to January 31 does not yield February 31. When clocks are turned forward, some times of day simply do not exist, so a result might have to be adjusted to a valid hour and minute in some cases.
 
-`ttime('2000-04-27T00:30 Africa/Cairo').add('day', 1).toString()` →<br>
-`DateTime<2000-04-28T01:30:00.000 +03:00§>` (clock turned forward at midnight to 1:00)
+`ttime('2000-04-27T00:30 Africa/Cairo').add('day', 1).toString()` →<br>`DateTime<2000-04-28T01:30:00.000 +03:00§>` (clock turned forward at midnight to 1:00)
 
 ### Using `roll()`
 
@@ -635,23 +626,17 @@ There is a corresponding `get()` method which returns the numeric value of a fie
 
 These functions transform a `DateTime` to the beginning or end of a given unit of time.
 
-`ttime('2300-05-05T04:08:10.909').startOf(DateTimeField.MINUTE).toIsoString(23)` →<br>
-`2300-05-05T04:08:00.000`
+`ttime('2300-05-05T04:08:10.909').startOf(DateTimeField.MINUTE).toIsoString(23)` →<br>`2300-05-05T04:08:00.000`
 
-`ttime('2300-05-05T04:08:10.909').startOf('hour').toIsoString(23)` →<br>
-`2300-05-05T04:00:00.000`
+`ttime('2300-05-05T04:08:10.909').startOf('hour').toIsoString(23)` →<br>`2300-05-05T04:00:00.000`
 
-`ttime('2300-05-05T04:08:10.909').startOf(DateTimeField.WEEK).format(ttime.WEEK_AND_DAY)` →<br>
-`2300-W18-1`
+`ttime('2300-05-05T04:08:10.909').startOf(DateTimeField.WEEK).format(ttime.WEEK_AND_DAY)` →<br>`2300-W18-1`
 
-`ttime('2300-05-05T04:08:10.909').startOf('year').toIsoString(23)` →<br>
-`2300-01-01T00:00:00.000`
+`ttime('2300-05-05T04:08:10.909').startOf('year').toIsoString(23)` →<br>`2300-01-01T00:00:00.000`
 
-`ttime('2300-05-05T04:08:10.909').endOf('day').toIsoString(23)` →<br>
-`2300-05-05T23:59:59.999`
+`ttime('2300-05-05T04:08:10.909').endOf('day').toIsoString(23)` →<br>`2300-05-05T23:59:59.999`
 
-`ttime('2300-05-05T04:08:10.909').endOf(DateTimeField.MONTH).toIsoString(23)` →<br>
-`2300-05-31T23:59:59.999`
+`ttime('2300-05-05T04:08:10.909').endOf(DateTimeField.MONTH).toIsoString(23)` →<br>`2300-05-31T23:59:59.999`
 
 ## Time value
 
@@ -905,23 +890,19 @@ getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number)
 
 ### Typical Daylight Saving Time examples
 
-`new DateTime('2021-03-14', 'America/New_York').getDiscontinuityDuringDay()` →<br>
-`{ start: '02:00:00', end: '03:00:00', delta: 3600000 } // spring forward!`
+`new DateTime('2021-03-14', 'America/New_York').getDiscontinuityDuringDay()` →<br>`{ start: '02:00:00', end: '03:00:00', delta: 3600000 } // spring forward!`
 
 `new DateTime('2021-07-01', 'America/New_York').getDiscontinuityDuringDay()`) → `null`
 
-`new DateTime('2021-11-07', 'America/New_York').getDiscontinuityDuringDay()` →<br>
-`{ start: '02:00:00', end: '01:00:00', delta: -3600000 } // fall back!`
+`new DateTime('2021-11-07', 'America/New_York').getDiscontinuityDuringDay()` →<br>`{ start: '02:00:00', end: '01:00:00', delta: -3600000 } // fall back!`
 
 ### Examples of big UTC offset shifts due to moving the International Dateline
 
 `// As soon as it’s midnight on the 30th, it’s instantly midnight on the 31st, erasing 24 hours:`<br>
-`new DateTime('2011-12-30', 'Pacific/Apia').getDiscontinuityDuringDay()`) →<br>
-`{ start: '00:00:00', end: '24:00:00', delta: 86400000 }`
+`new DateTime('2011-12-30', 'Pacific/Apia').getDiscontinuityDuringDay()`) →<br>`{ start: '00:00:00', end: '24:00:00', delta: 86400000 }`
 
 `// As soon as it’s midnight on the 31th, turn back to 1AM on the 30th, adding 23 hours to the day:`<br>
-`new DateTime('1969-09-30', 'Pacific/Kwajalein').getDiscontinuityDuringDay()` →<br>
-`{ start: '24:00:00', end: '01:00:00', delta: -82800000 }`
+`new DateTime('1969-09-30', 'Pacific/Kwajalein').getDiscontinuityDuringDay()` →<br>`{ start: '24:00:00', end: '01:00:00', delta: -82800000 }`
 
 Here’s a skyviewcafe.com image for that extra-long day in the Marshall Islands, with two sunrises, two sunsets, and 24 hours, 6 minutes worth of daylight packed into a 47-hour day:
 
@@ -1047,8 +1028,7 @@ As a string, `initialTime` can also include a trailing timezone or UTC offset, u
 
 If the `timezone` argument is itself `null` or unspecified, this embedded timezone will become the timezone for the `DateTime` instance. If the `timezone` argument is also provided, the time will be parsed according to the first timezone, then it will be transformed to the second timezone.
 
-`new DateTime('2022-06-01 14:30 America/Chicago', 'Europe/Paris', 'fr_FR').format('IMM ZZZ')` →<br>
-`1 juin 2022 à 21:30:00 Europe/Paris`
+`new DateTime('2022-06-01 14:30 America/Chicago', 'Europe/Paris', 'fr_FR').format('IMM ZZZ')` →<br>`1 juin 2022 à 21:30:00 Europe/Paris`
 
 The following is an example of using the `gregorianChange` parameter to apply the change from the Julian to Gregorian calendar that was used by Great Britain, including what were the American colonies at the time:
 
