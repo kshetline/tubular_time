@@ -194,6 +194,8 @@ describe('FormatParse', () => {
     expect(new DateTime('2021-08').format('MMMM YYYY', 'zh-tw')).to.equal('8月 2021');
     expect(new DateTime('2021-08').format('MMMM~YYYY~', 'zh-tw')).to.equal('8月2021年');
     expect(new DateTime('2021-08').format('MMMM~YYYY~', 'zh-cn')).to.equal('八月2021年');
+    expect(new DateTime('2021-08').format('MMM~Y~', 'zh-cn')).to.equal('8月2021年');
+    expect(new DateTime('2021-08').format('MMM~Y~', 'es')).to.equal('ago 2021');
     expect(new DateTime('2021-08').format('M~YYYY~', 'zh-cn')).to.equal('8月2021年');
     expect(new DateTime('2021-08').format('MM~YYYY~', 'zh-cn')).to.equal('08月2021年');
     expect(new DateTime('-2021-08').format('MMMM~y~n', 'ko')).to.equal('8월 2022년 BC');
