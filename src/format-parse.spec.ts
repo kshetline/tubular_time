@@ -189,4 +189,24 @@ describe('FormatParse', () => {
     expect(new DateTime(0, 'UTC', 'he').format('A')).to.equal('לפ׳');
     expect(new DateTime('1970-01-01T12:00', 'UTC', 'hi').format('A')).to.equal('अ');
   });
+
+  it('should properly handle special CJK date formatting', function () {
+    expect(new DateTime('2021-08').format('MMMM YYYY', 'zh-tw')).to.equal('8月 2021');
+    expect(new DateTime('2021-08').format('MMMM~YYYY~', 'zh-tw')).to.equal('8月2021年');
+    expect(new DateTime('2021-08').format('MMMM~YYYY~', 'zh-cn')).to.equal('八月2021年');
+    expect(new DateTime('2021-08').format('M~YYYY~', 'zh-cn')).to.equal('8月2021年');
+    expect(new DateTime('2021-08').format('MM~YYYY~', 'zh-cn')).to.equal('08月2021年');
+    expect(new DateTime('-2021-08').format('MMMM~y~n', 'ko')).to.equal('8월 2022년 BC');
+    expect(new DateTime('-2021-08').format('MMMM~y~n', 'zh-hk')).to.equal('8月2022年公元前');
+    expect(new DateTime('2021-08-29').format('MMMM~YYYY~DD~', 'ja')).to.equal('8月2021年29日');
+    expect(new DateTime('2021-08-29').format('MMMM~YYYY~DD~', 'ko')).to.equal('8월 2021년 29일');
+    expect(new DateTime('2021-08-29').format('MMMM~YYYY~DD~', 'en')).to.equal('August 2021 29');
+    expect(new DateTime('2021-08-29').format('MMMM~, YYYY~DD~', 'en')).to.equal('August, 2021 29');
+    expect(new DateTime('2021-08').format('MMMM', 'zh-tw')).to.equal('8月');
+    expect(new DateTime('2021-08').format('MMMM', 'zh-cn')).to.equal('八月');
+    expect(new DateTime('2021-08').format('MMMM', 'ja')).to.equal('8月');
+    expect(new DateTime('2021-08').format('MMMM', 'ko')).to.equal('8월');
+    expect(new DateTime('2021-08-20T20:36').format('MMM D, y n hh:mm~ A z', 'en')).to.equal('Aug 20, 2021 08:36~ PM EDT');
+    expect(parse('1/17/2022 1:22:33', 'MM~/DD~/YYYY~ H:m:s', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:33');
+  });
 });

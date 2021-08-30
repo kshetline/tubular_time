@@ -1,21 +1,23 @@
 import { IZonePoller } from './i-zone-poller';
-import JSONZ from 'json-z';
 
+let jsonZ: { parse: (text: string) => any };
 let requestText: (url: string, options?: any) => Promise<string>;
-let byRequestCheckDone = false;
+let externalsCheckDone = false;
 
-async function checkForRequestText(): Promise<void> {
-  if (!byRequestCheckDone && !requestText) {
-    byRequestCheckDone = true;
+async function checkForExternals(): Promise<void> {
+  if (!externalsCheckDone && !jsonZ && !requestText) {
+    externalsCheckDone = true;
 
-    try { // Obscure name of by-request package to prevent webpack from generating a dependency.
+    try { // Obscure names packages to prevent webpack from generating dependencies.
+      // @ts-ignore
+      jsonZ = (await import(/* webpackIgnore: true */ 'z-nosj'.split('').reverse().join('')));
       // @ts-ignore
       requestText = (await import(/* webpackIgnore: true */ 'tseuqer-yb'.split('').reverse().join(''))).requestText;
     }
     catch {}
 
-    if (!requestText) {
-      const msg = 'npm package "by-request" should be installed to use zonePollerNode';
+    if (!jsonZ || !requestText) {
+      const msg = 'npm packages "json-z" and "by-request" should be installed to use zonePollerNode';
       console.error(msg);
       throw new Error(msg);
     }
@@ -24,18 +26,18 @@ async function checkForRequestText(): Promise<void> {
 
 export const zonePollerNode: IZonePoller = {
   async getLatestVersion(url: string): Promise<string> {
-    await checkForRequestText();
+    await checkForExternals();
 
     return (await requestText(url, { timeout: 60000 })).replace(/"/g, '');
   },
 
   async getTimezones(url: string): Promise<{ [p: string]: string }> {
-    await checkForRequestText();
+    await checkForExternals();
 
     const zones = (await requestText(url, { timeout: 60000 }))
       .replace(/^.*?=\s*/s, '')
       .replace(/}.*$/s, '}');
 
-    return JSONZ.parse(zones);
+    return jsonZ.parse(zones);
   }
 };

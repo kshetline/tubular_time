@@ -15,8 +15,22 @@ const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m:
                     ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
 const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternsMoment = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM|MMM|MM|Mo|M|Qo|Q|DDDD|DDD|Do|DD|D|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY|yyyy|YY|yy|Y|y|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
+const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
+
+let allNumeric: RegExp;
+let dateMarkCheck: RegExp;
+
+try {
+  // Make sure Unicode character classes work.
+  allNumeric = /^\p{Nd}+$/u;
+  allNumeric.test('7१');
+  dateMarkCheck = /\x80(?=[\p{L}\p{N}])/gu;
+}
+catch {
+  allNumeric = /^\d+$/;
+  dateMarkCheck = /\x80(?=[a-z0-9])/g;
+}
 
 export function newDateTimeFormat(locale?: string | string[], options?: DateTimeFormatOptions): DateTimeFormat {
   options = options && checkDtfOptions(options);
@@ -62,7 +76,7 @@ function formatEscape(s: string): string {
   let inAlpha = false;
 
   s.split('').forEach(c => {
-    if (/[a-z[]/i.test(c)) {
+    if (/[~a-z[]/i.test(c)) {
       if (!inAlpha) {
         inAlpha = true;
         result += '[';
@@ -85,7 +99,7 @@ function formatEscape(s: string): string {
   return result;
 }
 
-export function decomposeFormatString(format: string): string[] {
+export function decomposeFormatString(format: string, stripDateMarks = false): string[] {
   const parts: (string | string[])[] = [];
   let inLiteral = true;
   let inBraces = false;
@@ -93,7 +107,7 @@ export function decomposeFormatString(format: string): string[] {
   let token = '';
 
   for (const ch of format.split('')) {
-    if (/[a-z]/i.test(ch) || (inBraces && ch === '[')) {
+    if (/[~a-z]/i.test(ch) || (inBraces && ch === '[')) {
       if (inBraces)
         literal += ch;
       else if (inLiteral) {
@@ -109,6 +123,9 @@ export function decomposeFormatString(format: string): string[] {
       inBraces = true;
 
       if (!inLiteral) {
+        if (stripDateMarks)
+          token = token.replace(/~$/, '');
+
         parts.push(token);
         token = '';
         inLiteral = true;
@@ -118,6 +135,11 @@ export function decomposeFormatString(format: string): string[] {
       inBraces = false;
     else {
       if (!inLiteral) {
+        if (stripDateMarks && token.endsWith('~')) {
+          token = token.slice(0, -1);
+          literal += ' ';
+        }
+
         parts.push(token);
         token = '';
         inLiteral = true;
@@ -131,7 +153,7 @@ export function decomposeFormatString(format: string): string[] {
     parts.push(literal || token);
 
   for (let i = 1; i < parts.length; i += 2)
-    parts[i] = (parts[i] as string).split(patternsMoment);
+    parts[i] = (parts[i] as string).split(patternTokens);
 
   parts.forEach((part, index) => {
     if (index % 2 === 0)
@@ -192,6 +214,10 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const currentLocale = normalizeLocale(localeOverride ?? dt.locale);
   const localeNames = !hasIntlDateTime ? 'en' : currentLocale;
   const locale = getLocaleInfo(localeNames);
+  const cjk = /^(ja|ko|zh)/.test(locale.name);
+  const ko = /^ko/.test(locale.name);
+  const dateMarks = cjk ? ko ? ['년', '월', '일'] : ['年', '月', '日'] : ['\x80', '\x80', '\x80'];
+  let usesDateMarks = false;
   const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
   const toNum = (n: number | string, pad = 1): string => {
     if (n == null || (isNumber(n) && isNaN(n)))
@@ -230,10 +256,16 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   for (let i = 0; i < parts.length; i += 2) {
     result.push(parts[i]);
 
-    const field = parts[i + 1];
+    let field = parts[i + 1];
+    let dateMark = 0;
 
     if (field == null)
       break;
+    else if (field.endsWith('~')) {
+      dateMark = -1;
+      field = field.slice(0, -1);
+      usesDateMarks = true;
+    }
 
     if (/^[LlZzI]/.test(field) && locale.cachedTimezone !== dt.timezone.zoneName || (hasIntlDateTime && isEqual(locale.dateTimeFormats, {})))
       generatePredefinedFormats(locale, dt.timezone.zoneName);
@@ -248,6 +280,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'yyyy':
       case 'Y':
         result.push((year < 0 ? '-' : year <= 9999 ? '' : field === 'Y' ? '+' : '') + toNum(abs(year), 4));
+        dateMark = dateMark && 1;
         break;
 
       case 'YY': // 2-digit year
@@ -257,6 +290,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'y': // Era year, never signed, min value 1.
         result.push(toNum(eraYear));
+        dateMark = dateMark && 1;
         break;
 
       case 'GGGG': // ISO-week year
@@ -281,6 +315,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'MMMM': // Long textual month
         result.push(locale.months[month - 1]);
+        dateMark = dateMark && 2;
         break;
 
       case 'MMM': // Short textual month
@@ -289,6 +324,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'MM': // 2-digit month
         result.push(toNum(month, 2));
+        dateMark = dateMark && 2;
         break;
 
       case 'Mo': // Month ordinal
@@ -297,6 +333,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'M': // Numerical month
         result.push(toNum(month));
+        dateMark = dateMark && 2;
         break;
 
       case 'WW': // ISO week number
@@ -311,6 +348,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'DD': // 2-digit day of month
         result.push(toNum(day, 2));
+        dateMark = dateMark && 3;
         break;
 
       case 'Do': // Day-of-month ordinal
@@ -319,6 +357,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'D': // Day-of-month number
         result.push(toNum(day));
+        dateMark = dateMark && 3;
         break;
 
       case 'dddd': // Long textual day of week
@@ -605,9 +644,22 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         else
           result.push('??');
     }
+
+    if (dateMark)
+      result.push(dateMarks[dateMark - 1] + (ko ? '\x80' : ''));
   }
 
-  return result.join('');
+  let formatted = result.join('');
+
+  if (usesDateMarks) {
+    if (cjk)
+      dateMarks.forEach(mark => formatted = formatted.replace(new RegExp(mark.repeat(2)), mark));
+
+    if (ko || !cjk)
+      formatted = formatted.replace(dateMarkCheck, ' ').replace(/\x80/g, '');
+  }
+
+  return formatted;
 }
 
 setFormatter(format);
@@ -680,9 +732,19 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 
     for (let month = 1; month <= 12; ++month) {
       const date = Date.UTC(2021, month - 1, 1);
+      let longMonth: string;
 
       format = fmt({ ds: 'l' });
-      locale.months.push(getDatePart(format, date, 'month'));
+      longMonth = getDatePart(format, date, 'month');
+
+      if (allNumeric.test(longMonth)) {
+        const altForm = fmt({ M: 'l' }).format(date);
+
+        if (!allNumeric.test(altForm))
+          longMonth = altForm;
+      }
+
+      locale.months.push(longMonth);
       format = fmt({ ds: 'm' });
       locale.monthsShort.push(getDatePart(format, date, 'month'));
       format = fmt({ M: 'n' });
@@ -1138,7 +1200,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     format = (locale.dateTimeFormats['_' + format] ?? locale.dateTimeFormats[format]) as string ?? format;
 
   const w = {} as DateAndTime;
-  const parts = decomposeFormatString(format);
+  const parts = decomposeFormatString(format, true);
   const hasEraField = !!parts.find(part => part.toLowerCase().startsWith('n'));
   const base = DateTime.getDefaultCenturyBase();
   let bce: boolean = null;
