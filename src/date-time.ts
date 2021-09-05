@@ -669,6 +669,8 @@ export class DateTime extends Calendar {
     if (this.locked)
       throw lockError;
 
+    newLocale = newLocale || DateTime.getDefaultLocale();
+
     if (this._locale !== newLocale)
       this._locale = newLocale;
   }

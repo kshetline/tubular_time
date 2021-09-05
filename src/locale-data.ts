@@ -88,7 +88,7 @@ export const localeList = [
 Object.freeze(localeList);
 
 export function normalizeLocale(locale: string | string[]): string | string[] {
-  if (!hasIntlDateTime)
+  if (!hasIntlDateTime || !locale)
     return 'en-us';
 
   if (isString(locale) && locale.includes(','))
