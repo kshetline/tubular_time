@@ -99,8 +99,19 @@ function formatEscape(s: string): string {
   return result;
 }
 
+const CACHE_LIMIT = 500;
+const cachedParts = new Map<string, string[]>();
+const cachedPartsStripped = new Map<string, string[]>();
+
 export function decomposeFormatString(format: string, stripDateMarks = false): string[] {
-  const parts: (string | string[])[] = [];
+  const cache = (stripDateMarks ? cachedPartsStripped : cachedParts);
+  let parts: (string | string[])[] = cache.get(format);
+
+  if (parts)
+    return parts as string[];
+  else
+    parts = [];
+
   let inLiteral = true;
   let inBraces = false;
   let literal = '';
@@ -168,7 +179,14 @@ export function decomposeFormatString(format: string, stripDateMarks = false): s
     }
   });
 
-  return flatten(parts) as string[];
+  parts = flatten(parts);
+
+  if (cache.size >= CACHE_LIMIT)
+    cache.clear();
+
+  cache.set(format, parts as string[]);
+
+  return parts as string[];
 }
 
 function parseDateTimeFormatMods(s: string): DateTimeFormatOptions {
