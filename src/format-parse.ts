@@ -17,6 +17,8 @@ const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'lo
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM~?|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y~?|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
+const invalidZones = new Set<string>();
+const warnedZones = new Set<string>();
 
 let allNumeric: RegExp;
 let dateMarkCheck: RegExp;
@@ -270,6 +272,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const min = wt.min;
   const sec = wt.sec;
   const dayOfWeek = dt.getDayOfWeek();
+  const zoneName = dt.timezone.zoneName;
 
   for (let i = 0; i < parts.length; i += 2) {
     result.push(parts[i]);
@@ -285,8 +288,17 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       usesDateMarks = true;
     }
 
-    if (/^[LlZzI]/.test(field) && locale.cachedTimezone !== dt.timezone.zoneName || (hasIntlDateTime && isEqual(locale.dateTimeFormats, {})))
-      generatePredefinedFormats(locale, dt.timezone.zoneName);
+    if (!invalidZones.has(zoneName) &&
+        ((/^[LlZzI]/.test(field) && locale.cachedTimezone !== zoneName) ||
+         (hasIntlDateTime && isEqual(locale.dateTimeFormats, {})))) {
+      try {
+        generatePredefinedFormats(locale, zoneName);
+      }
+      catch (e) {
+        if (/invalid time zone/i.test(e.message))
+          invalidZones.add(zoneName);
+      }
+    }
 
     switch (field) {
       case 'YYYYYY': // long year, always signed
@@ -518,8 +530,8 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'ZZZ': // As IANA zone name, if possible
-        if (dt.timezone.zoneName !== 'OS') {
-          result.push(dt.timezone.zoneName);
+        if (zoneName !== 'OS') {
+          result.push(zoneName);
           break;
         }
         else if (hasIntlDateTime) {
@@ -529,7 +541,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       // eslint-disable-next-line no-fallthrough
       case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
-        if (dt.timezone.zoneName === 'TAI') {
+        if (zoneName === 'TAI') {
           result.push('Temps Atomique International');
           break;
         }
@@ -541,19 +553,19 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
-        if (dt.timezone.zoneName !== 'TAI' && hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
+        if (zoneName !== 'TAI' && hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
           result.push(getDatePart(locale.dateTimeFormats.z, dt.epochMillis, 'timeZoneName'));
           break;
         }
-        else if (dt.timezone.zoneName !== 'OS') {
-          result.push(dt.timezone.zoneName);
+        else if (zoneName !== 'OS') {
+          result.push(zoneName);
           break;
         }
 
       // eslint-disable-next-line no-fallthrough
       case 'ZZ': // Zone as UTC offset
       case 'Z':
-        if (dt.timezone.zoneName === 'TAI')
+        if (zoneName === 'TAI')
           result.push(Timezone.formatUtcOffset(dt.wallTime.deltaTai, field === 'ZZ'));
         else
           result.push(dt.timezone.getFormattedOffset(dt.epochMillis, field === 'ZZ'));
@@ -593,7 +605,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
               options.calendar = 'gregory';
 
-              const zone = convertDigitsToAscii(dt.timezone.zoneName);
+              const zone = convertDigitsToAscii(zoneName);
               let $: RegExpExecArray;
 
               if (zone === 'TAI')
@@ -617,7 +629,11 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
                 locale.dateTimeFormats[formatKey] = intlFormat = newDateTimeFormat(localeNames, options);
               }
               catch {
-                console.warn('Timezone "%s" not recognized', options.timeZone);
+                if (!warnedZones.has(options.timeZone)) {
+                  console.warn('Timezone "%s" not recognized', options.timeZone);
+                  warnedZones.add(options.timeZone);
+                }
+
                 delete options.timeZone;
                 locale.dateTimeFormats[formatKey] = intlFormat = newDateTimeFormat(localeNames, options);
               }
@@ -706,7 +722,24 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
     options[key] = value;
   });
 
-  return newDateTimeFormat(localeNames, options);
+  try {
+    return newDateTimeFormat(localeNames, options);
+  }
+  catch (e) {
+    if (/invalid time zone/i.test(e.message)) {
+      const aliases = Timezone.getAliasesForZone(options.timeZone);
+
+      aliases.forEach(zone => {
+        try {
+          options.timeZone = zone;
+          return newDateTimeFormat(localeNames, options);
+        }
+        catch {}
+      });
+    }
+
+    throw e;
+  }
 }
 
 // Find the shortest case-insensitive version of each string in the array that doesn't match

@@ -235,6 +235,7 @@ export class Timezone {
   private static offsetsAndZones: OffsetsAndZones[];
   private static regionAndSubzones: RegionAndSubzones[];
   private static zoneLookup: Record<string, Timezone> = {};
+  private static zonesAliases: Record<string, Set<string>> = {};
 
   private readonly _zoneName: string;
   private readonly _utcOffset: number;
@@ -531,6 +532,15 @@ export class Timezone {
       this.zoneLookup[name] = zone;
 
     return zone;
+  }
+
+  static getAliasesForZone(zone: string): string[] {
+    zone = this.zonesByLowercase[zone?.toLowerCase()];
+
+    if (!this.zonesAliases[zone])
+      return [];
+    else
+      return Array.from(this.zonesAliases[zone]);
   }
 
   static hasShortName(name: string): boolean {
@@ -868,11 +878,26 @@ export class Timezone {
     };
   }
 
+  private static buildAliases(srcZone: string, dstZone: string): void {
+    const source = this.zonesAliases[srcZone];
+    const destination = this.zonesAliases[dstZone];
+
+    source.add(dstZone);
+    destination.add(srcZone);
+    source.forEach(zone => {
+      if (zone !== dstZone) {
+        destination.add(zone);
+        this.zonesAliases[zone].add(dstZone);
+      }
+    });
+  }
+
   private static extractZoneInfo(): void {
     this.shortZoneNames = {};
     this.zonesByLowercase = { gmt: 'GMT', lmt: 'LMT', os: 'OS', tai: 'TAI', ut: 'UT', utc: 'UTC'};
     this.zonesByOffsetAndDst = {};
     this.countriesForZone = {};
+    this.zonesAliases = {};
     this.zonesForCountry = {};
     this.populationForZone = {};
 
@@ -902,8 +927,18 @@ export class Timezone {
           popAndC = $[1];
           etz = this.encodedTimezones[$[2]];
         }
-        else
-          return; // Simple alias, do not process
+        else {
+          if (!this.zonesAliases[ianaName])
+            this.zonesAliases[ianaName] = new Set<string>();
+
+          if (!this.zonesAliases[etz])
+            this.zonesAliases[etz] = new Set<string>();
+
+          this.buildAliases(ianaName, etz);
+          this.buildAliases(etz, ianaName);
+
+          return;
+        }
       }
 
       const sections = etz.split(';');

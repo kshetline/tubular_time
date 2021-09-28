@@ -1,12 +1,15 @@
 import { expect } from 'chai';
 import { Timezone } from './timezone';
 import timezoneLarge from './timezone-large';
+import './format-parse';
+import { DateTime } from './date-time';
 
 const version = timezoneLarge.version;
 
 describe('Timezone', () => {
   beforeEach(() => Timezone.defineTimezones(Object.assign(Object.assign({
     'America/Barberg': 'America/Chicago',
+    'America/Bazberg': '-0500 -0500 0;-50/0',
     'America/Fooberg': '!250,XX,America/New_York'
   }, timezoneLarge), {
     leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167'
@@ -60,5 +63,13 @@ describe('Timezone', () => {
     expect(Timezone.getUpcomingLeapSecond()).equals(null);
     expect(Timezone.getLeapSecondList().length).equals(39);
     expect(Timezone.getLeapSecondList()[30].dateAfter).includes({ y: 1994, m: 7, d: 1 });
+  });
+
+  it('should gracefully handle timezones not available in Intl', () => {
+    expect(() => new DateTime(null, 'America/Barberg', 'en-us').format('IMM')).not.to.throw;
+    expect(() => new DateTime(null, 'America/Bazberg', 'en-us').format('IMM')).not.to.throw;
+    expect(() => new DateTime(null, 'Pacific/Kanton', 'en-us').format('IMM')).not.to.throw;
+    expect(new DateTime(0, 'America/Barberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 6:00:00 PM');
+    expect(new DateTime(0, 'America/Bazberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 7:00:00 PM');
   });
 });

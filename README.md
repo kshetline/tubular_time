@@ -1359,6 +1359,12 @@ Return a timezone matching `name`, if available. If no such timezone exists, a c
 static from(name: string): Timezone;
 ```
 
+Get all timezone names which can be treated as aliases for the give zone name. All equivalent timezones are treated as aliases for each other by this method, with no particular regard given to which zone name is the actual root name as opposed to being a link.
+
+```typescript
+static getAliasesForZone(zone: string): string[]
+```
+
 This method returns a full list of available IANA timezone names. Does **not** include names for the above static constants:
 
 ```typescript
