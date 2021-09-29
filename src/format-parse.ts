@@ -300,6 +300,9 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       }
     }
 
+    if ((field === 'z' || field === 'zz') && invalidZones.has(zoneName))
+      field = 'ZZ';
+
     switch (field) {
       case 'YYYYYY': // long year, always signed
       case 'yyyyyy':
