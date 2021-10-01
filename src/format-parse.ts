@@ -1,4 +1,7 @@
-import { DateAndTime, getDatePart, getDateValue, parseTimeOffset, setFormatter } from './common';
+import {
+  DateAndTime, enEras, enMonths, enMonthsShort, enWeekdays, enWeekdaysMin, enWeekdaysShort, getDatePart,
+  getDateValue, parseTimeOffset, setFormatter
+} from './common';
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
@@ -300,9 +303,6 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       }
     }
 
-    if ((field === 'z' || field === 'zz') && invalidZones.has(zoneName))
-      field = 'ZZ';
-
     switch (field) {
       case 'YYYYYY': // long year, always signed
       case 'yyyyyy':
@@ -560,10 +560,16 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           result.push(getDatePart(locale.dateTimeFormats.z, dt.epochMillis, 'timeZoneName'));
           break;
         }
+        else if (invalidZones.has(zoneName)) {
+          result.push(dt.timezone.getDisplayName(dt.epochMillis));
+          break;
+        }
         else if (zoneName !== 'OS') {
           result.push(zoneName);
           break;
         }
+        else
+          field = 'Z';
 
       // eslint-disable-next-line no-fallthrough
       case 'ZZ': // Zone as UTC offset
@@ -862,15 +868,14 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     locale.zeroDigit = fmt({ m: 'd' }).format(0);
   }
   else {
-    locale.eras = ['BC', 'AD', 'Before Christ', 'Anno Domini'];
-    locale.months = ['January', 'February', 'March', 'April', 'May', 'June',
-                     'July', 'August', 'September', 'October', 'November', 'December'];
+    locale.eras = enEras;
+    locale.months = enMonths;
     locale.monthsMin = shortenItems(locale.months);
-    locale.monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    locale.monthsShort = enMonthsShort;
     locale.monthsShortMin = shortenItems(locale.monthsShort);
-    locale.weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    locale.weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    locale.weekdaysMin = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    locale.weekdays = enWeekdays;
+    locale.weekdaysShort = enWeekdaysShort;
+    locale.weekdaysMin = enWeekdaysMin;
     locale.zeroDigit = '0';
   }
 

@@ -63,12 +63,18 @@ describe('Timezone', () => {
     expect(Timezone.getUpcomingLeapSecond()).equals(null);
     expect(Timezone.getLeapSecondList().length).equals(39);
     expect(Timezone.getLeapSecondList()[30].dateAfter).includes({ y: 1994, m: 7, d: 1 });
+
+    expect(Timezone.from('America/Chicago').stdRule).to.equal('first Sun on/after Nov 1, at 2:00 wall time begin std time');
+    expect(Timezone.from('America/Chicago').dstRule).to.equal('first Sun on/after Mar 8, at 2:00 wall time save 1 hour');
+    expect(Timezone.from('Europe/Dublin').dstRule).to.equal('last Sun of Oct, at 1:00 UTC save -1 hour');
+    expect(Timezone.from('UTC').dstRule).to.not.exist;
   });
 
   it('should gracefully handle timezones not available in Intl', () => {
     expect(() => new DateTime(null, 'America/Barberg', 'en-us').format('IMM')).not.to.throw;
     expect(() => new DateTime(null, 'America/Bazberg', 'en-us').format('IMM')).not.to.throw;
     expect(() => new DateTime(null, 'Pacific/Kanton', 'en-us').format('IMM')).not.to.throw;
+    console.log(new DateTime(null, 'Pacific/Kanton', 'en-us').format('IMM z Z zz ZZ'));
     expect(new DateTime(0, 'America/Barberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 6:00:00 PM');
     expect(new DateTime(0, 'America/Bazberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 7:00:00 PM');
   });

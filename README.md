@@ -1473,8 +1473,10 @@ static hasShortName(name: string): boolean;
 aliasFor: string | undefined; // undefined for a primary timezone name
 countries: Set<string>; // ISO Alpha-2 country codes, empty set if no associated countries
 dstOffset: number; // in seconds
+dstRule: string | undefined; // undefined, or textual representation of last start-of-DST rule in effect.
 error: string | undefined; // undefined if no error
 population: number; // 0 if inapplicable or unknown
+stdRule: string | undefined; // undefined, or textual representation of last end-of-DST rule in effect.
 usesDst: boolean;
 utcOffset: number; // in seconds
 zoneName: string;
