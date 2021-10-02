@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneLarge = /* trim-file-start */{ // tz database version: 2021b, years 1800-2088
-  version: '2021b',
+const timezoneLarge = /* trim-file-start */{ // tz database version: 2021c, years 1800-2088
+  version: '2021c',
   years: '1800-2088',
   deltaTs: '69.36 69.36 69.45',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
@@ -488,7 +488,7 @@ const timezoneLarge = /* trim-file-start */{ // tz database version: 2021b, year
   'Asia/Ulan_Bator': 'Asia/Ulaanbaatar',
   'Asia/Vientiane': 'Asia/Bangkok',
   'Atlantic/Faeroe': 'Atlantic/Faroe',
-  'Atlantic/Jan_Mayen': '!62e4,NOSJ,Europe/Berlin',
+  'Atlantic/Jan_Mayen': 'Europe/Oslo',
   'Atlantic/St_Helena': 'Africa/Abidjan',
   'Australia/ACT': 'Australia/Sydney',
   'Australia/Canberra': 'Australia/Sydney',
