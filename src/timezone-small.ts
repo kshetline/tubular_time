@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneSmall = /* trim-file-start */{ // tz database version: 2021c, years 2016-2026
-  version: '2021c',
+const timezoneSmall = /* trim-file-start */{ // tz database version: 2021d, years 2016-2026
+  version: '2021d',
   years: '2016-2026',
   deltaTs: '69.36 69.36 69.45',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
@@ -134,7 +134,7 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2021c, year
   'Pacific/Chatham': '+1245 +1245 60;cJ/0 dJ/10;10101010101010101010;1RLq0 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0;2008 4 1 1 2:45 1 0,2007 9 0 1 2:45 1 60;600;NZ',
   'Pacific/Easter': '-0700 -0600 60;-70/0 -50/10 -60/0;1212121212121212121212;tG30 1nco0 Ap0 1Nb0 Ap0 1Nb0 Ap0 1zb0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 11B0 1nX0 11B0 1nX0;2019 4 2 1 3:0 2 0,2019 9 2 1 4:0 2 60;30e2;CL',
   'Pacific/Fakaofo': '+1300 +1300 0;d0/0;;;;483;TK',
-  'Pacific/Fiji': '+1200 +1200 60;c0/0 d0/10;10101010101010101010;1S4e0 s00 1VA0 s00 1VA0 s00 20o0 pc0 2hc0 bc0 20o0 pc0 20o0 pc0 20o0 pc0 20o0 pc0 20o0 s00;2015 1 12 1 3:0 0 0,2021 11 8 1 2:0 0 60;88e4;FJ',
+  'Pacific/Fiji': '+1200 +1200 60;c0/0 d0/10;101010101010101010;1S4e0 s00 1VA0 s00 1VA0 s00 20o0 pc0 2hc0 bc0 4q00 pc0 20o0 pc0 20o0 pc0 20o0 s00;2023 1 12 1 3:0 0 0,2022 11 8 1 2:0 0 60;88e4;FJ',
   'Pacific/Galapagos': '-0600 -0600 0;-60/0;;;;25e3;EC',
   'Pacific/Gambier': '-0900 -0900 0;-90/0;;;;125;PF',
   'Pacific/Guam': '+1000 +1000 0;a0/0/ChST;;;;17e4;GUMP',
