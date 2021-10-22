@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneSmall = /* trim-file-start */{ // tz database version: 2021d, years 2016-2026
-  version: '2021d',
+const timezoneSmall = /* trim-file-start */{ // tz database version: 2021e, years 2016-2026
+  version: '2021e',
   years: '2016-2026',
   deltaTs: '69.36 69.36 69.45',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
@@ -66,7 +66,7 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2021d, year
   'Asia/Dhaka': '+0600 +0600 0;60/0;;;;16e6;BD',
   'Asia/Dubai': '+0400 +0400 0;40/0;;;;39e5;AEOM',
   'Asia/Famagusta': '+0200 +0200 60;20/0/EET 30/10/EEST 30/0;120101010101010101010;19LW0 HQL0 2Ks0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;;CY',
-  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1Qyn0 1qL0 WN0 1qL0 WN0 1qL0 11c0 1on0 11B0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00;2020 10 24 7 1:0 0 0,2020 3 24 7 0:0 0 60;18e5;PS',
+  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1Qyn0 1qL0 WN0 1qL0 WN0 1qL0 11c0 1on0 11B0 1o00 11A0 1qo0 Xc0 1qo0 Xc0 1qo0 1200 1nA0 1200 1qo0 Xc0 1qo0;2021 10 0 6 1:0 0 0,2020 3 24 7 0:0 0 60;18e5;PS',
   'Asia/Hong_Kong': '+0800 +0800 0;80/0/HKT;;;;73e5;HK',
   'Asia/Hovd': '+0700 +0700 0;70/0 80/10;10;1Qyj0 1cJ0;;81e3;MN',
   'Asia/Jakarta': '+0700 +0700 0;70/0/WIB;;;;31e6;ID',
