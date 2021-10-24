@@ -1,4 +1,7 @@
-import { DateAndTime, getDatePart, getDateValue, parseTimeOffset, setFormatter } from './common';
+import {
+  DateAndTime, enEras, enMonths, enMonthsShort, enWeekdays, enWeekdaysMin, enWeekdaysShort, getDatePart,
+  getDateValue, parseTimeOffset, setFormatter
+} from './common';
 import { DateTime } from './date-time';
 import { abs, floor, mod } from '@tubular/math';
 import { ILocale } from './i-locale';
@@ -17,6 +20,8 @@ const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'lo
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
 const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM~?|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y~?|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
+const invalidZones = new Set<string>();
+const warnedZones = new Set<string>();
 
 let allNumeric: RegExp;
 let dateMarkCheck: RegExp;
@@ -99,8 +104,19 @@ function formatEscape(s: string): string {
   return result;
 }
 
+const CACHE_LIMIT = 500;
+const cachedParts = new Map<string, string[]>();
+const cachedPartsStripped = new Map<string, string[]>();
+
 export function decomposeFormatString(format: string, stripDateMarks = false): string[] {
-  const parts: (string | string[])[] = [];
+  const cache = (stripDateMarks ? cachedPartsStripped : cachedParts);
+  let parts: (string | string[])[] = cache.get(format);
+
+  if (parts)
+    return parts as string[];
+  else
+    parts = [];
+
   let inLiteral = true;
   let inBraces = false;
   let literal = '';
@@ -168,7 +184,14 @@ export function decomposeFormatString(format: string, stripDateMarks = false): s
     }
   });
 
-  return flatten(parts) as string[];
+  parts = flatten(parts);
+
+  if (cache.size >= CACHE_LIMIT)
+    cache.clear();
+
+  cache.set(format, parts as string[]);
+
+  return parts as string[];
 }
 
 function parseDateTimeFormatMods(s: string): DateTimeFormatOptions {
@@ -252,6 +275,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   const min = wt.min;
   const sec = wt.sec;
   const dayOfWeek = dt.getDayOfWeek();
+  const zoneName = dt.timezone.zoneName;
 
   for (let i = 0; i < parts.length; i += 2) {
     result.push(parts[i]);
@@ -267,8 +291,17 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       usesDateMarks = true;
     }
 
-    if (/^[LlZzI]/.test(field) && locale.cachedTimezone !== dt.timezone.zoneName || (hasIntlDateTime && isEqual(locale.dateTimeFormats, {})))
-      generatePredefinedFormats(locale, dt.timezone.zoneName);
+    if (!invalidZones.has(zoneName) &&
+        ((/^[LlZzI]/.test(field) && locale.cachedTimezone !== zoneName) ||
+         (hasIntlDateTime && isEqual(locale.dateTimeFormats, {})))) {
+      try {
+        generatePredefinedFormats(locale, zoneName);
+      }
+      catch (e) {
+        if (/invalid time zone/i.test(e.message))
+          invalidZones.add(zoneName);
+      }
+    }
 
     switch (field) {
       case 'YYYYYY': // long year, always signed
@@ -500,8 +533,8 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       case 'ZZZ': // As IANA zone name, if possible
-        if (dt.timezone.zoneName !== 'OS') {
-          result.push(dt.timezone.zoneName);
+        if (zoneName !== 'OS') {
+          result.push(zoneName);
           break;
         }
         else if (hasIntlDateTime) {
@@ -511,7 +544,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       // eslint-disable-next-line no-fallthrough
       case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
-        if (dt.timezone.zoneName === 'TAI') {
+        if (zoneName === 'TAI') {
           result.push('Temps Atomique International');
           break;
         }
@@ -523,19 +556,25 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       // eslint-disable-next-line no-fallthrough
       case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
-        if (dt.timezone.zoneName !== 'TAI' && hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
+        if (zoneName !== 'TAI' && hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
           result.push(getDatePart(locale.dateTimeFormats.z, dt.epochMillis, 'timeZoneName'));
           break;
         }
-        else if (dt.timezone.zoneName !== 'OS') {
-          result.push(dt.timezone.zoneName);
+        else if (invalidZones.has(zoneName)) {
+          result.push(dt.timezone.getDisplayName(dt.epochMillis));
           break;
         }
+        else if (zoneName !== 'OS') {
+          result.push(zoneName);
+          break;
+        }
+        else
+          field = 'Z';
 
       // eslint-disable-next-line no-fallthrough
       case 'ZZ': // Zone as UTC offset
       case 'Z':
-        if (dt.timezone.zoneName === 'TAI')
+        if (zoneName === 'TAI')
           result.push(Timezone.formatUtcOffset(dt.wallTime.deltaTai, field === 'ZZ'));
         else
           result.push(dt.timezone.getFormattedOffset(dt.epochMillis, field === 'ZZ'));
@@ -575,7 +614,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
               options.calendar = 'gregory';
 
-              const zone = convertDigitsToAscii(dt.timezone.zoneName);
+              const zone = convertDigitsToAscii(zoneName);
               let $: RegExpExecArray;
 
               if (zone === 'TAI')
@@ -599,7 +638,11 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
                 locale.dateTimeFormats[formatKey] = intlFormat = newDateTimeFormat(localeNames, options);
               }
               catch {
-                console.warn('Timezone "%s" not recognized', options.timeZone);
+                if (!warnedZones.has(options.timeZone)) {
+                  console.warn('Timezone "%s" not recognized', options.timeZone);
+                  warnedZones.add(options.timeZone);
+                }
+
                 delete options.timeZone;
                 locale.dateTimeFormats[formatKey] = intlFormat = newDateTimeFormat(localeNames, options);
               }
@@ -688,7 +731,24 @@ function quickFormat(localeNames: string | string[], timezone: string, opts: any
     options[key] = value;
   });
 
-  return newDateTimeFormat(localeNames, options);
+  try {
+    return newDateTimeFormat(localeNames, options);
+  }
+  catch (e) {
+    if (/invalid time zone/i.test(e.message)) {
+      const aliases = Timezone.getAliasesForZone(options.timeZone);
+
+      aliases.forEach(zone => {
+        try {
+          options.timeZone = zone;
+          return newDateTimeFormat(localeNames, options);
+        }
+        catch {}
+      });
+    }
+
+    throw e;
+  }
 }
 
 // Find the shortest case-insensitive version of each string in the array that doesn't match
@@ -808,15 +868,14 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     locale.zeroDigit = fmt({ m: 'd' }).format(0);
   }
   else {
-    locale.eras = ['BC', 'AD', 'Before Christ', 'Anno Domini'];
-    locale.months = ['January', 'February', 'March', 'April', 'May', 'June',
-                     'July', 'August', 'September', 'October', 'November', 'December'];
+    locale.eras = enEras;
+    locale.months = enMonths;
     locale.monthsMin = shortenItems(locale.months);
-    locale.monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    locale.monthsShort = enMonthsShort;
     locale.monthsShortMin = shortenItems(locale.monthsShort);
-    locale.weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    locale.weekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    locale.weekdaysMin = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+    locale.weekdays = enWeekdays;
+    locale.weekdaysShort = enWeekdaysShort;
+    locale.weekdaysMin = enWeekdaysMin;
     locale.zeroDigit = '0';
   }
 

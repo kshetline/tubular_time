@@ -1,10 +1,10 @@
-import { abs, div_tt0, floor, min, mod2, round } from '@tubular/math';
+import { abs, div_rd, div_tt0, floor, min, mod2, round } from '@tubular/math';
 import { clone, compareStrings, isEqual, last, padLeft, toNumber } from '@tubular/util';
 import {
   dateAndTimeFromMillis_SGC, getDateFromDayNumber_SGC, getDateOfNthWeekdayOfMonth_SGC, getDayNumber_SGC,
   getDayOnOrAfter_SGC, LAST, millisFromDateTime_SGC
 } from './calendar';
-import { DAY_MSEC, deltaTUpdater, getDateValue, MINUTE_MSEC, parseTimeOffset, YMDDate } from './common';
+import { DAY_MSEC, deltaTUpdater, enMonthsShort, enWeekdaysShort, getDateValue, MINUTE_MSEC, parseTimeOffset, YMDDate } from './common';
 import { hasIntlDateTime } from './locale-data';
 import DateTimeFormatOptions = Intl.DateTimeFormatOptions;
 
@@ -42,6 +42,8 @@ export interface ZoneInfo {
   population?: number;
   countries?: Set<string>;
   aliasFor?: string;
+  stdRule?: Rule;
+  dstRule?: Rule;
 }
 
 export interface ShortZoneNameInfo {
@@ -105,6 +107,38 @@ class Rule {
       millis -= stdOffset * 1000;
 
     return millis;
+  }
+
+  toString(): string {
+    const month = enMonthsShort[this.month - 1];
+    const dayOfWeek = enWeekdaysShort[this.dayOfWeek - 1];
+    let s = '';
+
+    if (this.dayOfMonth === 0)
+      s += `last ${dayOfWeek} of ${month}`;
+    else if (this.dayOfWeek < 0)
+      s += `${month} ${this.dayOfMonth}`;
+    else if (this.dayOfMonth > 0)
+      s += `first ${dayOfWeek} on/after ${month} ${this.dayOfMonth}`;
+    else
+      s += `last ${dayOfWeek} on/before ${month} ${-this.dayOfMonth}`;
+
+    s += `, at ${this.atHour}:${padLeft(this.atMinute, 2, '0')} `;
+    s += ['wall time', 'std time', 'UTC'][this.atType];
+
+    if (this.save === 0)
+      s += ' begin std time';
+    else {
+      if (this.save % 3600 === 0)
+        s += ` save ${div_rd(this.save, 3600)} hour${abs(this.save / 3600) > 1 ? 's' : ''}`;
+      else
+        s += ` save ${div_rd(this.save, 60)} mins`;
+
+      if (this.save % 60 !== 0)
+        s += ` ${this.save % 60} secs`;
+    }
+
+    return s;
   }
 }
 
@@ -235,6 +269,7 @@ export class Timezone {
   private static offsetsAndZones: OffsetsAndZones[];
   private static regionAndSubzones: RegionAndSubzones[];
   private static zoneLookup: Record<string, Timezone> = {};
+  private static zonesAliases: Record<string, Set<string>> = {};
 
   private readonly _zoneName: string;
   private readonly _utcOffset: number;
@@ -246,6 +281,8 @@ export class Timezone {
   private readonly _aliasFor: string;
   private readonly _countries = new Set<string>();
   private readonly _population: number;
+  private readonly _stdRule: Rule;
+  private readonly _dstRule: Rule;
 
   private _error: string;
 
@@ -533,6 +570,15 @@ export class Timezone {
     return zone;
   }
 
+  static getAliasesForZone(zone: string): string[] {
+    zone = this.zonesByLowercase[zone?.toLowerCase()];
+
+    if (!this.zonesAliases[zone])
+      return [];
+    else
+      return Array.from(this.zonesAliases[zone]);
+  }
+
   static hasShortName(name: string): boolean {
     return !!this.shortZoneNames[name];
   }
@@ -738,6 +784,8 @@ export class Timezone {
     let firstTTime = Number.MIN_SAFE_INTEGER;
     let population = 0;
     let countries = '';
+    let stdRule: Rule;
+    let dstRule: Rule;
 
     transitions.push({ transitionTime: Number.MIN_SAFE_INTEGER, utcOffset: baseUtcOffset, dstOffset: 0 });
 
@@ -805,8 +853,8 @@ export class Timezone {
           lastTTime *= 1000;
 
           const rules = sections[4].split(',');
-          const stdRule = new Rule(rules[0]);
-          const dstRule = new Rule(rules[1]);
+          stdRule = new Rule(rules[0]);
+          dstRule = new Rule(rules[1]);
           const startYear = dateAndTimeFromMillis_SGC(lastTTime).y - 1;
 
           this.applyTransitionRules(transitions, startYear, LAST_DST_YEAR, currentUtcOffset, stdRule, dstRule,
@@ -864,8 +912,24 @@ export class Timezone {
       transitions: transitions,
       population,
       countries: this.countriesStringToSet(countries),
-      aliasFor
+      aliasFor,
+      stdRule,
+      dstRule
     };
+  }
+
+  private static buildAliases(srcZone: string, dstZone: string): void {
+    const source = this.zonesAliases[srcZone];
+    const destination = this.zonesAliases[dstZone];
+
+    source.add(dstZone);
+    destination.add(srcZone);
+    source.forEach(zone => {
+      if (zone !== dstZone) {
+        destination.add(zone);
+        this.zonesAliases[zone].add(dstZone);
+      }
+    });
   }
 
   private static extractZoneInfo(): void {
@@ -873,6 +937,7 @@ export class Timezone {
     this.zonesByLowercase = { gmt: 'GMT', lmt: 'LMT', os: 'OS', tai: 'TAI', ut: 'UT', utc: 'UTC'};
     this.zonesByOffsetAndDst = {};
     this.countriesForZone = {};
+    this.zonesAliases = {};
     this.zonesForCountry = {};
     this.populationForZone = {};
 
@@ -902,8 +967,18 @@ export class Timezone {
           popAndC = $[1];
           etz = this.encodedTimezones[$[2]];
         }
-        else
-          return; // Simple alias, do not process
+        else {
+          if (!this.zonesAliases[ianaName])
+            this.zonesAliases[ianaName] = new Set<string>();
+
+          if (!this.zonesAliases[etz])
+            this.zonesAliases[etz] = new Set<string>();
+
+          this.buildAliases(ianaName, etz);
+          this.buildAliases(etz, ianaName);
+
+          return;
+        }
       }
 
       const sections = etz.split(';');
@@ -1071,6 +1146,8 @@ export class Timezone {
     this._aliasFor = zoneInfo.aliasFor;
     this._population = zoneInfo.population ?? 0;
     this._countries = zoneInfo.countries ?? new Set();
+    this._stdRule = zoneInfo.stdRule;
+    this._dstRule = zoneInfo.dstRule;
 
     if (this.transitions && this.transitions.length > 0) {
       let lastOffset = this.transitions[0].utcOffset;
@@ -1105,6 +1182,8 @@ export class Timezone {
   get aliasFor(): string | undefined { return this._aliasFor; }
   get countries(): Set<string> { return new Set(this._countries); }
   get population(): number { return this._population; }
+  get stdRule(): string { return this._stdRule?.toString(); }
+  get dstRule(): string { return this._dstRule?.toString(); }
 
   getOffset(utcTime: number, day = 0): number {
     if (!this.transitions || this.transitions.length === 0)

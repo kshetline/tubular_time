@@ -17,6 +17,14 @@ export const DELTA_TDT_MSEC = 32184;
 export const DELTA_TDT_DAYS = DELTA_TDT_SEC / DAY_SEC;
 export const DELTA_MJD = 2400000.5;
 
+export const enEras = ['BC', 'AD', 'Before Christ', 'Anno Domini'];
+export const enMonths = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+export const enMonthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const enWeekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const enWeekdaysShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const enWeekdaysMin = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
 // Hacks to eliminate circular dependencies.
 type Formatter = (dt: any, fmt: string, localeOverride?: string | string[]) => string;
 export let formatter: Formatter;

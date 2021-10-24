@@ -61,6 +61,9 @@ describe('DateTime', () => {
 
     dt.locale = 'fr';
     expect(dt.locale).to.equal('fr');
+
+    dt.locale = undefined;
+    expect(() => dt.format('D')).not.to.throw;
   });
 
   it('should properly determine locale-specific starting days of the week', () => {
