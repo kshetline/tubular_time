@@ -72,9 +72,12 @@ const baseHistoricDeltaT = [
    66.06, 66.33, 66.61, 66.92, 67.28, 67.69, 68.11, 68.53, 68.92, 69.24
 
 // From 2020 onward, data from timezone files, via updateDeltaTs().
-// Get additional data from https://www.iers.org/IERS/EN/DataProducts/EarthOrientationData/eop.html
-// As ΔT = 32.184 (for TDT - TAI) + (TAI - UTC)† - (UT1-UTC)
-// † 37 seconds on 2021-04-27, as will likely remain for some time.
+// Additional data from https://datacenter.iers.org/data/latestVersion/finals.data.iau2000.txt,
+//   as linked to from https://www.iers.org/IERS/EN/DataProducts/EarthOrientationData/eop.html.
+// ΔT = 32.184† + (TAI - UTC)‡ - (UT1 - UTC)§
+// † TT - TAI (Terrestrial Time minus International Atomic Time), a constant value.
+// ‡ 37 seconds as of 2021-11-21, as it will likely remain for some time.
+// § From finals.data, numeric value starting at 59th character column.
 ];
 
 let historicDeltaT = clone(baseHistoricDeltaT);
