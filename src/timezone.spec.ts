@@ -74,7 +74,6 @@ describe('Timezone', () => {
     expect(() => new DateTime(null, 'America/Barberg', 'en-us').format('IMM')).not.to.throw;
     expect(() => new DateTime(null, 'America/Bazberg', 'en-us').format('IMM')).not.to.throw;
     expect(() => new DateTime(null, 'Pacific/Kanton', 'en-us').format('IMM')).not.to.throw;
-    console.log(new DateTime(null, 'Pacific/Kanton', 'en-us').format('IMM z Z zz ZZ'));
     expect(new DateTime(0, 'America/Barberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 6:00:00 PM');
     expect(new DateTime(0, 'America/Bazberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 7:00:00 PM');
   });
