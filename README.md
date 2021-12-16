@@ -499,6 +499,7 @@ function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'smal
   deltaTai: 37, // How much (in seconds) TAI exceeds UTC or UT1 at given moment in time (output only)
   /* In the well-defined range for UTC, deltaTai is always an integer value.
      Outside that range it can be a non-integer with millisecond precision. */
+  taiResidue: 0, // Difference (in seconds) between an original TAI value and the TAI value that results from converting an integer millisecond UTC time to TAI.
 
   jde: 2459249.722008264, // Julian days, ephemeris
   mjde: 59249.22200826416, // Modified Julian days, ephemeris

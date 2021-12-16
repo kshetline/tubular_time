@@ -67,6 +67,7 @@ export { Timezone, Transition, ZoneInfo, RegionAndSubzones } from './timezone';
 export { IZonePoller } from './i-zone-poller';
 export { zonePollerBrowser } from './zone-poller-browser';
 export { zonePollerNode } from './zone-poller-node';
+export { isSafeTaiMillis, isSafeUtcMillis } from './ut-converter';
 
 export function initTimezoneSmall(): void {
   Timezone.defineTimezones(timezoneSmall);
