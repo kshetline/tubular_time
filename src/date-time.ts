@@ -125,7 +125,6 @@ export class DateTime extends Calendar {
   private _error: string;
   private _leapSecondMillis = 0;
   private _locale: string | string[] = DateTime.defaultLocale;
-  private taiResidue = 0;
   private _timezone = DateTime.defaultTimezone;
   private _wallTime: DateAndTime;
   private wallTimeCounter = 0;
@@ -513,7 +512,7 @@ export class DateTime extends Calendar {
 
   get taiMillis(): number {
     return !this.isTai()
-      ? this._epochMillis + this._leapSecondMillis + this._deltaTaiMillis + this.taiResidue
+      ? this._epochMillis + this._leapSecondMillis + this._deltaTaiMillis
       : this._epochMillis;
   }
 
@@ -527,7 +526,7 @@ export class DateTime extends Calendar {
       if (this.isUtcBased() && Timezone.findDeltaTaiFromTai(newTime)?.inLeap)
         leapMillis = mod(newTime, 1000) + 1;
 
-      newTime = taiToUtMillis(newTime, true) - leapMillis;
+      newTime = round(taiToUtMillis(newTime, true) - leapMillis);
     }
 
     if (this._epochMillis !== newTime || !this.wallTime || leapMillis !== this._leapSecondMillis) {
@@ -564,8 +563,7 @@ export class DateTime extends Calendar {
        'dowmi', 'dayOfWeekMonthIndex', 'n', 'epochDay', 'j', 'isJulian',
        'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayByWeek',
        'ywl', 'yearByWeekLocale', 'wl', 'weekLocale', 'dwl', 'dayByWeekLocale',
-       'utcOffset', 'dstOffset', 'occurrence',
-       'deltaTai', 'taiResidue', 'jde', 'mjde', 'jdu', 'mjdu'].forEach(key => delete w[key]);
+       'utcOffset', 'dstOffset', 'occurrence', 'deltaTai', 'jde', 'mjde', 'jdu', 'mjdu'].forEach(key => delete w[key]);
 
     if (purge != null)
       purgeAliasFields(w, purge);
@@ -651,7 +649,6 @@ export class DateTime extends Calendar {
       delete wallTime.utcOffset;
       delete wallTime.occurrence;
       delete wallTime.deltaTai;
-      delete wallTime.taiResidue;
       result._leapSecondMillis = 0;
       result.wallTime = wallTime;
     }
@@ -864,7 +861,6 @@ export class DateTime extends Calendar {
       delete wallTime.dy;
       delete wallTime.occurrence;
       delete wallTime.deltaTai;
-      delete wallTime.taiResidue;
       delete wallTime.utcOffset;
       delete wallTime.j;
       delete wallTime.jde;
@@ -1069,7 +1065,6 @@ export class DateTime extends Calendar {
     delete wallTime.n;
     delete wallTime.j;
     delete wallTime.deltaTai;
-    delete wallTime.taiResidue;
     delete wallTime.jde;
     delete wallTime.mjde;
     delete wallTime.jdu;
@@ -1302,7 +1297,6 @@ export class DateTime extends Calendar {
     delete wallTime.j;
     delete wallTime.occurrence;
     delete wallTime.deltaTai;
-    delete wallTime.taiResidue;
     delete wallTime.jde;
     delete wallTime.mjde;
     delete wallTime.jdu;
@@ -1408,7 +1402,6 @@ export class DateTime extends Calendar {
     delete wallTime.utcOffset;
     delete wallTime.occurrence;
     delete wallTime.deltaTai;
-    delete wallTime.taiResidue;
     delete wallTime.jde;
     delete wallTime.mjde;
     delete wallTime.jdu;
@@ -1531,7 +1524,6 @@ export class DateTime extends Calendar {
     delete wallTime.utcOffset;
     delete wallTime.occurrence;
     delete wallTime.deltaTai;
-    delete wallTime.taiResidue;
     delete wallTime.jde;
     delete wallTime.mjde;
     delete wallTime.jdu;
@@ -1849,7 +1841,6 @@ export class DateTime extends Calendar {
     const lsi = switchFromTai ? Timezone.findDeltaTaiFromTai(this._epochMillis) : undefined;
     let extra = (switchFromTai ? (lsi.inLeap ? mod(this._epochMillis, 1000) + 1 : 0) : this._leapSecondMillis);
     let adjustMillis = false;
-    const origMillis = this._epochMillis;
 
     if (lsi?.deltaTai) {
       this._epochMillis -= round(lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0));
@@ -1895,16 +1886,6 @@ export class DateTime extends Calendar {
         this._epochMillis = null;
       }
     }
-
-    this.taiResidue = 0;
-    this._wallTime.taiResidue = 0;
-
-    if (switchFromTai) {
-      this.taiResidue = origMillis - this.taiMillis;
-      this._wallTime.taiResidue = this.taiResidue / 1000;
-      if (this.taiResidue !== 0)
-        console.log(this.toIsoString(), this._wallTime.deltaTai, this._wallTime.taiResidue);
-    }
   }
 
   getTimeOfDayFieldsFromMillis(millis: number, day = 0, extra = 0): DateAndTime {
@@ -1943,7 +1924,6 @@ export class DateTime extends Calendar {
 
     wallTime.mjde = wallTime.jde - DELTA_MJD;
     wallTime.mjdu = wallTime.jdu - DELTA_MJD;
-    wallTime.taiResidue = 0;
 
     const transition = this.timezone.findTransitionByWallTime(wallTimeMillis);
 

@@ -100,7 +100,6 @@ export interface DateAndTime extends YMDDate {
   dstOffset?: number;
   occurrence?: number;
   deltaTai?: number;
-  taiResidue?: number;
 
   /** Julian days, ephemeris. */
   jde?: number;
@@ -129,7 +128,7 @@ const fieldOrder = [
   'yearByWeekLocale', 'weekLocale', 'dayByWeekLocale',
   'hrs', 'min', 'sec',
   'hour', 'minute', 'second', 'millis',
-  'utcOffset', 'dstOffset', 'occurrence', 'deltaTai', 'taiResidue',
+  'utcOffset', 'dstOffset', 'occurrence', 'deltaTai',
   'jde', 'mjde', 'jdu', 'mjdu',
   'error'
 ];
@@ -187,7 +186,7 @@ export function validateDateAndTime(obj: YMDDate | DateAndTime): void {
       const value = obj[key];
 
       if (value != null) {
-        if (/^(m?(deltaTai|taiResidue|jde|jdu))$/.test(key)) {
+        if (/^(m?(deltaTai|jde|jdu))$/.test(key)) {
           if (!isNumber(value))
             throw new Error(`${key} must be a numeric value (${value})`);
         }
