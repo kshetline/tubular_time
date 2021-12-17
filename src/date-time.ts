@@ -1867,7 +1867,6 @@ export class DateTime extends Calendar {
       extra = 0;
 
     this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._epochMillis, day, extra));
-    this._wallTime.taiResidue = this.taiResidue / 1000;
     this._deltaTaiMillis = this._wallTime.deltaTai * 1000;
     delete this._error;
 
@@ -1898,9 +1897,14 @@ export class DateTime extends Calendar {
     }
 
     this.taiResidue = 0;
+    this._wallTime.taiResidue = 0;
 
-    if (switchFromTai)
+    if (switchFromTai) {
       this.taiResidue = origMillis - this.taiMillis;
+      this._wallTime.taiResidue = this.taiResidue / 1000;
+      if (this.taiResidue !== 0)
+        console.log(this.toIsoString(), this._wallTime.deltaTai, this._wallTime.taiResidue);
+    }
   }
 
   getTimeOfDayFieldsFromMillis(millis: number, day = 0, extra = 0): DateAndTime {
