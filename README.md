@@ -69,6 +69,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 - [Leap Seconds, TAI, and Julian Dates](#leap-seconds-tai-and-julian-dates)
   - [Leap second time values](#leap-second-time-values)
   - [TAI field values](#tai-field-values)
+  - [Converting from UT/UTC to TAI, and back again](#converting-from-ututc-to-tai-and-back-again)
   - [Astronomical `DateAndTime` fields](#astronomical-dateandtime-fields)
   - [`epochMillis`, `utcMillis`, and `taiMillis` getters/setters](#epochmillis-utcmillis-and-taimillis-getterssetters)
   - [Sorting and comparison with TAI and non-TAI `DateTime` instances](#sorting-and-comparison-with-tai-and-non-tai-datetime-instances)
@@ -955,6 +956,12 @@ Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23
 ### TAI field values
 
 You can `add` and `subtract` TAI quantities using the following fields: `MILLI_TAI`, `SECOND_TAI`, `MINUTE_TAI`, `HOUR_TAI`, and `DAY_TAI`, as provided by the `DateTimeField` enum, or their string equivalents (`'milli_tai'`, `'millis_tai'`, `'millisecond_tai'`, `'milliseconds_tai'`, `'second_tai'`... etc.).
+
+### Converting from UT/UTC to TAI, and back again
+
+**@tubular/time** `DateTime` instances maintain UT/UTC time using integer millisecond values (sometimes along with an ancillary integer count of milliseconds during leap seconds). Starting with version 3.8.0 of **@tubular/time**, `DateTime` TAI time values, likewise measured in milliseconds, can be integer or non-integer values. This difference is because integer TAI values, as previously used, do not have a unique one-to-one correspondence with UT/UTC integer values. Without fractional precision for TAI, a UT/UTC value converted to TAI, then converted back to UT/UTC, would not reliably be restored to its original value.
+
+Over the range of time starting from January 1, 1958, up until roughly six months beyond present realtime, time is maintained specifically as UTC (not UT1 or UT1/UTC transitional) and UTC integer milliseconds are reliably converted to TAI integer milliseconds.
 
 ### Astronomical `DateAndTime` fields
 
