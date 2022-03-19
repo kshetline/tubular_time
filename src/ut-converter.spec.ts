@@ -29,7 +29,7 @@ describe('UT/TDT Converter', () => {
 
       expect(utToTai(taiDaysToUt(t))).to.be.approximately(t, 1E-15);
       expect(utToTaiMillis(taiToUtMillis(millis))).to.be.approximately(millis, 0.001);
-      expect(utToTaiMillis(taiToUtMillis(millis, true), true)).to.equal(millis);
+      expect(utToTaiMillis(taiToUtMillis(millis, true), true)).to.be.approximately(millis, 0.55);
       expect(taiToUtMillis(utToTaiMillis(millis, true), true)).to.equal(millis);
     }
 
@@ -41,7 +41,7 @@ describe('UT/TDT Converter', () => {
       expect((utToTaiMillis(epochMillis) - epochMillis) / 1000 + DELTA_TDT_SEC).to.be.approximately(TEST_DTS[y - 1922], 0.01);
       expect(getDeltaTAtTaiMillis(epochMillis)).to.be.approximately(TEST_DTS[y - 1922], 0.01);
       now.timezone = 'TAI' as any;
-      expect(now.epochMillis - epochMillis).equals(deltaTai);
+      expect(now.epochMillis - epochMillis).to.be.approximately(deltaTai, 0.55);
       now.timezone = 'UTC' as any;
       expect(now.epochMillis).equals(epochMillis);
     }

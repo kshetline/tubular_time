@@ -1,4 +1,4 @@
-import { floor, max, round } from '@tubular/math';
+import { ceil, floor, max, round } from '@tubular/math';
 import { clone } from '@tubular/util';
 import {
   DAY_MSEC, DAY_SEC, DELTA_TDT_DAYS, DELTA_TDT_MSEC, JD_J2000, UNIX_TIME_ZERO_AS_JULIAN_DAY,
@@ -88,6 +88,8 @@ let historicDeltaT = clone(baseHistoricDeltaT);
 let calibration = 0;
 let lastTableYear = -1;
 const preKnownLeapSeconds = getDayNumber_SGC(1958, 1, 1) + UNIX_TIME_ZERO_AS_JULIAN_DAY;
+let safeTaiLow = Number.MIN_SAFE_INTEGER, safeTaiHigh = Number.MAX_SAFE_INTEGER;
+let safeUtcLow = Number.MIN_SAFE_INTEGER, safeUtcHigh = Number.MAX_SAFE_INTEGER;
 let postKnownLeapSeconds: number;
 
 updateDeltaTs();
@@ -101,18 +103,30 @@ export function updateDeltaTs(post2019values?: number[], lastKnownLeapSecond?: Y
   calibration = 0;
   lastTableYear = -1;
 
-  // const now = new DateTime().wallTime; // max(new DateTime(), new DateTime(Timezone.getDateAfterLastKnownLeapSecond(), 'UTC')).wallTime;
   let lastDay = Date.now() / DAY_MSEC;
 
   if (lastKnownLeapSecond)
     lastDay = max(lastDay, getDayNumber_SGC(lastKnownLeapSecond));
 
   const lastYMD = getDateFromDayNumber_SGC(lastDay);
+  const afterLeaps = getDayNumber_SGC({ y: lastYMD.y + 1, m: lastYMD.m < 7 ? 1 : 7, d: 1 });
 
-  postKnownLeapSeconds = getDayNumber_SGC({ y: lastYMD.y + 1, m: lastYMD.m < 7 ? 1 : 7, d: 1 }) + UNIX_TIME_ZERO_AS_JULIAN_DAY;
+  postKnownLeapSeconds = afterLeaps + UNIX_TIME_ZERO_AS_JULIAN_DAY;
+  safeUtcLow = ceil((preKnownLeapSeconds + 1 - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
+  safeUtcHigh = floor((afterLeaps - 1) * DAY_MSEC);
+  safeTaiLow = utToTaiMillis(safeUtcLow);
+  safeTaiHigh = utToTaiMillis(safeUtcHigh);
 }
 
 setDeltaTUpdater(updateDeltaTs);
+
+export function isSafeTaiMillis(tai: number): boolean {
+  return safeTaiLow < tai && tai < safeTaiHigh;
+}
+
+export function isSafeUtcMillis(utc: number): boolean {
+  return safeUtcLow < utc && utc < safeUtcHigh;
+}
 
 export function getDeltaTAtJulianDate(timeJDE: number): number {
   const year = (timeJDE - JD_J2000) / 365.25 + 2000.0;
@@ -166,8 +180,12 @@ export function utToTai(timeJDU: number, asUtc = false): number {
 }
 
 export function utToTaiMillis(millis: number, asUtc = false): number {
-  return round((utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
-    UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
+  if (isSafeUtcMillis(millis))
+    return round((utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
+      UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
+  else
+    return (utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
+      UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC ;
 }
 
 export function tdtToUt(timeJDE: number): number {
@@ -192,17 +210,17 @@ export function taiToUtMillis(millis: number, forUtc = false): number {
   const jduMillis = (timeJDU - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 
   if (!forUtc || timeJDU < preKnownLeapSeconds - 365 || timeJDU > postKnownLeapSeconds + 365)
-    return round(jduMillis);
+    return jduMillis;
 
   const deltaTai = Timezone.findDeltaTaiFromTai(millis)?.deltaTai ?? 0;
-  const utMillis = millis - deltaTai * 1000;
+  let utMillis = millis - deltaTai * 1000;
 
-  if (preKnownLeapSeconds <= timeJDU && timeJDU <= postKnownLeapSeconds)
-    return utMillis;
+  if (preKnownLeapSeconds > timeJDU || timeJDU > postKnownLeapSeconds) {
+    const weight = (timeJDU <= preKnownLeapSeconds ? preKnownLeapSeconds - timeJDU : timeJDU - postKnownLeapSeconds);
+    utMillis = round((utMillis * (365 - weight) + jduMillis * weight) / 365);
+  }
 
-  const weight = (timeJDU <= preKnownLeapSeconds ? preKnownLeapSeconds - timeJDU : timeJDU - postKnownLeapSeconds);
-
-  return round((utMillis * (365 - weight) + jduMillis * weight) / 365);
+  return isSafeUtcMillis(utMillis) ? round(utMillis) : utMillis;
 }
 
 function deltaTAtStartOfYear(year: number): number {

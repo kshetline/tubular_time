@@ -1,4 +1,4 @@
-import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
+import { abs, div_rd, floor, max, min, mod, mod2, round, sign } from '@tubular/math';
 import { clone, forEach, isArray, isEqual, isNumber, isObject, isString, toNumber } from '@tubular/util';
 import {
   getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate,
@@ -120,12 +120,12 @@ export class DateTime extends Calendar {
   private static defaultTimezone = Timezone.OS_ZONE;
   private static defaultTimezoneExplicit = false;
 
+  private _deltaTaiMillis = 0;
+  private _epochMillis = 0;
   private _error: string;
+  private _leapSecondMillis = 0;
   private _locale: string | string[] = DateTime.defaultLocale;
   private _timezone = DateTime.defaultTimezone;
-  private _epochMillis = 0;
-  private _leapSecondMillis = 0;
-  private _deltaTaiMillis = 0;
   private _wallTime: DateAndTime;
   private wallTimeCounter = 0;
 
@@ -178,8 +178,11 @@ export class DateTime extends Calendar {
 
     const divisor = [1, 1, 1000, 1000, MINUTE_MSEC, MINUTE_MSEC, undefined, HOUR_MSEC, HOUR_MSEC][resolution];
 
-    if (divisor != null && divisor < DateTimeField.MINUTE)
-      return floor(d1.taiMillis / divisor) - floor(d2.taiMillis / divisor);
+    if (divisor != null && divisor < DateTimeField.MINUTE) {
+      const diff = (d1.taiMillis - d2.taiMillis) / divisor;
+
+      return abs(diff) < 0.1 ? 0 : sign(diff);
+    }
     else if (divisor != null) // Use _epochMillis here so minutes and higher round off correctly
       return floor(d1._epochMillis / divisor) - floor(d2._epochMillis / divisor);
     else if (resolution === DateTimeField.DAY)
@@ -377,7 +380,7 @@ export class DateTime extends Calendar {
     else
       this.epochMillis = (isNumber(initialTime) ? initialTime as number :
         (parseZone === Timezone.TAI_ZONE || (parseZone == null && timezone === Timezone.TAI_ZONE) ?
-          utToTaiMillis(Date.now()) : Date.now()));
+          utToTaiMillis(Date.now(), true) : Date.now()));
 
     if (parseZone && timezone)
       this.timezone = timezone;
@@ -421,6 +424,9 @@ export class DateTime extends Calendar {
     if (this.locked)
       throw lockError;
 
+    if (!this.isTai())
+      newTime = round(newTime);
+
     if (this._epochMillis !== newTime || !this.wallTime || this._leapSecondMillis !== 0) {
       this._epochMillis = newTime;
       this._leapSecondMillis = 0;
@@ -440,7 +446,7 @@ export class DateTime extends Calendar {
 
   isInLeapSecond(): boolean { return this.leapSecondMillis > 0; }
 
-  get utcMillis(): number { return this.isTai() ? this._epochMillis - this._deltaTaiMillis : this.epochMillis; }
+  get utcMillis(): number { return this.isTai() ? round(this._epochMillis - this._deltaTaiMillis) : this.epochMillis; }
   set utcMillis(newTime: number) {
     if (this.locked)
       throw lockError;
@@ -520,7 +526,7 @@ export class DateTime extends Calendar {
       if (this.isUtcBased() && Timezone.findDeltaTaiFromTai(newTime)?.inLeap)
         leapMillis = mod(newTime, 1000) + 1;
 
-      newTime = taiToUtMillis(newTime, true) - leapMillis;
+      newTime = round(taiToUtMillis(newTime, true) - leapMillis);
     }
 
     if (this._epochMillis !== newTime || !this.wallTime || leapMillis !== this._leapSecondMillis) {
@@ -926,7 +932,7 @@ export class DateTime extends Calendar {
       {
         const targetHour = mod(wallTime.hrs + 12, 24);
 
-        result.roll(DateTimeField.HOUR, 12 * (amount % 2));
+        result.roll(DateTimeField.HOUR, 12 * mod(amount, 2));
 
         if (result._wallTime.hrs === targetHour)
           return result._lock(this.locked);
@@ -1773,7 +1779,7 @@ export class DateTime extends Calendar {
       else if (wallTime.jde == null)
         wallTime.jde = wallTime.mjde + DELTA_MJD;
 
-      millis = round(tdtDaysToTaiMillis(wallTime.jde));
+      millis = tdtDaysToTaiMillis(wallTime.jde);
 
       if (!isTai) {
         if (allowSelfUpdate) {
@@ -1836,14 +1842,14 @@ export class DateTime extends Calendar {
     let extra = (switchFromTai ? (lsi.inLeap ? mod(this._epochMillis, 1000) + 1 : 0) : this._leapSecondMillis);
     let adjustMillis = false;
 
-    if (lsi && lsi.deltaTai) {
-      this._epochMillis -= lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0);
+    if (lsi?.deltaTai) {
+      this._epochMillis -= round(lsi.deltaTai * 1000 + (lsi.inLeap ? 1000 : 0));
 
       if (lsi.inLeap && this.isUtcBased())
         adjustMillis = true;
     }
     else if (switchFromTai)
-      this._epochMillis = taiToUtMillis(this._epochMillis, true);
+      this._epochMillis = round(taiToUtMillis(this._epochMillis, true));
     else if (switchToTai) {
       this._epochMillis = utToTaiMillis(this._epochMillis, true) + extra;
       extra = 0;
@@ -1852,7 +1858,7 @@ export class DateTime extends Calendar {
       extra = 0;
 
     this._wallTime = orderFields(this.getTimeOfDayFieldsFromMillis(this._epochMillis, day, extra));
-    this._deltaTaiMillis = round(this._wallTime.deltaTai * 1000);
+    this._deltaTaiMillis = this._wallTime.deltaTai * 1000;
     delete this._error;
 
     if (adjustMillis) {
@@ -1908,6 +1914,7 @@ export class DateTime extends Calendar {
       wallTime.jdu = tdtToUt(wallTime.jde);
     }
     else {
+      millis = round(millis);
       wallTime.deltaTai = (utToTaiMillis(millis, true) - millis) / 1000;
       wallTime.jdu = DateTime.julianDay(millis + extra);
       wallTime.jde = utToTdt(wallTime.jdu);
