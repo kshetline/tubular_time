@@ -38,8 +38,8 @@ describe('UT/TDT Converter', () => {
       const epochMillis = now.epochMillis;
       const deltaTai = round(now.wallTime.deltaTai * 1000);
 
-      expect((utToTaiMillis(epochMillis) - epochMillis) / 1000 + DELTA_TDT_SEC).to.be.approximately(TEST_DTS[y - 1922], 0.01);
-      expect(getDeltaTAtTaiMillis(epochMillis)).to.be.approximately(TEST_DTS[y - 1922], 0.01);
+      expect((utToTaiMillis(epochMillis) - epochMillis) / 1000 + DELTA_TDT_SEC).to.be.approximately(TEST_DTS[y - 1922], 0.015);
+      expect(getDeltaTAtTaiMillis(epochMillis)).to.be.approximately(TEST_DTS[y - 1922], 0.015);
       now.timezone = 'TAI' as any;
       expect(now.epochMillis - epochMillis).to.be.approximately(deltaTai, 0.55);
       now.timezone = 'UTC' as any;
