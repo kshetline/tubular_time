@@ -790,6 +790,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
     locale.monthsShort = [];
     const narrow: string[] = [];
     let format: DateTimeFormat;
+    const fullTimeFormat = new DateTimeFormat(normalizeLocale(locale.name), { timeStyle: 'full', timeZone: 'UTC' });
 
     for (let month = 1; month <= 12; ++month) {
       const date = Date.UTC(2021, month - 1, 1);
@@ -846,13 +847,28 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
       const date = Date.UTC(2021, 0, 1, hour,  0, 0);
       const value = getDatePart(format, date, 'dayPeriod');
       const lcValue = value.toLowerCase();
-
-      hourForms.add(value);
+      let newHourForm = value;
+      const newMeridiems = [];
 
       if (value === lcValue)
-        locale.meridiemAlt.push([value]);
+        newMeridiems.push(value);
       else
-        locale.meridiemAlt.push([lcValue, value]);
+        newMeridiems.push(lcValue, value);
+
+      const fullValue = getDatePart(fullTimeFormat, date, 'dayPeriod');
+      const lcFullValue = fullValue?.toLowerCase();
+
+      if (fullValue && fullValue !== value) {
+        newHourForm += ',' + fullValue;
+
+        if (fullValue === lcFullValue)
+          newMeridiems.push(fullValue);
+        else
+          newMeridiems.push(lcFullValue, fullValue);
+      }
+
+      hourForms.add(newHourForm);
+      locale.meridiemAlt.push(newMeridiems);
     }
 
     if (hourForms.size < 3) {
