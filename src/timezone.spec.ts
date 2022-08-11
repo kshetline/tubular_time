@@ -83,11 +83,13 @@ describe('Timezone', () => {
     initTimezoneLarge();
     expect(Timezone.getAliasesForZone('Africa/Accra')).to.deep.equal([
       'Africa/Abidjan', 'Africa/Bamako', 'Africa/Banjul', 'Africa/Conakry', 'Africa/Dakar', 'Africa/Freetown',
-      'Africa/Lome', 'Africa/Nouakchott', 'Africa/Ouagadougou', 'Africa/Timbuktu', 'Atlantic/St_Helena'
+      'Africa/Lome', 'Africa/Nouakchott', 'Africa/Ouagadougou', 'Africa/Timbuktu', 'Atlantic/Reykjavik',
+      'Atlantic/St_Helena', 'Iceland'
     ]);
     expect(Timezone.getAliasesForZone('Africa/Lome')).to.deep.equal([
       'Africa/Abidjan', 'Africa/Accra', 'Africa/Bamako', 'Africa/Banjul', 'Africa/Conakry', 'Africa/Dakar',
-      'Africa/Freetown', 'Africa/Nouakchott', 'Africa/Ouagadougou', 'Africa/Timbuktu', 'Atlantic/St_Helena'
+      'Africa/Freetown', 'Africa/Nouakchott', 'Africa/Ouagadougou', 'Africa/Timbuktu', 'Atlantic/Reykjavik',
+      'Atlantic/St_Helena', 'Iceland'
     ]);
     expect(Timezone.getAliasesForZone('America/New_York')).to.deep.equal([
       'SystemV/EST5EDT', 'US/Eastern'
