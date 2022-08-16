@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneLargeAlt = /* trim-file-start */{ // tz database version: 2022b, years 1800-2089, rounded to nearest minute, filtered, calendar rollbacks eliminated
-  version: '2022b',
+const timezoneLargeAlt = /* trim-file-start */{ // tz database version: 2022c, years 1800-2089, rounded to nearest minute, filtered, calendar rollbacks eliminated
+  version: '2022c',
   years: '1800-2089',
   deltaTs: '69.36 69.36 69.28',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
