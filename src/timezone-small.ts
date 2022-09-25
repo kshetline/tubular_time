@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneSmall = /* trim-file-start */{ // tz database version: 2022c, years 2017-2027
-  version: '2022c',
+const timezoneSmall = /* trim-file-start */{ // tz database version: 2022d, years 2017-2027
+  version: '2022d',
   years: '2017-2027',
   deltaTs: '69.36 69.36 69.28',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
@@ -62,7 +62,7 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2022c, year
   'Asia/Dhaka': '+0600 +0600 0;60/0;;;;16e6;BD',
   'Asia/Dubai': '+0400 +0400 0;40/0;;;;39e5;AEOM',
   'Asia/Famagusta': '+0300 +0200 60;30/0 20/0/EET 30/10/EEST;121212121212121212121;1Urd0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;;CY',
-  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1SXX0 1qL0 WN0 1qL0 11c0 1on0 11B0 1o00 11A0 1qo0 XA0 1q00 XA0 1q00 12o0 1nc0 12o0 1nc0 12o0 1nc0 12o0 1q00;2021 10 23 6 1:0 0 0,2022 3 25 1 0:0 0 60;18e5;PS',
+  'Asia/Gaza': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1SXX0 1qL0 11B0 1nX0 11c0 1on0 11B0 1o00 11A0 1qo0 XA0 1qp0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0;2022 10 0 7 2:0 0 0,2023 3 0 7 2:0 0 60;18e5;PS',
   'Asia/Hong_Kong': '+0800 +0800 0;80/0/HKT;;;;73e5;HK',
   'Asia/Jakarta': '+0700 +0700 0;70/0/WIB;;;;31e6;ID',
   'Asia/Jayapura': '+0900 +0900 0;90/0/WIT;;;;26e4;ID',
@@ -116,7 +116,6 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2022c, year
   'Europe/Paris': '+0100 +0100 60;10/0/CET 20/10/CEST;1010101010101010101010;1T0p0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;11e6;FR',
   'Europe/Tirane': '+0100 +0100 60;10/0/CET 20/10/CEST;1010101010101010101010;zhX0 1l9e0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;42e4;AL',
   'Europe/Volgograd': '+0300 +0300 0;30/0 40/0;10;1WQL0 5gn0;;10e5;RU',
-  'Europe/Zaporozhye': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;14by0 QfD0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;77e4;UA',
   'MET': '+0100 +0100 60;10/0/MET 20/10/MEST;1010101010101010101010;1T0p0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0;1996 10 0 1 2:0 1 0,1981 3 0 1 2:0 1 60',
   'Pacific/Apia': '-1100 +1300 0;-b0/0 e0/10 d0/0;1212121212;1Gfn0 cLD0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0;;37e3;WS',
   'Pacific/Auckland': '+1200 +1200 60;c0/0/NZST d0/10/NZDT;10101010101010101010;1Ud20 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0;2008 4 1 1 2:0 1 0,2007 9 0 1 2:0 1 60;14e5;AQNZ',
@@ -504,13 +503,14 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2022c, year
   'Europe/Tallinn': '!41e4,EE,Europe/Athens',
   'Europe/Tiraspol': 'Europe/Chisinau',
   'Europe/Ulyanovsk': '!13e5,RU,Asia/Dubai',
-  'Europe/Uzhgorod': '!11e4,UA,Europe/Zaporozhye',
+  'Europe/Uzhgorod': '!11e4,UA,Europe/Kyiv',
   'Europe/Vaduz': '!38e4,CHDELI,Europe/Paris',
   'Europe/Vatican': '!39e5,ITSMVA,Europe/Paris',
   'Europe/Vienna': '!18e5,AT,Europe/Paris',
   'Europe/Vilnius': '!54e4,LT,Europe/Athens',
   'Europe/Warsaw': '!17e5,PL,Europe/Paris',
   'Europe/Zagreb': '!12e5,BAHRMEMKRSSI,Europe/Paris',
+  'Europe/Zaporozhye': '!77e4,UA,Europe/Kyiv',
   'Europe/Zurich': '!38e4,CHDELI,Europe/Paris',
   'GB': 'Europe/London',
   'GB-Eire': 'Europe/London',
