@@ -143,22 +143,22 @@ While there are a wide range of functions and classes available from **@tubular/
 
 `DateTime` instances can be created in many ways. The simplest way is to create a current-time instance, done by passing no arguments at all. Dates and times can also be expressed as strings, objects, and arrays of numbers.
 
-|  |  | .toString() |
-|---|---|---|
-| `ttime()` | Current time. | `DateTime<2021‑01‑28T03:29:12.040 ‑05:00>` |
-| `ttime('1969‑07‑12T20:17')`<br>`ttime('1969‑07‑12T20:17Z')`<br>`ttime('20210704T0945-03')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>A trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<1969‑07‑12T20:17:00.000 ‑04:00§>`<br>`DateTime<1969-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-07-04T09:45:00.000 -03:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>`
-| `ttime('2021-w05-5')` | DateTime from an ISO-8601-like date/time variant (lowercase `w` instead of uppercase `W`) for locale-based week numbering. | `DateTime<2021-01-28T00:00:00.000 -05:00>` |
-| `ttime('2017‑03‑02 14:45 Europe/Paris')` | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone. | `DateTime<2017-03-02T14:45:00.000 +01:00>` |
-| `ttime('20:17:15')` | Dateless time from an ISO-8601 time string. | `DateTime<20:17:15.000>` |
-| `ttime(1200848400000)` | From a millisecond timestamp. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime({ tai: 1200848400000 })` | From a TAI millisecond timestamp. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })` | From a `DateAndTime` object, short-style field names. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })` | From a `DateAndTime` object, long-style field names. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime([2013, 12, 11, 10, 9, 8, 765])` | From a numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order. | `DateTime<2013-12-11T10:09:08.765 -05:00>` |
-| `ttime(new Date(2008, 0, 20, 12, 0))` | From a JavaScript `Date` object. | `DateTime<2008-01-20T12:00:00.000 -05:00>` |
-| `ttime('Feb 26 2021 11:00:00 GMT‑0500')` | From an ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`). | `DateTime<2021-02-26T11:00:00.000 ‑05:00>` |
-| `ttime.unix(1318781876.721)` | From a Unix timestamp. | `DateTime<2011-10-16T12:17:56.721 -04:00§>` |
-| `ttime.unix(1318781876.721, 'UTC')` | From a Unix timestamp, with timezone. | `DateTime<2011-10-16T16:17:56.721 +00:00>` |
+|                                                                                                                     |                                                                                                                                                  | .toString()                                                                                                                                                                           |
+|---------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ttime()`                                                                                                           | Current time.                                                                                                                                    | `DateTime<2021‑01‑28T03:29:12.040 ‑05:00>`                                                                                                                                            |
+| `ttime('1969‑07‑12T20:17')`<br>`ttime('1969‑07‑12T20:17Z')`<br>`ttime('20210704T0945-03')`<br>`ttime('2021‑W04‑4')` | DateTime from an ISO-8601 date/time string.<br>A trailing `Z` causes the time to be parsed as UTC. Without it, your default timezone is assumed. | `DateTime<1969‑07‑12T20:17:00.000 ‑04:00§>`<br>`DateTime<1969-07-12T20:17:00.000 +00:00>`<br>`DateTime<2021-07-04T09:45:00.000 -03:00>`<br>`DateTime<2021-01-28T00:00:00.000 -05:00>` |
+| `ttime('2021-w05-5')`                                                                                               | DateTime from an ISO-8601-like date/time variant (lowercase `w` instead of uppercase `W`) for locale-based week numbering.                       | `DateTime<2021-01-28T00:00:00.000 -05:00>`                                                                                                                                            |
+| `ttime('2017‑03‑02 14:45 Europe/Paris')`                                                                            | From an ISO-8601 date/time (variant with space instead of `T`) and IANA timezone.                                                                | `DateTime<2017-03-02T14:45:00.000 +01:00>`                                                                                                                                            |
+| `ttime('20:17:15')`                                                                                                 | Dateless time from an ISO-8601 time string.                                                                                                      | `DateTime<20:17:15.000>`                                                                                                                                                              |
+| `ttime(1200848400000)`                                                                                              | From a millisecond timestamp.                                                                                                                    | `DateTime<2008-01-20T12:00:00.000 -05:00>`                                                                                                                                            |
+| `ttime({ tai: 1200848400000 })`                                                                                     | From a TAI millisecond timestamp.                                                                                                                | `DateTime<2008-01-20T12:00:00.000 -05:00>`                                                                                                                                            |
+| `ttime({ y: 2008, m: 1, d: 20, hrs: 12, min: 0 })`                                                                  | From a `DateAndTime` object, short-style field names.                                                                                            | `DateTime<2008-01-20T12:00:00.000 -05:00>`                                                                                                                                            |
+| `ttime({ year: 2008, month: 1, day: 20, hour: 12, minute: 0 })`                                                     | From a `DateAndTime` object, long-style field names.                                                                                             | `DateTime<2008-01-20T12:00:00.000 -05:00>`                                                                                                                                            |
+| `ttime([2013, 12, 11, 10, 9, 8, 765])`                                                                              | From a numeric array: year, month, day, (hour (0-23), minute, second, millisecond), in that order.                                               | `DateTime<2013-12-11T10:09:08.765 -05:00>`                                                                                                                                            |
+| `ttime(new Date(2008, 0, 20, 12, 0))`                                                                               | From a JavaScript `Date` object.                                                                                                                 | `DateTime<2008-01-20T12:00:00.000 -05:00>`                                                                                                                                            |
+| `ttime('Feb 26 2021 11:00:00 GMT‑0500')`                                                                            | From an ECMA-262 string<br>(Parsing performed by JavaScript `Date('`*time_string*`')`).                                                          | `DateTime<2021-02-26T11:00:00.000 ‑05:00>`                                                                                                                                            |
+| `ttime.unix(1318781876.721)`                                                                                        | From a Unix timestamp.                                                                                                                           | `DateTime<2011-10-16T12:17:56.721 -04:00§>`                                                                                                                                           |
+| `ttime.unix(1318781876.721, 'UTC')`                                                                                 | From a Unix timestamp, with timezone.                                                                                                            | `DateTime<2011-10-16T16:17:56.721 +00:00>`                                                                                                                                            |
 
 When dealing with Daylight Saving Time, and days when clocks are turned backward, some hour/minute combinations are repeated. The time might be 1:59, go back to 1:00, then forward again to 1:59, and only after hitting 1:59 for this second time during the day, move forward to 2:00.
 
@@ -200,76 +200,76 @@ For example:
 
 ## Format string tokens
 
-| | Token | Output |
-|-------|------:|-------|
-| Era | NNNNN<br>NNN,&nbsp;NN,&nbsp;N | BC AD<br><br>Abbreviated era (no distinction between narrow and abbreviated, as in Moment.js). |
-| | NNNN | Before Christ, Anno Domini<br><br>Long-form era.
-| | n | BC<br><br>Abbreviated era, only shows for BC, not AD. When year is AD, leading space before `n` token is removed. |
-| Year | YYYYYY | -001970 -001971 ... +001907 +001971<br><br>Always-signed years, padded to six digits. |
-| | YYYY&nbsp;&nbsp;<br>YYYY~ | 1970 1971 ... 2029 2030<br><br>Padded to at least four digits. With `~`, `年` or `년` is added when needed for CJK locales, otherwise replaced by a space character or empty string. |
-| | YY | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
-| | Y&nbsp;&nbsp;<br>Y~ | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. With `~`, `年` or `년` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| | y&nbsp;&nbsp;<br>y~ | 1 2 ... 2020 ...<br><br>Era year, for use with BC/AD, never 0 or negative. With `~`, `年` or `년` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| Week year (ISO) | GGGG | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
-| | GG | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
-| Week year (locale) | gggg | 1970 1971 ... 2029 2030, `+` sign shown when over 9999. |
-| | gg | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary. |
-| Quarter | Qo | 1st 2nd 3rd 4th |
-| | Q | 1 2 3 4 |
-| Month | MMMM&nbsp;&nbsp;<br>MMMM~ | January February ... November December<br>1月 2月 ... 11月 12月 • 一月 二月 ... 十一月 十二月 • 1월 2월 ... 11월 12월<br><br>For CJK locales, `月` or `월` is added when using either the `MMMM` and `MMMM~` token, but using `MMMM~` allows the position of the `~` to be replaced with a blank, when appropriate, for other languages. |
-| | MMM&nbsp;&nbsp;<br>MMM~ | Jan Feb ... Nov Dec<br>1月 2月 ... 11月 12月 • 1월 2월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| | MM&nbsp;&nbsp;<br>MM~ | 01 02 ... 11 12<br>01月 02月 ... 11月 12月 • 01월 02월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| | M&nbsp;&nbsp;<br>M~ | 1 2 ... 11 12<br>1月 2月 ... 11月 12月 • 1월 2월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| | Mo | 1st 2nd ... 11th 12th |
-| Week (ISO) | WW | 01 02 ... 52 53 |
-| | W | 1 2 ... 52 53 |
-| Week (locale) | ww | 01 02 ... 52 53 |
-| | w | 1 2 ... 52 53 |
-| Day of month | DD&nbsp;&nbsp;<br>DD~ | 01 02 ... 30 31<br><br>With `~`, `日` or `일` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| | D&nbsp;&nbsp;<br>D~ | 1 2 ... 30 31<br><br>With `~`, `日` or `일` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string. |
-| | Do | 1st 2nd ... 30th 31st |
-| Day of year | DDDD | 001 002 ... 364 365 366 |
-| | DDD | 1 2 ... 364 365 366 |
-| Day of week | dddd | Sunday Monday ... Friday Saturday |
-| | ddd | Sun Mon ... Fri Sat |
-| | dd | Su Mo ... Fr Sa |
-| | d | 0 1 ... 5 6 |
-| | do | 0th 1st ... 5th 6th |
-| Day of Week (ISO) | E | 1 2 ... 6 7 |
-| Day of Week (locale) | e | 1 2 ... 6 7<br><br>Note: this is 1-based, not 0-based, as in Moment.js. |
-| Hour | HH | 00-23 |
-| | H | 0-23 |
-| | hh | 01-12, for use with AM/PM |
-| | h | 1-12, for use with AM/PM |
-| | KK | 00-11, for use with AM/PM |
-| | K | 0-11, for use with AM/PM |
-| | kk | 01-24 |
-| | k | 1-24 |
-| Day period | A | AM PM |
-| | a | am pm |
-| Minute | mm | 00-59 |
-| | m | 0-59 |
-| Second | ss | 00-59
-| | s | 0-59 |
-| Fractional seconds | S | 0-9 (tenths of a second) |
-| | SS | 00-99 (hundredths of a second) |
-| | SSS | 000-999 (milliseconds) |
-| | SSSS... | Additional zeros after milliseconds. |
-| Timezone | ZZZ | America/New_York, Europe/Paris, etc.<br><br>IANA timezone, if available. |
-| | zzz | Australian Central Standard Time, Pacific Daylight Time, etc.<br><br>_Long form names are only for output &mdash; cannot be parsed._ |
-| | ZZ | -0700 -0600 ... +0600 +0700<br><br>If used with a TAI time, the displayed offset will be the difference between TAI and UTC at a given moment in time. Outside of the well-defined span of officially-declared leap seconds, this offset might be displayed with millisecond precision.
-| | zz,&nbsp;z | EST, CDT, MST, PDT, AEST, etc.<br><br>Please note that timezones in this format are not internationalized, and are not unambiguous when parsed. |
-| | Z | -07:00 -06:00 ... +06:00 +07:00
-| Unix timestamp, UTC | X | 1360013296 |
-| Unix millisecond timestamp, UTC | x | 1360013296123 |
-| Unix timestamp, epoch | XX | 1360013296 |
-| Unix millisecond timestamp, epoch | xx | 1360013296123 |
-| Unix timestamp, TAI | X | 1360013331 |
-| Unix millisecond timestamp, TAI | x | 1360013331123 |
-| Daylight Saving Time indicator | V | § # ^ ~ ❄<br><br>Symbol indicating DST is in effect.<br>This is typically §, meaning the clock has been turned forward one hour.<br># means two hours forward, ^ means half an hour, ~ is any other forward amount.<br>❄ is negative DST, i.e. “Winter Time”.<br>Renders one blank space when DST is not in effect. |
-| | v | Same as above, but no blank space when DST is not in effect. |
-| Occurrence indicator | R | 1:00 , 1:01 ... 1:58 , 1:59 , 1:00₂, 1:01₂ ... 1:58₂, 1:59₂, 2:00 , 2:01<br><br>A subscript 2 (₂) that denotes the second occurrence of the same clock time during a day when clocks are turned back for Daylight Saving Time. |
-| | r | Same as above, but no blank space when subscript isn’t needed. |
+|                                   |                         Token | Output                                                                                                                                                                                                                                                                                                               |
+|-----------------------------------|------------------------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Era                               | NNNNN<br>NNN,&nbsp;NN,&nbsp;N | BC AD<br><br>Abbreviated era (no distinction between narrow and abbreviated, as in Moment.js).                                                                                                                                                                                                                       |
+|                                   |                          NNNN | Before Christ, Anno Domini<br><br>Long-form era.                                                                                                                                                                                                                                                                     |
+|                                   |                             n | BC<br><br>Abbreviated era, only shows for BC, not AD. When year is AD, leading space before `n` token is removed.                                                                                                                                                                                                    |
+| Year                              |                        YYYYYY | -001970 -001971 ... +001907 +001971<br><br>Always-signed years, padded to six digits.                                                                                                                                                                                                                                |
+|                                   |     YYYY&nbsp;&nbsp;<br>YYYY~ | 1970 1971 ... 2029 2030<br><br>Padded to at least four digits. With `~`, `年` or `년` is added when needed for CJK locales, otherwise replaced by a space character or empty string.                                                                                                                                   |
+|                                   |                            YY | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary.                                                                                                                                                                                                                                          |
+|                                   |           Y&nbsp;&nbsp;<br>Y~ | 1970 1971 ... 9999 +10000 +10001<br><br>Padded to at least four digits, `+` sign shown when over 9999. With `~`, `年` or `년` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string.                                                                                    |
+|                                   |           y&nbsp;&nbsp;<br>y~ | 1 2 ... 2020 ...<br><br>Era year, for use with BC/AD, never 0 or negative. With `~`, `年` or `년` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string.                                                                                                                |
+| Week year (ISO)                   |                          GGGG | 1970 1971 ... 2029 2030, `+` sign shown when over 9999.                                                                                                                                                                                                                                                              |
+|                                   |                            GG | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary.                                                                                                                                                                                                                                          |
+| Week year (locale)                |                          gggg | 1970 1971 ... 2029 2030, `+` sign shown when over 9999.                                                                                                                                                                                                                                                              |
+|                                   |                            gg | 70 71 ... 29 30<br><br>Padded to two digits with leading zero if necessary.                                                                                                                                                                                                                                          |
+| Quarter                           |                            Qo | 1st 2nd 3rd 4th                                                                                                                                                                                                                                                                                                      |
+|                                   |                             Q | 1 2 3 4                                                                                                                                                                                                                                                                                                              |
+| Month                             |     MMMM&nbsp;&nbsp;<br>MMMM~ | January February ... November December<br>1月 2月 ... 11月 12月 • 一月 二月 ... 十一月 十二月 • 1월 2월 ... 11월 12월<br><br>For CJK locales, `月` or `월` is added when using either the `MMMM` and `MMMM~` token, but using `MMMM~` allows the position of the `~` to be replaced with a blank, when appropriate, for other languages. |
+|                                   |       MMM&nbsp;&nbsp;<br>MMM~ | Jan Feb ... Nov Dec<br>1月 2月 ... 11月 12月 • 1월 2월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string.                                                                                                                       |
+|                                   |         MM&nbsp;&nbsp;<br>MM~ | 01 02 ... 11 12<br>01月 02月 ... 11月 12月 • 01월 02월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string.                                                                                                                       |
+|                                   |           M&nbsp;&nbsp;<br>M~ | 1 2 ... 11 12<br>1月 2月 ... 11月 12月 • 1월 2월 ... 11월 12월<br><br>With `~`, `月` or `월` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string.                                                                                                                             |
+|                                   |                            Mo | 1st 2nd ... 11th 12th                                                                                                                                                                                                                                                                                                |
+| Week (ISO)                        |                            WW | 01 02 ... 52 53                                                                                                                                                                                                                                                                                                      |
+|                                   |                             W | 1 2 ... 52 53                                                                                                                                                                                                                                                                                                        |
+| Week (locale)                     |                            ww | 01 02 ... 52 53                                                                                                                                                                                                                                                                                                      |
+|                                   |                             w | 1 2 ... 52 53                                                                                                                                                                                                                                                                                                        |
+| Day of month                      |         DD&nbsp;&nbsp;<br>DD~ | 01 02 ... 30 31<br><br>With `~`, `日` or `일` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string.                                                                                                                                                                    |
+|                                   |           D&nbsp;&nbsp;<br>D~ | 1 2 ... 30 31<br><br>With `~`, `日` or `일` is added when needed for CJK locales, otherwise `~` is replaced by a space character or empty string.                                                                                                                                                                      |
+|                                   |                            Do | 1st 2nd ... 30th 31st                                                                                                                                                                                                                                                                                                |
+| Day of year                       |                          DDDD | 001 002 ... 364 365 366                                                                                                                                                                                                                                                                                              |
+|                                   |                           DDD | 1 2 ... 364 365 366                                                                                                                                                                                                                                                                                                  |
+| Day of week                       |                          dddd | Sunday Monday ... Friday Saturday                                                                                                                                                                                                                                                                                    |
+|                                   |                           ddd | Sun Mon ... Fri Sat                                                                                                                                                                                                                                                                                                  |
+|                                   |                            dd | Su Mo ... Fr Sa                                                                                                                                                                                                                                                                                                      |
+|                                   |                             d | 0 1 ... 5 6                                                                                                                                                                                                                                                                                                          |
+|                                   |                            do | 0th 1st ... 5th 6th                                                                                                                                                                                                                                                                                                  |
+| Day of Week (ISO)                 |                             E | 1 2 ... 6 7                                                                                                                                                                                                                                                                                                          |
+| Day of Week (locale)              |                             e | 1 2 ... 6 7<br><br>Note: this is 1-based, not 0-based, as in Moment.js.                                                                                                                                                                                                                                              |
+| Hour                              |                            HH | 00-23                                                                                                                                                                                                                                                                                                                |
+|                                   |                             H | 0-23                                                                                                                                                                                                                                                                                                                 |
+|                                   |                            hh | 01-12, for use with AM/PM                                                                                                                                                                                                                                                                                            |
+|                                   |                             h | 1-12, for use with AM/PM                                                                                                                                                                                                                                                                                             |
+|                                   |                            KK | 00-11, for use with AM/PM                                                                                                                                                                                                                                                                                            |
+|                                   |                             K | 0-11, for use with AM/PM                                                                                                                                                                                                                                                                                             |
+|                                   |                            kk | 01-24                                                                                                                                                                                                                                                                                                                |
+|                                   |                             k | 1-24                                                                                                                                                                                                                                                                                                                 |
+| Day period                        |                             A | AM PM                                                                                                                                                                                                                                                                                                                |
+|                                   |                             a | am pm                                                                                                                                                                                                                                                                                                                |
+| Minute                            |                            mm | 00-59                                                                                                                                                                                                                                                                                                                |
+|                                   |                             m | 0-59                                                                                                                                                                                                                                                                                                                 |
+| Second                            |                            ss | 00-59                                                                                                                                                                                                                                                                                                                |
+|                                   |                             s | 0-59                                                                                                                                                                                                                                                                                                                 |
+| Fractional seconds                |                             S | 0-9 (tenths of a second)                                                                                                                                                                                                                                                                                             |
+|                                   |                            SS | 00-99 (hundredths of a second)                                                                                                                                                                                                                                                                                       |
+|                                   |                           SSS | 000-999 (milliseconds)                                                                                                                                                                                                                                                                                               |
+|                                   |                       SSSS... | Additional zeros after milliseconds.                                                                                                                                                                                                                                                                                 |
+| Timezone                          |                           ZZZ | America/New_York, Europe/Paris, etc.<br><br>IANA timezone, if available.                                                                                                                                                                                                                                             |
+|                                   |                           zzz | Australian Central Standard Time, Pacific Daylight Time, etc.<br><br>_Long form names are only for output &mdash; cannot be parsed._                                                                                                                                                                                 |
+|                                   |                            ZZ | -0700 -0600 ... +0600 +0700<br><br>If used with a TAI time, the displayed offset will be the difference between TAI and UTC at a given moment in time. Outside of the well-defined span of officially-declared leap seconds, this offset might be displayed with millisecond precision.                              |
+|                                   |                    zz,&nbsp;z | EST, CDT, MST, PDT, AEST, etc.<br><br>Please note that timezones in this format are not internationalized, and are not unambiguous when parsed.                                                                                                                                                                      |
+|                                   |                             Z | -07:00 -06:00 ... +06:00 +07:00                                                                                                                                                                                                                                                                                      |
+| Unix timestamp, UTC               |                             X | 1360013296                                                                                                                                                                                                                                                                                                           |
+| Unix millisecond timestamp, UTC   |                             x | 1360013296123                                                                                                                                                                                                                                                                                                        |
+| Unix timestamp, epoch             |                            XX | 1360013296                                                                                                                                                                                                                                                                                                           |
+| Unix millisecond timestamp, epoch |                            xx | 1360013296123                                                                                                                                                                                                                                                                                                        |
+| Unix timestamp, TAI               |                             X | 1360013331                                                                                                                                                                                                                                                                                                           |
+| Unix millisecond timestamp, TAI   |                             x | 1360013331123                                                                                                                                                                                                                                                                                                        |
+| Daylight Saving Time indicator    |                             V | § # ^ ~ ❄<br><br>Symbol indicating DST is in effect.<br>This is typically §, meaning the clock has been turned forward one hour.<br># means two hours forward, ^ means half an hour, ~ is any other forward amount.<br>❄ is negative DST, i.e. “Winter Time”.<br>Renders one blank space when DST is not in effect.  |
+|                                   |                             v | Same as above, but no blank space when DST is not in effect.                                                                                                                                                                                                                                                         |
+| Occurrence indicator              |                             R | 1:00 , 1:01 ... 1:58 , 1:59 , 1:00₂, 1:01₂ ... 1:58₂, 1:59₂, 2:00 , 2:01<br><br>A subscript 2 (₂) that denotes the second occurrence of the same clock time during a day when clocks are turned back for Daylight Saving Time.                                                                                       |
+|                                   |                             r | Same as above, but no blank space when subscript isn’t needed.                                                                                                                                                                                                                                                       |
 
 **Moment.js formats not supported by @tubular/time:** DDDo, Wo, wo, yo
 
@@ -364,7 +364,7 @@ Please note that if you pass a second argument of `true`, the timezone is change
 
 These functions define the size and behavior of the IANA timezone definitions used by **@tubular/time**:
 
-```typescript
+```
 ttime.initTimezoneSmall();
 ttime.initTimezoneLarge();
 ttime.initTimezoneLargeAlt();
@@ -398,7 +398,7 @@ Timezone definitions can be updated live as well. Different polling methods are 
 
 To be informed when a live timezone update takes place, add and remove update listeners using these functions:
 
-```typescript
+```
 function addZonesUpdateListener(listener: (result: boolean | Error) => void): void;
 function removeZonesUpdateListener(listener: (result: boolean | Error) => void): void;
 function clearZonesUpdateListeners(): void
@@ -408,7 +408,7 @@ The result received by a callback is `true` if an update was successful, and cau
 
 For example:
 
-```typescript
+```
   const listener = result => console.log(result); // Keep in a variable if removal is needed later
 
   ttime.addZonesUpdateListener(listener);
@@ -422,7 +422,7 @@ Why use a listener? Because you might want to recalculate previously calculated 
 
 To poll for for timezone updates at a regular interval, use:
 
-```typescript
+```
 function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: ZoneOptions = 'small', intervalDays = 1): void;
 ```
 
@@ -432,7 +432,7 @@ function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: ZoneOptio
 
 You can also do a one-off request:
 
-```typescript
+```
 function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'small'): Promise<boolean>;
 ```
 
@@ -704,7 +704,7 @@ There are also functions for checking if a year, month, and day-of-month togethe
 
 The following functions can be imported/required from `'@tubular/time'`, or, in a browser script, found on the `tbTime` global:
 
-```typescript
+```
 function isValidDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
 function isValidDateGregorian(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
 function isValidDateJulian(yearOrDate: YearOrDate, month?: number, day?: number): boolean;
@@ -714,14 +714,14 @@ The `yearOrDate` argument can be just a number for the year (in which case `mont
 
 There is also this method, available on instances of `Calendar` or `DateTime`, which determines the validity of a date according to that instance’s Julian/Gregorian switch-over:
 
-```typescript
+```
 isValidDate(year: number, month: number, day: number): boolean;
 isValidDate(yearOrDate: YMDDate | number[]): boolean;
 ```
 
 A related method takes a possibly invalid date and coerces it into a valid date, such as turning September 31 into October 1.
 
-```typescript
+```
 normalizeDate(year: number, month: number, day: number): YMDDate;
 normalizeDate(yearOrDate: YMDDate | number[]): YMDDate;
 ```
@@ -820,25 +820,25 @@ The `getCalendarMonth()` method shows all of these effects together, but there a
 
 Total number of days in a month, as affected by leap years and Julian/Gregorian switch-over. If a day is missing due to a timezone issue, that day is still counted as a day in the month, albeit a special 0-length day:
 
-```typescript
+```
 getDaysInMonth(year?: number, month?: number): number;
 ```
 
 The range of dates excluded due to Julian/Gregorian switch-over only. If no days are excluded, the result is `null`. If days are excluded, a two-element array is returned. `result[0]` is the first day dropped, `result[1]` is the last day dropped:
 
-```typescript
+```
 getMissingDateRange(year?: number, month?: number): number[] | null;
 ```
 
 The first date in a month. Usually 1, of course, but possibly different, as in the previous example for Russia, February 1918:
 
-```typescript
+```
 getFirstDateInMonth(year?: number, month?: number): number;
 ```
 
 The last date in a month. Usually 28, 29, 30, or 31. This method is provided mainly because this number can be different from the `getDaysInMonth()` value:
 
-```typescript
+```
 getLastDateInMonth(year?: number, month?: number): number;
 ```
 
@@ -875,7 +875,7 @@ A day is, of course, *usually* 24 hours long, which is also 1440 minutes, or 864
 
 These two methods tell you how long a particular day is, in either seconds or minutes:
 
-```typescript
+```
 getSecondsInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
 
 getMinutesInDay(yearOrDate?: YearOrDate, month?: number, day?: number): number;
@@ -885,7 +885,7 @@ It is possible, but highly unlikely (no timezone is currently defined this way, 
 
 This next method provides a description of any discontinuity in time during a day caused by Daylight Saving Time or other changes in UTC offset. It provides the wall-clock time when a clock change starts, the number of milliseconds applied to that time to turn the clock either forward or backward, and the ending wall-clock time. The notation “24:00:00” refers to midnight of the next day. If there is no discontinuity, as with most days, the method returns `null`:
 
-```typescript
+```
 getDiscontinuityDuringDay(yearOrDate?: YearOrDate, month?: number, day?: number): Discontinuity | null;
 ```
 
@@ -1016,7 +1016,7 @@ The main `ttime()` function works by creating instances of the `DateTime` class.
 
 ### Constructor
 
-```typescript
+```
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null,
               gregorianChange?: GregorianChange);
 
@@ -1059,25 +1059,25 @@ The `clone()` method creates a copy of a `DateTime` instance. By default, the co
 
 Converts Julian days into milliseconds from the 1970-01-01T00:00 UTC epoch:
 
-```typescript
+```
 DateTime.julianDay(millis: number): number;
 ```
 
 Converts milliseconds from the 1970-01-01T00:00 UTC epoch into Julian days:
 
-```typescript
+```
 DateTime.millisFromJulianDay(jd: number): number;
 ```
 
 Given a year, month, day according to the standard Gregorian calendar change (SGC) of 1582-10-15, and optional hour, minute, and second UTC, returns a Julian day number.
 
-```typescript
+```
 DateTime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number;
 ```
 
 ### `DateTime` static constant
 
-```typescript
+```
 static INVALID_DATE;
 ```
 
@@ -1085,20 +1085,20 @@ static INVALID_DATE;
 
 Compares two `DateTime` instances, or a `DateTime` instance and another date form, returns a negative value when the first date is less than the second, 0 when the two are equal (for the given `resolution`), or positive value when the first date is greater than the second:
 
-```typescript
+```
 static compare(d1: DateTime, d2: DateTime | string | number | Date,
                resolution: DateTimeField | DateTimeFieldName = DateTimeField.FULL): number;
 ```
 
 Determine if a value is an instance of the `DateTime` class:
 
-```typescript
+```
 static isDateTime(obj: any): obj is DateTime; // boolean
 ```
 
 ### `DateTime` getters
 
-```typescript
+```
 dstOffsetMinutes: number;
 dstOffsetSeconds: number;
 error: string | undefined; // Explanation of why a DateTime is considered invalid, undefined if valid.
@@ -1115,7 +1115,7 @@ wallTimeShort: DateAndTime;
 
 ### `DateTime` getter/setters
 
-```typescript
+```
 locale: string | string[];
 epochMillis: number;
 epochSeconds: number;
@@ -1129,7 +1129,7 @@ wallTime: DateAndTime;
 
 ### Other `DateTime` methods
 
-```typescript
+```
 computeUtcMillisFromWallTime(wallTime: DateAndTime): number;
 
 format(fmt = fullIsoFormat, localeOverride?: string | string[]): string;
@@ -1285,13 +1285,13 @@ Most of the purely date-related methods of `DateTime` exist on `Calendar`. `Cale
 
 The constructor takes the same arguments as the `setGregorianChange()` method:
 
-```typescript
+```
 constructor(gcYearOrDateOrType?: YearOrDate | CalendarType | string, gcMonth?: number, gcDate?: number);
 ```
 
 This `Calendar` method adds a given number of days to a date:
 
-```typescript
+```
 addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: number): YMDDate
 ```
 
@@ -1299,7 +1299,7 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 
 ### Static `Timezone` constants
 
-```typescript
+```
   static OS_ZONE: Timezone; // Local timezone as derived from analyzing values returned by JavaScript `Date`.
   static TAI_ZONE: Timezone; // International Atomic Time (TAI).
   static UT_ZONE: Timezone; // Universal Coordinated Time (AKA UTC, UCT, GMT, Zulu Time, etc.)
@@ -1309,7 +1309,7 @@ addDaysToDate(deltaDays: number, yearOrDate: YearOrDate, month?: number, day?: n
 
 ### Static `Timezone` getter
 
-```typescript
+```
 version: string; // Current timezone version, e.g. 2021a
 ```
 
@@ -1317,7 +1317,7 @@ version: string; // Current timezone version, e.g. 2021a
 
 This defines the moment *immediately after* the insertion or deletion of a leap second.
 
-```typescript
+```
 export interface LeapSecondInfo {
   utcMillis: number;
   taiMillis: number;
@@ -1338,73 +1338,73 @@ export interface LeapSecondInfo {
 
 Check if a given IANA `zoneName` is associated with an ISO Alpha-2 (two-letter) `country` code:
 
-```typescript
+```
 static doesZoneMatchCountry(zoneName: string, country: string): boolean;
 ```
 
 Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given TAI moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
 
-```typescript
+```
 static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
 ```
 
 Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given UTC moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
 
-```typescript
+```
 static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
 ```
 
 <a id="format-utc-offset" name="format-utc-offset"></a>Take a duration, `offsetSeconds`, and turn it into a formatted UTC offset, e.g. `-18000` → `'-05:00'`. If `noColons` is set to `false` (it defaults to `true` if not specified), colons will be omitted from the output, e.g. `'-0500'`. If the duration is not in whole minutes, seconds will be added to the output, e.g. `'+15:02:19'`:
 
-```typescript
+```
 static formatUtcOffset(offsetSeconds: number, noColons = false): string;
 ```
 
 Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but with the given `name`, and with `result.error` containing an error message. `name` can be `"DATELESS"`, `"TAI"`, or `"ZONELESS"`, as well as an IANA timezone name, or common name like `"UTC"` or `"GMT"`:
 
-```typescript
+```
 static from(name: string): Timezone;
 ```
 
 Get all timezone names which can be treated as aliases for the give zone name. All equivalent timezones are treated as aliases for each other by this method, with no particular regard given to which zone name is the actual root name as opposed to being a link.
 
-```typescript
+```
 static getAliasesForZone(zone: string): string[]
 ```
 
 This method returns a full list of available IANA timezone names. Does **not** include names for the above static constants:
 
-```typescript
+```
 static getAvailableTimezones(): string[];
 ```
 
 Get a `Set` of ISO Alpha-2 (two-letter) country codes associated with a given IANA `zoneName`:
 
-```typescript
+```
 static getCountries(zoneName: string): Set<string>;
 ```
 
 The last known, declared leap second. This can be `null` if no leap seconds are declared in the current timezone data:
 
-```typescript
+```
 static getDateAfterLastKnownLeapSecond(): YMDDate
 ```
 
 Get the symbol (`^`, `§`, `#`, `❄`, or `~`) **@tubular/time** associates with various Daylight Saving Time offsets, or an empty string for `dstOffsetSeconds` of 0:
 
-```typescript
+```
 static getDstSymbol(dstOffsetSeconds: number): string;
 ```
 
 Get the full list of leap seconds, including 10 non-official, proleptic leap seconds defined from 1959 to 1971, and all officially declared leap seconds thereafter (up to the latest software update). This can be `null` if no leap seconds are declared in the current timezone data:
 
-```typescript
+```
 static getLeapSecondList(): LeapSecondInfo[];
 ```
 
 This method returns a list of available IANA timezone names in a structured form, grouped by standard UTC offset and Daylight Saving Time offset (if any), e.g. `+02:00`, `-05:00§`, etc. The “MISC” timezones, and the various IANA “Etc” timezones, are filtered out:
 
-```typescript
+```
 export interface OffsetsAndZones {
   offset: string;
   offsetSeconds: number;
@@ -1417,13 +1417,13 @@ static getOffsetsAndZones(): OffsetsAndZones[]
 
 Get a rough estimate, if applicable and available, for the population of an IANA `zoneName`, otherwise 0:
 
-```typescript
+```
 static getPopulation(zoneName: string): number;
 ```
 
 This method returns a full list of available IANA timezone names in a structured form, grouped by regions (e.g. “Africa”, “America”, “Etc”, “Europe”, etc.). The large “America” region is broken down into three regions, “America”, “America/Argentina”, and “America/Indiana”. There is also a “MISC” region that contains a number of redundant, deprecated, or legacy timezones, such as many single-name-no-slash timezones and SystemV timezones:
 
-```typescript
+```
 export interface RegionAndSubzones {
   region: string;
   subzones: string[];
@@ -1434,7 +1434,7 @@ static getRegionsAndSubzones(): RegionAndSubzones[];
 
 If a `shortName` such as 'PST' or 'EET' is available, return information about that timezone, or `undefined` if not available. Please keep in mind that some short timezone names are ambiguous, so you might not get the desired result:
 
-```typescript
+```
 export interface ShortZoneNameInfo {
   utcOffset: number;
   dstOffset: number;
@@ -1446,37 +1446,37 @@ static getShortZoneNameInfo(shortName: string): ShortZoneNameInfo;
 
 Return a timezone matching `name`, if available. If no such timezone exists, a clone of `Timezone.OS_ZONE` is returned, but using the given `name`, and with `result.error` containing an error message. If the name `'LMT'` (for Local Mean Time) is used, then include the optional `longitude` in degrees (negative west of the Prime Meridian), and a timezone matching Local Mean Time for that longitude will be returned, with a UTC offset at a resolution of one (time) minute (as opposed to angular minutes):
 
-```typescript
+```
 static getTimezone(name: string, longitude?: number): Timezone
 ```
 
 The same as `getDateAfterLastKnownLeapSecond()`, but `null` if the given date is in the past:
 
-```typescript
+```
 static getUpcomingLeapSecond(): YMDDate;
 ```
 
 This method returns the name of the IANA timezone that best matches your local timezone. If the `Intl` package is available, it’s not a guess at all, but a proper system-reported value. Otherwise, the `guess()` method finds the most populous timezone that most closely matches `OS_ZONE`. If `recheck` is `true`, a fresh check is forced instead of using a cached result:
 
-```typescript
+```
 static guess(recheck = false): string;
 ```
 
 Check if there is a timezone matching `name`:
 
-```typescript
+```
 static has(name: string): boolean;
 ```
 
 Check if a `shortName` for a timezone, such as 'PST' or 'EET', is available:
 
-```typescript
+```
 static hasShortName(name: string): boolean;
 ```
 
 ### `Timezone` getters
 
-```typescript
+```
 aliasFor: string | undefined; // undefined for a primary timezone name
 countries: Set<string>; // ISO Alpha-2 country codes, empty set if no associated countries
 dstOffset: number; // in seconds
@@ -1493,7 +1493,7 @@ zoneName: string;
 
 For a given `utcTime`, find the most recent change in the timezone, on or before `utcTime`. The change can be a DST “spring forward” or “fall back” change, a change in the standard UTC offset, or even just a change in the short-form name of the timezone:
 
-```typescript
+```
 export interface Transition {
   transitionTime: number; // in milliseconds
   utcOffset: number; // in seconds
@@ -1511,55 +1511,55 @@ findTransitionByUtc(utcTime: number): Transition | null;
 
 For a given `wallTime`, expressed in milliseconds, find the most recent change in the timezone, on or before `wallTime`. For an ambiguous wall time, the _later_ time applies:
 
-```typescript
+```
 findTransitionByWallTime(wallTime: number): Transition | null
 ```
 
 Get all transitions in a timezone. Returns null for simple, single-UTC-offset timezones which have no transitions.
 
-```typescript
+```
 getAllTransitions(): Transition[] | null
 ```
 
 Get the short-form name for the timezone, dependent upon `utcTime` in milliseconds, such as the America/New_York timezone returning `'EST'` during the winter, but `'EDT'` during the summer.
 
-```typescript
+```
 getDisplayName(utcTime: number);
 ```
 
 Return the formatted UTC offset for a given moment in time, specified in milliseconds, [formatted as per `Timezone.formatUtcOffset`](#format-utc-offset):
 
-```typescript
+```
 getFormattedOffset(utcTime: number, noColons = false): string;
 ```
 
 Return the UTC offset in seconds (with effect of DST, if applicable, included) for the timezone at `utcTime` in milliseconds. The `day` parameter is usually not needed, but for the [edge case of a 0-length day](#apia), passing the wall-time day value helps distinguish between the two overlapping midnights of one day and the instantaneous next day:
 
-```typescript
+```
 getOffset(utcTime: number, day = 0): number;
 ```
 
 For a given `wallTime`, in milliseconds for this timezone, return the UTC offset in seconds at that time. Where wall time is ambiguous, `wallTime` refers to the _later_ time:
 
-```typescript
+```
 getOffsetForWallTime(wallTime: number): number;
 ```
 
 For a given `utcTime`, in milliseconds, return the UTC offset in seconds, and DST offset in seconds, at that time for this timezone. The UTC offset includes the effect of the DST offset, if any. The result is a two-element numeric array, `[utcOffset, dstOffset]`:
 
-```typescript
+```
 getOffsets(utcTime: number): number[];
 ```
 
 Check if the given `utcTime`, in milliseconds, is during Daylight Saving Time for this timezone:
 
-```typescript
+```
 isDuringDst(utcTime: number): boolean;
 ```
 
 Check if this timezone explicitly supports the given `country`, specified as a two-letter ISO Alpha-2 code:
 
-```typescript
+```
 supportsCountry(country: string): boolean;
 ```
 
@@ -1567,79 +1567,79 @@ supportsCountry(country: string): boolean;
 
 Get the minimum number of days within a given calendar year needed for a week to be considered part of a locale’s week-based calendar for that year:
 
-```typescript
+```
 ttime.getMinDaysInWeek(locale: string | string[]): number;
 ```
 
 Day number (0-6 for Sunday-Saturday) considered the first day of a week for a locale:
 
-```typescript
+```
 ttime.getStartOfWeek(locale: string | string[]): number;
 ```
 
 Day numbers (0-6 for Sunday-Saturday) considered to comprise weekend days for a locale:
 
-```typescript
+```
 ttime.getWeekend(locale: string | string[]): number[];
 ```
 
 Determine if a value is an instance of the `Date` class:
 
-```typescript
+```
 ttime.isDate(obj: any): obj is Date; // boolean
 ```
 
 Determine if a value is an instance of the `DateTime` class:
 
-```typescript
+```
 ttime.isDateTime(obj: any): obj is DateTime; // boolean
 ```
 
 Converts Julian days into milliseconds from the 1970-01-01T00:00 UTC epoch:
 
-```typescript
+```
 ttime.julianDay(millis: number): number;
 ```
 
 Converts milliseconds from the 1970-01-01T00:00 UTC epoch into Julian days:
 
-```typescript
+```
 ttime.millisFromJulianDay(jd: number): number;
 ```
 
 Given a year, month, day according to the standard Gregorian calendar change (SGC) of 1582-10-15, and optional hour, minute, and second UTC, returns a Julian day number.
 
-```typescript
+```
 ttime.julianDay_SGC(year: number, month: number, day: number, hour = 0, minute = 0, second = 0): number;
 ```
 
 For a given TDT Julian Date (ephemeris time), return the number of seconds that TDT is ahead of Universal Time (UT1):
 
-```typescript
+```
 ttime.getDeltaTAtJulianDate(timeJDE: number): number;
 ```
 
 For a given TAI millisecond value (1970 epoch), return the corresponding UT1 or UTC milliseconds:
 
-```typescript
+```
 ttime.taiToUtMillis(millis: number, forUtc = false): number;
 ```
 
 For a given TDT Julian Date (ephemeris time), return the Julian Date in Universal Time (UT1):
 
-```typescript
+```
 ttime.tdtToUt(timeJDE: number): number;
 ```
 
 For a given UT1 or UTC millisecond value (1970 epoch), return the corresponding TAI milliseconds:
 
-```typescript
+```
 ttime.utToTaiMillis(millis: number, asUtc = false): number;
 ```
 
 For a given UT1 Julian Date (Universal Time), return the Julian Date in ephemeris time (TDT):
 
-```typescript
+```
 ttime.utToTdt(timeJDU: number): number;
 ```
 
@@ -1657,7 +1657,7 @@ Create new `Intl.DateTimeFormat` instances with more flexibility for mixing opti
 
 ## Constants available on `ttime`
 
-```typescript
+```
 // Locale
 ttime.defaultLocale;
 

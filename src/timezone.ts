@@ -919,8 +919,14 @@ export class Timezone {
   }
 
   private static buildAliases(srcZone: string, dstZone: string): void {
-    const source = this.zonesAliases[srcZone];
-    const destination = this.zonesAliases[dstZone];
+    let source = this.zonesAliases[srcZone];
+    let destination = this.zonesAliases[dstZone];
+
+    if (!source)
+      source = this.zonesAliases[srcZone] = new Set<string>();
+
+    if (!destination)
+      destination = this.zonesAliases[dstZone] = new Set<string>();
 
     source.add(dstZone);
     destination.add(srcZone);
@@ -956,7 +962,9 @@ export class Timezone {
 
     keys.forEach(ianaName => {
       let etz = this.encodedTimezones[ianaName];
+      let otherZone: string;
       let popAndC: string;
+      let done = false;
 
       this.zonesByLowercase[ianaName.toLowerCase()] = ianaName;
 
@@ -965,21 +973,22 @@ export class Timezone {
 
         if ($) {
           popAndC = $[1];
-          etz = this.encodedTimezones[$[2]];
+          otherZone = $[2];
+          etz = this.encodedTimezones[otherZone];
         }
         else {
-          if (!this.zonesAliases[ianaName])
-            this.zonesAliases[ianaName] = new Set<string>();
-
-          if (!this.zonesAliases[etz])
-            this.zonesAliases[etz] = new Set<string>();
-
-          this.buildAliases(ianaName, etz);
-          this.buildAliases(etz, ianaName);
-
-          return;
+          otherZone = etz;
+          done = true;
         }
       }
+
+      if (otherZone) {
+        this.buildAliases(ianaName, otherZone);
+        this.buildAliases(otherZone, ianaName);
+      }
+
+      if (done)
+        return;
 
       const sections = etz.split(';');
       let parts = sections[0].split(' ');

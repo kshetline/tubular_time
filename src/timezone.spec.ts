@@ -3,6 +3,7 @@ import { Timezone } from './timezone';
 import timezoneLarge from './timezone-large';
 import './format-parse';
 import { DateTime } from './date-time';
+import { initTimezoneLarge } from './index';
 
 const version = timezoneLarge.version;
 
@@ -76,5 +77,23 @@ describe('Timezone', () => {
     expect(() => new DateTime(null, 'Pacific/Kanton', 'en-us').format('IMM')).not.to.throw;
     expect(new DateTime(0, 'America/Barberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 6:00:00 PM');
     expect(new DateTime(0, 'America/Bazberg', 'en-us').format('IMM')).to.equal('Dec 31, 1969, 7:00:00 PM');
+  });
+
+  it('should recognize timezone aliases', () => {
+    initTimezoneLarge();
+    expect(Timezone.getAliasesForZone('Africa/Accra')).to.deep.equal([
+      'Africa/Abidjan', 'Africa/Bamako', 'Africa/Banjul', 'Africa/Conakry', 'Africa/Dakar', 'Africa/Freetown',
+      'Africa/Lome', 'Africa/Nouakchott', 'Africa/Ouagadougou', 'Africa/Timbuktu', 'Atlantic/Reykjavik',
+      'Atlantic/St_Helena', 'Iceland'
+    ]);
+    expect(Timezone.getAliasesForZone('Africa/Lome')).to.deep.equal([
+      'Africa/Abidjan', 'Africa/Accra', 'Africa/Bamako', 'Africa/Banjul', 'Africa/Conakry', 'Africa/Dakar',
+      'Africa/Freetown', 'Africa/Nouakchott', 'Africa/Ouagadougou', 'Africa/Timbuktu', 'Atlantic/Reykjavik',
+      'Atlantic/St_Helena', 'Iceland'
+    ]);
+    expect(Timezone.getAliasesForZone('America/New_York')).to.deep.equal([
+      'SystemV/EST5EDT', 'US/Eastern'
+    ]);
+    expect(Timezone.getAliasesForZone('Antarctica/Mawson')).to.deep.equal([]);
   });
 });
