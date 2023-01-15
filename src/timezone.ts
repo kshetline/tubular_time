@@ -161,7 +161,7 @@ let osDstOffset: number;
 // Create a transition table (if necessary) for the OS timezone so that it can be handled like other timezones.
 // It might also be discovered, of course, that the OS timezone is a simple fixed offset from UTC.
 (function (): void {
-  const date = new Date(1901, 0, 1, 12, 0, 0, 0); // Sample around local noon so it's unlikely we'll sample right at a transition.
+  const date = new Date(1901, 0, 1, 12, 0, 0, 0); // Sample around local noon, so it's unlikely we'll sample right at a transition.
   let lastSampleTime = date.getTime();
   const now = Date.now();
   const MONTH_MSEC = 30 * DAY_MSEC;
@@ -588,11 +588,47 @@ export class Timezone {
   }
 
   static getPopulation(zoneName: string): number {
-    return this.populationForZone[zoneName] ?? 0;
+    let population = this.populationForZone[zoneName];
+
+    if (population == null) {
+      const aliases = this.getAliasesForZone(zoneName);
+
+      for (const alias of aliases) {
+        population = this.populationForZone[alias];
+
+        if (population != null && population > 0) {
+          this.populationForZone[zoneName] = population;
+          break;
+        }
+      }
+    }
+
+    if (population == null)
+      this.populationForZone[zoneName] = 0;
+
+    return population ?? 0;
   }
 
   static getCountries(zoneName: string): Set<string> {
-    return new Set(this.countriesForZone[zoneName] ?? []);
+    let countries = this.countriesForZone[zoneName];
+
+    if (countries == null) {
+      const aliases = this.getAliasesForZone(zoneName);
+
+      for (const alias of aliases) {
+        countries = this.countriesForZone[alias];
+
+        if (countries.size != null) {
+          this.countriesForZone[zoneName] = countries;
+          break;
+        }
+      }
+    }
+
+    if (countries == null)
+      this.countriesForZone[zoneName] = new Set<string>();
+
+    return new Set(countries);
   }
 
   static doesZoneMatchCountry(zoneName: string, country: string): boolean {

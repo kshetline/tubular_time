@@ -96,4 +96,12 @@ describe('Timezone', () => {
     ]);
     expect(Timezone.getAliasesForZone('Antarctica/Mawson')).to.deep.equal([]);
   });
+
+  it('should match timezones with countries', () => {
+    expect(Timezone.getCountries('America/Chicago').has('US')).to.be.true;
+    expect(Timezone.getCountries('America/Argentina/Buenos_Aires').has('AR')).to.be.true;
+    expect(Timezone.getCountries('America/Buenos_Aires').has('AR')).to.be.true;
+    expect(Timezone.getCountries('Asia/Tokyo').has('JP')).to.be.true;
+    expect(Timezone.getCountries('Europe/Paris').has('FR')).to.be.true;
+  });
 });
