@@ -101,6 +101,7 @@ describe('Timezone', () => {
     expect(Timezone.getCountries('America/Chicago').has('US')).to.be.true;
     expect(Timezone.getCountries('America/Argentina/Buenos_Aires').has('AR')).to.be.true;
     expect(Timezone.getCountries('America/Buenos_Aires').has('AR')).to.be.true;
+    expect(Timezone.getCountries('America/Ciudad_Juarez').has('MX')).to.be.true;
     expect(Timezone.getCountries('Asia/Tokyo').has('JP')).to.be.true;
     expect(Timezone.getCountries('Europe/Paris').has('FR')).to.be.true;
   });

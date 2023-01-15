@@ -25,7 +25,7 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2022g, year
   'America/Caracas': '-0400 -0400 0;-40/0;;;;29e5;VE',
   'America/Chicago': '-0600 -0600 60;-60/0/CST -50/10/CDT;1010101010101010101010;1SSU0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;92e5;US',
   'America/Chihuahua': '-0700 -0600 0;-70/0/MST -60/10/MDT -60/0/CST;101010101012;1T3l0 1nX0 11B0 1nX0 14p0 1lb0 14p0 1lb0 14p0 1nX0 11B0 1nX0;;81e4;MX',
-  'America/Ciudad_Juarez': '-0700 -0700 60;-70/0/MST -60/10/MDT -60/0/CST;10101010101201010101010;1SSV0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1wn0 cm0 EP0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60',
+  'America/Ciudad_Juarez': '-0700 -0700 60;-70/0/MST -60/10/MDT -60/0/CST;10101010101201010101010;1SSV0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1wn0 cm0 EP0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;23e3;MX',
   'America/Denver': '-0700 -0700 60;-70/0/MST -60/10/MDT;1010101010101010101010;1SSV0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;26e5;US',
   'America/Detroit': '-0500 -0500 60;-50/0/EST -40/10/EDT;1010101010101010101010;cUT0 1Hxb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;37e5;US',
   'America/Fortaleza': '-0300 -0300 0;-30/0;;;;34e5;BR',
