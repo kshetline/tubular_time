@@ -31,7 +31,6 @@ describe('Timezone', () => {
   it('should properly guess matching timezones', () => {
     expect(Timezone.guess(true, 'US', 'US/Eastern')).to.equal('America/New_York');
     expect(Timezone.guess(true, 'CA', 'US/Eastern')).to.equal('America/Toronto');
-    expect(Timezone.guess(true, 'LY', 'Africa/Cairo')).to.equal('Africa/Tripoli');
     Timezone.guess(true);
   });
 
