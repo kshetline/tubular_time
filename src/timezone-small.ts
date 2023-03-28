@@ -1,7 +1,7 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneSmall = /* trim-file-start */{ // tz database version: 2023b, years 2018-2028
-  version: '2023b',
+const timezoneSmall = /* trim-file-start */{ // tz database version: 2023c, years 2018-2028
+  version: '2023c',
   years: '2018-2028',
   deltaTs: '69.36 69.36 69.29 69.20',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
@@ -57,7 +57,7 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2023b, year
   'Antarctica/Troll': '+0000 +0000 120;0/0 20/20;1010101010101010101010;1Vq10 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0;2004 10 0 1 1:0 2 0,2005 3 0 1 1:0 2 120;40;AQ',
   'Asia/Amman': '+0200 +0300 0;20/0/EET 30/10/EEST 30/0;1010101012;1VrW0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 LA0 1C00;;25e5;JO',
   'Asia/Bangkok': '+0700 +0700 0;70/0;;;;15e6;KHLATHVN',
-  'Asia/Beirut': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1VpW0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 19d0 1gn0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0;1999 10 0 1 0:0 0 0,2024 3 0 1 0:0 0 60;22e5;LB',
+  'Asia/Beirut': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1VpW0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0;1999 10 0 1 0:0 0 0,1993 3 0 1 0:0 0 60;22e5;LB',
   'Asia/Chita': '+0900 +0900 0;90/0;;;;33e4;RU',
   'Asia/Colombo': '+0530 +0530 0;5u/0;;;;22e5;LK',
   'Asia/Damascus': '+0200 +0300 0;20/0/EET 30/10/EEST 30/0;1010101012;1VrW0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0;;26e5;SY',
