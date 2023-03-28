@@ -537,4 +537,3 @@ const timezoneLargeAlt = /* trim-file-start */{ // tz database version: 2023c, y
 
 Object.freeze(timezoneLargeAlt);
 export default timezoneLargeAlt;
-
