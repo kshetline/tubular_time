@@ -1,6 +1,6 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneSmall = /* trim-file-start */{ // tz database version: 2023c, years 2018-2028
+const timezoneSmall = { // tz database version: 2023c, years 2018-2028
   version: '2023c',
   years: '2018-2028',
   deltaTs: '69.36 69.36 69.29 69.20',
@@ -615,7 +615,7 @@ const timezoneSmall = /* trim-file-start */{ // tz database version: 2023c, year
   'W-SU': 'Europe/Moscow',
   'WET': '!Europe/Lisbon',
   'Zulu': 'Etc/UTC'
-}/* trim-file-end */;
+};
 
 Object.freeze(timezoneSmall);
 export default timezoneSmall;

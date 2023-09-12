@@ -32,18 +32,32 @@ import { getDeltaTAtJulianDate, tdtToUt, utToTdt } from './ut-converter';
 import { defaultLocale, getMinDaysInWeek, getStartOfWeek, getWeekend, hasDateTimeStyle, hasIntlDateTime } from './locale-data';
 
 let win: any = null;
+let zonesDefined = false;
+let defineAttempts = 0;
 
 try {
   win = window;
 }
 catch {}
 
-Timezone.defineTimezones(win?.tbTime_timezone_large ?? win?.tbTime_timezone_large_alt ?? timezoneSmall);
+function initialZoneDefine(): void {
+  const initZones = win?.tbTime_timezone_large ?? win?.tbTime_timezone_large_alt ?? timezoneSmall ?? win?.tbTime_timezone_small;
 
-if (win) {
-  delete win.tbTime_timezone_large;
-  delete win.tbTime_timezone_large_alt;
+  if (!initZones && ++defineAttempts < 20)
+    setTimeout(initialZoneDefine, 100);
+  else {
+    Timezone.defineTimezones(initZones);
+    zonesDefined = !!initZones;
+
+    if (win) {
+      delete win.tbTime_timezone_large;
+      delete win.tbTime_timezone_large_alt;
+      delete win.tbTime_timezone_small;
+    }
+  }
 }
+
+initialZoneDefine();
 
 export {
   Calendar, CalendarType, dateAndTimeFromMillis_SGC, DayOfWeek, Month,
@@ -70,7 +84,8 @@ export { zonePollerNode } from './zone-poller-node';
 export { isSafeTaiMillis, isSafeUtcMillis } from './ut-converter';
 
 export function initTimezoneSmall(): void {
-  Timezone.defineTimezones(timezoneSmall);
+
+  Timezone.defineTimezones(timezoneSmall ?? win?.tbTime_timezone_small);
 }
 
 export function initTimezoneLarge(failQuietly = false): void {
@@ -322,6 +337,8 @@ forEach(Month, (key, value) => { if (toNumber(key, -1) < 0) ttime[key] = value; 
 ttime.LAST = LAST;
 
 Object.freeze(ttime);
-initTimezoneSmall();
+
+if (!zonesDefined && timezoneSmall)
+  initTimezoneSmall();
 
 export default ttime;
