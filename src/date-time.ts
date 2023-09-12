@@ -1681,7 +1681,7 @@ export class DateTime extends Calendar {
   }
 
   toString(): string {
-    let s = `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime.j ? 'J' : ''}>`;
+    let s = `DateTime<${this.format(this.timezone === DATELESS ? timeOnlyFormat : fullAltFormat)}${this._wallTime?.j ? 'J' : ''}>`;
 
     if (this.isTai())
       s = s.replace(/ [-+]\d\d:[\d:.]+>$/, ' TAI>');

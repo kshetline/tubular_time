@@ -129,6 +129,8 @@ For the old-fashioned UMD approach (which can save you from about 560K of extra 
 <script src="https://unpkg.com/@tubular/time/dist/umd/index.js"></script>
 ```
 
+_(Or ...`/data/timezone-large.js"`)_
+
 The script element just above the `index.js` URL is an example of _optionally_ loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
 The **@tubular/time** package will be available via the global variable `tbTime`. `tbTime.ttime` is the default function, and other functions, classes, and constants will also be available on this variable, such as `tbTime.DateTime`, `tbTime.julianDay`, `tbTime.TIME_MS`, etc.

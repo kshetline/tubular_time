@@ -289,7 +289,7 @@ export class Timezone {
   static defineTimezones(encodedTimezones: Record<string, string>): boolean {
     const changed = !isEqual(this.encodedTimezones, encodedTimezones);
 
-    if (encodedTimezones.version)
+    if (encodedTimezones?.version)
       this._version = encodedTimezones.version;
     else
       this._version = 'unspecified';
