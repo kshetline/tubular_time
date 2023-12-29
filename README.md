@@ -279,18 +279,18 @@ For example:
 
 ## Moment.js-style localized formats
 
-| | Token | Output |
-| -------|------:|------- |
-| Month name, day of month, day of week, year, time | LLLL | Thursday, September 4, 1986 8:30 PM |
-| | llll | Thu, Sep 4, 1986 8:30 PM |
-| Month name, day of month, year, time | LLL | September 4, 1986 8:30 PM |
-| | lll | Sep 4, 1986 8:30 PM |
-| Month name, day of month, year | LL | September 4, 1986 |
-| | ll | Sep 4, 1986 |
-| Month numeral, day of month, year | L | 09/04/1986 |
-| | l | 9/4/1986 |
-| Time with seconds | LTS | 8:30:25 PM |
-| Time | LT | 8:30 PM |
+| | Token | Output                                  |
+| -------|------:|-----------------------------------------|
+| Month name, day of month, day of week, year, time | LLLL | Thursday, September 4, 1986 at 8:30 PM |
+| | llll | Thu, Sep 4, 1986 8:30 PM                |
+| Month name, day of month, year, time | LLL | September 4, 1986 8:30 PM               |
+| | lll | Sep 4, 1986 8:30 PM                     |
+| Month name, day of month, year | LL | September 4, 1986                       |
+| | ll | Sep 4, 1986                             |
+| Month numeral, day of month, year | L | 09/04/1986                              |
+| | l | 9/4/1986                                |
+| Time with seconds | LTS | 8:30:25 PM                              |
+| Time | LT | 8:30 PM                                 |
 
 ## @tubular/time `Intl.DateTimeFormat` shorthand string formats
 

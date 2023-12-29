@@ -71,9 +71,9 @@ describe('Zone updates', () => {
     expect(ttime('May 8, 1945 UTC', 'MMM D, Y z').epochMillis).to.equal(Date.parse('May 8, 1945 00:00+00:00'));
     expect(ttime('8/5/1945', 'IS', 'es').format('IM')).to.match(/^8 may\.? 1945$/);
     expect(ttime('8/5/45', 'IS', 'es').format('IM')).to.match(/^8 may\.? 2045$/);
-    expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLLL')).to.equal('Saturday, February 5, 1955, 3:12 AM');
+    expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLLL')).to.equal('Saturday, February 5, 1955 at 3:12 AM');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('llll')).to.equal('Sat, Feb 5, 1955, 3:12 AM');
-    expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLL')).to.equal('February 5, 1955, 3:12 AM');
+    expect(ttime('2/5/1955 03:12 am', 'ISS').format('LLL')).to.equal('February 5, 1955 at 3:12 AM');
     expect(ttime([1955, 2, 5, 3, 12]).format('lll')).to.equal('Feb 5, 1955, 3:12 AM');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('LL')).to.equal('February 5, 1955');
     expect(ttime('2/5/1955 03:12 am', 'ISS').format('ll')).to.equal('Feb 5, 1955');
@@ -110,9 +110,9 @@ describe('Zone updates', () => {
   });
 
   it('should be able to create DateTimeFormat instances without dateStyle/timeStyle exceptions', () => {
-    expect(() => newDateTimeFormat('fr', { timeStyle: 'short', hour: '2-digit' })).to.not.throw();
+    expect(() => newDateTimeFormat('fr', { timeStyle: 'short', hour: '2-digit' } as any)).to.not.throw();
 
-    const options = newDateTimeFormat('en-US', { dateStyle: 'short', era: 'short' }).resolvedOptions();
+    const options = newDateTimeFormat('en-US', { dateStyle: 'short', era: 'short' } as any).resolvedOptions();
 
     expect(options.era).to.equal('short');
     expect((options as any).dateStyle).to.be.undefined;

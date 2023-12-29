@@ -29,7 +29,7 @@ describe('FormatParse', () => {
     expect(new DateTime('20212-06-04').format('Y-MM-DD')).to.equal('+20212-06-04');
     expect(new DateTime('1986-09-04T20:30:03').format('yyyy-MMM-DD, hh:mm A')).to.equal('1986-Sep-04, 08:30 PM');
     expect(new DateTime('1986-09-04T20:30:03').format('LTS')).to.equal('8:30:03 PM');
-    expect(new DateTime('1986-09-04T20:30:03').format('LLLL')).to.equal('Thursday, September 4, 1986, 8:30 PM');
+    expect(new DateTime('1986-09-04T20:30:03').format('LLLL')).to.equal('Thursday, September 4, 1986 at 8:30 PM');
     expect(new DateTime('1986-09-04T20:30:03').format('ILS')).to.equal('September 4, 1986 at 8:30 PM');
     expect(new DateTime('1986-09-04T20:30:03 America/New_York').format('IxL')).to.equal('8:30:03 PM EDT');
     expect(new DateTime('1986-09-04T20:30:03Z').format('IxL')).to.equal('8:30:03 PM UTC');
@@ -45,8 +45,8 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
     expect(new DateTime('1986-09-04').format('D\u200F/M\u200F/YYYY h:mm A', 'ar')).to.equal('٤\u200F/٩\u200F/١٩٨٦ ١٢:٠٠ ص');
     expect(new DateTime('1986-09-04').format('D/M/YY h:mm A', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
-    expect(new DateTime('1986-09-04').format('ISS', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
-    expect(new DateTime('1986-09-04').format('ISS{numberingSystem:latn}', 'bn')).to.equal('4/9/86 12:00 AM');
+    expect(new DateTime('1986-09-04').format('ISS', 'bn')).to.equal('৪/৯/৮৬, ১২:০০ AM');
+    expect(new DateTime('1986-09-04').format('ISS{numberingSystem:latn}', 'bn')).to.equal('4/9/86, 12:00 AM');
     expect(new DateTime('1986-09-04').format('DD-MM-YY နံနက် H:mm', 'my')).to.equal('၀၄-၀၉-၈၆ နံနက် ၀:၀၀');
   });
 

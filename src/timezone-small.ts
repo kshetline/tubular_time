@@ -1,9 +1,9 @@
 /* eslint-disable quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
-const timezoneSmall = { // tz database version: 2023c, years 2018-2028
-  version: '2023c',
+const timezoneSmall = /* trim-file-start */{ // tz database version: 2023d, years 2018-2028
+  version: '2023d',
   years: '2018-2028',
-  deltaTs: '69.36 69.36 69.29 69.20',
+  deltaTs: '69.36 69.36 69.29 69.20 69.18',
   leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167',
   'Africa/Abidjan': '+0000 +0000 0;0/0/GMT;;;;48e5;BFCIGMGNMLMRSHSLSNTG',
   'Africa/Algiers': '+0100 +0100 0;10/0/CET;;;;26e5;DZ',
@@ -41,7 +41,7 @@ const timezoneSmall = { // tz database version: 2023c, years 2018-2028
   'America/Miquelon': '-0300 -0300 60;-30/0 -20/10;1010101010101010101010;1Vkt0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;61e2;PM',
   'America/New_York': '-0500 -0500 60;-50/0/EST -40/10/EDT;1010101010101010101010;1Vkv0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;21e6;US',
   'America/Noronha': '-0200 -0200 0;-20/0;;;;30e2;BR',
-  'America/Nuuk': '-0300 -0200 60;-30/0 -20/10 -20/0 -10/10;1010101010123232323232;oXh0 1xRw0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;17e3;GL',
+  'America/Nuuk': '-0300 -0200 60;-30/0 -20/10 -20/0 -10/10;101010101023232323232;oXh0 1xRw0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 2so0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;17e3;GL',
   'America/Ojinaga': '-0700 -0600 60;-70/0/MST -60/10/MDT -60/0/CST -50/10/CDT;1010101012323232323232;1Vkx0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1wn0 Rc0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;23e3;MX',
   'America/Panama': '-0500 -0500 0;-50/0/EST;;;;15e5;KYPA',
   'America/Phoenix': '-0700 -0700 0;-70/0/MST;;;;42e5;US',
@@ -49,12 +49,13 @@ const timezoneSmall = { // tz database version: 2023c, years 2018-2028
   'America/Santiago': '-0400 -0400 60;-40/0 -30/10;10101010101010101010;1Wm40 1zb0 11B0 1nX0 11B0 1nX0 11B0 1nX0 14p0 1lb0 11B0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1nX0;2019 4 2 1 3:0 2 0,2023 9 2 1 4:0 2 60;62e5;CL',
   'America/Santo_Domingo': '-0400 -0400 0;-40/0/AST;;;;29e5;DO',
   'America/Sao_Paulo': '-0300 -0300 60;-30/0 -20/10;1010;-f4J0 2cgL0 1HB0 FX0;;20e6;BR',
-  'America/Scoresbysund': '-0200 -0100 60;-20/0 0/10 -10/0;1212121212121212121212;rm20 1vuL0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;452;GL',
+  'America/Scoresbysund': '-0200 -0200 60;-20/0 0/10 -10/0 -10/10;1212121212123030303030;rm20 1vuL0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0;1996 10 0 1 1:0 2 0,1981 3 0 1 1:0 2 60;452;GL',
   'America/St_Johns': '-0330 -0330 60;-3u/0/NST -2u/10/NDT;1010101010101010101010;1FPDu h410 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Op0 1zb0 Rd0 1zb0 Op0 1zb0;2007 11 1 1 2:0 0 0,2007 3 8 1 2:0 0 60;11e4;CA',
   'America/Whitehorse': '-0800 -0700 0;-80/0/PST -70/10/PDT -70/0/MST;101012;1Vky0 1zb0 Op0 1zb0 Op0 1z90;;23e3;CA',
-  'Antarctica/Casey': '+1100 +1100 0;b0/0 80/0;101010;1Vkh0 1o30 14k0 1kr0 12l0 1o01;;10;AQ',
+  'Antarctica/Casey': '+1100 +0800 0;b0/0 80/0;10101010101;1Vkh0 1o30 14k0 1kr0 12l0 1o01 14kX 1lf1 14kX 1lf1 13bX;;10;AQ',
   'Antarctica/Macquarie': '+1000 +1000 60;a0/0/AEST b0/10/AEDT;1010101010101010101010;1BnO0 k4O0 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1fA0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0 1cM0;2008 4 1 1 2:0 1 0,2001 10 1 1 2:0 1 60;1;AU',
   'Antarctica/Troll': '+0000 +0000 120;0/0 20/20;1010101010101010101010;1Vq10 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0;2004 10 0 1 1:0 2 0,2005 3 0 1 1:0 2 120;40;AQ',
+  'Antarctica/Vostok': '+0700 +0500 0;70/0 50/0;1;2bnv0;;25;AQ',
   'Asia/Amman': '+0200 +0300 0;20/0/EET 30/10/EEST 30/0;1010101012;1VrW0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 LA0 1C00;;25e5;JO',
   'Asia/Bangkok': '+0700 +0700 0;70/0;;;;15e6;KHLATHVN',
   'Asia/Beirut': '+0200 +0200 60;20/0/EET 30/10/EEST;1010101010101010101010;1VpW0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0 WN0 1qL0 11B0 1nX0 11B0 1nX0 11B0 1nX0 11B0 1qL0 WN0 1qL0;1999 10 0 1 0:0 0 0,1993 3 0 1 0:0 0 60;22e5;LB',
@@ -319,7 +320,6 @@ const timezoneSmall = { // tz database version: 2023c, years 2018-2028
   'Antarctica/Rothera': '!130,AQ,America/Fortaleza',
   'Antarctica/South_Pole': 'Pacific/Auckland',
   'Antarctica/Syowa': '!20,AQ,Europe/Istanbul',
-  'Antarctica/Vostok': '!25,AQ,Asia/Dhaka',
   'Arctic/Longyearbyen': '!62e4,NOSJ,Europe/Paris',
   'Asia/Aden': '!57e5,KWSAYE,Europe/Istanbul',
   'Asia/Almaty': '!15e5,KZ,Asia/Dhaka',
@@ -615,7 +615,7 @@ const timezoneSmall = { // tz database version: 2023c, years 2018-2028
   'W-SU': 'Europe/Moscow',
   'WET': '!Europe/Lisbon',
   'Zulu': 'Etc/UTC'
-};
+}/* trim-file-end */;
 
 Object.freeze(timezoneSmall);
 export default timezoneSmall;
