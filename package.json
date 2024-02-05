@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "3.9.0",
+  "version": "3.9.1",
   "description": "Date/time, IANA timezones, leap seconds, TAI/UTC conversions, calendar with settable Julian/Gregorian switchover",
   "main": "dist/cjs/index.js",
   "module": "dist/fesm2015/index.js",
@@ -72,7 +72,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.0.0",
-    "mocha": "^9.2.2",
+    "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.71.1",
