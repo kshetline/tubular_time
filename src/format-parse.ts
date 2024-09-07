@@ -942,9 +942,9 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
     });
   }
   else {
-    locale.dateTimeFormats.LLLL = 'dddd, MMMM D, YYYY h:mm A'; // Thursday, September 4, 1986 8:30 PM
+    locale.dateTimeFormats.LLLL = 'dddd, MMMM D, YYYY at h:mm A'; // Thursday, September 4, 1986 8:30 PM
     locale.dateTimeFormats.llll = 'ddd, MMM D, YYYY h:mm A'; // Thu, Sep 4, 1986 8:30 PM
-    locale.dateTimeFormats.LLL = 'MMMM D, YYYY h:mm A'; // September 4, 1986 8:30 PM
+    locale.dateTimeFormats.LLL = 'MMMM D, YYYY at h:mm A'; // September 4, 1986 8:30 PM
     locale.dateTimeFormats.lll = 'MMM D, YYYY h:mm A'; // Sep 4, 1986 8:30 PM
     locale.dateTimeFormats.LTS = 'h:mm:ss A'; // 8:30:25 PM
     locale.dateTimeFormats.LT = 'h:mm A'; // 8:30 PM
