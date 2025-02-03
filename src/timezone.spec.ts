@@ -28,6 +28,13 @@ describe('Timezone', () => {
     expect(Timezone.from('America/Fooberg').aliasFor).to.equal(null);
   });
 
+  it('should properly handle DST transition times', () => {
+    expect(new DateTime('2005-04-01T01:00', 'Asia/Jerusalem').toString().includes('+02:00')).to.be.true;
+    expect(new DateTime('2005-04-01T03:00', 'Asia/Jerusalem').toString().includes('+03:00')).to.be.true;
+    expect(new DateTime('2006-03-31T01:00', 'Asia/Jerusalem').toString().includes('+02:00')).to.be.true;
+    expect(new DateTime('2006-03-31T03:00', 'Asia/Jerusalem').toString().includes('+03:00')).to.be.true;
+  });
+
   it('should properly guess matching timezones', () => {
     expect(Timezone.guess(true, 'US', 'US/Eastern')).to.equal('America/New_York');
     expect(Timezone.guess(true, 'CA', 'US/Eastern')).to.equal('America/Toronto');
@@ -67,6 +74,7 @@ describe('Timezone', () => {
     expect(Timezone.from('America/Chicago').stdRule).to.equal('first Sun on/after Nov 1, at 2:00 wall time begin std time');
     expect(Timezone.from('America/Chicago').dstRule).to.equal('first Sun on/after Mar 8, at 2:00 wall time save 1 hour');
     expect(Timezone.from('Europe/Dublin').dstRule).to.equal('last Sun of Oct, at 1:00 UTC save -1 hour');
+    expect(Timezone.from('Asia/Jerusalem').dstRule).to.equal('first Fri on/after Mar 23, at 2:00 wall time save 1 hour');
     expect(Timezone.from('UTC').dstRule).to.not.exist;
   });
 
