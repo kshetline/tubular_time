@@ -54,6 +54,7 @@ describe('Timezone', () => {
     expect(Timezone.from('Europe/Paris').supportsCountry('JA')).to.be.false;
     expect(Array.from(Timezone.from('Pacific/Honolulu').countries).sort().join('')).to.equal('UMUS');
     expect(Timezone.getAvailableTimezones().length).to.be.greaterThan(200);
+    expect(Timezone.getAvailableTimezones().includes('leapSeconds')).to.be.false;
 
     const regions = Timezone.getRegionsAndSubzones();
 
@@ -99,7 +100,7 @@ describe('Timezone', () => {
       'Atlantic/St_Helena', 'Iceland'
     ]);
     expect(Timezone.getAliasesForZone('America/New_York')).to.deep.equal([
-      'EST5EDT', 'SystemV/EST5EDT', 'US/Eastern'
+      'EST5EDT', 'US/Eastern'
     ]);
     expect(Timezone.getAliasesForZone('Antarctica/Mawson')).to.deep.equal([]);
   });

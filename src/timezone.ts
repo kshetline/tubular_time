@@ -311,8 +311,10 @@ export class Timezone {
   static getAvailableTimezones(): string[] {
     const zones: string[] = [];
 
-    for (const zone of Object.keys(this.encodedTimezones))
-      zones.push(zone);
+    for (const zone of Object.keys(this.encodedTimezones)) {
+      if (zone.includes('/') || /^[A-Z]/.test(zone)) // Filter out deltaTs, leapSeconds, etc.
+        zones.push(zone);
+    }
 
     zones.sort();
 
