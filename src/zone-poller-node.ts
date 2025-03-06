@@ -10,9 +10,9 @@ async function checkForExternals(): Promise<void> {
 
     try { // Obscure names packages to prevent webpack from generating dependencies.
       // @ts-ignore
-      jsonZ = (await import(/* webpackIgnore: true */ 'z-nosj'.split('').reverse().join('')));
+      jsonZ = (await import(/* @vite-ignore */ /* webpackIgnore: true */ 'z-nosj'.split('').reverse().join('')));
       // @ts-ignore
-      requestText = (await import(/* webpackIgnore: true */ 'tseuqer-yb'.split('').reverse().join(''))).requestText;
+      requestText = (await import(/* @vite-ignore */ /* webpackIgnore: true */ 'tseuqer-yb'.split('').reverse().join(''))).requestText;
     }
     catch {}
 

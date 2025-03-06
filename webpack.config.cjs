@@ -50,7 +50,7 @@ module.exports = env => {
         terserOptions: {
           output: {
             comments: (node, comment) => {
-              return comment.type === 'comment2' && /\bwebpackIgnore\b/.test(comment.value);
+              return comment.type === 'comment2' && /\b(webpackIgnore|@vite-ignore)\b/.test(comment.value);
             },
             max_line_len: 511
           }
