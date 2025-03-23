@@ -100,7 +100,7 @@ describe('Timezone', () => {
       'Atlantic/St_Helena', 'Iceland'
     ]);
     expect(Timezone.getAliasesForZone('America/New_York')).to.deep.equal([
-      'EST5EDT', 'US/Eastern'
+      'EST5EDT', 'SystemV/EST5EDT', 'US/Eastern'
     ]);
     expect(Timezone.getAliasesForZone('Antarctica/Mawson')).to.deep.equal([]);
   });
