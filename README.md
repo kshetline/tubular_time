@@ -422,7 +422,7 @@ For example:
 
 Why use a listener? Because you might want to recalculate previously calculated times, which possibly have changed due to timezone definition changes. For example, imagine you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was going to be 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is cancelled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 in your timezone instead.
 
-To poll for for timezone updates at a regular interval, use:
+To poll for timezone updates at a regular interval, use:
 
 ```typescript
 function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: ZoneOptions = 'small', intervalDays = 1): void;
