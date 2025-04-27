@@ -7,7 +7,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 ## Key features<!-- omit in toc -->
 
 * Mutable and immutable DateTime objects supporting the Gregorian and Julian calendar systems, with settable crossover.
-* IANA timezone support, with features beyond formatting using timezones, such as parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region), and live updates of timezone definitions.
+* IANA timezone support, with features beyond formatting time for particular timezones, such as parsing, accessible listings of all available timezones (single-array list, grouped by UTC offset, or grouped by region), timezone transition history, and live updates of timezone definitions.
 * Supports leap seconds and conversions between TAI (International Atomic Time) and UTC (Universal Coordinated Time).
 * Supports and recognizes negative Daylight Saving Time.
 * Extensive date/time manipulation and calculation capabilities.
