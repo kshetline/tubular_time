@@ -7,7 +7,7 @@ import {
 import { Timezone } from './timezone';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 
-/* eslint-disable @typescript-eslint/indent, comma-spacing, space-infix-ops */
+/* eslint-disable @stylistic/indent, @stylistic/comma-spacing */
 const baseHistoricDeltaT = [
 // Values to smooth transition from polynomial used for earlier years.
   // 1580-1599
@@ -185,7 +185,7 @@ export function utToTaiMillis(millis: number, asUtc = false): number {
       UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
   else
     return (utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
-      UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC ;
+      UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 }
 
 export function tdtToUt(timeJDE: number): number {

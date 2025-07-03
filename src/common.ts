@@ -135,10 +135,8 @@ const fieldOrder = [
 
 export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {
   for (const [key1, key2] of altFields) {
-    // eslint-disable-next-line no-prototype-builtins
     if (obj.hasOwnProperty(key1))
       obj[key2] = obj[key1];
-    // eslint-disable-next-line no-prototype-builtins
     else if (obj.hasOwnProperty(key2))
       obj[key1] = obj[key2];
   }

@@ -217,7 +217,7 @@ export class DateTime extends Calendar {
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null,
-              gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
+              gregorianOrLocale?: string | string[] | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
     if (!DateTime.defaultTimezoneExplicit && !timezone) {
@@ -249,10 +249,11 @@ export class DateTime extends Calendar {
     let occurrence = 0;
 
     if (isString(initialTime)) {
-      if (initialTime!.includes('₂'))
+      // noinspection JSObjectNullOrUndefined
+      if (initialTime.includes('₂'))
         occurrence = 2;
 
-      initialTime = initialTime!.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
+      initialTime = initialTime.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
       let $ = /^\/Date\((\d+)([-+]\d\d\d\d)?\)\/$/i.exec(initialTime);
 
       if ($) {
@@ -327,7 +328,7 @@ export class DateTime extends Calendar {
           }
         }
         catch (e) {
-          initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
+          initialTime = Date.parse((initialTime as string) + (zone ? ' ' + zone : ''));
 
           if (isNaN(initialTime)) {
             this._error = e.message;
@@ -345,7 +346,8 @@ export class DateTime extends Calendar {
       timezone = Timezone.from(timezone);
 
     if (timezone?.error) {
-      this._error = `Bad timezone: ${timezone!.zoneName}`;
+      // noinspection JSObjectNullOrUndefined
+      this._error = `Bad timezone: ${timezone.zoneName}`;
       this._epochMillis = null;
 
       return;
@@ -378,7 +380,7 @@ export class DateTime extends Calendar {
       }
     }
     else
-      this.epochMillis = (isNumber(initialTime) ? initialTime as number :
+      this.epochMillis = (isNumber(initialTime) ? initialTime :
         (parseZone === Timezone.TAI_ZONE || (parseZone == null && timezone === Timezone.TAI_ZONE) ?
           utToTaiMillis(Date.now(), true) : Date.now()));
 
@@ -391,7 +393,7 @@ export class DateTime extends Calendar {
 
     copy._locked = cloneLock ? this._locked : false;
 
-    return copy as this;
+    return copy;
   }
 
   get type(): 'ZONELESS' | 'DATELESS' | 'DATETIME' {
@@ -794,10 +796,9 @@ export class DateTime extends Calendar {
       case DateTimeField.QUARTER:
         amount *= 3;
 
-      // eslint-disable-next-line no-fallthrough
+      // noinspection FallThroughInSwitchStatementJS
       case DateTimeField.MONTH:
         this.checkDateless(fieldN);
-        // eslint-disable-next-line no-case-declarations
         const m = wallTime.m;
         updateFromWall = true;
         wallTime.m = mod(m - 1 + amount, 12) + 1;
@@ -1011,7 +1012,7 @@ export class DateTime extends Calendar {
       case DateTimeField.QUARTER:
         amount *= 3;
 
-      // eslint-disable-next-line no-fallthrough
+      // noinspection FallThroughInSwitchStatementJS
       case DateTimeField.MONTH:
         this.checkDateless(fieldN);
         wallTime.m = mod(wallTime.m + amount - 1, 12) + 1;

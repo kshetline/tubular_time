@@ -1,4 +1,4 @@
-/* eslint-disable quote-props */
+/* eslint-disable  @stylistic/quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
 const timezoneSmall = /* trim-file-start */{ // tz database version: 2025b, years 2020-2030
   version: '2025b',

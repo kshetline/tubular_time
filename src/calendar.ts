@@ -17,8 +17,7 @@ export const SATURDAY  = 6;
 // noinspection JSUnusedGlobalSymbols
 export enum DayOfWeek { SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY }
 // noinspection JSUnusedGlobalSymbols
-export enum Month { JANUARY = 1, FEBRUARY, MARCH, APRIL, MAY, JUNE,
-                    JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER }
+export enum Month { JANUARY = 1, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER }
 
 /**
  * Constant for indicating the last occurrence of a particular day of the week (e.g. the last Tuesday) of a given month.
@@ -66,9 +65,9 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   let dy: number;
 
   if (isNumber(yearOrDate))
-    year = yearOrDate as number;
-  else if (isArray(yearOrDate) && (<number[]> yearOrDate).length >= 3 && isNumber((<number[]> yearOrDate)[0]))
-    return yearOrDate as number[];
+    year = yearOrDate;
+  else if (isArray(yearOrDate) && yearOrDate.length >= 3 && isNumber(yearOrDate[0]))
+    return yearOrDate;
   else if (isObject(yearOrDate)) {
     syncDateAndTime(yearOrDate as YMDDate);
     n     = (yearOrDate as YMDDate).n;
@@ -298,7 +297,7 @@ export function getDayOfWeek(dayNum: number): number {
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
   if (isNumber(yearOrDateOrDayNum) && month == null)
-    return mod((yearOrDateOrDayNum as number) + 4, 7);
+    return mod(yearOrDateOrDayNum + 4, 7);
   else
     return getDayOfWeek(getDayNumber_SGC(yearOrDateOrDayNum, month, day));
 }
@@ -623,7 +622,7 @@ export class Calendar {
       return this;
     }
     else if (isString(gcYearOrDate))
-      gcYearOrDate = parseISODate(gcYearOrDate as string);
+      gcYearOrDate = parseISODate(gcYearOrDate);
     else if (isObject(gcYearOrDate) && !isArray(gcYearOrDate) && (gcYearOrDate.y == null ||
              gcYearOrDate.m == null || gcYearOrDate.d == null || gcYearOrDate.j))
       throw new Error('Gregorian change date must be an explicit non-Julian y-m-d date');
@@ -804,7 +803,7 @@ export class Calendar {
 
   getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
     if (isNumber(yearOrDateOrDayNum) && month == null)
-      return getDayOfWeek(yearOrDateOrDayNum as number);
+      return getDayOfWeek(yearOrDateOrDayNum);
     else
       return getDayOfWeek(this.getDayNumber(yearOrDateOrDayNum, month, day));
   }

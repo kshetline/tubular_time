@@ -978,7 +978,7 @@ export class Timezone {
 
   private static extractZoneInfo(): void {
     this.shortZoneNames = {};
-    this.zonesByLowercase = { gmt: 'GMT', lmt: 'LMT', os: 'OS', tai: 'TAI', ut: 'UT', utc: 'UTC'};
+    this.zonesByLowercase = { gmt: 'GMT', lmt: 'LMT', os: 'OS', tai: 'TAI', ut: 'UT', utc: 'UTC' };
     this.zonesByOffsetAndDst = {};
     this.countriesForZone = {};
     this.zonesAliases = {};
