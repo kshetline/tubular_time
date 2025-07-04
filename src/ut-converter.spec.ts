@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getDeltaTAtTaiMillis, taiDaysToUt, taiToUtMillis, utToTai, utToTaiMillis } from './ut-converter';
+import { getDeltaTAtTaiMillis, isSafeTaiMillis, taiDaysToUt, taiToUtMillis, utToTai, utToTaiMillis } from './ut-converter';
 import { DateTime } from './date-time';
 import { DAY_MSEC, DELTA_TDT_SEC, UNIX_TIME_ZERO_AS_JULIAN_DAY } from './common';
 import { initTimezoneSmall } from './index';
@@ -24,7 +24,7 @@ describe('UT/TDT Converter', () => {
   initTimezoneSmall();
 
   it('should convert properly between time systems', () => {
-    for (let t = UNIX_TIME_ZERO_AS_JULIAN_DAY - 75 * SIX_MONTHS_DAYS; t < UNIX_TIME_ZERO_AS_JULIAN_DAY + 75 * SIX_MONTHS_DAYS; t += SIX_MONTHS_DAYS) {
+    for (let t = UNIX_TIME_ZERO_AS_JULIAN_DAY - 75 * SIX_MONTHS_DAYS; t < UNIX_TIME_ZERO_AS_JULIAN_DAY + 160 * SIX_MONTHS_DAYS; t += SIX_MONTHS_DAYS) {
       const millis = (t - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 
       expect(utToTai(taiDaysToUt(t))).to.be.approximately(t, 1E-15);
@@ -45,5 +45,11 @@ describe('UT/TDT Converter', () => {
       now.timezone = 'UTC' as any;
       expect(now.epochMillis).equals(epochMillis);
     }
+  });
+
+  it('isSafeTaiMillis', () => {
+    expect(isSafeTaiMillis(new Date('1950-12-31').getTime())).to.be.false;
+    expect(isSafeTaiMillis(new Date('2024-12-31').getTime())).to.be.true;
+    expect(isSafeTaiMillis(new Date('2099-12-31').getTime())).to.be.false;
   });
 });

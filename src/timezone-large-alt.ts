@@ -1,4 +1,4 @@
-/* eslint-disable  @stylistic/quote-props */
+/* eslint-disable @stylistic/quote-props */
 /* cspell:disable */ // noinspection SpellCheckingInspection
 const timezoneLargeAlt = /* trim-file-start */{ // tz database version: 2025b, years 1800-2092, rounded to nearest minute, filtered, calendar rollbacks eliminated
   version: '2025b',

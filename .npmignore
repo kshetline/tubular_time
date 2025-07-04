@@ -19,5 +19,4 @@
 .travis.yml
 .coveralls.yml
 .markdownlint.json
-.nycrc
 rollup.config.js

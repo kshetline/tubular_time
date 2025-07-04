@@ -34,6 +34,7 @@ describe('DateTime', () => {
       .to.equal('DateTime<2021-07-04T06:34:00.000 -05:00§>');
     expect(new DateTime().locale).to.equal('en-us');
     expect(new DateTime(null, null, 'fr').locale).to.equal('fr');
+    expect(new DateTime(null, null, [1919, 4, 14]).locale).to.not.equal('fr');
     expect(new DateTime(null, null, ['fr-FR', 'de_CH']).locale).to.eql(['fr-fr', 'de-ch']);
     expect(new DateTime('20210704Z').toString()).to.equal('DateTime<2021-07-04T00:00:00.000 +00:00>');
     expect(new DateTime('10210704Z').toString()).to.equal('DateTime<1021-07-04T00:00:00.000 +00:00J>');

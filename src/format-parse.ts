@@ -302,6 +302,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       }
     }
 
+    // noinspection FallThroughInSwitchStatementJS
     switch (field) {
       case 'YYYYYY': // long year, always signed
       case 'yyyyyy':
@@ -1288,9 +1289,9 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
       const altPart = { 'de': 'd’', 'd’': 'de' }[part];
 
       if (input.startsWith(part))
-        input = input.substr(part.length).trimLeft();
+        input = input.substr(part.length).trimStart();
       else if (altPart && input.startsWith(altPart))
-        input = input.substr(altPart.length).trimLeft();
+        input = input.substr(altPart.length).trimStart();
 
       // Exact in-between text wasn't matched, but if the next thing coming up is a numeric field,
       // just skip over the text being parsed until the next digit is found.
@@ -1333,7 +1334,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           if (!hasEraField && (parts[i + 2] == null || isNumericPart(parts[i + 2]))) {
             firstChar = 'n';
             handled = false;
-            input = input.substr(newValueText?.length ?? 0).trimLeft();
+            input = input.substr(newValueText?.length ?? 0).trimStart();
           }
           break;
 
@@ -1420,7 +1421,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     }
 
     if (handled) {
-      input = input.substr(newValueText?.length ?? 0).trimLeft();
+      input = input.substr(newValueText?.length ?? 0).trimStart();
       continue;
     }
 
@@ -1432,7 +1433,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
           if (length > 0) {
             bce = isBCE;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
 
             if (w.y != null && bce)
               w.y = 1 - w.y;
@@ -1450,7 +1451,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           if (length > 0) {
             handled = true;
             pm = isPM;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
 
             if (w.hrs != null && pm && w.hrs !== 12)
               w.hrs += 12;
@@ -1466,7 +1467,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
           if (month > 0) {
             handled = true;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
             w.m = month;
           }
         }
@@ -1478,7 +1479,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
           if (length > 0) {
             handled = true;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
           }
         }
         break;

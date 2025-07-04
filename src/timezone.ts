@@ -921,7 +921,7 @@ export class Timezone {
                   insertTransitions[1].dstOffset !== 0)
                 insertTransitions.splice(0, 1);
 
-              // Make sure last added transition IS to standard time, and doesn't overlap already-created transitions.
+              // Make sure last-added transition IS to standard time, and doesn't overlap already-created transitions.
               while (insertTransitions.length > 0 && last(insertTransitions).dstOffset !== 0 ||
                      last(insertTransitions).transitionTime >= transitions[1].transitionTime)
                 insertTransitions.splice(insertTransitions.length - 1, 1);

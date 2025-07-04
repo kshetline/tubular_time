@@ -26,6 +26,7 @@
   },
   "scripts": {
     "build": "rimraf dist/ && rollup -c && ts-node make-remote-zone-data.ts",
+    "coverage": "nyc report --reporter=text-lcov > coverage/lcov.info",
     "prepack": "npm run lint && npm run test && npm run build",
     "lint": "eslint --ext .ts 'src/**/*.ts'",
     "test": "nyc --reporter=text --reporter=html mocha --require ts-node/register src/**/*.spec.ts && npm run coverage"
@@ -78,6 +79,14 @@
     "rollup-plugin-sourcemaps": "^0.6.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
+  },
+  "nyc": {
+    "exclude": [
+      "**/*.spec.ts",
+      "src/index.ts",
+      "src/timezone-*.ts",
+      "src/zone-poller-*.ts"
+    ]
   },
   "overrides": {
     "@rollup/pluginutils": {

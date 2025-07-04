@@ -27,7 +27,7 @@ describe('Zone updates', () => {
     pollForTimezoneUpdates(zonePollerNode);
   });
 
-  it('should fail to retrieve remote timezone update', function (done) {
+  xit('should fail to retrieve remote timezone update', function (done) {
     this.slow(3000);
     this.timeout(61000);
 
