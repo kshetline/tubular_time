@@ -84,7 +84,7 @@
     "exclude": [
       "**/*.spec.ts",
       "src/index.ts",
-      "src/timezone-*.ts",
+      "src/locale-data.ts",
       "src/zone-poller-*.ts"
     ]
   },

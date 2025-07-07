@@ -11,7 +11,9 @@ describe('Timezone', () => {
   beforeEach(() => Timezone.defineTimezones(Object.assign(Object.assign({
     'America/Barberg': 'America/Chicago',
     'America/Bazberg': '-0500 -0500 0;-50/0',
-    'America/Fooberg': '!250,XX,America/New_York'
+    'America/Fooberg': '!250,XX,America/New_York',
+    'Europe/A': '+0 +0 0;0/0',
+    'Europe/B': '-1 -1 0;0/0'
   }, timezoneLarge), {
     leapSeconds: '912 1096 1461 1826 2191 2557 2922 3287 3652 4199 4564 4929 5660 6574 7305 7670 8217 8582 8947 9496 10043 10592 13149 14245 15522 16617 17167'
   })));
@@ -55,6 +57,9 @@ describe('Timezone', () => {
     expect(Array.from(Timezone.from('Pacific/Honolulu').countries).sort().join('')).to.equal('UMUS');
     expect(Timezone.getAvailableTimezones().length).to.be.greaterThan(200);
     expect(Timezone.getAvailableTimezones().includes('leapSeconds')).to.be.false;
+    expect(Timezone.getOffsetsAndZones().length).to.be.greaterThan(50);
+    expect(Timezone.getRegionsAndSubzones().length).to.equal(20);
+    expect(Timezone.from('Europe/Paris').getAllTransitions().length).to.be.greaterThan(50);
 
     const regions = Timezone.getRegionsAndSubzones();
 
@@ -77,6 +82,21 @@ describe('Timezone', () => {
     expect(Timezone.from('Europe/Dublin').dstRule).to.equal('last Sun of Oct, at 1:00 UTC save -1 hour');
     expect(Timezone.from('Asia/Jerusalem').dstRule).to.equal('first Fri on/after Mar 23, at 2:00 wall time save 1 hour');
     expect(Timezone.from('UTC').dstRule).to.not.exist;
+
+    expect(Timezone.getTimezone()).to.equal(Timezone.OS_ZONE);
+    expect(Timezone.getTimezone('os')).to.equal(Timezone.OS_ZONE);
+    expect(Timezone.getTimezone('tai')).to.equal(Timezone.TAI_ZONE);
+    expect(Timezone.getTimezone('dateless')).to.equal(Timezone.DATELESS);
+    expect(Timezone.getTimezone('zoneless')).to.equal(Timezone.ZONELESS);
+    expect(Timezone.getTimezone('lmt', 77).utcOffset).to.equal(18480);
+    expect(() => Timezone.getTimezone('???')).to.throw();
+
+    expect(Timezone.getPopulation('America/New_York')).to.be.greaterThan(20000000);
+    expect(Timezone.getPopulation('America/Barberg')).to.be.greaterThan(9000000);
+    expect(Timezone.getPopulation('America/Bazberg')).to.equal(0);
+
+    expect(Timezone.getCountries('America/New_York')).to.deep.equal(new Set(['US']));
+    expect(Timezone.getCountries('America/Bazberg')).to.deep.equal(new Set([]));
   });
 
   it('should gracefully handle timezones not available in Intl', () => {
@@ -112,5 +132,8 @@ describe('Timezone', () => {
     expect(Timezone.getCountries('America/Ciudad_Juarez').has('MX')).to.be.true;
     expect(Timezone.getCountries('Asia/Tokyo').has('JP')).to.be.true;
     expect(Timezone.getCountries('Europe/Paris').has('FR')).to.be.true;
+  });
+
+  it('should match timezones with countries', () => {
   });
 });

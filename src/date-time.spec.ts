@@ -19,9 +19,11 @@ describe('DateTime', () => {
       'Australia/LHI': '+103620 +1030 30;aA.k/0/LMT a0/0/AEST au/0 bu/10 b0/u;1232323232424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242424242;-32oWA.k 3tzAA.k 1zdu Rb0 1zd0 On0 1zd0 On0 1zd0 On0 1zd0 TXu 1qMu WLu 1tAu WLu 1tAu TXu 1tAu Onu 1zcu Onu 1zcu Onu 1zcu Rbu 1zcu Onu 1zcu Onu 1zcu 11zu 1o0u 11zu 1o0u 11zu 1o0u 11zu 1qMu WLu 11Au 1nXu 1qMu 11zu 1o0u 11zu 1o0u 11zu 1qMu WLu 1qMu 11zu 1o0u WLu 1qMu 14nu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1fzu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1fzu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1fzu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1cMu 1cLu 1fAu 1cLu 1cMu 1cLu;2008 4 1 1 2:0 0 0,2008 10 1 1 2:0 0 30;347;AU',
       'Europe/Dublin': '-0025 +0100 -60;-p/0/LMT -p.l/0/DMT y.D/10/IST 0/0/GMT 10/10/BST 10/10/IST 10/0/IST 0/-10/GMT;123434343434353535353535353535353535353535353535353535353535353535353535353535353535353535353567676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676767676;-3BHbz 1ra20.l Rc0 1fzy.D 14M0 1fc0 1g00 1co0 1dc0 1co0 1oo0 1400 1dc0 19A0 1io0 1io0 WM0 1o00 14o0 1o00 17c0 1io0 17c0 1fA0 1a00 1lc0 17c0 1io0 17c0 1fA0 1a00 1io0 17c0 1io0 17c0 1fA0 1cM0 1io0 17c0 1fA0 1a00 1io0 17c0 1io0 17c0 1fA0 1a00 1io0 1qM0 Dc0 g600 14o0 1wo0 17c0 1io0 11A0 1o00 17c0 1fA0 1a00 1fA0 1cM0 1fA0 1a00 17c0 1fA0 1a00 1io0 17c0 1lc0 17c0 1fA0 1a00 1io0 17c0 1io0 17c0 1fA0 1a00 1a00 1qM0 WM0 1qM0 11A0 1o00 WM0 1qM0 WM0 1qM0 WM0 1qM0 WM0 1tA0 IM0 1EJ0 7jD0 U00 1tA0 U00 1tA0 U00 1tA0 U00 1tA0 WM0 1qM0 WM0 1qM0 WM0 1tA0 U00 1tA0 U00 1tA0 11z0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1o00 14o0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0 1o00 11A0 1o00 11A0 1qM0 WM0 1qM0 WM0 1qM0 11A0 1o00 11A0;1981 3 0 1 1:0 2 0,1996 10 0 1 1:0 2 -60;12e5;IE',
       'Kwajalein': '+110920 +1200 0;b9.k/0/LMT b0/0 a0/0 90/0 -c0/0 c0/0;123145;-2M0X9.k 1rDA9.k akp0 6Up0 12ry0 Wan0;;14e3;MH',
-      'Pacific/Apia': '+123304 +1300 60;cx.4/0/LMT -bq.U/0/LMT -bu/0 -b0/0 -a0/10 e0/10 d0/0;12343456565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656;-38Fox.4 J1A0 1yW03.4 2rRbu 1ff0 1a00 CI0 AQ0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0;2012 4 1 1 4:0 0 0,2012 9 0 1 3:0 0 60;37e3;WS',
+      'Pacific/Apia': '+123304 +1300 60;cx.4/0/LMT -bq.U/0/LMT -bu/0 -b0/0 -a0/10 +e0/10 d0/0;12343456565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656565656;-38Fox.4 J1A0 1yW03.4 2rRbu 1ff0 1a00 CI0 AQ0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1io0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1a00 1fA0 1cM0 1fA0 1a00 1fA0;2012 4 1 1 4:0 0 0,2012 9 0 1 3:0 0 60;37e3;WS',
       'Pacific/Kwajalein': '!14e3,MH,Kwajalein',
       'Australia/Lord_Howe': '!347,AU,Australia/LHI',
+      'Foo/Bar': '+0000 +0000 60;0/0/FBR;;;2007 11 -1 1 2:0 0 0,2007 3 8 1 2:0 0 60;0;X1',
+      'Foo/Baz': '+0000 +0000 60;0/0/FBZ;;;2007 11 1 -1 2:0 0 0,2007 3 8 1 2:0 0 60;0;X2'
     });
     DateTime.setDefaultLocale('en-us');
     DateTime.setDefaultTimezone('America/New_York');
@@ -36,7 +38,12 @@ describe('DateTime', () => {
     expect(new DateTime(null, null, 'fr').locale).to.equal('fr');
     expect(new DateTime(null, null, [1919, 4, 14]).locale).to.not.equal('fr');
     expect(new DateTime(null, null, ['fr-FR', 'de_CH']).locale).to.eql(['fr-fr', 'de-ch']);
+    expect(new DateTime({ mjde: 0 }).toIsoString(10)).to.equal('1858-11-16');
+    expect(new DateTime({ mjdu: 0 }).toIsoString(10)).to.equal('1858-11-16');
+    expect(new DateTime({ jde: 0 }).toIsoString(10)).to.equal('-4713-12-30');
+    expect(new DateTime({ jdu: 0 }).toIsoString(10)).to.equal('-4712-01-01');
     expect(new DateTime('20210704Z').toString()).to.equal('DateTime<2021-07-04T00:00:00.000 +00:00>');
+    expect(new DateTime('20210704', Timezone.ZONELESS).toString()).to.equal('DateTime<2021-07-04T00:00:00.000>');
     expect(new DateTime('10210704Z').toString()).to.equal('DateTime<1021-07-04T00:00:00.000 +00:00J>');
     expect(new DateTime('20210704T09Z').toString()).to.equal('DateTime<2021-07-04T09:00:00.000 +00:00>');
     expect(new DateTime('20210704T0945Z').toString()).to.equal('DateTime<2021-07-04T09:45:00.000 +00:00>');
@@ -59,7 +66,9 @@ describe('DateTime', () => {
     expect(new DateTime(0, Timezone.ZONELESS).type).to.equal('ZONELESS');
     expect(() => new DateTime(NaN).throwIfInvalid()).to.throw('Invalid core millisecond time value: NaN');
     expect(() => new DateTime().throwIfInvalid()).to.not.throw();
-    expect(new DateTime(0, 'Foo/Bar').error).to.match(/Bad timezone/);
+    expect(new DateTime(0, 'Foo/Foo').error).to.match(/Bad timezone/);
+    expect(new DateTime(0, 'Foo/Bar').getSecondsInDay([2025, 11, 2])).to.equal(90000);
+    expect(new DateTime(0, 'Foo/Baz').getSecondsInDay([2025, 11, 1])).to.equal(90000);
 
     const saveZone = DateTime.getDefaultTimezone();
 
@@ -214,7 +223,7 @@ describe('DateTime', () => {
   it('should correctly add/subtract DateTime fields', () => {
     expect(new DateTime('2300-05-05T04:08:10.909').add(DateTimeField.MILLI, -1001).toIsoString(23))
       .to.equal('2300-05-05T04:08:09.908');
-    expect(new DateTime('2020-11-29 23:24:35').add('seconds', 30).toIsoString(19))
+    expect(new DateTime('2020-11-29 23:24:35').add('seconds', 30).toIsoString(-10))
       .to.equal('2020-11-29T23:25:05');
     expect(new DateTime('2020-11-29 23:24:35 TAI').add(DateTimeField.SECOND_TAI, 30).toIsoString(19))
       .to.equal('2020-11-29T23:25:05');
@@ -496,6 +505,12 @@ describe('DateTime', () => {
     d.epochSeconds = 0;
     expect(d.wallTime.y).to.equal(1970);
     expect(() => d.lock().epochSeconds = 1).to.throw('This DateTime instance is locked and immutable');
+    expect(() => d.utcMillis = 1).to.throw();
+    expect(d.setUtcMillis(1).utcMillis).to.equal(1);
+    expect(() => d.taiMillis = 1).to.throw();
+    expect(() => d.wallTime = { y: 2025 }).to.throw();
+    expect(() => d.timezone = Timezone.OS_ZONE).to.throw();
+    expect(() => d.locale = 'fr').to.throw();
   });
 
   it('should correctly perform DateTime comparisons', () => {
@@ -505,16 +520,20 @@ describe('DateTime', () => {
     expect(dt.isAfter('2021-03-04T05:06:07.887')).to.be.true;
     expect(dt.isAfter('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.false;
     expect(dt.isSameOrAfter('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
+    expect(dt.isSameOrAfter('2021-03-04T05:06:07.887')).to.be.true;
     expect(() => dt.isAfter('05:06:07.887')).to.throw('Mismatched DateTime types DATETIME/DATELESS');
     expect(dt.isBefore('2021-03-04T05:06:07.887')).to.be.false;
     expect(dt.isBefore('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.false;
     expect(dt.isSameOrBefore('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
+    expect(dt.isSameOrBefore('2021-03-04T05:06:07.887')).to.be.false;
     expect(dt.isSame('2021-03-04T05:06:07.887', DateTimeField.SECOND)).to.be.true;
+    expect(dt.getStartOfDayMillis()).to.equal(new DateTime('2021-03-04').getStartOfDayMillis());
     expect(dt2.isAfter('1969-07-20', DateTimeField.MINUTE)).to.be.true;
     expect(dt2.isAfter('1969-07-20', DateTimeField.HOUR)).to.be.true;
     expect(dt2.isAfter('1969-07-20', DateTimeField.DAY)).to.be.false;
     expect(dt2.isAfter('1969-07-19', DateTimeField.DAY)).to.be.true;
     expect(dt2.isSame('1969-07-01', DateTimeField.MONTH)).to.be.true;
+    expect(dt2.isSame('1969-07-01')).to.be.false;
     expect(dt2.isBefore('1969-07-01', DateTimeField.MONTH)).to.be.false;
     expect(dt2.isBefore('1969-08-01', DateTimeField.MONTH)).to.be.true;
     expect(dt2.isBefore('1969-08-01', DateTimeField.YEAR)).to.be.false;
@@ -588,6 +607,9 @@ describe('DateTime', () => {
       .to.contain({ start: '00:00:00', end: '24:00:00', delta: 86400000 });
     expect(new DateTime('1969-09-30', 'Pacific/Kwajalein').getDiscontinuityDuringDay())
       .to.contain({ start: '24:00:00', end: '01:00:00', delta: -82800000 });
+    expect(new DateTime(0, 'Pacific/Kwajalein').getDiscontinuityDuringDay([1969, 9, 30]))
+      .to.contain({ start: '24:00:00', end: '01:00:00', delta: -82800000 });
+    expect(new DateTime('foo').getDiscontinuityDuringDay()).to.be.null;
   });
 
   it('should correctly handle TAI and leap seconds', () => {
@@ -603,6 +625,8 @@ describe('DateTime', () => {
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 18).tz('UTC').toString()).to.equal('DateTime<1978-01-01T00:00:00.000 +00:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').add('seconds', 17).tz('America/New_York').toString()).to.equal('DateTime<1977-12-31T18:59:60.000 -05:00>');
     expect(new DateTime('1977-12-31T23:59:59 TAI').tz('America/New_York', true).toString()).to.equal('DateTime<1977-12-31T23:59:59.000 -05:00>');
+    expect(new DateTime('1977-12-31 UTC').computeUtcMillisFromWallTime({ mjdu: 40587 })).to.equal(-254);
+    expect(new DateTime('1977-12-31 UTC').computeUtcMillisFromWallTime({ y: 1969, m: 12, d: 19, j: true })).to.equal(0);
     expect(() => new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 60)).not.to.throw();
     expect(() => new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 61)).to.throw('SECOND (61) must be in the range [0, 60]');
     expect(new DateTime('1977-12-31T23:59:00Z').set(DateTimeField.SECOND, 60).tz('TAI').toString()).to.equal('DateTime<1978-01-01T00:00:16.000 TAI>');
@@ -696,17 +720,6 @@ describe('DateTime', () => {
     expect(new DateTime(0).compare(new DateTime(-1E11), 'year')).to.equal(3);
     expect(() => new DateTime(0).compare(new DateTime(-1E11), 'foo' as any)).to.throw(/Resolution.+not valid/);
     expect(new DateTime('2021-11-07T01:25₂', 'America/New_York').compare(new DateTime('2021-11-07T06:25Z'))).to.equal(0);
-  });
-
-  it('locking', () => {
-    const dt = new DateTime().lock();
-
-    expect(() => dt.utcMillis = 1).to.throw();
-    expect(dt.setUtcMillis(1).utcMillis).to.equal(1);
-    expect(() => dt.taiMillis = 1).to.throw();
-    expect(() => dt.wallTime = { y: 2025 }).to.throw();
-    expect(() => dt.timezone = Timezone.OS_ZONE).to.throw();
-    expect(() => dt.locale = 'fr').to.throw();
   });
 
   it('misc setters/getters', () => {

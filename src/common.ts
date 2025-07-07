@@ -287,7 +287,7 @@ export function parseTimeOffset(offset: string, roundToMinutes = false): number 
 
   const parts = offset.includes(':') ?
     offset.split(':') :
-    offset.match(/../g);
+    offset.match(/../g) ?? ['0'];
   let offsetSeconds = 60 * (60 * Number(parts[0]) + Number(parts[1] ?? 0));
 
   if (parts[2]) {

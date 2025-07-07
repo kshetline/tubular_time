@@ -109,6 +109,7 @@ class Rule {
     return millis;
   }
 
+  /* istanbul ignore next: just a function used for development debugging */
   toString(): string {
     const month = enMonthsShort[this.month - 1];
     const dayOfWeek = enWeekdaysShort[this.dayOfWeek - 1];
@@ -160,6 +161,7 @@ let osDstOffset: number;
 
 // Create a transition table (if necessary) for the OS timezone so that it can be handled like other timezones.
 // It might also be discovered, of course, that the OS timezone is a simple fixed offset from UTC.
+/* istanbul ignore next: testing depends on OS timezone */
 (function (): void {
   const date = new Date(1901, 0, 1, 12, 0, 0, 0); // Sample around local noon, so it's unlikely we'll sample right at a transition.
   let lastSampleTime = date.getTime();
@@ -341,6 +343,7 @@ export class Timezone {
 
       const sections = etz.split(/[ ;]/);
 
+      /* istanbul ignore next: unreached sanity check */
       if (sections.length < 3)
         continue;
 
@@ -446,6 +449,7 @@ export class Timezone {
 
   private static _guess: string;
 
+  /* istanbul ignore next: testing depends on OS timezone */
   static guess(recheck = false, testCountry?: string, testZone?: string): string {
     if (!this._guess || recheck) {
       if (hasIntlDateTime && !testCountry && !testZone)
@@ -514,7 +518,7 @@ export class Timezone {
       return cached;
 
     let zone: Timezone;
-    const $: string[] = /LMT|OS|(?:(GMT|UTC?)?([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?))?)|(?:.+\/.+)|\w+/.exec(name);
+    const $: string[] = /^(?:LMT|OS|(?:(GMT|UTC?)?([-+]\d\d(\d{4}|\d\d|:\d\d(:\d\d)?))?)|(?:.+\/.+)|\w+)$/.exec(name);
 
     if ($ === null || $.length === 0)
       throw new Error('Unrecognized format for timezone name "' + name + '"');
@@ -1143,6 +1147,7 @@ export class Timezone {
   }
 
   static formatUtcOffset(offsetSeconds: number, noColons = false): string {
+    /* istanbul ignore next: unreached sanity check */
     if (offsetSeconds == null)
       return '?';
 
@@ -1171,6 +1176,7 @@ export class Timezone {
   }
 
   static getDstSymbol(dstOffsetSeconds: number): string {
+    /* istanbul ignore next: unreached sanity check */
     if (dstOffsetSeconds == null)
       return '';
 

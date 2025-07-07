@@ -1246,8 +1246,12 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
   format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
 
-  if (isString(zone))
-    origZone = zone = Timezone.from(zone);
+  if (isString(zone)) {
+    try {
+      origZone = zone = Timezone.from(zone);
+    }
+    catch {}
+  }
 
   const locale = getLocaleInfo(locales);
   let $ = /^(I[FLMSx][FLMS]?)/.exec(format);
