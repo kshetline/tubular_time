@@ -1,6 +1,4 @@
 import { expect } from 'chai';
-// import moment from './locale/moment-with-locales.js';
-
 import { DateTime } from './date-time';
 import ttime, { initTimezoneLarge } from './index';
 import { localeList } from './locale-data';
@@ -44,7 +42,7 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
     expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
-    expect(new DateTime('1986-09-04').format('D\u200F/M\u200F/YYYY h:mm A', 'ar')).to.equal('٤\u200F/٩\u200F/١٩٨٦ ١٢:٠٠ ص');
+    expect(new DateTime('1986-09-04').format('D\u200F/M\u200F/YYYY h:mm A', 'ar-sa')).to.equal('٤\u200F/٩\u200F/١٩٨٦ ١٢:٠٠ ص');
     expect(new DateTime('1986-09-04').format('D/M/YY h:mm A', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
     expect(new DateTime('1986-09-04').format('ISS', 'bn')).to.equal('৪/৯/৮৬, ১২:০০ AM');
     expect(new DateTime('1986-09-04').format('ISS{numberingSystem:latn}', 'bn')).to.equal('4/9/86, 12:00 AM');

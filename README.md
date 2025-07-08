@@ -372,7 +372,7 @@ ttime.initTimezoneLarge();
 ttime.initTimezoneLargeAlt();
 ```
 
-By default, **@tubular/time** is set up using `initTimezoneSmall()`. This covers explicitly-defined timezone information for roughly the release date of the version of **@tubular/time** you’re using, +/- five years, supplemented by rules-based extensions (i.e. knowing that for a particular timezone, say, “DST starts on the last Sunday of March and ends on the last Sunday of October”), and further supplemented by information extracted from `Intl`, when available.
+By default, **@tubular/time** is set up using `initTimezoneSmall()`. This covers explicitly defined timezone information for roughly the release date of the version of **@tubular/time** you’re using, +/- five years, supplemented by rules-based extensions (i.e. knowing that for a particular timezone, say, “DST starts on the last Sunday of March and ends on the last Sunday of October”), and further supplemented by information extracted from `Intl`, when available.
 
 With proper tree-shaking, the code footprint of **@tubular/time** should be less than 150K when using the small timezone definitions.
 
@@ -420,7 +420,7 @@ For example:
   ttime.removeZonesUpdateListener(listener);
 ```
 
-Why use a listener? Because you might want to recalculate previously calculated times, which possibly have changed due to timezone definition changes. For example, imagine you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was going to be 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is cancelled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 in your timezone instead.
+Why use a listener? Because you might want to recalculate previously calculated times, which possibly have changed due to timezone definition changes. For example, imagine you have a video meeting scheduled for 10:00 in a client’s timezone, which, when you first schedule it, was going to be 15:00 in your timezone. Between the time you scheduled the meeting, however, and when the meeting actually takes place, the switch to Daylight Saving Time is canceled for the client’s timezone. If you still intend to talk to your client at 10:00 their time, you have to meet at 16:00 in your timezone instead.
 
 To poll for timezone updates at a regular interval, use:
 
@@ -438,7 +438,7 @@ You can also do a one-off request:
 function getTimezones(zonePoller: IZonePoller | false, name: ZoneOptions = 'small'): Promise<boolean>;
 ```
 
-`zonePoller` and `name` are the same as above. Any periodic polling done by `pollForTimezoneUpdates()` is canceled. You can get a response via registered listeners, but this function also returns a `Promise`. The promise either resolves to a boolean value, or is rejected with an `Error`.
+`zonePoller` and `name` are the same as above. Any periodic polling done by `pollForTimezoneUpdates()` is canceled. You can get a response via registered listeners, but this function also returns a `Promise`. The promise either resolves to a boolean value or is rejected with an `Error`.
 
 ## The `YMDDate` and `DateAndTime` objects
 
@@ -519,7 +519,7 @@ In specifying a date, the date fields have the following priority:
 * `n` / `epochDay`: Number of days before/after epoch day 0, which is January 1, 1970.
 * `y` / `year`: A normal calendar year. Along with the year, you can specify:
   * Nothing more, in which case the date is treated as January 1 of that year.
-  * `m` / `month`: The month (a normal 1-12 month, not the weird 0-11 month the JavaScript `Date` uses!).
+  * `m` / `month`: The month (a normal 1–12 month, not the weird 0–11 month the JavaScript `Date` uses!).
     * If nothing more is given, the date is treated as the first of the month.
     * `d` / `day`: The date of the month.
   * `dy` / `dayOfYear`: The 1-based number of days into the year, such that 32 means February 1.
@@ -530,7 +530,7 @@ In specifying a date, the date fields have the following priority:
       * `dw` / `dayByWeek`: The 1-based day of the given week.
 * `ywl` / `yearByWeekLocale`, etc.: These fields work the same as `yw` / `yearByWeek`, etc., except that they apply to locale-specific rules for the day of the week on which each week starts, and for the definition of the first week of the year.
 
-In specifying a time, the minimum needed is a 0-23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
+In specifying a time, the minimum needed is a 0–23 value for `hrs` / `hour`. All other unspecified time fields will be treated as 0.
 
 [Astronomical time fields](#astronomical-dateandtime-fields) will supersede any of the above date fields.
 
@@ -600,7 +600,7 @@ Even with the default behavior, however, it is still possible for hours and minu
 
 You can use the `roll()` method to roll, or “spin”, through values for each date/time field. This operation can be used, for example, in a user interface where you select a field and use up/down arrows to change the value, and the value changes in a wrap-around fashion, e.g. ...58 → 59 → 00 → 01..., etc.
 
-While seconds and minutes wrap at 59, hours at 23, and dates wrap at the length of the current month, there are no natural wrapping boundaries for years. The wrap-range defaults to 1900-2099, but you can pass optional arguments to change this range (this only effects rolling of years, not other time units).
+While seconds and minutes wrap at 59, hours at 23, and dates wrap at the length of the current month, there are no natural wrapping boundaries for years. The wrap-range defaults to 1900–2099, but you can pass optional arguments to change this range (this only affects rolling of years, not other time units).
 
 You can `roll` using the following fields: `MILLI`, `SECOND`, `MINUTE`, `HOUR`, `AM_PM`, `DAY`, `DAY_OF_WEEK`, `DAY_OF_WEEK_LOCALE`, `DAY_OF_YEAR`, `WEEK`, `WEEK_LOCALE`, `MONTH`, `YEAR`, `YEAR_WEEK`, `YEAR_WEEK_LOCALE`, `ERA`.
 
@@ -811,7 +811,7 @@ One of the last switches to the Gregorian calendar was enacted by Russia in 1918
 
 Given such examples, here are some things to consider which might defy ordinary expectations about how calendar months work:
 
-* A month does not necessary start on the 1st.
+* A month does not necessarily start on the 1st.
 * A month might be missing days in the middle.
 * Because of the previous possibilities, the last numeric date of the month (in the above example, 28) is not necessary the same thing as the number of days in the month (in the example above, only 15 days).
 * There are timezone changes which eliminate both a day-of-the-month number *and* a day of the week.
@@ -848,7 +848,9 @@ getLastDateInMonth(year?: number, month?: number): number;
 
 In December 2011, the nation of Samoa jumped over the International Dateline (or, since no major tectonic shifts occurred, perhaps it’s better to say the International Dateline jumped over Samoa). The Pacific/Apia timezone was changed from UTC-10:00 to UTC+14:00. As a result, Friday, December 30, 2011 did not exist for Samoans. Thursday was followed immediately by Saturday, a type of discontinuity that doesn’t happen with days dropped by switching from the Julian to the Gregorian calendar.
 
-<a id="apia" name="apia"></a>**@tubular/time** handles this situation by treating that skipped-over Friday as a day that exists, but one that is 0 seconds long. The `getCalendarMonth()` method makes this 0-length status apparent by rendering the day-of-the-month for that day as a negative number.
+### <a id="apia" name="apia"></a>
+
+**@tubular/time** handles this situation by treating that skipped-over Friday as a day that exists, but one that is 0 seconds long. The `getCalendarMonth()` method makes this 0-length status apparent by rendering the day-of-the-month for that day as a negative number.
 
 `new DateTime('2011-12', 'Pacific/Apia').getCalendarMonth().map(date => date.m === ttime.DECEMBER ? date.d : '-')` →
 
@@ -912,7 +914,7 @@ Here’s a skyviewcafe.com image for that extra-long day in the Marshall Islands
 
 ## Leap Seconds, TAI, and Julian Dates
 
-UTC (Universal Coordinated Time) is not a uniform timescale. It is currently defined to track closely with another time standard, UT1, which is based on the slightly variable, and (in the long run) slowly lengthening rotation time of the Earth. Each single second of UTC is equal to one standard, atomically-defined second, but whole seconds are occasionally inserted (and, theoretically, might occasionally be deleted) to keep UTC within 0.9s of UT1. These seconds are called _leap seconds_.
+UTC (Universal Coordinated Time) is not a uniform timescale. It is currently defined to track closely with another time standard, UT1, which is based on the slightly variable, and (in the long run) slowly lengthening rotation time of the Earth. Each single second of UTC is equal to one standard, atomically defined second, but whole seconds are occasionally inserted (and, theoretically, might occasionally be deleted) to keep UTC within 0.9s of UT1. These seconds are called _leap seconds_.
 
 The current system for UTC was adopted in 1970 and implemented in 1972[*](https://en.wikipedia.org/wiki/Coordinated_Universal_Time). UTC is only strictly defined relative to TAI starting in 1972 and going forward in time until the next announced omission or addition of a leap second. You can, however, create a **@tubular/time** `DateTime` instance using UTC while also using year values in the distant past or future.
 
@@ -921,8 +923,8 @@ So how are dates and times outside the well-defined range of UTC handled?
 The answer is that `DateTime` uses both extended UTC and UT1 outside the well-defined UTC range. This works as follows:
 
 * For all dates prior to 1957, estimated UT1 is in effect. This is most accurate back to 1600, for which there is sufficient astronomical data for reasonable approximate conversions from UT1 to TAI and dynamical time. Further back in time less accurate approximations are in effect.
-* From 1957-1958, using a sliding weighted average, UT1 transitions to *proleptic* UTC.
-* From 1958-1972 *proleptic* UTC, [as proposed by Tony Finch](https://fanf.livejournal.com/69586.html), is used, with the first non-official leap second occurring at 1959-06-30 23:59:60.
+* From 1957 to 1958, using a sliding weighted average, UT1 transitions to *proleptic* UTC.
+* From 1958 to 1972 *proleptic* UTC, [as proposed by Tony Finch](https://fanf.livejournal.com/69586.html), is used, with the first non-official leap second occurring at 1959-06-30 23:59:60.
 * From 1972 up until the latest updates provided by the [International Bureau of Weights and Measures](https://en.wikipedia.org/wiki/International_Bureau_of_Weights_and_Measures), well-defined UTC prevails, with the first official leap second occurring at 1972-06-30 23:59:60.
 * For a year to 18 months after the current time, or after the last defined leap second, *whichever is later*, a presumed leap-second-free span of UTC is projected to occur.
 * A sliding weighted average transition from UTC to estimated UT1 follows for the next 365 days.
@@ -947,7 +949,7 @@ Note that this only works for defined leap seconds. `new DateTime('2021-04-15 23
 * By add/subtract operations using TAI quantities:
 `new DateTime('2016-12-31 18:59:59 EST').add('seconds_tai', 1).toString()` →
 `"DateTime<2016-12-31T18:59:60.000 -05:00>"`<br><br>
-* Using the set operation (this only works if the result is the is considered a valid leap second):
+* Using the set operation (this only works if the result is considered a valid leap second):
 `new DateTime('2016-12-31 18:59:59 EST').set('second', 60).toString()` →
 `"DateTime<2016-12-31T18:59:60.000 -05:00>"`<br><br>
 * Using the `setUtcMillis` method, with the optional second `leapSecondMillis` argument:
@@ -992,7 +994,7 @@ In the unlikely event a negative leap second is ever declared, the `epochMillis`
 
 ## Global default settings
 
-The next two methods get or set the first year of the one hundred-year range that will be used to interpret two-digit year numbers. The “default default” is 1970, meaning that 00-69 will be treated as 2000-2069, and 70-99 will be treated as 1970-1999:
+The next two methods get or set the first year of the one hundred-year range that will be used to interpret two-digit year numbers. The “default default” is 1970, meaning that 00–69 will be treated as 2000–2069, and 70–99 will be treated as 1970–1999:
 
 `ttime.getDefaultCenturyBase(): number;`<br>
 `ttime.setDefaultCenturyBase(newBase: number): void;`
@@ -1343,19 +1345,21 @@ Check if a given IANA `zoneName` is associated with an ISO Alpha-2 (two-letter) 
 static doesZoneMatchCountry(zoneName: string, country: string): boolean;
 ```
 
-Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given TAI moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
+Find the officially defined, or proleptic, difference in seconds between TAI and UTC at the given TAI moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
 
 ```typescript
 static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
 ```
 
-Find the officially-defined, or proleptic, difference in seconds between TAI and UTC at the given UTC moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
+Find the officially defined, or proleptic, difference in seconds between TAI and UTC at the given UTC moment (in milliseconds from the 1970 epoch). This value will be part of an `LeapSecondInfo` object which also defines when that offset started (the moment after the insertion/deletion of a leap second), and the flags `inLeap` and `inNegativeLeap` (defined above). This can be `null` if no leap seconds are declared in the current timezone data:
 
 ```typescript
 static findDeltaTaiFromUtc(utcTime: number): LeapSecondInfo;
 ```
 
-<a id="format-utc-offset" name="format-utc-offset"></a>Take a duration, `offsetSeconds`, and turn it into a formatted UTC offset, e.g. `-18000` → `'-05:00'`. If `noColons` is set to `false` (it defaults to `true` if not specified), colons will be omitted from the output, e.g. `'-0500'`. If the duration is not in whole minutes, seconds will be added to the output, e.g. `'+15:02:19'`:
+### <a id="format-utc-offset" name="format-utc-offset"></a>
+
+Take a duration, `offsetSeconds`, and turn it into a formatted UTC offset, e.g. `-18000` → `'-05:00'`. If `noColons` is set to `false` (it defaults to `true` if not specified), colons will be omitted from the output, e.g. `'-0500'`. If the duration is not in whole minutes, seconds will be added to the output, e.g. `'+15:02:19'`:
 
 ```typescript
 static formatUtcOffset(offsetSeconds: number, noColons = false): string;
@@ -1572,13 +1576,13 @@ Get the minimum number of days within a given calendar year needed for a week to
 ttime.getMinDaysInWeek(locale: string | string[]): number;
 ```
 
-Day number (0-6 for Sunday-Saturday) considered the first day of a week for a locale:
+Day number (0–6 for Sunday–Saturday) considered the first day of a week for a locale:
 
 ```typescript
 ttime.getStartOfWeek(locale: string | string[]): number;
 ```
 
-Day numbers (0-6 for Sunday-Saturday) considered to comprise weekend days for a locale:
+Day numbers (0–6 for Sunday–Saturday) considered to comprise weekend days for a locale:
 
 ```typescript
 ttime.getWeekend(locale: string | string[]): number[];

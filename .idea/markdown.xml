@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="MarkdownSettings">
+    <option name="showProblemsInCodeBlocks" value="false" />
+    <option name="style" value="GITHUB_LIGHT" />
+    <option name="useGitHubSyntaxColors" value="true" />
+  </component>
+</project>

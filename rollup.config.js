@@ -1,7 +1,9 @@
-import sourcemaps from 'rollup-plugin-sourcemaps';
-import { terser } from 'rollup-plugin-terser';
-import typescript from '@rollup/plugin-typescript';
+const sourcemaps = require('rollup-plugin-sourcemaps');
+const terser = require('@rollup/plugin-terser');
+const typescript = require('@rollup/plugin-typescript');
+const pkg = require('./package.json');
 
+// noinspection JSUnusedGlobalSymbols
 module.exports = [{
   external: ['by-request', 'json-z', '@tubular/math', '@tubular/util'],
   input: 'src/index.ts',
@@ -10,7 +12,13 @@ module.exports = [{
       file: pkg.browser,
       sourcemap: true,
       format: 'umd',
-      name: 'tbTime'
+      name: 'tbTime',
+      globals: {
+        'json-z': 'JSONZ',
+        '@tubular/math': 'tbMath',
+        '@tubular/util': 'tbUtil',
+        'by-request': '_by_request_' // Never used, only specified to suppress warning
+      }
     },
     {
       file: pkg.main,
@@ -35,5 +43,9 @@ module.exports = [{
       },
       sourceMap: { includeSources: true }
     })
-  ]
+  ],
+  onwarn(code, defaultHandler) {
+    if (code.code !== 'MIXED_EXPORTS')
+      defaultHandler(code);
+  }
 }];

@@ -1,46 +1,28 @@
-# See http://help.github.com/ignore-files/ for more about ignoring files.
-
-# compiled output
-/dist
-/dist-server
-/tmp
-/out-tsc
-/docs
-
-# dependencies
-/node_modules
-
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
+**/*
+!.gitignore
+!.idea/codeStyles/Project.xml
+!.idea/codeStyles/codeStyleConfig.xml
+!.idea/compiler.xml
+!.idea/dictionaries/project.xml
+!.idea/encodings.xml
+!.idea/inspectionProfiles/Project_Default.xml
+!.idea/kotlinc.xml
+!.idea/libraries/KotlinJavaRuntime.xml
+!.idea/markdown.xml
+!.idea/misc.xml
+!.idea/modules.xml
+!.idea/scopes/Markdown.xml
+!.idea/tubular_time.iml
+!.markdownlint.json
+!.npmignore
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-testem.log
-/typings
-/.nyc_output
-*.tgz
-
-# e2e
-/e2e/*.js
-/e2e/*.map
-
-# System Files
-.DS_Store
-Thumbs.db
+!*.md
+!*.js
+!*.mjs
+!*.ts
+!img/**/*
+!package-lock.json
+!package.json
+!src/**/*
+!test.html
+!tsconfig.*
