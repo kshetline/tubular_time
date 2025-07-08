@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "3.10.0-alpha.0",
+  "version": "3.10.1",
   "description": "Date/time, IANA timezones, leap seconds, TAI/UTC conversions, calendar with settable Julian/Gregorian switchover",
   "module": "dist/index.min.mjs",
   "main": "dist/index.min.cjs",
@@ -14,6 +14,9 @@
       "require": "./dist/index.min.cjs",
       "browser": "./dist/index.min.js",
       "default": "./dist/index.min.cjs"
+    },
+    "./cjs": {
+      "require": "./dist/index.min.cjs"
     },
     "./dist/cjs/index.cjs": "./dist/index.min.cjs",
     "./dist/cjs/index.js": "./dist/index.min.cjs",

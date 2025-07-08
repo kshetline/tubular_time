@@ -1,12 +1,15 @@
 _Updates limited to IANA tzdb updates omitted._
 
+### 3.10.1
+
+* Minor documentation update.
+
 ### 3.10.0
 
-* Added optional timezones to date/time format strings.
 * Fixed bug with creating `DateTime` instances using `Date` objects.
 * Other minor edge-case bug fixes.
 * Code coverage increased to 95%.
-* Updated build and linting.
+* Updated build, linting, and documentation.
 * Improved sourcemaps.
 * CHANGELOG.md started (earlier changes listed added retroactively).
 

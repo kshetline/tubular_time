@@ -104,7 +104,7 @@ Two alternate large timezone definition sets, of approximately 280K each, are av
 
 ...or...
 
-`const { ttime, DateTime, Timezone`...`} = require('@tubular/time/cjs'); // CommonJS`
+`const { ttime, DateTime, Timezone`...`} = require('@tubular/time'); // CommonJS`
 
 Documentation examples will assume **@tubular/time** has been imported as above.
 
