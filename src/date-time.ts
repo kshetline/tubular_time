@@ -2072,7 +2072,7 @@ export class DateTime extends Calendar {
   getYearWeekAndWeekday(date: YearOrDate | number,
     startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
-  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
+  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY: number,
                       startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
     if (isObject(yearOrDate)) {
       monthOrSDW = monthOrSDW ?? 1;

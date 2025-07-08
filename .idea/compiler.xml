@@ -18,4 +18,8 @@
       <entry name="?*.ftl" />
     </wildcardResourcePatterns>
   </component>
+  <component name="TypeScriptCompiler">
+    <option name="showSuggestions" value="false" />
+    <option name="typeScriptCompilerParams" value="--project tsconfig.eslint.json" />
+  </component>
 </project>

@@ -167,7 +167,7 @@ describe('Calendar', () => {
     let month = 1;
     let day: number;
     let index = 0;
-    let ymd, lastYmd: YMDDate;
+    let ymd: YMDDate, lastYmd: YMDDate;
 
     for (let dayNum = 9497; dayNum <= 10225 && match && countMatch; dayNum += (match ? 7 : 0)) { // 1996-01-02 through 1997-12-30
       ymd = calendar.getDateFromDayNumber(dayNum);

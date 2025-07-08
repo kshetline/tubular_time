@@ -820,9 +820,9 @@ export class Timezone {
     const baseUtcOffset = this.parseTimeOffset(parts[0]);
     const currentUtcOffset = this.parseTimeOffset(parts[1]);
     const dstOffset = round(Number(parts[2]) * 60);
-    let displayName;
-    let lastStdName;
-    let lastDstName;
+    let displayName: string;
+    let lastStdName: string;
+    let lastDstName: string;
     let firstTTime = Number.MIN_SAFE_INTEGER;
     let population = 0;
     let countries = '';
@@ -1206,8 +1206,8 @@ export class Timezone {
       let lastOffset = this.transitions[0].utcOffset;
       let lastBaseOffset = lastOffset;
       let lastDst = false; // The first transition should never be DST.
-      let baseOffset;
-      let isDst;
+      let baseOffset: number;
+      let isDst: boolean;
 
       for (const transition of this.transitions) {
         isDst = (transition.dstOffset !== 0);

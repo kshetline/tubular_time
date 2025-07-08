@@ -126,7 +126,7 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
  * @returns True if the date is Julian.
  */
 export function isJulianCalendarDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
-  let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
 
   return (j === 1 || year < 1582 || (year === 1582 && (month < 10 || month === 10 && day < 15)));
 }
@@ -139,7 +139,7 @@ export function isJulianCalendarDate_SGC(yearOrDate: YearOrDate, month?: number,
  * @returns Day number.
  */
 export function getDayNumber_SGC(yearOrDate: YearOrDate, month?: number, day?: number): number {
-  let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
 
   while (month <  1) { month += 12; --year; }
   while (month > 12) { month -= 12; ++year; }
@@ -189,8 +189,7 @@ export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?:
  * Gregorian change date is not fixed.
  * @returns First date of calendar month.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function getFirstDateInMonth_SGC(year: number, month: number): number {
+export function getFirstDateInMonth_SGC(_year: number, _month: number): number {
   return 1;
 }
 
@@ -622,7 +621,7 @@ export class Calendar {
              gcYearOrDate.m == null || gcYearOrDate.d == null || gcYearOrDate.j))
       throw new Error('Gregorian change date must be an explicit non-Julian y-m-d date');
 
-    let gcYear; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(gcYearOrDate as YearOrDate, gcMonth, gcDate, this);
+    let gcYear: number; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(gcYearOrDate as YearOrDate, gcMonth, gcDate, this);
 
     if (gcYear < GREGORIAN_CHANGE_MIN_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear > DISTANT_YEAR_PAST)
@@ -672,7 +671,7 @@ export class Calendar {
   }
 
   isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
-    let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
+    let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
 
     return (j === 1 || year < this.gcYear || (year === this.gcYear && (month < this.gcMonth ||
             month === this.gcMonth && day < this.gcDate)));
@@ -702,7 +701,7 @@ export class Calendar {
         yearOrDate = this.addDaysToDate(yearOrDate.dy - 1, { y: yearOrDate.y, m: 1, d: 1 });
     }
 
-    let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
+    let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
 
     while (month <  1) { month += 12; --year; }
     while (month > 12) { month -= 12; ++year; }
@@ -913,10 +912,10 @@ export class Calendar {
 
   getCalendarMonth(year: number, month: number, startingDayOfWeek = SUNDAY): YMDDate[] {
     const dates: YMDDate[] = [];
-    let dateOffset;
+    let dateOffset: number;
     let dayNum = this.getDayNumber(year, month, this.getFirstDateInMonth(year, month));
     let ymd: YMDDate;
-    let currMonth;
+    let currMonth: number;
 
     // Step back (if necessary) to the nearest prior day matching the requested starting day of the week.
     dateOffset = mod(startingDayOfWeek - getDayOfWeek(dayNum), -7); // First time I recall ever wanting to use a negative modulus.
@@ -965,7 +964,7 @@ export class Calendar {
     }
 
     if (!this.isValidDate(year, month, day)) {
-      let d;
+      let d: number;
 
       if (day < (d = this.getFirstDateInMonth(year, month)))
         day = d;
@@ -1022,7 +1021,7 @@ export class Calendar {
   getYearWeekAndWeekday(date: YearOrDate | number,
     startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
-  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
+  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY: number,
                       startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
     const [year, month, day] = handleVariableDateArgs(yearOrDate, monthOrSDW, dayOrMDiCY, this, true);
 
