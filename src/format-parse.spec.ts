@@ -1,6 +1,4 @@
 import { expect } from 'chai';
-// import moment from './locale/moment-with-locales.js';
-
 import { DateTime } from './date-time';
 import ttime, { initTimezoneLarge } from './index';
 import { localeList } from './locale-data';
@@ -20,6 +18,7 @@ describe('FormatParse', () => {
     expect(new DateTime('2022-07-07 8:08 PDT').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('1995-05-06 EDT').format('IMM zzz ZZZ z')).to.equal('May 6, 1995, 12:00:00 AM Eastern Daylight Time America/New_York EDT');
     expect(new DateTime('foo').valid).is.false;
+    expect(new DateTime('foo').wallTime.error).to.equal('Invalid ISO date/time');
     expect(new DateTime('2021-01-02').format('GGGG-[W]WW-E')).to.equal('2020-W53-6');
     expect(new DateTime('2021-01-03').format('GGGG-[W]WW-E')).to.equal('2020-W53-7');
     expect(new DateTime('2021-01-04').format('GGGG-[W]WW-E')).to.equal('2021-W01-1');
@@ -43,7 +42,7 @@ describe('FormatParse', () => {
     expect(new DateTime('1986-09-04').toLocale('en,ru').format('IS')).to.equal('9/4/86');
     expect(new DateTime('1986-09-04').toLocale(['ru', 'en']).format('IS')).to.equal('04.09.1986');
     expect(new DateTime('1986-09-04').toLocale(['qq', 'fr']).format('IS')).to.equal('04/09/1986');
-    expect(new DateTime('1986-09-04').format('D\u200F/M\u200F/YYYY h:mm A', 'ar')).to.equal('٤\u200F/٩\u200F/١٩٨٦ ١٢:٠٠ ص');
+    expect(new DateTime('1986-09-04').format('D\u200F/M\u200F/YYYY h:mm A', 'ar-sa')).to.equal('٤\u200F/٩\u200F/١٩٨٦ ١٢:٠٠ ص');
     expect(new DateTime('1986-09-04').format('D/M/YY h:mm A', 'bn')).to.equal('৪/৯/৮৬ ১২:০০ AM');
     expect(new DateTime('1986-09-04').format('ISS', 'bn')).to.equal('৪/৯/৮৬, ১২:০০ AM');
     expect(new DateTime('1986-09-04').format('ISS{numberingSystem:latn}', 'bn')).to.equal('4/9/86, 12:00 AM');

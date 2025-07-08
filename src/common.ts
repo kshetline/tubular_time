@@ -135,10 +135,8 @@ const fieldOrder = [
 
 export function syncDateAndTime<T extends YMDDate | DateAndTime>(obj: T): T {
   for (const [key1, key2] of altFields) {
-    // eslint-disable-next-line no-prototype-builtins
     if (obj.hasOwnProperty(key1))
       obj[key2] = obj[key1];
-    // eslint-disable-next-line no-prototype-builtins
     else if (obj.hasOwnProperty(key2))
       obj[key1] = obj[key2];
   }
@@ -289,7 +287,7 @@ export function parseTimeOffset(offset: string, roundToMinutes = false): number 
 
   const parts = offset.includes(':') ?
     offset.split(':') :
-    offset.match(/../g);
+    offset.match(/../g) ?? ['0'];
   let offsetSeconds = 60 * (60 * Number(parts[0]) + Number(parts[1] ?? 0));
 
   if (parts[2]) {

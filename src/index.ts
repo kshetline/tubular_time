@@ -1,5 +1,5 @@
 /*
-  Copyright © 2017-2021 Kerry Shetline, kerry@shetline.com
+  Copyright © 2017-2025 Kerry Shetline, kerry@shetline.com
 
   MIT license: https://opensource.org/licenses/MIT
 
@@ -16,7 +16,7 @@
   COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
   OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
-
+/* eslint-disable @typescript-eslint/unbound-method */
 import { DAY_MSEC } from './common';
 import { DateTime, DateTimeArg } from './date-time';
 import { newDateTimeFormat } from './format-parse';
@@ -84,7 +84,6 @@ export { zonePollerNode } from './zone-poller-node';
 export { isSafeTaiMillis, isSafeUtcMillis } from './ut-converter';
 
 export function initTimezoneSmall(): void {
-
   Timezone.defineTimezones(timezoneSmall ?? win?.tbTime_timezone_small);
 }
 
@@ -181,6 +180,7 @@ export function pollForTimezoneUpdates(zonePoller: IZonePoller | false, name: Zo
     poll().finally();
 
     if (intervalDays > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       pollingInterval = setInterval(poll, Math.max(intervalDays * DAY_MSEC, 3600000));
 
       // Using unref prevents the interval alone from keeping a process alive

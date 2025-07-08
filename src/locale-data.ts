@@ -34,7 +34,7 @@ try {
   else if (typeof navigator === 'object' && navigator.language)
     _defaultLocale = navigator.language;
 }
-catch (e) {
+catch {
   _defaultLocale = 'en';
 }
 
@@ -133,7 +133,6 @@ function getLocaleResource<T>(locale: string | string[], localeData: Record<stri
   return data;
 }
 
-/* eslint-disable quote-props */
 // noinspection SpellCheckingInspection
 const meridiems = {
   'af': [['vm', 'VM'], ['nm', 'NM']],

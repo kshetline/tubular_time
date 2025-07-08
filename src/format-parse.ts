@@ -208,7 +208,6 @@ function parseDateTimeFormatMods(s: string): DateTimeFormatOptions {
 function isLetter(char: string, checkDot = false): boolean {
   // This custom test works out better than the \p{L} character class for parsing purposes here.
   return (checkDot && char === '.') ||
-    // eslint-disable-next-line no-misleading-character-class -- Deliberately including combining diacritical marks
     /^[A-Za-zÀ-ÖØ-öø-ˁˆ-ˑˠ-ˤˬˮ\u0300-\u036FΑ-ΡΣ-ϔА-ҀҊ-ԯ\u05D0-\u05E9\u0620-\u065F\u066E-\u066F\u0671-\u06D3\u06D5\u06E5-\u06E6\u06EE-\u06EF\u06FA-\u06FC\u06FF\u0904-\u0939\u0F00-\u0F14\u0F40-\u0FBC\u1000-\u103F]/.test(char);
 }
 
@@ -303,6 +302,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       }
     }
 
+    // noinspection FallThroughInSwitchStatementJS
     switch (field) {
       case 'YYYYYY': // long year, always signed
       case 'yyyyyy':
@@ -542,7 +542,6 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           break;
         }
 
-      // eslint-disable-next-line no-fallthrough
       case 'zzz':  // As long zone name (e.g. "Pacific Daylight Time"), if possible
         if (zoneName === 'TAI') {
           result.push('Temps Atomique International');
@@ -553,7 +552,6 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           break;
         }
 
-      // eslint-disable-next-line no-fallthrough
       case 'zz':  // As zone acronym (e.g. EST, PDT, AEST), if possible
       case 'z':
         if (zoneName !== 'TAI' && hasIntlDateTime && locale.dateTimeFormats.z instanceof DateTimeFormat) {
@@ -571,7 +569,6 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         else
           field = 'Z';
 
-      // eslint-disable-next-line no-fallthrough
       case 'ZZ': // Zone as UTC offset
       case 'Z':
         if (zoneName === 'TAI')
@@ -1198,7 +1195,6 @@ function matchMonth(locale: ILocale, input: string): [number, number] {
     }
 
     if (maxLen > 0) {
-      // eslint-disable-next-line no-unmodified-loop-condition
       while (isLetter(input.charAt(maxLen), true)) ++maxLen;
       return [month, maxLen];
     }
@@ -1224,7 +1220,6 @@ function skipDayOfWeek(locale: ILocale, input: string): number {
     }
 
     if (maxLen > 0) {
-      // eslint-disable-next-line no-unmodified-loop-condition
       while (isLetter(input.charAt(maxLen), true)) ++maxLen;
       return maxLen;
     }
@@ -1251,8 +1246,12 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
   format = format.trim().replace(/\u200F/g, '');
   locales = !hasIntlDateTime ? 'en' : normalizeLocale(locales ?? DateTime.getDefaultLocale());
 
-  if (isString(zone))
-    origZone = zone = Timezone.from(zone);
+  if (isString(zone)) {
+    try {
+      origZone = zone = Timezone.from(zone);
+    }
+    catch {}
+  }
 
   const locale = getLocaleInfo(locales);
   let $ = /^(I[FLMSx][FLMS]?)/.exec(format);
@@ -1291,12 +1290,12 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     if (i % 2 === 0) {
       part = part.trim();
       // noinspection JSNonASCIINames,NonAsciiCharacters
-      const altPart = { de: 'd’', 'd’': 'de' }[part];
+      const altPart = { 'de': 'd’', 'd’': 'de' }[part];
 
       if (input.startsWith(part))
-        input = input.substr(part.length).trimLeft();
+        input = input.substr(part.length).trimStart();
       else if (altPart && input.startsWith(altPart))
-        input = input.substr(altPart.length).trimLeft();
+        input = input.substr(altPart.length).trimStart();
 
       // Exact in-between text wasn't matched, but if the next thing coming up is a numeric field,
       // just skip over the text being parsed until the next digit is found.
@@ -1339,7 +1338,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           if (!hasEraField && (parts[i + 2] == null || isNumericPart(parts[i + 2]))) {
             firstChar = 'n';
             handled = false;
-            input = input.substr(newValueText?.length ?? 0).trimLeft();
+            input = input.substr(newValueText?.length ?? 0).trimStart();
           }
           break;
 
@@ -1426,7 +1425,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
     }
 
     if (handled) {
-      input = input.substr(newValueText?.length ?? 0).trimLeft();
+      input = input.substr(newValueText?.length ?? 0).trimStart();
       continue;
     }
 
@@ -1438,7 +1437,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
           if (length > 0) {
             bce = isBCE;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
 
             if (w.y != null && bce)
               w.y = 1 - w.y;
@@ -1456,7 +1455,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
           if (length > 0) {
             handled = true;
             pm = isPM;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
 
             if (w.hrs != null && pm && w.hrs !== 12)
               w.hrs += 12;
@@ -1472,7 +1471,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
           if (month > 0) {
             handled = true;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
             w.m = month;
           }
         }
@@ -1484,7 +1483,7 @@ export function parse(input: string, format: string, zone?: Timezone | string, l
 
           if (length > 0) {
             handled = true;
-            input = input.substr(length).trimLeft();
+            input = input.substr(length).trimStart();
           }
         }
         break;

@@ -17,8 +17,7 @@ export const SATURDAY  = 6;
 // noinspection JSUnusedGlobalSymbols
 export enum DayOfWeek { SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY }
 // noinspection JSUnusedGlobalSymbols
-export enum Month { JANUARY = 1, FEBRUARY, MARCH, APRIL, MAY, JUNE,
-                    JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER }
+export enum Month { JANUARY = 1, FEBRUARY, MARCH, APRIL, MAY, JUNE, JULY, AUGUST, SEPTEMBER, OCTOBER, NOVEMBER, DECEMBER }
 
 /**
  * Constant for indicating the last occurrence of a particular day of the week (e.g. the last Tuesday) of a given month.
@@ -66,17 +65,21 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
   let dy: number;
 
   if (isNumber(yearOrDate))
-    year = yearOrDate as number;
-  else if (isArray(yearOrDate) && (<number[]> yearOrDate).length >= 3 && isNumber((<number[]> yearOrDate)[0]))
-    return yearOrDate as number[];
+    year = yearOrDate;
+  else if (isArray(yearOrDate) && yearOrDate.length >= 3 && isNumber(yearOrDate[0]))
+    return yearOrDate;
+  else if (isArray(yearOrDate)) {
+    year = yearOrDate[0];
+    month = yearOrDate[1];
+  }
   else if (isObject(yearOrDate)) {
-    syncDateAndTime(yearOrDate as YMDDate);
-    n     = (yearOrDate as YMDDate).n;
-    j     = ignoreJ ? undefined : (yearOrDate as YMDDate).j;
-    year  = (yearOrDate as YMDDate).y;
-    dy    = (yearOrDate as YMDDate).dy;
-    month = (yearOrDate as YMDDate).m;
-    day   = (yearOrDate as YMDDate).d;
+    syncDateAndTime(yearOrDate);
+    n     = yearOrDate.n;
+    j     = ignoreJ ? undefined : yearOrDate.j;
+    year  = yearOrDate.y;
+    dy    = yearOrDate.dy;
+    month = yearOrDate.m;
+    day   = yearOrDate.d;
   }
 
   if (year != null) {
@@ -85,12 +88,6 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
         return handleVariableDateArgs(getDateFromDayNumberGregorian(getDayNumberGregorian(year, 1, 0) + dy));
       else if (calendar === 'j' || j === true)
         return handleVariableDateArgs(getDateFromDayNumberJulian(getDayNumberJulian(year, 1, 0) + dy));
-      else if (calendar) {
-        ++(calendar as any).computeWeekValues;
-        const ymd = handleVariableDateArgs(calendar.getDateFromDayNumber(calendar.getDayNumber(year, 1, 0) + dy));
-        --(calendar as any).computeWeekValues;
-        return ymd;
-      }
       else
         return handleVariableDateArgs(getDateFromDayNumber_SGC(getDayNumber_SGC(year, 1, 0) + dy));
     }
@@ -129,7 +126,7 @@ export function handleVariableDateArgs(yearOrDate: YearOrDate, month?: number, d
  * @returns True if the date is Julian.
  */
 export function isJulianCalendarDate_SGC(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
-  let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
 
   return (j === 1 || year < 1582 || (year === 1582 && (month < 10 || month === 10 && day < 15)));
 }
@@ -142,7 +139,7 @@ export function isJulianCalendarDate_SGC(yearOrDate: YearOrDate, month?: number,
  * @returns Day number.
  */
 export function getDayNumber_SGC(yearOrDate: YearOrDate, month?: number, day?: number): number {
-  let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
+  let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day);
 
   while (month <  1) { month += 12; --year; }
   while (month > 12) { month -= 12; ++year; }
@@ -192,8 +189,7 @@ export function getDayNumberJulian(yearOrDate: YearOrDate, month?: number, day?:
  * Gregorian change date is not fixed.
  * @returns First date of calendar month.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function getFirstDateInMonth_SGC(year: number, month: number): number {
+export function getFirstDateInMonth_SGC(_year: number, _month: number): number {
   return 1;
 }
 
@@ -298,7 +294,7 @@ export function getDayOfWeek(dayNum: number): number {
  */
 export function getDayOfWeek_SGC(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
   if (isNumber(yearOrDateOrDayNum) && month == null)
-    return mod((yearOrDateOrDayNum as number) + 4, 7);
+    return mod(yearOrDateOrDayNum + 4, 7);
   else
     return getDayOfWeek(getDayNumber_SGC(yearOrDateOrDayNum, month, day));
 }
@@ -431,6 +427,10 @@ export function getDateFromDayNumberGregorian(dayNum: number): YMDDate {
   return syncDateAndTime({ y: year, m: month, d: day, dy: dayOfYear, n: dayNum, j: false });
 }
 
+for (let i = -207084; i <= 205084; ++i) {
+  getDateFromDayNumberJulian(i);
+}
+
 export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
   let year: number;
   let month: number;
@@ -438,13 +438,6 @@ export function getDateFromDayNumberJulian(dayNum: number): YMDDate {
   let lastDay: number;
 
   year = Math.floor((dayNum + 719530) / 365.25);
-
-  while (dayNum < getDayNumberJulian(year, 1, 1))
-    --year;
-
-  while (dayNum >= getDayNumberJulian(year + 1, 1, 1))
-    ++year;
-
   day = dayNum - getDayNumberJulian(year, 1, 1) + 1;
 
   for (month = 1; day > (lastDay = getLastDateInMonthJulian(year, month)); ++month)
@@ -623,12 +616,12 @@ export class Calendar {
       return this;
     }
     else if (isString(gcYearOrDate))
-      gcYearOrDate = parseISODate(gcYearOrDate as string);
+      gcYearOrDate = parseISODate(gcYearOrDate);
     else if (isObject(gcYearOrDate) && !isArray(gcYearOrDate) && (gcYearOrDate.y == null ||
              gcYearOrDate.m == null || gcYearOrDate.d == null || gcYearOrDate.j))
       throw new Error('Gregorian change date must be an explicit non-Julian y-m-d date');
 
-    let gcYear; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(gcYearOrDate as YearOrDate, gcMonth, gcDate, this);
+    let gcYear: number; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(gcYearOrDate as YearOrDate, gcMonth, gcDate, this);
 
     if (gcYear < GREGORIAN_CHANGE_MIN_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear > DISTANT_YEAR_PAST)
@@ -678,7 +671,7 @@ export class Calendar {
   }
 
   isJulianCalendarDate(yearOrDate: YearOrDate, month?: number, day?: number): boolean {
-    let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
+    let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
 
     return (j === 1 || year < this.gcYear || (year === this.gcYear && (month < this.gcMonth ||
             month === this.gcMonth && day < this.gcDate)));
@@ -694,8 +687,8 @@ export class Calendar {
         const year = yearOrDate.ywl ?? yearOrDate.yw;
         const startOfWeek = (localeWeek && month != null ? month : 1);
         const minDaysInWeek = (localeWeek && day != null ? day : 4);
-        const week = (localeWeek ? yearOrDate.wl : yearOrDate.w) ?? 1;
-        const dayOfWeek = (localeWeek ? yearOrDate.dwl : yearOrDate.dw) ?? 1;
+        const week = (localeWeek ? yearOrDate.wl : yearOrDate.w) ?? /* istanbul ignore next: unreached sanity check */ 1;
+        const dayOfWeek = (localeWeek ? yearOrDate.dwl : yearOrDate.dw) ?? /* istanbul ignore next: unreached sanity check */ 1;
         ++this.computeWeekValues;
 
         const w = this.getStartDateOfFirstWeekOfYear(year, startOfWeek, minDaysInWeek);
@@ -708,7 +701,7 @@ export class Calendar {
         yearOrDate = this.addDaysToDate(yearOrDate.dy - 1, { y: yearOrDate.y, m: 1, d: 1 });
     }
 
-    let year, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
+    let year: number, j: number; [year, month, day, j] = handleVariableDateArgs(yearOrDate, month, day, this);
 
     while (month <  1) { month += 12; --year; }
     while (month > 12) { month -= 12; ++year; }
@@ -804,7 +797,7 @@ export class Calendar {
 
   getDayOfWeek(yearOrDateOrDayNum: YearOrDate, month?: number, day?: number): number {
     if (isNumber(yearOrDateOrDayNum) && month == null)
-      return getDayOfWeek(yearOrDateOrDayNum as number);
+      return getDayOfWeek(yearOrDateOrDayNum);
     else
       return getDayOfWeek(this.getDayNumber(yearOrDateOrDayNum, month, day));
   }
@@ -872,7 +865,7 @@ export class Calendar {
     const dayOfWeek = getDayOfWeek(dayNum);
     const delta = mod(dayOfTheWeek - dayOfWeek, 7);
 
-    if (year === this.gcYear && month === this.gcDate) {
+    if (year === this.gcYear && month === this.gcMonth) {
       const ymd = this.getDateFromDayNumber(dayNum + delta);
 
       if (ymd.y !== year || ymd.m !== month)
@@ -895,7 +888,7 @@ export class Calendar {
     const dayOfWeek = getDayOfWeek(dayNum);
     const delta = mod(dayOfWeek - dayOfTheWeek, 7);
 
-    if (year === this.gcYear && month === this.gcDate) {
+    if (year === this.gcYear && month === this.gcMonth) {
       const ymd = this.getDateFromDayNumber(dayNum - delta);
 
       if (ymd.y !== year || ymd.m !== month)
@@ -917,14 +910,12 @@ export class Calendar {
     return this.getDateFromDayNumber(this.getDayNumber(yearOrDate, month, day) + deltaDays);
   }
 
-  getCalendarMonth(year: number, month: number, startingDayOfWeek?: number): YMDDate[] {
-    startingDayOfWeek = startingDayOfWeek ?? SUNDAY;
-
+  getCalendarMonth(year: number, month: number, startingDayOfWeek = SUNDAY): YMDDate[] {
     const dates: YMDDate[] = [];
-    let dateOffset;
+    let dateOffset: number;
     let dayNum = this.getDayNumber(year, month, this.getFirstDateInMonth(year, month));
     let ymd: YMDDate;
-    let currMonth;
+    let currMonth: number;
 
     // Step back (if necessary) to the nearest prior day matching the requested starting day of the week.
     dateOffset = mod(startingDayOfWeek - getDayOfWeek(dayNum), -7); // First time I recall ever wanting to use a negative modulus.
@@ -973,7 +964,7 @@ export class Calendar {
     }
 
     if (!this.isValidDate(year, month, day)) {
-      let d;
+      let d: number;
 
       if (day < (d = this.getFirstDateInMonth(year, month)))
         day = d;
@@ -984,8 +975,6 @@ export class Calendar {
 
         if (range != null)
           day = range[1] + 1;
-        else
-          day = d;
       }
     }
 
@@ -1032,7 +1021,7 @@ export class Calendar {
   getYearWeekAndWeekday(date: YearOrDate | number,
     startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
-  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
+  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY: number,
                       startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
     const [year, month, day] = handleVariableDateArgs(yearOrDate, monthOrSDW, dayOrMDiCY, this, true);
 

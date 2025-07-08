@@ -1,4 +1,4 @@
-import { abs, div_rd, floor, max, min, mod, mod2, round, sign } from '@tubular/math';
+import { div_rd, floor, max, min, mod, mod2, round } from '@tubular/math';
 import { clone, forEach, isArray, isEqual, isNumber, isObject, isString, toNumber } from '@tubular/util';
 import {
   getDayNumber_SGC, GregorianChange, handleVariableDateArgs, isGregorianType, Calendar, YearOrDate,
@@ -156,7 +156,7 @@ export class DateTime extends Calendar {
       newZone = Timezone.from(newZone);
 
     this.defaultTimezone = newZone;
-    this.defaultTimezoneExplicit = true;
+    this.defaultTimezoneExplicit = !!newZone;
   }
 
   static isDateTime(obj: any): obj is DateTime { return obj instanceof DateTime; }
@@ -178,12 +178,7 @@ export class DateTime extends Calendar {
 
     const divisor = [1, 1, 1000, 1000, MINUTE_MSEC, MINUTE_MSEC, undefined, HOUR_MSEC, HOUR_MSEC][resolution];
 
-    if (divisor != null && divisor < DateTimeField.MINUTE) {
-      const diff = (d1.taiMillis - d2.taiMillis) / divisor;
-
-      return abs(diff) < 0.1 ? 0 : sign(diff);
-    }
-    else if (divisor != null) // Use _epochMillis here so minutes and higher round off correctly
+    if (divisor != null) // Use _epochMillis here so minutes and higher round off correctly
       return floor(d1._epochMillis / divisor) - floor(d2._epochMillis / divisor);
     else if (resolution === DateTimeField.DAY)
       return floor(d1._wallTime.n) - floor(d2._wallTime.n);
@@ -217,13 +212,14 @@ export class DateTime extends Calendar {
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, gregorianChange?: GregorianChange);
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null, locale?: string | string[], gregorianChange?: GregorianChange);
   constructor(initialTime?: DateTimeArg, timezone?: Timezone | string | null,
-              gregorianOrLocale?: string| string[] | GregorianChange, gregorianChange?: GregorianChange) {
+              gregorianOrLocale?: string | string[] | GregorianChange, gregorianChange?: GregorianChange) {
     super(gregorianChange ?? (isGregorianType(gregorianOrLocale) ? gregorianOrLocale : undefined));
 
     if (!DateTime.defaultTimezoneExplicit && !timezone) {
       if (hasIntlDateTime && Timezone.guess() !== 'OS')
         this._timezone = DateTime.defaultTimezone = Timezone.from(Timezone.guess());
 
+      /* istanbul ignore next: unreached sanity check */
       if (this._timezone.error)
         this._timezone = Timezone.OS_ZONE;
       else
@@ -243,16 +239,17 @@ export class DateTime extends Calendar {
       forEach((initialTime = t) as any, (key, value) => value === undefined ? delete t[key] : null);
     }
 
-    if (isEqual(initialTime, {}))
+    if (!(initialTime instanceof Date) && isEqual(initialTime, {}))
       initialTime = null;
 
     let occurrence = 0;
 
     if (isString(initialTime)) {
-      if (initialTime!.includes('₂'))
+      // noinspection JSObjectNullOrUndefined
+      if (initialTime.includes('₂'))
         occurrence = 2;
 
-      initialTime = initialTime!.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
+      initialTime = initialTime.replace(/[\u00AD\u2010-\u2014\u2212]/g, '-').replace(/\s+/g, ' ').replace(/₂/g, '').trim();
       let $ = /^\/Date\((\d+)([-+]\d\d\d\d)?\)\/$/i.exec(initialTime);
 
       if ($) {
@@ -327,7 +324,7 @@ export class DateTime extends Calendar {
           }
         }
         catch (e) {
-          initialTime = Date.parse(initialTime + (zone ? ' ' + zone : ''));
+          initialTime = Date.parse((initialTime as string) + (zone ? ' ' + zone : ''));
 
           if (isNaN(initialTime)) {
             this._error = e.message;
@@ -345,7 +342,8 @@ export class DateTime extends Calendar {
       timezone = Timezone.from(timezone);
 
     if (timezone?.error) {
-      this._error = `Bad timezone: ${timezone!.zoneName}`;
+      // noinspection JSObjectNullOrUndefined
+      this._error = `Bad timezone: ${timezone.zoneName}`;
       this._epochMillis = null;
 
       return;
@@ -378,7 +376,7 @@ export class DateTime extends Calendar {
       }
     }
     else
-      this.epochMillis = (isNumber(initialTime) ? initialTime as number :
+      this.epochMillis = (isNumber(initialTime) ? initialTime :
         (parseZone === Timezone.TAI_ZONE || (parseZone == null && timezone === Timezone.TAI_ZONE) ?
           utToTaiMillis(Date.now(), true) : Date.now()));
 
@@ -391,7 +389,7 @@ export class DateTime extends Calendar {
 
     copy._locked = cloneLock ? this._locked : false;
 
-    return copy as this;
+    return copy;
   }
 
   get type(): 'ZONELESS' | 'DATELESS' | 'DATETIME' {
@@ -497,17 +495,17 @@ export class DateTime extends Calendar {
     return result;
   }
 
-  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  /* istanbul ignore next: deprecated */ // noinspection JSUnusedGlobalSymbols
   get utcTimeMillis(): number { return this.utcMillis; }
-  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  /* istanbul ignore next: deprecated */ // noinspection JSUnusedGlobalSymbols
   set utcTimeMillis(newTime: number) { this.utcMillis = newTime; }
 
   get utcSeconds(): number { return floor(this.utcMillis / 1000); }
   set utcSeconds(newTime: number) { this.utcMillis = newTime * 1000; }
 
-  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  /* istanbul ignore next: deprecated */ // noinspection JSUnusedGlobalSymbols
   get utcTimeSeconds(): number { return this.utcSeconds; }
-  // noinspection JSUnusedGlobalSymbols /** @deprecated */
+  /* istanbul ignore next: deprecated */ // noinspection JSUnusedGlobalSymbols
   set utcTimeSeconds(newTime: number) { this.utcSeconds = newTime; }
 
   get taiMillis(): number {
@@ -558,7 +556,7 @@ export class DateTime extends Calendar {
 
     const w = clone(this._wallTime);
 
-    if (this._timezone === DATELESS)
+    if (w && this._timezone === DATELESS)
       ['y', 'year', 'q', 'quarter', 'm', 'month', 'd', 'day', 'dy', 'dayOfYear', 'dow', 'dayOfWeek',
        'dowmi', 'dayOfWeekMonthIndex', 'n', 'epochDay', 'j', 'isJulian',
        'yw', 'yearByWeek', 'w', 'week', 'dw', 'dayByWeek',
@@ -794,10 +792,9 @@ export class DateTime extends Calendar {
       case DateTimeField.QUARTER:
         amount *= 3;
 
-      // eslint-disable-next-line no-fallthrough
+      // noinspection FallThroughInSwitchStatementJS
       case DateTimeField.MONTH:
         this.checkDateless(fieldN);
-        // eslint-disable-next-line no-case-declarations
         const m = wallTime.m;
         updateFromWall = true;
         wallTime.m = mod(m - 1 + amount, 12) + 1;
@@ -1011,7 +1008,7 @@ export class DateTime extends Calendar {
       case DateTimeField.QUARTER:
         amount *= 3;
 
-      // eslint-disable-next-line no-fallthrough
+      // noinspection FallThroughInSwitchStatementJS
       case DateTimeField.MONTH:
         this.checkDateless(fieldN);
         wallTime.m = mod(wallTime.m + amount - 1, 12) + 1;
@@ -2075,7 +2072,7 @@ export class DateTime extends Calendar {
   getYearWeekAndWeekday(date: YearOrDate | number,
     startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[];
 
-  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY,
+  getYearWeekAndWeekday(yearOrDate: YearOrDate, monthOrSDW: number, dayOrMDiCY: number,
                       startingDayOfWeek?: number, minDaysInCalendarYear?: number): number[] {
     if (isObject(yearOrDate)) {
       monthOrSDW = monthOrSDW ?? 1;

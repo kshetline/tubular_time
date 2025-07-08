@@ -1,31 +1,51 @@
-import sourcemaps from 'rollup-plugin-sourcemaps';
-import { terser } from 'rollup-plugin-terser';
-import typescript from '@rollup/plugin-typescript';
+const sourcemaps = require('rollup-plugin-sourcemaps');
+const terser = require('@rollup/plugin-terser');
+const typescript = require('@rollup/plugin-typescript');
+const pkg = require('./package.json');
 
-export default [
-  {
-    input: 'dist/index.js',
-    external: ['by-request', 'json-z', '@tubular/math', '@tubular/util'],
-    output: [
-      {
-        file: 'dist/cjs/index.js',
-        format: 'cjs',
-        exports: 'named'
-      },
-      {
-        file: 'dist/fesm2015/index.js',
-        format: 'es'
+// noinspection JSUnusedGlobalSymbols
+module.exports = [{
+  external: ['by-request', 'json-z', '@tubular/math', '@tubular/util'],
+  input: 'src/index.ts',
+  output: [
+    {
+      file: pkg.browser,
+      sourcemap: true,
+      format: 'umd',
+      name: 'tbTime',
+      globals: {
+        'json-z': 'JSONZ',
+        '@tubular/math': 'tbMath',
+        '@tubular/util': 'tbUtil',
+        'by-request': '_by_request_' // Never used, only specified to suppress warning
       }
-    ],
-    plugins: [
-      sourcemaps(),
-      terser({ output: {
+    },
+    {
+      file: pkg.main,
+      sourcemap: true,
+      format: 'cjs'
+    },
+    {
+      file: pkg.module,
+      sourcemap: true,
+      format: 'esm'
+    }
+  ],
+  plugins: [
+    typescript({ inlineSources: true }),
+    sourcemaps(),
+    terser({
+      output: {
         comments: (node, comment) => {
-          return comment.type === 'comment2' && /\bwebpackIgnore\b/.test(comment.value);
+          return comment.type === 'comment2' && /\b(webpackIgnore|vite-ignore)\b/.test(comment.value);
         },
         max_line_len: 511
-      } }),
-      typescript()
-    ]
+      },
+      sourceMap: { includeSources: true }
+    })
+  ],
+  onwarn(code, defaultHandler) {
+    if (code.code !== 'MIXED_EXPORTS')
+      defaultHandler(code);
   }
-];
+}];

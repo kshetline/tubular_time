@@ -1,29 +1,38 @@
 {
   "name": "@tubular/time",
-  "version": "3.9.6",
+  "version": "3.10.1",
   "description": "Date/time, IANA timezones, leap seconds, TAI/UTC conversions, calendar with settable Julian/Gregorian switchover",
-  "main": "dist/cjs/index.js",
-  "module": "dist/fesm2015/index.js",
-  "esm2015": "dist/index.js",
-  "fesm2015": "dist/fesm2015/index.js",
+  "module": "dist/index.min.mjs",
+  "main": "dist/index.min.cjs",
+  "browser": "dist/index.min.js",
+  "umd:main": "dist/index.min.js",
   "typings": "dist/index",
   "sideEffects": false,
   "exports": {
-    "import": "./dist/fesm2015/index.js",
-    "require": "./dist/cjs/index.js",
-    "script": "./dist/umd/index.js",
-    "default": "./dist/cjs/index.js"
+    ".": {
+      "import": "./dist/index.min.mjs",
+      "require": "./dist/index.min.cjs",
+      "browser": "./dist/index.min.js",
+      "default": "./dist/index.min.cjs"
+    },
+    "./cjs": {
+      "require": "./dist/index.min.cjs"
+    },
+    "./dist/cjs/index.cjs": "./dist/index.min.cjs",
+    "./dist/cjs/index.js": "./dist/index.min.cjs",
+    "./dist/fesm2015/index.js": "./dist/index.min.mjs",
+    "./dist/fesm2015/index.mjs": "./dist/index.min.mjs",
+    "./dist/umd/index.js": "./dist/index.min.js"
   },
   "engines": {
     "node": ">=10.24.1"
   },
   "scripts": {
-    "build": "rimraf dist/ && tsc && rollup -c -m && webpack && ts-node make-remote-zone-data.ts",
-    "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "prepack": "npm run build",
-    "lint": "eslint 'src/**/*.ts' '**/*.cjs'",
-    "test": "nyc --reporter=html mocha --require ts-node/register src/**/*.spec.ts",
-    "document": "typedoc --name \"ks-date-time-zone\" --module commonjs --exclude \"**/*+(e2e|spec|index).ts\" --excludePrivate --excludeProtected --readme README.md --target ES5 --out docs src"
+    "build": "rimraf dist/ && rollup -c && ts-node make-remote-zone-data.ts",
+    "coverage": "nyc report --reporter=text-lcov > coverage/lcov.info",
+    "prepack": "npm run lint && npm run test && npm run build",
+    "lint": "eslint --ext .ts 'src/**/*.ts'",
+    "test": "nyc --reporter=text --reporter=html mocha --require ts-node/register src/**/*.spec.ts && npm run coverage"
   },
   "keywords": [
     "astronomy",
@@ -46,44 +55,50 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "license": "MIT",
   "dependencies": {
-    "@tubular/math": "^3.3.1",
-    "@tubular/util": "^4.16.1"
+    "@tubular/math": "^3.4.0",
+    "@tubular/util": "^4.18.1"
   },
   "optionalDependencies": {
-    "by-request": "^1.3.4",
-    "json-z": "^3.3.2"
+    "by-request": "^1.4.0",
+    "json-z": "^6.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.23.6",
-    "@babel/preset-env": "^7.17.10",
-    "@babel/register": "^7.17.7",
-    "@rollup/plugin-typescript": "^8.3.2",
-    "@types/chai": "^4.3.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@stylistic/eslint-plugin": "^4.4.1",
+    "@types/chai": "^4.3.16",
+    "@types/chai-as-promised": "^7.1.8",
     "@types/mocha": "^9.1.1",
-    "@types/node": "^15.14.9",
-    "@typescript-eslint/eslint-plugin": "^5.21.0",
-    "@typescript-eslint/parser": "^5.21.0",
-    "babel-loader": "^8.2.5",
-    "chai": "^4.3.6",
-    "coveralls": "^3.1.1",
-    "eslint": "^8.14.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-chai-friendly": "^0.7.2",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^6.0.0",
-    "mocha": "^10.2.0",
-    "nyc": "^15.1.0",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.71.1",
+    "@types/node": "^22.15.31",
+    "@typescript-eslint/eslint-plugin": "^8.34.0",
+    "@typescript-eslint/parser": "^8.34.0",
+    "chai": "^4.4.1",
+    "eslint": "^9.29.0",
+    "eslint-plugin-chai-friendly": "^1.1.0",
+    "mocha": "^10.8.2",
+    "nyc": "^17.1.0",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.43.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
-    "rollup-plugin-terser": "^7.0.2",
-    "terser-webpack-plugin": "^5.3.1",
-    "ts-node": "^10.7.0",
-    "typescript": "~4.6.4",
-    "webpack": "^5.72.0",
-    "webpack-cli": "^4.9.2",
-    "webpack-node-externals": "^3.0.0"
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.3"
   },
-  "repository": "github:kshetline/tubular_time.git"
+  "nyc": {
+    "exclude": [
+      "**/*.spec.ts",
+      "src/index.ts",
+      "src/locale-data.ts",
+      "src/zone-poller-*.ts"
+    ]
+  },
+  "overrides": {
+    "@rollup/pluginutils": {
+      "rollup": "$rollup"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kshetline/tubular_time.git"
+  }
 }

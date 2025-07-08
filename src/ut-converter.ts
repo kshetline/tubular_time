@@ -7,7 +7,7 @@ import {
 import { Timezone } from './timezone';
 import { getDateFromDayNumber_SGC, getDayNumber_SGC } from './calendar';
 
-/* eslint-disable @typescript-eslint/indent, comma-spacing, space-infix-ops */
+/* eslint-disable @stylistic/indent, @stylistic/comma-spacing */
 const baseHistoricDeltaT = [
 // Values to smooth transition from polynomial used for earlier years.
   // 1580-1599
@@ -109,7 +109,7 @@ export function updateDeltaTs(post2019values?: number[], lastKnownLeapSecond?: Y
     lastDay = max(lastDay, getDayNumber_SGC(lastKnownLeapSecond));
 
   const lastYMD = getDateFromDayNumber_SGC(lastDay);
-  const afterLeaps = getDayNumber_SGC({ y: lastYMD.y + 1, m: lastYMD.m < 7 ? 1 : 7, d: 1 });
+  const afterLeaps = getDayNumber_SGC({ y: lastYMD.y + 1, m: lastYMD.m < 7 ? /* istanbul ignore next: unreached sanity check */ 1 : 7, d: 1 });
 
   postKnownLeapSeconds = afterLeaps + UNIX_TIME_ZERO_AS_JULIAN_DAY;
   safeUtcLow = ceil((preKnownLeapSeconds + 1 - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
@@ -163,7 +163,7 @@ export function utToTai(timeJDU: number, asUtc = false): number {
 
   if (asUtc && preKnownLeapSeconds - 365 <= timeJDU && timeJDU <= postKnownLeapSeconds + 365) {
     utcMillis = round((timeJDU - UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
-    deltaTai = Timezone.findDeltaTaiFromUtc(utcMillis)?.deltaTai ?? 0;
+    deltaTai = Timezone.findDeltaTaiFromUtc(utcMillis)?.deltaTai ?? /* istanbul ignore next: unreached sanity check */ 0;
   }
 
   if (asUtc && preKnownLeapSeconds <= timeJDU && timeJDU <= postKnownLeapSeconds)
@@ -185,7 +185,7 @@ export function utToTaiMillis(millis: number, asUtc = false): number {
       UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC);
   else
     return (utToTai(millis / DAY_MSEC + UNIX_TIME_ZERO_AS_JULIAN_DAY, asUtc) -
-      UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC ;
+      UNIX_TIME_ZERO_AS_JULIAN_DAY) * DAY_MSEC;
 }
 
 export function tdtToUt(timeJDE: number): number {
@@ -212,7 +212,7 @@ export function taiToUtMillis(millis: number, forUtc = false): number {
   if (!forUtc || timeJDU < preKnownLeapSeconds - 365 || timeJDU > postKnownLeapSeconds + 365)
     return jduMillis;
 
-  const deltaTai = Timezone.findDeltaTaiFromTai(millis)?.deltaTai ?? 0;
+  const deltaTai = Timezone.findDeltaTaiFromTai(millis)?.deltaTai ?? /* istanbul ignore next: unreached sanity check */ 0;
   let utMillis = millis - deltaTai * 1000;
 
   if (preKnownLeapSeconds > timeJDU || timeJDU > postKnownLeapSeconds) {
