@@ -27,6 +27,7 @@
 !*.js
 !*.mjs
 !*.ts
+!coveralls-report.sh
 !img/
 !img/**/**
 !package-lock.json
