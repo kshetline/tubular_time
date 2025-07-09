@@ -709,7 +709,7 @@ export class Calendar {
     if (j < 0) {
       if (year === this.lastJulianYear && month === this.lastJulianMonth) {
         if (day > this.lastJulianDate)
-          day = this.lastJulianDate;
+          day = this.lastJulianDate + 1;
       }
       else if (year === this.gcYear && month === this.gcMonth && (day > this.lastJulianDate ||
                (this.lastJulianMonth !== this.gcMonth && this.lastJulianMonth > 0)) && day < this.gcDate) {
