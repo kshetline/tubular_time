@@ -2,7 +2,7 @@
 
 Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 hours. Some minutes are 61 seconds long. How about a Thursday followed directly by a Saturday, giving Friday the slip? Or a September only 19 days long? This is a date/time library for handling both day-to-day situations (so to speak) and some weird ones too.
 
-[![npm](https://img.shields.io/npm/v/@tubular/time.svg)](https://www.npmjs.com/package/@tubular/time/) [![Coverage Status](https://coveralls.io/repos/github/kshetline/tubular_time/badge.svg?branch=master)](https://coveralls.io/github/kshetline/tubular_time) [![npm downloads](https://img.shields.io/npm/dm/@tubular/time.svg)](https://npmjs.org/package/@tubular/time/) ![npm bundle size (scoped)](https://img.shields.io/bundlephobia/min/@tubular/time)  ![license](https://img.shields.io/badge/licence-mit-informational)
+[![npm](https://img.shields.io/npm/v/@tubular/time.svg)](https://www.npmjs.com/package/@tubular/time/) [![Coverage Status](https://coveralls.io/repos/github/kshetline/tubular_time/badge.svg?branch=master)](https://coveralls.io/github/kshetline/tubular_time) [![npm downloads](https://img.shields.io/npm/dm/@tubular/time.svg)](https://npmjs.org/package/@tubular/time/) ![npm bundle size (scoped)](https://img.shields.io/bundlephobia/minzip/@tubular/time)  ![license](https://img.shields.io/badge/licence-mit-informational)
 
 ## Key features<!-- omit in toc -->
 
@@ -114,7 +114,7 @@ To remotely download the full code as an ES module:
 
 ```html
 <script type="module">
-  import('https://unpkg.com/@tubular/time/dist/fesm2015/index.mjs').then(pkg => {
+  import('https://unpkg.com/@tubular/time/dist/index.min.mjs').then(pkg => {
     const { ttime, DateTime, Timezone} = pkg;
 
     // ...
@@ -126,10 +126,10 @@ For the old-fashioned UMD approach (which can save you from about 560K of extra 
 
 ```html
 <script src="https://unpkg.com/@tubular/time/dist/data/timezone-large-alt.js"></script>
-<script src="https://unpkg.com/@tubular/time/dist/umd/index.js"></script>
+<script src="https://unpkg.com/@tubular/time/dist/index.min.js"></script>
 ```
 
-_(Or ...`/data/timezone-large.js"`)_
+_(...or `/data/timezone-large.js"`)_
 
 The script element just above the `index.js` URL is an example of _optionally_ loading extended timezone definitions. Such a script element, if used, should precede the `index.js` script.
 
