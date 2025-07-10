@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { DateTime } from './date-time';
-import ttime, { initTimezoneLarge } from './index';
+import ttime, { initTimezoneLarge, Timezone } from './index';
 import { localeList } from './locale-data';
 import { analyzeFormat, parse } from './format-parse';
 
@@ -17,6 +17,9 @@ describe('FormatParse', () => {
     expect(new DateTime('2022-07-07 8:08 PST').format('IMM{hourCycle:h23} zzz ZZZ z')).to.equal('Jul 7, 2022, 09:08:00 Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('2022-07-07 8:08 PDT').format('IMM zzz ZZZ z')).to.equal('Jul 7, 2022, 8:08:00 AM Pacific Daylight Time America/Los_Angeles PDT');
     expect(new DateTime('1995-05-06 EDT').format('IMM zzz ZZZ z')).to.equal('May 6, 1995, 12:00:00 AM Eastern Daylight Time America/New_York EDT');
+    expect(new DateTime('1995-05-06 TAI').format('IS', 'en-us')).to.equal('5/6/95');
+    expect(new DateTime('1995-05-06T21:00', 'UTC+0100').format('ISS', 'en-us')).to.equal('5/6/95, 9:00 PM');
+    expect(new DateTime('1995-05-06T21:00', 'UTC+0115').format('ISS', 'en-us')).to.equal('5/6/95, 9:00\u202FPM');
     expect(new DateTime('foo').valid).is.false;
     expect(new DateTime('foo').wallTime.error).to.equal('Invalid ISO date/time');
     expect(new DateTime('2021-01-02').format('GGGG-[W]WW-E')).to.equal('2020-W53-6');
@@ -93,6 +96,8 @@ describe('FormatParse', () => {
     expect(parse('11/7/2021 1:25₂ AM', 'MM/DD/YYYY h:m a', 'America/Denver').toString()).to.equal('DateTime<2021-11-07T01:25:00.000₂-07:00>');
     expect(parse('2016-12-31T23:59:60', ttime.DATETIME_LOCAL_SECONDS, 'UTC',
       undefined, true).toString()).to.equal('DateTime<2016-12-31T23:59:60.000 +00:00>');
+    expect(() => parse('1/17/2022 1:22:33', 'MM/Do/YYYY H:m:s', 'UTC')).to.throw();
+    expect(() => parse('1/17/2022 1:22:33', 'MM/d/YYYY H:m:s', 'UTC')).to.throw();
   });
 
   it('should correctly handle two-digit years', () => {
@@ -168,6 +173,8 @@ describe('FormatParse', () => {
   it('should be able to parse times with timezones', () => {
     expect(parse('Jul 7, 2022 04:05 PM America/Chicago', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 5 * 3_600_000);
+    expect(parse('Jul 7, 2022 04:05 PM America/Chicago', 'MMM D, y n hh:mm A Z').epochMillis)
+      .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 5 * 3_600_000);
     expect(parse('Jul 7, 2022 04:05 PM EDT', 'MMM D, y n hh:mm A z').epochMillis)
       .to.equal(Date.UTC(2022, 6, 7, 16, 5, 0) + 4 * 3_600_000);
     expect(parse('Jul 7, 2022 04:05 PM PST', 'MMM D, y n hh:mm A z').epochMillis)
@@ -209,5 +216,25 @@ describe('FormatParse', () => {
     expect(new DateTime('2021-08').format('MMMM', 'ko')).to.equal('8월');
     expect(new DateTime('2021-08-20T20:36').format('MMM D, y n hh:mm~ A z', 'en')).to.equal('Aug 20, 2021 08:36~ PM EDT');
     expect(parse('1/17/2022 1:22:33', 'MM~/DD~/YYYY~ H:m:s', 'UTC').toIsoString(19)).to.equal('2022-01-17T01:22:33');
+  });
+
+  it('should handling special formatting', () => {
+    expect(new DateTime('2021-08').format('YYYYYY')).to.equal('+002021');
+    expect(new DateTime('-2021-08').format('YYYYYY')).to.equal('-002021');
+    expect(new DateTime('2021-08-08').format('GGGG gggg GG gg')).to.equal('2021 2021 21 21');
+    expect(new DateTime('-2021-08-08').format('GGGG gggg GG gg')).to.equal('-2021 -2021 -21 -21');
+    expect(new DateTime('22021-08-08').format('GGGG gggg GG gg')).to.equal('+22021 +22021 21 21');
+    expect(new DateTime('-22021-08-08').format('GGGG gggg GG gg')).to.equal('-22021 -22021 -21 -21');
+    expect(new DateTime('2021-08-08').format('W w D~')).to.equal('31 33 8');
+    expect(new DateTime('2021-08-08T12:03:04', Timezone.OS_ZONE).format('ZZZ')).to.match(/\w/);
+    expect(new DateTime('2021-08-08T12:03:04 TAI').format('zzz')).to.equal('Temps Atomique International');
+    expect(new DateTime('2025-07-03').format('(d) dd MMM Do, YYYY')).to.equal('(4) Th Jul 3rd, 2025');
+    expect(new DateTime('1970-01-01T12:03:04Z').format('XX xx XT xt X x KK K kk k m s zz ZZ V'))
+      .to.equal('43384 43384000 43392 43392 43384 43384000 00 0 12 12 3 4 UTC +0000  ');
+    expect(new DateTime('1970-01-01T12:03:04.77Z').format('mm:ss.SSS')).to.equal('03:04.770');
+    expect(new DateTime('1970-01-01T12:03:04 EST').format('LLL zz', 'en-us'))
+      .to.equal('January 1, 1970 at 12:03 PM EST');
+    expect(parse('11/7/2021 1:25 AM', 'MM/DD/YYYY h:m a', 'America/Denver').format('r')).to.equal('');
+    expect(new DateTime('foo').format('YYYYYY')).to.equal('##Invalid_Date##');
   });
 });

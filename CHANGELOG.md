@@ -3,6 +3,7 @@ _Updates limited to IANA tzdb updates omitted._
 ### 3.10.2
 
 * Fixed a very edge-case bug where `getSecondsInDay()` and `getMinutesInDay()` might return 0 for the very last Julian calendar date before a transition to the Gregorian calendar.
+* Increased test coverage.
 
 ### 3.10.1
 
