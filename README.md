@@ -12,7 +12,7 @@ Not all days are 24 hours. Some are 23 hours, or 25, or even 23.5 or 24.5 or 47 
 * Supports and recognizes negative Daylight Saving Time.
 * Extensive date/time manipulation and calculation capabilities.
 * Many features available using a familiar Moment.js-style API.
-* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI.
+* Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC, and TAI.
 * Local mean time, by geographic longitude, to one minute (of time) resolution.
 * Astronomical time conversions among TDT (Terrestrial Dynamic Time), UT1, UTC and TAI, as well as local mean time, by geographic longitude, to one minute (of time) resolution.
 * Internationalization via JavaScript’s `Intl` Internationalization API, with additional built-in i18n support for issues not covered by `Intl`, and US-English fallback for environments without `Intl` support.
@@ -979,7 +979,7 @@ The `epochMillis` getter/setter returns, or allows you to modify, the fundamenta
 
 For a TAI instance, `epochMillis` is the same as `taiMillis`, with `utcMillis` providing a conversion to or from UTC (or UT1 outside the well-defined UTC range). For a non-TAI instance `epochMillis` is the same as `utcMillis`, with `taiMillis` performing conversions.
 
-During a leap second the `epochMillis`/`utcMillis` value is pinned 59 seconds, 999 milliseconds into the minute in which the leap seconds occurs. The `taiMillis` value, however, still varies over the course of that second.
+During a leap second the `epochMillis`/`utcMillis` value is pinned 59 seconds, 999 milliseconds into the minute in which the leap second occurs. The `taiMillis` value, however, still varies over the course of that second.
 
 In the unlikely event a negative leap second is ever declared, the `epochMillis`/`utcMillis` value for a non-TAI `DateTime` instance will simply skip over the leap second, while `taiMillis` advances contiguously.
 
@@ -1031,7 +1031,7 @@ All arguments to the constructor are optional. When passed no arguments, `new Da
 
 * `initialTime`: This can be a single number (for milliseconds since 1970-01-01T00:00 UTC), an ISO-8601 date as a string, and ECMA-262 date as string, an ASP.​NET JSON date string, a JavaScript `Date` object, [a `DateAndTime` object](#the-ymddate-and-dateandtime-objects), an array of numbers (in the order year, month, day, hour, etc.), or a `null`, which causes the current time to be used.
 * `timezone`: This can be a `Timezone` instance, a string specifying an IANA timezone (e.g. 'Pacific/Honolulu'), a UTC offset (e.g. 'UTC+04:00'), or `null` to use the default timezone.
-* `locale`: a locale string (e.g. 'fr-FR'), an array of locales strings in order of preference (e.g. ['fr-FR', 'fr-CA', 'en-US']), or `null` to use the default locale.
+* `locale`: a locale string (e.g. 'fr-FR'), an array of locale strings in order of preference (e.g. ['fr-FR', 'fr-CA', 'en-US']), or `null` to use the default locale.
 * `gregorianChange`: The first date when the Gregorian calendar is active, the string `'J'` for a pure Julian calendar, the string 'G' for a pure Gregorian calendar, the constant `ttime.PURE_JULIAN`, the constant `ttime.PURE_GREGORIAN`, or `null` for the default of 1582-10-15. A date can take the form of a year-month-day ISO-8601 date string (e.g. '1752-09-14'), a year-month-day numeric array (e.g. [1918, 2, 14]), or a date as a `YMDDate` object.
 
 As a string, `initialTime` can also include a trailing timezone or UTC offset, using the letter `Z` to indicate UTC (e.g. '1969‑07‑12T20:17Z'), or a specific timezone (e.g. '1969‑07‑20T16:17 EDT', '1969‑07‑20T16:17 America/New_York', or '1969‑07‑20T16:17-0400').
