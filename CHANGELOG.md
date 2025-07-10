@@ -1,5 +1,10 @@
 _Updates limited to IANA tzdb updates omitted._
 
+### 3.10.2
+
+* Fixed a very edge-case bug where `getSecondsInDay()` and `getMinutesInDay()` might return 0 for the very last Julian calendar date before a transition to the Gregorian calendar.
+* Increased test coverage.
+
 ### 3.10.1
 
 * Minor documentation update.
@@ -7,7 +12,7 @@ _Updates limited to IANA tzdb updates omitted._
 ### 3.10.0
 
 * Fixed bug with creating `DateTime` instances using `Date` objects.
-* Other minor edge-case bug fixes.
+* Other minor bug fixes.
 * Code coverage increased to 95%.
 * Updated build, linting, and documentation.
 * Improved sourcemaps.

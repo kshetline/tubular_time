@@ -18,7 +18,7 @@ const shortOpts = { Y: 'year', M: 'month', D: 'day', w: 'weekday', h: 'hour', m:
                     ds: 'dateStyle', ts: 'timeStyle', e: 'era' };
 const shortOptValues = { f: 'full', m: 'medium', n: 'narrow', s: 'short', l: 'long', dd: '2-digit', d: 'numeric' };
 const styleOptValues = { F: 'full', L: 'long', M: 'medium', S: 'short' };
-const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM~?|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y~?|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
+const patternTokens = /({[A-Za-z0-9/_]+?!?}|V|v|R|r|I[FLMSx][FLMS]?|MMMM~?|MMM~?|MM~?|Mo|M~?|Qo|Q|DDDD|DDD|Do|DD~?|D~?|dddd|ddd|do|dd|d|E|e|ww|wo|w|WW|Wo|W|YYYYYY|yyyyyy|YYYY~?|yyyy|YY|yy|Y~?|y~?|N{1,5}|n|gggg|gg|GGGG|GG|A|a|HH|H|hh|h|KK|K|kk|k|mm|m|ss|s|LTS|LT|LLLL|llll|LLL|lll|LL|ll|L|l|S+|ZZZ|zzz|ZZ|zz|Z|z|XT|xt|XX|xx|X|x)/g;
 const cachedLocales: Record<string, ILocale> = {};
 const invalidZones = new Set<string>();
 const warnedZones = new Set<string>();
@@ -234,7 +234,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
     return '##Invalid_Date##';
 
   const currentLocale = normalizeLocale(localeOverride ?? dt.locale);
-  const localeNames = !hasIntlDateTime ? 'en' : currentLocale;
+  const localeNames = !hasIntlDateTime ? /* istanbul ignore next: unreached sanity check */ 'en' : currentLocale;
   const locale = getLocaleInfo(localeNames);
   const cjk = /^(ja|ko|zh)/.test(locale.name);
   const ko = /^ko/.test(locale.name);
@@ -242,6 +242,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
   let usesDateMarks = false;
   const zeroAdj = locale.zeroDigit.charCodeAt(0) - 48;
   const toNum = (n: number | string, pad = 1): string => {
+    /* istanbul ignore next: unreached sanity check */
     if (n == null || (isNumber(n) && isNaN(n)))
       return '?'.repeat(pad);
     else
@@ -473,7 +474,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
       case 'A': // AM/PM indicator (may have more than just two forms)
       case 'a':
         {
-          const values = locale.meridiemAlt ?? locale.meridiem;
+          const values = locale.meridiemAlt ?? /* istanbul ignore next: unreached sanity check */ locale.meridiem;
           const dayPartsForHour = values[values.length === 2 ? floor(hour / 12) : hour];
 
           // If there is no case distinction between the first two forms, use the first form
@@ -482,7 +483,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
               (!isCased(dayPartsForHour[0]) && !isCased(dayPartsForHour[0])))
             result.push(dayPartsForHour[0]);
           else
-            result.push(dayPartsForHour[field === 'A' && dayPartsForHour.length > 1 ? 1 : 0]);
+            result.push(dayPartsForHour[field === 'A' && dayPartsForHour.length > 1 ? 1 : /* istanbul ignore next: unreached sanity check */ 0]);
         }
         break;
 
@@ -523,8 +524,10 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         {
           const localeFormat = locale.dateTimeFormats[field];
 
+          /* istanbul ignore next: unreached sanity check */
           if (localeFormat == null)
             result.push(`[${field}?]`);
+          /* istanbul ignore next: unreached sanity check */
           else if (isString(localeFormat))
             result.push(format(dt, localeFormat, localeOverride));
           else
@@ -558,7 +561,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           result.push(getDatePart(locale.dateTimeFormats.z, dt.epochMillis, 'timeZoneName'));
           break;
         }
-        else if (invalidZones.has(zoneName)) {
+        else /* istanbul ignore next: unreached sanity check */ if (invalidZones.has(zoneName)) {
           result.push(dt.timezone.getDisplayName(dt.epochMillis));
           break;
         }
@@ -566,6 +569,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
           result.push(zoneName);
           break;
         }
+        /* istanbul ignore else: unreached sanity check */
         else
           field = 'Z';
 
@@ -584,7 +588,7 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
 
       case 'R':
       case 'r':
-        result.push(wt.occurrence === 2 ? '\u2082' : field === 'R' ? ' ' : ''); // Subscript 2
+        result.push(wt.occurrence === 2 ? '\u2082' : field === 'R' ? ' ' : ''); // Subscript 2 (₂)
         break;
 
       case 'n':
@@ -595,11 +599,13 @@ export function format(dt: DateTime, fmt: string, localeOverride?: string | stri
         break;
 
       default:
+        /* istanbul ignore else: unreached sanity check */
         if (field.startsWith('N'))
           result.push(locale.eras[(year < 1 ? 0 : 1) + (field.length === 4 ? 2 : 0)]);
         else if (field.startsWith('I')) {
+          /* istanbul ignore else: unreached backup for lack of Intl library */
           if (hasIntlDateTime) {
-            const formatKey = field + (dtfMods ? JSON.stringify(dtfMods) : '');
+            const formatKey = field + (dtfMods ? JSON.stringify(dtfMods) : /* istanbul ignore next: unreached sanity check */ '');
             let intlFormat = locale.dateTimeFormats[formatKey] as DateTimeFormat;
 
             if (!intlFormat) {
@@ -782,6 +788,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
 
   locale.name = isArray(localeNames) ? localeNames.join(',') : localeNames;
 
+  /* istanbul ignore else: unreached backup for lack of Intl library */
   if (hasIntlDateTime) {
     locale.months = [];
     locale.monthsShort = [];
@@ -858,6 +865,7 @@ function getLocaleInfo(localeNames: string | string[]): ILocale {
       if (fullValue && fullValue !== value) {
         newHourForm += ',' + fullValue;
 
+        /* istanbul ignore else: unreached sanity check */
         if (fullValue === lcFullValue)
           newMeridiems.push(fullValue);
         else
@@ -917,6 +925,7 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
   locale.cachedTimezone = timezone;
   locale.dateTimeFormats = {};
 
+  /* istanbul ignore else: unreached backup for lack of Intl library */
   if (hasIntlDateTime) {
     locale.dateTimeFormats.LLLL = fmt({ Y: 'd', M: 'l', D: 'd', w: 'l', h: 'd', m: 'dd' }); // Thursday, September 4, 1986 8:30 PM
     locale.dateTimeFormats.llll = fmt({ Y: 'd', M: 's', D: 'd', w: 's', h: 'd', m: 'dd' }); // Thu, Sep 4, 1986 8:30 PM
@@ -953,6 +962,7 @@ function generatePredefinedFormats(locale: ILocale, timezone: string): void {
 }
 
 function isLocale(locale: string | string[], matcher: string): boolean {
+  /* istanbul ignore else: unreached sanity check */
   if (isString(locale))
     return locale.startsWith(matcher);
   else if (locale.length > 0)

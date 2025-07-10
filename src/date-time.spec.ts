@@ -76,13 +76,16 @@ describe('DateTime', () => {
     expect(new DateTime('2021-11-07T01:23').compare(new DateTime('2021-11-07T01:23', Timezone.guess()))).to.equal(0);
     DateTime.setDefaultTimezone(saveZone);
 
-    const dt = new DateTime();
+    let dt = new DateTime();
 
     dt.locale = 'fr';
     expect(dt.locale).to.equal('fr');
 
     dt.locale = undefined;
     expect(() => dt.format('D')).not.to.throw;
+
+    dt = new DateTime('2025-06-20T12:00', 'America/Chicago', [2025, 7, 4]);
+    expect(dt.getSecondsInDay()).to.equal(86400);
   });
 
   it('should properly determine locale-specific starting days of the week', () => {
