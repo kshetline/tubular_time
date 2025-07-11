@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Browser Check</title>
-  <script src="dist/umd/index.js"></script>
+  <script src="dist/index.min.js"></script>
 </head>
 <body>
   <script>
@@ -31,6 +31,10 @@
 
       document.write('<br><br>\n');
     }
+
+    const zones = tbTime.Timezone.getAvailableTimezones().join('<br>\n');
+
+    document.write(zones + '<br><br>\n');
   </script>
 </body>
 </html>
