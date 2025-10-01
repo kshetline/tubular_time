@@ -1,5 +1,13 @@
 _Updates limited to IANA tzdb updates omitted._
 
+### 3.10.5
+
+* Update @tubular/math dependency.
+
+### 3.10.4
+
+* Fixed a package.json problem with Angular/Nx.
+
 ### 3.10.3
 
 * Fix UMD packaging.
