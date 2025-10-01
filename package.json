@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "3.10.3",
+  "version": "3.10.5",
   "description": "Date/time, IANA timezones, leap seconds, TAI/UTC conversions, calendar with settable Julian/Gregorian switchover",
   "module": "dist/index.min.mjs",
   "main": "dist/index.min.cjs",
@@ -13,7 +13,8 @@
       "import": "./dist/index.min.mjs",
       "require": "./dist/index.min.cjs",
       "browser": "./dist/index.min.js",
-      "default": "./dist/index.min.cjs"
+      "default": "./dist/index.min.cjs",
+      "types": "./dist/index.d.ts"
     },
     "./cjs": {
       "require": "./dist/index.min.cjs"
@@ -55,11 +56,11 @@
   "author": "Kerry Shetline <kerry@shetline.com>",
   "license": "MIT",
   "dependencies": {
-    "@tubular/math": "^3.4.0",
-    "@tubular/util": "^4.18.1"
+    "@tubular/math": "^3.4.2",
+    "@tubular/util": "^4.18.2"
   },
   "optionalDependencies": {
-    "by-request": "^1.4.0",
+    "by-request": "^1.4.1",
     "json-z": "^6.0.0"
   },
   "devDependencies": {
