@@ -264,7 +264,7 @@ describe('DateTime', () => {
     expect(() => new DateTime('04:05').add(DateTimeField.WEEK, 1))
       .to.throw('"WEEK" cannot be used with a dateless time value');
     expect(() => new DateTime().add('era', 1)).to.throw('"era" is not a valid add()/subtract() field');
-    expect(() => new DateTime().add(999 as any, 1)).to.throw('#999 is not a valid add()/subtract() field');
+    expect(() => new DateTime().add(999, 1)).to.throw('#999 is not a valid add()/subtract() field');
     expect(() => new DateTime('foo').add(DateTimeField.SECOND, 1)).to.throw(/Cannot perform/);
     expect(() => new DateTime().add(DateTimeField.SECOND, 1.1)).to.throw(/must be integers/);
 

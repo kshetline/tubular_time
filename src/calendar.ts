@@ -558,7 +558,7 @@ export class Calendar {
     else if (arguments.length === 0 || gcYearOrDateOrType == null)
       this.setGregorianChange(1582, 10, 15);
     else
-      this.setGregorianChange(gcYearOrDateOrType as YearOrDate | string, gcMonth, gcDate);
+      this.setGregorianChange(gcYearOrDateOrType, gcMonth, gcDate);
   }
 
   lock = (): this => this._lock();
@@ -621,7 +621,7 @@ export class Calendar {
              gcYearOrDate.m == null || gcYearOrDate.d == null || gcYearOrDate.j))
       throw new Error('Gregorian change date must be an explicit non-Julian y-m-d date');
 
-    let gcYear: number; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(gcYearOrDate as YearOrDate, gcMonth, gcDate, this);
+    let gcYear: number; [gcYear, gcMonth, gcDate] = handleVariableDateArgs(gcYearOrDate, gcMonth, gcDate, this);
 
     if (gcYear < GREGORIAN_CHANGE_MIN_YEAR) {
       if ((gcMonth !== 0 || gcDate !== 0) && gcYear > DISTANT_YEAR_PAST)

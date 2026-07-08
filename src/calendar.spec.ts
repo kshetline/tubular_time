@@ -267,7 +267,7 @@ describe('Calendar', () => {
     calendar.setGregorianChange('1582-10-15');
     expect(calendar.getDateFromDayNumber(dayNum)).to.include({ y: 1752, m: 9, d: 13 });
 
-    expect(() => calendar.setGregorianChange({} as any)).to.throw(/must be an explicit non-Julian y-m-d date/);
+    expect(() => calendar.setGregorianChange({})).to.throw(/must be an explicit non-Julian y-m-d date/);
     expect(() => calendar.setGregorianChange({ y: 100, m: 1, d: 1 })).to.throw(/cannot be less than/);
     expect(() => calendar.setGregorianChange({ y: 10000, m: 1, d: 1 })).to.throw(/cannot be greater than/);
     expect(() => calendar.setGregorianChange({ y: 2025, m: 2, d: 29 })).to.throw(/Invalid/);
@@ -316,7 +316,8 @@ describe('Calendar', () => {
     expect(new Calendar(CalendarType.PURE_GREGORIAN).isPureGregorian()).to.be.true;
     expect(new Calendar(CalendarType.PURE_JULIAN).isPureJulian()).to.be.true;
     expect(new Calendar([1919, 4, 14]).getGregorianChange()).to.include({ y: 1919, m: 4, d: 14 });
-    expect(() => new Calendar([1919, 4, 'foo' as any]).getGregorianChange()).to.throw(/Invalid/);
+    // @ts-ignore
+    expect(() => new Calendar([1919, 4, 'foo']).getGregorianChange()).to.throw(/Invalid/);
   });
 
   it('show prevent modification after locking', () => {
