@@ -1,6 +1,6 @@
 {
   "name": "@tubular/time",
-  "version": "3.10.7",
+  "version": "3.10.9",
   "description": "Date/time, IANA timezones, leap seconds, TAI/UTC conversions, calendar with settable Julian/Gregorian switchover",
   "module": "dist/index.min.mjs",
   "main": "dist/index.min.cjs",
@@ -102,5 +102,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kshetline/tubular_time.git"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true
   }
 }
